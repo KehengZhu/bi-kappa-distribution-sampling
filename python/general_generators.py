@@ -92,7 +92,7 @@ def main():
     n_particle = 1000000
     rng = np.random.default_rng()
     
-    print("=== Example 1: GeneralVelocityGenerator (f(E)=exp(-E)) ===")
+    print("=== Example 1: GeneralVelocityGenerator f(E)=exp(-E) ===")
     energy_pdf = lambda E: np.exp(-E)
     vel_gen = GeneralVelocityGenerator(energy_pdf, 0.0, 20.0, 1.0)
     
@@ -109,11 +109,12 @@ def main():
             f.write(f"{v[0]} {v[1]} {v[2]}\n")
     print(f"Wrote {n_particle} samples to samples_general_velocity.txt\n")
     
-    print("=== Example 2: GeneralPositionGenerator (rho=exp(-(x^2+y^2+z^2))) ===")
+    print("=== Example 2: GeneralPositionGenerator rho=1+sin(x)sin(y) ===")
     rho = lambda x: (1+np.sin(x[0])*np.sin(x[1])*np.sin(x[2])) if len(x) >= 3 else (1+np.sin(x[0])*np.sin(x[1]))
     
     # 3D domain
-    pos_gen = GeneralPositionGenerator(2, [-2.0, -2.0], [2.0, 2.0], rho)
+    from numpy import pi
+    pos_gen = GeneralPositionGenerator(2, [-pi, -pi], [pi, pi], rho)
     
     samples_position = []
     for i in range(n_particle):
