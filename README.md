@@ -61,12 +61,12 @@ int main() {
 	std::mt19937 gen(12345u);
 
 	// 1) BiKappaDistribution
-	BiKappaDistribution<Real>::Point3D ub1 = {0.0, 0.0, 1.0};
+	Point3D ub1 = {0.0, 0.0, 1.0};
 	BiKappaDistribution<Real> bikappa(2.0, 1.0, 2.0, ub1);
 	Point3D vk = bikappa(gen); // generate one 3D vector sample
 
 	// 2) BiMaxwellianDistribution
-	BiMaxwellianDistribution<Real>::Point3D ub2 = {1.0, 0.0, 0.0};
+	Point3D ub2 = {1.0, 0.0, 0.0};
 	BiMaxwellianDistribution<Real> bimaxwell(1.0, 2.0, ub2);
 	Point3D vm = bimaxwell(gen);
 
@@ -76,12 +76,14 @@ int main() {
 	Point3D vg = velGen(gen);
 
 	// 4) GeneralPositionGenerator: rho(x, y) = 1 + sin(x) sin(y), domain [-pi, pi]^2
-	auto rho = [](const GeneralPositionGenerator<Real>::PositionVector &x) -> Real {
+	typedef GeneralPositionGenerator<Real>::PositionVector PositionVector;
+	// PositionVector is defined as std::vector<Real>, satisfying variable dimension needs.
+	auto rho = [](const PositionVector &x) -> Real {
 		return 1.0 + std::sin(x[0]) * std::sin(x[1]);
 	};
 	const Real pi = 3.14159265358979323846;
 	GeneralPositionGenerator<Real> posGen(2, {-pi, -pi}, {pi, pi}, rho);
-	GeneralPositionGenerator<Real>::PositionVector x = posGen(gen); // generate one 2D vector sample
+	PositionVector x = posGen(gen); // generate one 2D vector sample
 
 	return 0;
 }
