@@ -46,6 +46,53 @@ Monte Carlo particle sampling project with:
 - Samples positions from user-defined density using rejection sampling in a box domain
 - Supports 1D/2D/3D, with output padded to 3 components when needed
 
+## C++ Usage Examples
+
+```cpp
+#include <random>
+#include "bi_kappa_distribution.H"
+#include "bi_maxwellian_distribution.H"
+#include "general_velocity_generator.H"
+#include "general_position_generator.H"
+
+int main() {
+	typedef double Real;
+    typedef std::array<Real, 3> Point3D;
+	std::mt19937 gen(12345u);
+
+	// 1) BiKappaDistribution
+	BiKappaDistribution<Real>::Point3D ub1 = {0.0, 0.0, 1.0};
+	BiKappaDistribution<Real> bikappa(2.0, 1.0, 2.0, ub1);
+	Point3D vk = bikappa(gen); // generate one 3D vector sample
+
+	// 2) BiMaxwellianDistribution
+	BiMaxwellianDistribution<Real>::Point3D ub2 = {1.0, 0.0, 0.0};
+	BiMaxwellianDistribution<Real> bimaxwell(1.0, 2.0, ub2);
+	Point3D vm = bimaxwell(gen);
+
+	// 3) GeneralVelocityGenerator: f(E) = exp(-E), E in [0, 20], mass = 1
+	auto energyPdf = [](Real E) -> Real { return std::exp(-E); };
+	GeneralVelocityGenerator<Real> velGen(energyPdf, 0.0, 20.0, 1.0);
+	Point3D vg = velGen(gen);
+
+	// 4) GeneralPositionGenerator: rho(x, y) = 1 + sin(x) sin(y), domain [-pi, pi]^2
+	auto rho = [](const GeneralPositionGenerator<Real>::PositionVector &x) -> Real {
+		return 1.0 + std::sin(x[0]) * std::sin(x[1]);
+	};
+	const Real pi = 3.14159265358979323846;
+	GeneralPositionGenerator<Real> posGen(2, {-pi, -pi}, {pi, pi}, rho);
+	GeneralPositionGenerator<Real>::PositionVector x = posGen(gen); // generate one 2D vector sample
+
+	return 0;
+}
+```
+
+### Notes for the Examples
+
+- `ub` can be non-normalized; it is normalized internally by the transform.
+- `GeneralPositionGenerator` returns a 3-component vector; in 2D, `z` is padded with `0`.
+- Use your project `Real` type if needed (for example from Chombo), or replace `double` above.
+
 ## C++ Transform Tests
 
 `cpp/main.cpp` runs transform self-tests before generating samples.
