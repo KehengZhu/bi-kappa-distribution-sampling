@@ -16,18 +16,19 @@
 template <typename RealType= double> class GeneralPositionGenerator
 {
   public:
-    typedef std::vector<RealType> PositionVector; // modern form: using PositionVector =
-                                                  // std::vector<RealType>;
-    typedef std::function<RealType(const PositionVector &)> DensityFunction; // modern form: using
-                                                                             // DensityFunction =
-                                                                             // std::function<RealType(const
-                                                                             // PositionVector&)>;
+    typedef std::vector<RealType> PositionVector;
+    typedef PositionVector ResultType;
+    typedef ResultType result_type;
+    typedef std::function<RealType(const PositionVector &)> DensityFunction;
 
     GeneralPositionGenerator(int dimension, const PositionVector &lower_bounds,
                              const PositionVector &upper_bounds, DensityFunction density_function,
                              int probe_points= 4096, int max_reject_tries= 200000)
         : m_dimension(dimension), m_lowerBounds(lower_bounds), m_upperBounds(upper_bounds),
-          m_densityFunction(density_function), m_maxRejectTries(max_reject_tries)
+                    m_rangeWidths(static_cast<std::size_t>(dimension), RealType(0.0)),
+                    m_densityFunction(density_function), m_maxRejectTries(max_reject_tries),
+                    m_densityUpperBound(RealType(0.0)), m_distAccept(RealType(0.0), RealType(1.0)),
+                    m_distUnit(RealType(0.0), RealType(1.0))
     {
         if (!(m_dimension >= 1 && m_dimension <= 3))
         {
@@ -54,20 +55,31 @@ template <typename RealType= double> class GeneralPositionGenerator
         int d= 0;
         for (d= 0; d < m_dimension; ++d)
         {
-            if (!(m_lowerBounds[static_cast<std::size_t>(d)] <
-                  m_upperBounds[static_cast<std::size_t>(d)]))
+            std::size_t idx= static_cast<std::size_t>(d);
+            if (!(m_lowerBounds[idx] < m_upperBounds[idx]))
             {
                 throw std::invalid_argument("each lower bound must be strictly less than its upper "
                                             "bound");
             }
+            m_rangeWidths[idx]= m_upperBounds[idx] - m_lowerBounds[idx];
         }
 
         m_densityUpperBound= estimateDensityUpperBound(probe_points);
-        if (m_densityUpperBound <= static_cast<RealType>(0.0))
+        if (m_densityUpperBound <= RealType(0.0))
         {
             throw std::invalid_argument("density_function must be positive somewhere inside the "
                                         "domain");
         }
+
+        m_distAccept.param(
+            typename std::uniform_real_distribution<RealType>::param_type(RealType(0.0),
+                                                                           m_densityUpperBound));
+    }
+
+    void reset()
+    {
+        m_distAccept.reset();
+        m_distUnit.reset();
     }
 
     int dimension() const
@@ -89,15 +101,12 @@ template <typename RealType= double> class GeneralPositionGenerator
 
     template <typename GeneratorType> PositionVector operator()(GeneratorType &gen) const
     {
-        std::uniform_real_distribution<RealType> distAccept(static_cast<RealType>(0.0),
-                                                            m_densityUpperBound);
-
         int tries= 0;
         for (tries= 0; tries < m_maxRejectTries; ++tries)
         {
             PositionVector point= sampleUniformPoint(gen);
             RealType rho= evaluateDensity(point);
-            RealType y= distAccept(gen);
+            RealType y= m_distAccept(gen);
             if (y <= rho)
             {
                 return point;
@@ -116,7 +125,7 @@ template <typename RealType= double> class GeneralPositionGenerator
         {
             throw std::runtime_error("density_function returned a non-finite value");
         }
-        if (value < static_cast<RealType>(0.0))
+        if (value < RealType(0.0))
         {
             throw std::runtime_error("density_function returned a negative value; expected a "
                                      "non-negative density");
@@ -126,14 +135,12 @@ template <typename RealType= double> class GeneralPositionGenerator
 
     template <typename GeneratorType> PositionVector sampleUniformPoint(GeneratorType &gen) const
     {
-        PositionVector point(static_cast<std::size_t>(m_dimension), static_cast<RealType>(0.0));
+        PositionVector point(static_cast<std::size_t>(m_dimension), RealType(0.0));
         int d= 0;
         for (d= 0; d < m_dimension; ++d)
         {
-            std::uniform_real_distribution<RealType> distAxis(
-                m_lowerBounds[static_cast<std::size_t>(d)],
-                m_upperBounds[static_cast<std::size_t>(d)]);
-            point[static_cast<std::size_t>(d)]= distAxis(gen);
+            std::size_t idx= static_cast<std::size_t>(d);
+            point[idx]= m_lowerBounds[idx] + m_rangeWidths[idx] * m_distUnit(gen);
         }
         return point;
     }
@@ -141,7 +148,7 @@ template <typename RealType= double> class GeneralPositionGenerator
     RealType estimateDensityUpperBound(int probe_points) const
     {
         std::mt19937 probeGen(1337u);
-        RealType max_value= static_cast<RealType>(0.0);
+        RealType max_value= RealType(0.0);
 
         int i= 0;
         for (i= 0; i < probe_points; ++i)
@@ -155,15 +162,18 @@ template <typename RealType= double> class GeneralPositionGenerator
         }
 
         // Add safety margin in case peak lies between probes.
-        return max_value * static_cast<RealType>(1.05);
+        return max_value * RealType(1.05);
     }
 
     int m_dimension;
     PositionVector m_lowerBounds;
     PositionVector m_upperBounds;
+    PositionVector m_rangeWidths;
     DensityFunction m_densityFunction;
     int m_maxRejectTries;
     RealType m_densityUpperBound;
+    mutable std::uniform_real_distribution<RealType> m_distAccept;
+    mutable std::uniform_real_distribution<RealType> m_distUnit;
 };
 
 #endif // _GENERAL_POSITION_GENERATOR_H_

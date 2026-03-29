@@ -1,214 +1,133 @@
-"""General particle generators for velocity and position sampling.
-
-This module provides two rejection-sampling based generators:
-- GeneralVelocityGenerator: sample 3D velocity from an arbitrary energy PDF f(E)
-- GeneralPositionGenerator: sample 1D/2D/3D position from an arbitrary density rho(x)
-
-Example:
-    import random
-
-    def energy_pdf(e):
-        return e * (2.718281828459045 ** (-e))
-
-    vg = GeneralVelocityGenerator(
-        energy_pdf=energy_pdf,
-        energy_min=0.0,
-        energy_max=20.0,
-        particle_mass=1.0,
-    )
-
-    rng = random.Random(42)
-    v = vg.sample(rng)
-    print("Velocity:", v)
-
-    def rho_2d(pos):
-        x, y = pos
-        return 1.0 + 0.25 * x * x + 0.1 * y
-
-    pg = GeneralPositionGenerator(
-        dimension=2,
-        lower_bounds=[-1.0, -1.0],
-        upper_bounds=[1.0, 1.0],
-        density_function=rho_2d,
-    )
-
-    p = pg.sample(rng)
-    print("Position:", p)
-"""
-
-import math
-import random
-from typing import Callable, List, Sequence
+import numpy as np
+from typing import Callable, List
 
 
 class GeneralVelocityGenerator:
-    """Generate isotropic 3D velocities from an arbitrary energy distribution.
-
-    The sampled velocity satisfies E = m * |V|^2 / 2.
-
-    Args:
-        energy_pdf: Callable f(E) >= 0 on [energy_min, energy_max].
-        energy_min: Lower energy bound (inclusive).
-        energy_max: Upper energy bound (inclusive).
-        particle_mass: Particle mass (must be positive).
-        probe_points: Number of probe points to estimate PDF upper bound.
-        max_reject_tries: Max iterations for rejection sampling.
-    """
-
-    def __init__(
-        self,
-        energy_pdf: Callable[[float], float],
-        energy_min: float,
-        energy_max: float,
-        particle_mass: float,
-        probe_points: int = 1024,
-        max_reject_tries: int = 100000,
-    ) -> None:
-        if not callable(energy_pdf):
-            raise ValueError("energy_pdf must be callable")
-        if not (energy_min < energy_max):
-            raise ValueError("energy_min must be strictly less than energy_max")
-        if particle_mass <= 0.0:
-            raise ValueError("particle_mass must be positive")
-        if probe_points <= 1:
-            raise ValueError("probe_points must be greater than 1")
-        if max_reject_tries <= 0:
-            raise ValueError("max_reject_tries must be positive")
-
+    """Samples velocities from a user-defined energy distribution f(E)."""
+    
+    def __init__(self, energy_pdf: Callable, energy_min: float, energy_max: float, 
+                 particle_mass: float, probe_points: int = 1024, max_reject_tries: int = 100000):
         self.energy_pdf = energy_pdf
-        self.energy_min = float(energy_min)
-        self.energy_max = float(energy_max)
-        self.particle_mass = float(particle_mass)
-        self.max_reject_tries = int(max_reject_tries)
-        self._pdf_upper_bound = self._estimate_pdf_upper_bound(probe_points)
-
-        if self._pdf_upper_bound <= 0.0:
-            raise ValueError("energy_pdf must be positive somewhere on [energy_min, energy_max]")
-
-    def _eval_pdf(self, energy: float) -> float:
-        value = float(self.energy_pdf(energy))
-        if not math.isfinite(value):
-            raise ValueError("energy_pdf returned non-finite value")
-        if value < 0.0:
-            raise ValueError("energy_pdf returned a negative value")
-        return value
-
+        self.energy_min = energy_min
+        self.energy_max = energy_max
+        self.particle_mass = particle_mass
+        self.max_reject_tries = max_reject_tries
+        
+        # Estimate upper bound of the PDF
+        self.pdf_upper_bound = self._estimate_pdf_upper_bound(probe_points)
+    
     def _estimate_pdf_upper_bound(self, probe_points: int) -> float:
-        max_value = 0.0
-        width = self.energy_max - self.energy_min
-        for i in range(probe_points):
-            ratio = i / float(probe_points - 1)
-            energy = self.energy_min + ratio * width
-            value = self._eval_pdf(energy)
-            if value > max_value:
-                max_value = value
-        return 1.05 * max_value
-
-    def _sample_energy(self, rng: random.Random) -> float:
+        """Estimate the maximum value of the energy PDF in the given range."""
+        energies = np.linspace(self.energy_min, self.energy_max, probe_points)
+        pdf_values = np.array([self.energy_pdf(E) for E in energies])
+        return np.max(pdf_values)
+    
+    def sample_energy(self, rng: np.random.Generator) -> float:
+        """Sample energy using rejection sampling."""
         for _ in range(self.max_reject_tries):
-            energy = rng.uniform(self.energy_min, self.energy_max)
-            y = rng.uniform(0.0, self._pdf_upper_bound)
-            if y <= self._eval_pdf(energy):
-                return energy
-        raise RuntimeError("failed to sample energy: rejection sampling exceeded max_reject_tries")
-
-    def sample(self, rng: random.Random = None) -> List[float]:
-        """Sample a single 3D velocity [vx, vy, vz]."""
-        if rng is None:
-            rng = random.Random()
-
-        energy = self._sample_energy(rng)
-        speed = math.sqrt(2.0 * energy / self.particle_mass)
-
+            E = rng.uniform(self.energy_min, self.energy_max)
+            u = rng.uniform(0, self.pdf_upper_bound)
+            if u <= self.energy_pdf(E):
+                return E
+        raise RuntimeError("Failed to sample energy after max_reject_tries attempts")
+    
+    def __call__(self, rng: np.random.Generator) -> np.ndarray:
+        """Generate a random 3D velocity vector."""
+        energy = self.sample_energy(rng)
+        speed = np.sqrt(2.0 * energy / self.particle_mass)
+        
+        # Isotropic direction on sphere
         cos_theta = rng.uniform(-1.0, 1.0)
-        sin_theta = math.sqrt(max(0.0, 1.0 - cos_theta * cos_theta))
-        phi = rng.uniform(0.0, 2.0 * math.pi)
-
-        vx = speed * sin_theta * math.cos(phi)
-        vy = speed * sin_theta * math.sin(phi)
+        sin_theta = np.sqrt(max(0.0, 1.0 - cos_theta**2))
+        phi = rng.uniform(0.0, 2.0 * np.pi)
+        
+        vx = speed * sin_theta * np.cos(phi)
+        vy = speed * sin_theta * np.sin(phi)
         vz = speed * cos_theta
-        return [vx, vy, vz]
+        
+        return np.array([vx, vy, vz])
 
 
 class GeneralPositionGenerator:
-    """Generate positions in 1D/2D/3D from an arbitrary spatial density.
-
-    Args:
-        dimension: Number of dimensions (1, 2, or 3).
-        lower_bounds: Lower bounds for each axis.
-        upper_bounds: Upper bounds for each axis.
-        density_function: Callable rho(position) >= 0.
-        probe_points: Number of random probe points for estimating max density.
-        max_reject_tries: Max iterations for rejection sampling.
-    """
-
-    def __init__(
-        self,
-        dimension: int,
-        lower_bounds: Sequence[float],
-        upper_bounds: Sequence[float],
-        density_function: Callable[[Sequence[float]], float],
-        probe_points: int = 4096,
-        max_reject_tries: int = 200000,
-    ) -> None:
-        if dimension not in (1, 2, 3):
-            raise ValueError("dimension must be 1, 2, or 3")
-        if not callable(density_function):
-            raise ValueError("density_function must be callable")
-        if len(lower_bounds) != dimension or len(upper_bounds) != dimension:
-            raise ValueError("bound vector lengths must match dimension")
-        if probe_points <= 0:
-            raise ValueError("probe_points must be positive")
-        if max_reject_tries <= 0:
-            raise ValueError("max_reject_tries must be positive")
-
-        self.dimension = int(dimension)
-        self.lower_bounds = [float(v) for v in lower_bounds]
-        self.upper_bounds = [float(v) for v in upper_bounds]
+    """Samples positions in 1D/2D/3D from a user density function using rejection sampling."""
+    
+    def __init__(self, dimension: int, lower_bounds: List[float], upper_bounds: List[float],
+                 density_function: Callable, probe_points: int = 4096, max_reject_tries: int = 200000):
+        self.dimension = dimension
+        self.lower_bounds = np.array(lower_bounds)
+        self.upper_bounds = np.array(upper_bounds)
         self.density_function = density_function
-        self.max_reject_tries = int(max_reject_tries)
-
-        for i in range(self.dimension):
-            if not (self.lower_bounds[i] < self.upper_bounds[i]):
-                raise ValueError("each lower bound must be strictly less than upper bound")
-
-        self._density_upper_bound = self._estimate_density_upper_bound(probe_points)
-        if self._density_upper_bound <= 0.0:
-            raise ValueError("density_function must be positive somewhere in the domain")
-
-    def _eval_density(self, position: Sequence[float]) -> float:
-        value = float(self.density_function(position))
-        if not math.isfinite(value):
-            raise ValueError("density_function returned non-finite value")
-        if value < 0.0:
-            raise ValueError("density_function returned negative value")
-        return value
-
-    def _sample_uniform_point(self, rng: random.Random) -> List[float]:
-        return [
-            rng.uniform(self.lower_bounds[i], self.upper_bounds[i])
-            for i in range(self.dimension)
-        ]
-
+        self.max_reject_tries = max_reject_tries
+        
+        # Estimate upper bound of the density
+        self.density_upper_bound = self._estimate_density_upper_bound(probe_points)
+    
     def _estimate_density_upper_bound(self, probe_points: int) -> float:
-        probe_rng = random.Random(1337)
-        max_value = 0.0
+        """Estimate the maximum value of the density function in the domain."""
+        max_density = 0.0
         for _ in range(probe_points):
-            point = self._sample_uniform_point(probe_rng)
-            value = self._eval_density(point)
-            if value > max_value:
-                max_value = value
-        return 1.05 * max_value
-
-    def sample(self, rng: random.Random = None) -> List[float]:
-        """Sample a single position vector with length = dimension."""
-        if rng is None:
-            rng = random.Random()
-
+            x = self.lower_bounds + np.random.rand(self.dimension) * (self.upper_bounds - self.lower_bounds)
+            rho = self.density_function(x.tolist())
+            max_density = max(max_density, rho)
+        return max_density
+    
+    def __call__(self, rng: np.random.Generator) -> np.ndarray:
+        """Generate a random position vector using rejection sampling."""
         for _ in range(self.max_reject_tries):
-            point = self._sample_uniform_point(rng)
-            y = rng.uniform(0.0, self._density_upper_bound)
-            if y <= self._eval_density(point):
-                return point
+            # Sample uniformly in the domain
+            x = self.lower_bounds + rng.uniform(0, 1, self.dimension) * (self.upper_bounds - self.lower_bounds)
+            u = rng.uniform(0, self.density_upper_bound)
+            
+            if u <= self.density_function(x.tolist()):
+                # Pad to 3D if necessary
+                if self.dimension < 3:
+                    x = np.pad(x, (0, 3 - self.dimension), mode='constant', constant_values=0)
+                return x
+        
+        raise RuntimeError("Failed to sample position after max_reject_tries attempts")
 
-        raise RuntimeError("failed to sample position: rejection sampling exceeded max_reject_tries")
+
+def main():
+    """Generate samples from General Velocity and General Position distributions."""
+    n_particle = 1000000
+    rng = np.random.default_rng()
+    
+    print("=== Example 1: GeneralVelocityGenerator (f(E)=exp(-E)) ===")
+    energy_pdf = lambda E: np.exp(-E)
+    vel_gen = GeneralVelocityGenerator(energy_pdf, 0.0, 20.0, 1.0)
+    
+    samples_velocity = []
+    for i in range(n_particle):
+        v = vel_gen(rng)
+        samples_velocity.append(v)
+        if (i + 1) % 100000 == 0:
+            print(f"  generated {i + 1} samples")
+    
+    # Write to file
+    with open("samples_general_velocity.txt", "w") as f:
+        for v in samples_velocity:
+            f.write(f"{v[0]} {v[1]} {v[2]}\n")
+    print(f"Wrote {n_particle} samples to samples_general_velocity.txt\n")
+    
+    print("=== Example 2: GeneralPositionGenerator (rho=exp(-(x^2+y^2+z^2))) ===")
+    rho = lambda x: (1+np.sin(x[0])*np.sin(x[1])*np.sin(x[2])) if len(x) >= 3 else (1+np.sin(x[0])*np.sin(x[1]))
+    
+    # 3D domain
+    pos_gen = GeneralPositionGenerator(2, [-2.0, -2.0], [2.0, 2.0], rho)
+    
+    samples_position = []
+    for i in range(n_particle):
+        x = pos_gen(rng)
+        samples_position.append(x)
+        if (i + 1) % 100000 == 0:
+            print(f"  generated {i + 1} samples")
+    
+    # Write to file
+    with open("samples_general_position.txt", "w") as f:
+        for x in samples_position:
+            f.write(f"{x[0]} {x[1]} {x[2]}\n")
+    print(f"Wrote {n_particle} samples to samples_general_position.txt")
+
+
+if __name__ == "__main__":
+    main()

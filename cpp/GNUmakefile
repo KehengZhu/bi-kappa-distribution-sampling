@@ -5,7 +5,7 @@ CHOMBO_HOME := /home/zkeheng/Chombo-3.2/lib
 include $(CHOMBO_HOME)/mk/Make.defs
 
 ## this is the name of the file with 'main()'
-ebase := bi-kappa-main
+ebase := main
 
 ## Chombo libraries needed by this program
 LibNames := AMRElliptic AMRTools BoxTools

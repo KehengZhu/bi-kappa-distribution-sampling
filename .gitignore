@@ -25,6 +25,7 @@ wheels/
 *.jpg
 *.jpeg
 *.pdf
+*.txt
 
 # C/C++ build intermediates
 *.o
@@ -62,8 +63,7 @@ cpp/p/
 
 # Common no-extension executable names (top-level and project subfolders)
 /a.out
-/bi-kappa-main3d.Linux.mpicxx.gfortran.OPT.MPI.ex
-cpp/bi-kappa-main3d.Linux.mpicxx.gfortran.OPT.MPI.ex
+*.ex
 
 # vscode settings
 .vscode
