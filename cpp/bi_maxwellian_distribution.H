@@ -2,7 +2,9 @@
 #define _BI_MAXWELLIAN_DISTRIBUTION_H_
 
 #include <array>
+#include <algorithm>
 #include <cmath>
+#include <limits>
 #include <random>
 #include <stdexcept>
 
@@ -24,7 +26,7 @@ template <typename RealType= double> class bi_maxwellian_distribution
         using distribution_type= bi_maxwellian_distribution<RealType>;
 
         param_type(RealType theta_perp= RealType(1.0), RealType theta_par= RealType(1.0),
-                   point_type ub= point_type({RealType(0.0), RealType(0.0), RealType(0.0)}))
+                   point_type ub= point_type({RealType(0.0), RealType(0.0), RealType(1.0)}))
             : m_theta_perp(theta_perp), m_theta_par(theta_par), m_ub(ub)
         {
             if (m_theta_perp <= RealType(0.0) || m_theta_par <= RealType(0.0))
@@ -55,7 +57,7 @@ template <typename RealType= double> class bi_maxwellian_distribution
 
     explicit bi_maxwellian_distribution(RealType theta_perp, RealType theta_par= RealType(1.0),
                                         point_type ub= point_type({RealType(0.0), RealType(0.0),
-                                                                   RealType(0.0)}))
+                                                                   RealType(1.0)}))
         : m_params(theta_perp, theta_par, ub), m_standardNormal(RealType(0.0), RealType(1.0))
     {
     }
@@ -75,8 +77,7 @@ template <typename RealType= double> class bi_maxwellian_distribution
     template <typename GeneratorType>
     result_type operator()(GeneratorType &gen, const param_type &params)
     {
-        const RealType kOne= RealType(1.0);
-        const RealType sigmaScale= kOne / std::sqrt(RealType(2.0));
+        const RealType sigmaScale= RealType(1.0) / std::sqrt(RealType(2.0));
 
         RealType vx= params.theta_perp() * sigmaScale * m_standardNormal(gen);
         RealType vy= params.theta_perp() * sigmaScale * m_standardNormal(gen);
@@ -89,12 +90,12 @@ template <typename RealType= double> class bi_maxwellian_distribution
 
         // Rotate only when ub is explicitly set (non-zero).
         point_type ub= params.ub();
-        RealType ubNorm2= ub[0] * ub[0] + ub[1] * ub[1] + ub[2] * ub[2];
-        if (ubNorm2 > RealType(0.0))
+        if (approximatelyEqual(ub[0], RealType(0.0)) && approximatelyEqual(ub[1], RealType(0.0)) &&
+            approximatelyEqual(ub[2], RealType(1.0)))
         {
-            return rotate_from_fieldAligned_frame(point, ub);
+            return point;
         }
-        return point;
+        return rotate_from_fieldAligned_frame(point, ub);
     }
 
     param_type param() const { return m_params; }
@@ -111,7 +112,7 @@ template <typename RealType= double> class bi_maxwellian_distribution
         const RealType kOne= RealType(1.0);
 
         RealType ubNorm2= ub[0] * ub[0] + ub[1] * ub[1] + ub[2] * ub[2];
-        if (ubNorm2 <= kZero)
+        if (approximatelyEqual(ubNorm2, kZero))
         {
             throw std::invalid_argument("ub must be a non-zero vector");
         }
@@ -164,6 +165,12 @@ template <typename RealType= double> class bi_maxwellian_distribution
     bool operator!=(const bi_maxwellian_distribution &other) const { return !(*this == other); }
 
   private:
+    static bool approximatelyEqual(RealType a, RealType b)
+    {
+        RealType scale= std::max({RealType(1.0), std::abs(a), std::abs(b)});
+        return std::abs(a - b) <= std::numeric_limits<RealType>::epsilon() * scale;
+    }
+
     param_type m_params;
     std::normal_distribution<RealType> m_standardNormal;
 };
