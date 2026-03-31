@@ -15,20 +15,19 @@
  * The sampled velocity satisfies E = m * |V|^2 / 2 and direction is isotropic in 3D.
  */
 template<typename RealType = double>
-class GeneralVelocityGenerator
+class general_velocity_generator
 {
 public:
-    typedef std::array<RealType, 3> Point3D;
-    typedef Point3D ResultType;
-    typedef ResultType result_type;
-    typedef std::function<RealType(RealType)> EnergyPdfFunction;
+        using result_type = std::array<RealType, 3>;
+        using point_type = result_type;
+        using energy_pdf_function = std::function<RealType(RealType)>;
 
-    GeneralVelocityGenerator(EnergyPdfFunction energy_pdf,
-                             RealType energy_min,
-                             RealType energy_max,
-                             RealType particle_mass,
-                             int probe_points = 1024,
-                             int max_reject_tries = 100000)
+        general_velocity_generator(energy_pdf_function energy_pdf,
+                                                             RealType energy_min,
+                                                             RealType energy_max,
+                                                             RealType particle_mass,
+                                                             int probe_points = 1024,
+                                                             int max_reject_tries = 100000)
         : m_energyPdf(energy_pdf),
           m_energyMin(energy_min),
           m_energyMax(energy_max),
@@ -74,7 +73,7 @@ public:
     }
 
     template<typename GeneratorType>
-    Point3D operator()(GeneratorType& gen) const
+    point_type operator()(GeneratorType& gen) const
     {
         const RealType kOne= RealType(1.0);
         const RealType kTwo= RealType(2.0);
@@ -90,7 +89,7 @@ public:
         RealType vy= speed * sinTheta * std::sin(phi);
         RealType vz= speed * cosTheta;
 
-        Point3D point;
+        point_type point;
         point[0]= vx;
         point[1]= vy;
         point[2]= vz;
@@ -150,7 +149,7 @@ private:
 
     static RealType piValue() { return RealType(3.14159265358979323846264338327950288L); }
 
-    EnergyPdfFunction m_energyPdf;
+    energy_pdf_function m_energyPdf;
     RealType m_energyMin;
     RealType m_energyMax;
     RealType m_particleMass;

@@ -13,17 +13,17 @@
  *
  * The generator uses rejection sampling in an axis-aligned box domain.
  */
-template <typename RealType= double> class GeneralPositionGenerator
+template <typename RealType= double> class general_position_generator
 {
   public:
-    typedef std::vector<RealType> PositionVector;
-    typedef PositionVector ResultType;
-    typedef ResultType result_type;
-    typedef std::function<RealType(const PositionVector &)> DensityFunction;
+        using result_type = std::vector<RealType>;
+        using point_type = result_type;
+        using density_function = std::function<RealType(const point_type &)>;
 
-    GeneralPositionGenerator(int dimension, const PositionVector &lower_bounds,
-                             const PositionVector &upper_bounds, DensityFunction density_function,
-                             int probe_points= 4096, int max_reject_tries= 200000)
+        general_position_generator(int dimension, const point_type &lower_bounds,
+                                                             const point_type &upper_bounds,
+                                                             density_function density_function,
+                                                             int probe_points= 4096, int max_reject_tries= 200000)
         : m_dimension(dimension), m_lowerBounds(lower_bounds), m_upperBounds(upper_bounds),
                     m_rangeWidths(static_cast<std::size_t>(dimension), RealType(0.0)),
                     m_densityFunction(density_function), m_maxRejectTries(max_reject_tries),
@@ -86,11 +86,11 @@ template <typename RealType= double> class GeneralPositionGenerator
     {
         return m_dimension;
     }
-    const PositionVector &lowerBounds() const
+    const point_type &lowerBounds() const
     {
         return m_lowerBounds;
     }
-    const PositionVector &upperBounds() const
+    const point_type &upperBounds() const
     {
         return m_upperBounds;
     }
@@ -99,12 +99,12 @@ template <typename RealType= double> class GeneralPositionGenerator
         return m_densityUpperBound;
     }
 
-    template <typename GeneratorType> PositionVector operator()(GeneratorType &gen) const
+    template <typename GeneratorType> point_type operator()(GeneratorType &gen) const
     {
         int tries= 0;
         for (tries= 0; tries < m_maxRejectTries; ++tries)
         {
-            PositionVector point= sampleUniformPoint(gen);
+            point_type point= sampleUniformPoint(gen);
             RealType rho= evaluateDensity(point);
             RealType y= m_distAccept(gen);
             if (y <= rho)
@@ -118,7 +118,7 @@ template <typename RealType= double> class GeneralPositionGenerator
     }
 
   private:
-    RealType evaluateDensity(const PositionVector &point) const
+    RealType evaluateDensity(const point_type &point) const
     {
         RealType value= m_densityFunction(point);
         if (!std::isfinite(value))
@@ -133,9 +133,9 @@ template <typename RealType= double> class GeneralPositionGenerator
         return value;
     }
 
-    template <typename GeneratorType> PositionVector sampleUniformPoint(GeneratorType &gen) const
+    template <typename GeneratorType> point_type sampleUniformPoint(GeneratorType &gen) const
     {
-        PositionVector point(static_cast<std::size_t>(m_dimension), RealType(0.0));
+        point_type point(static_cast<std::size_t>(m_dimension), RealType(0.0));
         int d= 0;
         for (d= 0; d < m_dimension; ++d)
         {
@@ -153,7 +153,7 @@ template <typename RealType= double> class GeneralPositionGenerator
         int i= 0;
         for (i= 0; i < probe_points; ++i)
         {
-            PositionVector point= sampleUniformPoint(probeGen);
+            point_type point= sampleUniformPoint(probeGen);
             RealType value= evaluateDensity(point);
             if (value > max_value)
             {
@@ -166,10 +166,10 @@ template <typename RealType= double> class GeneralPositionGenerator
     }
 
     int m_dimension;
-    PositionVector m_lowerBounds;
-    PositionVector m_upperBounds;
-    PositionVector m_rangeWidths;
-    DensityFunction m_densityFunction;
+    point_type m_lowerBounds;
+    point_type m_upperBounds;
+    point_type m_rangeWidths;
+    density_function m_densityFunction;
     int m_maxRejectTries;
     RealType m_densityUpperBound;
     mutable std::uniform_real_distribution<RealType> m_distAccept;

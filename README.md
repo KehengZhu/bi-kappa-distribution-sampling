@@ -23,25 +23,25 @@ Monte Carlo particle sampling project with:
 
 ## C++ Generators
 
-### BiKappaDistribution
+### bi_kappa_distribution
 
 - Samples 3D velocities from a bi-kappa distribution
-- Parameters include `kappa`, `theta_perp`, `theta_para`, and field direction `ub`
+- Parameters include `kappa`, `theta_perp`, `theta_par`, and field direction `ub`
 - Applies a local-field-frame to global-frame transform via
 	`rotate_from_fieldAligned_frame(...)`
 
-### BiMaxwellianDistribution
+### bi_maxwellian_distribution
 
 - Samples 3D velocities from an anisotropic Gaussian (bi-Maxwellian)
-- Parameters include `theta_perp`, `theta_para`, and field direction `ub`
+- Parameters include `theta_perp`, `theta_par`, and field direction `ub`
 - Also applies the same frame transform to map local components into global coordinates
 
-### GeneralVelocityGenerator
+### general_velocity_generator
 
 - Samples energy using rejection sampling from user-defined `f(E)`
 - Converts sampled energy to speed and assigns isotropic direction in 3D
 
-### GeneralPositionGenerator
+### general_position_generator
 
 - Samples positions from user-defined density using rejection sampling in a box domain
 - Supports 1D/2D/3D, with output padded to 3 components when needed
@@ -49,50 +49,52 @@ Monte Carlo particle sampling project with:
 ## C++ Usage Examples
 
 ```cpp
+#include <array>
+#include <cmath>
 #include <random>
+#include <vector>
 #include "bi_kappa_distribution.H"
 #include "bi_maxwellian_distribution.H"
 #include "general_velocity_generator.H"
 #include "general_position_generator.H"
 
 int main() {
-	typedef double Real;
-    typedef std::array<Real, 3> Point3D;
-	std::mt19937 gen(12345u);
+    typedef double Real;
+    std::mt19937 gen(12345u);
 
-	// 1) BiKappaDistribution
-	Point3D ub1 = {0.0, 0.0, 1.0};
-	BiKappaDistribution<Real> bikappa(2.0, 1.0, 2.0, ub1);
-	Point3D vk = bikappa(gen); // generate one 3D vector sample
+    // 1) bi_kappa_distribution
+    bi_kappa_distribution<Real>::point_type ub1 = {0.0, 0.0, 1.0};
+    bi_kappa_distribution<Real> bikappa(2.0, 1.0, 2.0, ub1);
+    bi_kappa_distribution<Real>::point_type vk = bikappa(gen);
 
-	// 2) BiMaxwellianDistribution
-	Point3D ub2 = {1.0, 0.0, 0.0};
-	BiMaxwellianDistribution<Real> bimaxwell(1.0, 2.0, ub2);
-	Point3D vm = bimaxwell(gen);
+    // 2) bi_maxwellian_distribution
+    bi_maxwellian_distribution<Real>::point_type ub2 = {1.0, 0.0, 0.0};
+    bi_maxwellian_distribution<Real> bimaxwell(1.0, 2.0, ub2);
+    bi_maxwellian_distribution<Real>::point_type vm = bimaxwell(gen);
 
-	// 3) GeneralVelocityGenerator: f(E) = exp(-E), E in [0, 20], mass = 1
-	auto energyPdf = [](Real E) -> Real { return std::exp(-E); };
-	GeneralVelocityGenerator<Real> velGen(energyPdf, 0.0, 20.0, 1.0);
-	Point3D vg = velGen(gen);
+    // 3) general_velocity_generator: f(E) = exp(-E), E in [0, 20], mass = 1
+    auto energyPdf = [](Real E) -> Real { return std::exp(-E); };
+    general_velocity_generator<Real> velGen(energyPdf, 0.0, 20.0, 1.0);
+    general_velocity_generator<Real>::point_type vg = velGen(gen);
 
-	// 4) GeneralPositionGenerator: rho(x, y) = 1 + sin(x) sin(y), domain [-pi, pi]^2
-	typedef GeneralPositionGenerator<Real>::PositionVector PositionVector;
-	// PositionVector is defined as std::vector<Real>, satisfying variable dimension needs.
-	auto rho = [](const PositionVector &x) -> Real {
-		return 1.0 + std::sin(x[0]) * std::sin(x[1]);
-	};
-	const Real pi = 3.14159265358979323846;
-	GeneralPositionGenerator<Real> posGen(2, {-pi, -pi}, {pi, pi}, rho);
-	PositionVector x = posGen(gen); // generate one 2D vector sample
+    // 4) general_position_generator: rho(x, y) = 1 + sin(x) sin(y), domain [-pi, pi]^2
+    typedef general_position_generator<Real>::point_type position_point_type;
+    auto rho = [](const position_point_type &x) -> Real {
+        return 1.0 + std::sin(x[0]) * std::sin(x[1]);
+    };
+    const Real pi = 3.14159265358979323846;
+    general_position_generator<Real> posGen(2, {-pi, -pi}, {pi, pi}, rho);
+    position_point_type x = posGen(gen);
 
-	return 0;
+    return 0;
 }
 ```
 
 ### Notes for the Examples
 
 - `ub` can be non-normalized; it is normalized internally by the transform.
-- `GeneralPositionGenerator` returns a 3-component vector; in 2D, `z` is padded with `0`.
+- If `ub` is left at the default zero vector, transform is skipped and local-frame components are returned directly.
+- `general_position_generator` returns a `std::vector<Real>` of length equal to `dimension`.
 - Use your project `Real` type if needed (for example from Chombo), or replace `double` above.
 
 ## C++ Transform Tests

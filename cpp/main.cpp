@@ -38,17 +38,17 @@ int test_transform()
         const Real tol = Real(1e-10);
         bool all_ok = true;
 
-        BiKappaDistribution<Real> kappaTest(Real(2.0), Real(1.0), Real(2.0));
-        BiMaxwellianDistribution<Real> maxwellTest(Real(1.0), Real(2.0));
+        bi_kappa_distribution<Real> kappaTest(Real(2.0), Real(1.0), Real(2.0));
+        bi_maxwellian_distribution<Real> maxwellTest(Real(1.0), Real(2.0));
 
         // Test 1: For any ub, parallel projection equals local[2],
         // and perpendicular magnitude equals sqrt(local[0]^2 + local[1]^2).
         {
-            BiKappaDistribution<Real>::Point3D local = {Real(0.7), Real(-1.2), Real(2.5)};
-            BiKappaDistribution<Real>::Point3D ub = {Real(1.0), Real(2.0), Real(2.0)};
-            BiKappaDistribution<Real>::Point3D out =
+            bi_kappa_distribution<Real>::point_type local = {Real(0.7), Real(-1.2), Real(2.5)};
+            bi_kappa_distribution<Real>::point_type ub = {Real(1.0), Real(2.0), Real(2.0)};
+            bi_kappa_distribution<Real>::point_type out =
                 kappaTest.rotate_from_fieldAligned_frame(local, ub);
-            BiKappaDistribution<Real>::Point3D ubHat = normalize3(ub);
+            bi_kappa_distribution<Real>::point_type ubHat = normalize3(ub);
 
             Real parallel = dot3(out, ubHat);
             Real outNorm = norm3(out);
@@ -74,9 +74,9 @@ int test_transform()
 
         // Test 2: parallel component maps along ub direction (non-normalized ub)
         {
-            BiMaxwellianDistribution<Real>::Point3D local = {Real(0.0), Real(0.0), Real(3.0)};
-            BiMaxwellianDistribution<Real>::Point3D ub = {Real(0.0), Real(5.0), Real(0.0)};
-            BiMaxwellianDistribution<Real>::Point3D out =
+            bi_maxwellian_distribution<Real>::point_type local = {Real(0.0), Real(0.0), Real(3.0)};
+            bi_maxwellian_distribution<Real>::point_type ub = {Real(0.0), Real(5.0), Real(0.0)};
+            bi_maxwellian_distribution<Real>::point_type out =
                 maxwellTest.rotate_from_fieldAligned_frame(local, ub);
 
             bool ok = approx_equal(out[0], Real(0.0), tol) &&
@@ -89,12 +89,12 @@ int test_transform()
 
         // Test 3: Dot products are preserved under a rotation.
         {
-            BiKappaDistribution<Real>::Point3D a = {Real(1.2), Real(-0.4), Real(2.7)};
-            BiKappaDistribution<Real>::Point3D b = {Real(-0.8), Real(1.5), Real(0.3)};
-            BiKappaDistribution<Real>::Point3D ub = {Real(2.0), Real(-1.0), Real(3.0)};
-            BiKappaDistribution<Real>::Point3D ra =
+            bi_kappa_distribution<Real>::point_type a = {Real(1.2), Real(-0.4), Real(2.7)};
+            bi_kappa_distribution<Real>::point_type b = {Real(-0.8), Real(1.5), Real(0.3)};
+            bi_kappa_distribution<Real>::point_type ub = {Real(2.0), Real(-1.0), Real(3.0)};
+            bi_kappa_distribution<Real>::point_type ra =
                 kappaTest.rotate_from_fieldAligned_frame(a, ub);
-            BiKappaDistribution<Real>::Point3D rb =
+            bi_kappa_distribution<Real>::point_type rb =
                 kappaTest.rotate_from_fieldAligned_frame(b, ub);
 
             bool ok = approx_equal(dot3(a, b), dot3(ra, rb), Real(1e-9));
@@ -105,18 +105,18 @@ int test_transform()
 
         // Test 4: Linearity T(a+b)=T(a)+T(b) for the same ub.
         {
-            BiMaxwellianDistribution<Real>::Point3D a = {Real(0.4), Real(1.1), Real(-0.2)};
-            BiMaxwellianDistribution<Real>::Point3D b = {Real(-1.3), Real(0.7), Real(2.2)};
-            BiMaxwellianDistribution<Real>::Point3D ab = add3(a, b);
-            BiMaxwellianDistribution<Real>::Point3D ub = {Real(1.0), Real(3.0), Real(2.0)};
+            bi_maxwellian_distribution<Real>::point_type a = {Real(0.4), Real(1.1), Real(-0.2)};
+            bi_maxwellian_distribution<Real>::point_type b = {Real(-1.3), Real(0.7), Real(2.2)};
+            bi_maxwellian_distribution<Real>::point_type ab = add3(a, b);
+            bi_maxwellian_distribution<Real>::point_type ub = {Real(1.0), Real(3.0), Real(2.0)};
 
-            BiMaxwellianDistribution<Real>::Point3D ta =
+            bi_maxwellian_distribution<Real>::point_type ta =
                 maxwellTest.rotate_from_fieldAligned_frame(a, ub);
-            BiMaxwellianDistribution<Real>::Point3D tb =
+            bi_maxwellian_distribution<Real>::point_type tb =
                 maxwellTest.rotate_from_fieldAligned_frame(b, ub);
-            BiMaxwellianDistribution<Real>::Point3D tab =
+            bi_maxwellian_distribution<Real>::point_type tab =
                 maxwellTest.rotate_from_fieldAligned_frame(ab, ub);
-            BiMaxwellianDistribution<Real>::Point3D tSum = add3(ta, tb);
+            bi_maxwellian_distribution<Real>::point_type tSum = add3(ta, tb);
 
             bool ok = approx_equal(tab[0], tSum[0], Real(1e-9)) &&
                       approx_equal(tab[1], tSum[1], Real(1e-9)) &&
@@ -139,7 +139,7 @@ int main()
 {
     const Real kappa = 2.0;
     const Real theta_perp = 1.0;
-    const Real theta_para = 2.0;
+    const Real theta_par = 2.0;
     const int n_particle = 100000;
 
     std::random_device rd;
@@ -153,58 +153,58 @@ int main()
     std::cout << std::endl;
 
     std::cout << "=== Example 1: BiKappaDistribution ===" << std::endl;
-    BiKappaDistribution<Real> biKappa(kappa, theta_perp, theta_para);
+    bi_kappa_distribution<Real> biKappa(kappa, theta_perp, theta_par);
     {
         std::ofstream out("samples_bikappa.txt");
         for (int i = 0; i < n_particle; ++i) {
-            const BiKappaDistribution<Real>::Point3D v = biKappa(gen);
+            const bi_kappa_distribution<Real>::point_type v = biKappa(gen);
             out << v[0] << " " << v[1] << " " << v[2] << "\n";
         }
         std::cout << "wrote " << n_particle << " samples to samples_bikappa.txt" << std::endl;
     }
 
     std::cout << "\n=== Example 2: BiMaxwellianDistribution ===" << std::endl;
-    BiMaxwellianDistribution<Real> biMaxwell(theta_perp, theta_para);
+    bi_maxwellian_distribution<Real> biMaxwell(theta_perp, theta_par);
     {
         std::ofstream out("samples_bimaxwellian.txt");
         for (int i = 0; i < n_particle; ++i) {
-            const BiMaxwellianDistribution<Real>::Point3D v = biMaxwell(gen);
+            const bi_maxwellian_distribution<Real>::point_type v = biMaxwell(gen);
             out << v[0] << " " << v[1] << " " << v[2] << "\n";
         }
         std::cout << "wrote " << n_particle << " samples to samples_bimaxwellian.txt"
                << std::endl;
     }
 
-    std::cout << "\n=== Example 3: GeneralVelocityGenerator (f(E)=exp(-E)) ===" << std::endl;
+    std::cout << "\n=== Example 3: general_velocity_generator (f(E)=exp(-E)) ===" << std::endl;
     auto energyPdf = [](Real E) -> Real { return std::exp(-E); };
-    GeneralVelocityGenerator<Real> velocityGen(energyPdf,
-                                               static_cast<Real>(0.0),
-                                               static_cast<Real>(20.0),
-                                               static_cast<Real>(1.0));
+    general_velocity_generator<Real> velocityGen(energyPdf,
+                                                 static_cast<Real>(0.0),
+                                                 static_cast<Real>(20.0),
+                                                 static_cast<Real>(1.0));
     {
         std::ofstream out("samples_general_velocity.txt");
         for (int i = 0; i < n_particle; ++i) {
-            const GeneralVelocityGenerator<Real>::Point3D v = velocityGen(gen);
+            const general_velocity_generator<Real>::point_type v = velocityGen(gen);
             out << v[0] << " " << v[1] << " " << v[2] << "\n";
         }
         std::cout << "wrote " << n_particle << " samples to samples_general_velocity.txt"
                << std::endl;
     }
 
-    std::cout << "\n=== Example 4: GeneralPositionGenerator (rho=1+sin(x)sin(y)) ===" << std::endl;
-    typedef GeneralPositionGenerator<Real>::PositionVector PositionVector;
-    auto rho = [](const PositionVector &x) -> Real {
+    std::cout << "\n=== Example 4: general_position_generator (rho=1+sin(x)sin(y)) ===" << std::endl;
+    typedef general_position_generator<Real>::point_type position_point_type;
+    auto rho = [](const position_point_type &x) -> Real {
         return 1 + std::sin(x[0])*std::sin(x[1]);
     };
     static double pi = 3.14159;
-    GeneralPositionGenerator<Real> positionGen(2,
-                                               {-pi, -pi},
-                                               {pi, pi},
-                                               rho);
+    general_position_generator<Real> positionGen(2,
+                                                 {-pi, -pi},
+                                                 {pi, pi},
+                                                 rho);
     {
         std::ofstream out("samples_general_position.txt");
         for (int i = 0; i < n_particle; ++i) {
-            const PositionVector x = positionGen(gen);
+            const position_point_type x = positionGen(gen);
             out << x[0] << " " << x[1] << " " << x[2] << "\n";
         }
         std::cout << "wrote " << n_particle << " samples to samples_general_position.txt"
