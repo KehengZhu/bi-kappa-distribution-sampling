@@ -32,8 +32,8 @@ template <typename RealType= double> class BiKappaDistribution
         typedef DistributionType distribution_type;
 
         ParamType(RealType kappa= RealType(2.0), RealType theta_perp= RealType(1.0),
-                  RealType theta_para= RealType(1.0),
-                  Point3D ub= Point3D({RealType(0.0), RealType(0.0), RealType(1.0)}))
+              RealType theta_para= RealType(1.0),
+              Point3D ub= Point3D({RealType(0.0), RealType(0.0), RealType(0.0)}))
             : m_kappa(kappa), m_theta_perp(theta_perp), m_theta_para(theta_para), m_ub(ub)
         {
             if (m_kappa <= RealType(0.5))
@@ -76,7 +76,7 @@ template <typename RealType= double> class BiKappaDistribution
 
     explicit BiKappaDistribution(RealType kappa, RealType theta_perp= RealType(1.0),
                                  RealType theta_para= RealType(1.0),
-                                 Point3D ub= Point3D({RealType(0.0), RealType(0.0), RealType(1.0)}))
+                                 Point3D ub= Point3D({RealType(0.0), RealType(0.0), RealType(0.0)}))
         : m_params(kappa, theta_perp, theta_para, ub), m_distX1(RealType(1.5), RealType(1.0)),
           m_distX2(RealType(1.0), RealType(1.0)), m_distCosTheta(RealType(-1.0), RealType(1.0)),
           m_distPhi(RealType(0.0), RealType(2.0) * piValue())
@@ -143,7 +143,12 @@ template <typename RealType= double> class BiKappaDistribution
         point[2]= sqrtKappa * theta_para * uz;
 
         // Step 5: rotate from local field-aligned frame to global frame
-        point = rotate_from_fieldAligned_frame(point, ub);
+        // only when ub is explicitly set (non-zero).
+        RealType ubNorm2= ub[0] * ub[0] + ub[1] * ub[1] + ub[2] * ub[2];
+        if (ubNorm2 > RealType(0.0))
+        {
+            point = rotate_from_fieldAligned_frame(point, ub);
+        }
         
         return point;
     }

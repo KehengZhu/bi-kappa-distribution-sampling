@@ -112,14 +112,8 @@ If a test fails, the executable exits with non-zero status.
 
 ### 1) Prerequisites
 
-- Chombo installed locally
-- C++ toolchain matching your Chombo build
-
-In `cpp/GNUmakefile`, set:
-
-```make
-CHOMBO_HOME := /path/to/Chombo-3.2/lib
-```
+- Compiler that supports C++11.
+- In cpp/GNUmakefile, set `CXX=/path/to/your/compiler`(g++ by default).
 
 ### 2) Build
 
@@ -128,15 +122,15 @@ cd cpp
 make
 ```
 
-This produces an executable similar to:
+This produces an executable:
 
-- `main3d.Linux.mpicxx.gfortran.OPT.MPI.ex`
+- `main.exe`
 
 ### 3) Run
 
 ```bash
 cd cpp
-./main3d.Linux.mpicxx.gfortran.OPT.MPI.ex
+./main.exe
 ```
 
 Outputs include:

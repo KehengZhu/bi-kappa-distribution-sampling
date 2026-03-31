@@ -1,19 +1,14 @@
-## path to the 'Chombo/lib' directory
-CHOMBO_HOME := /home/zkeheng/Chombo-3.2/lib
+CXX = g++
+CXXFLAGS = -Wall -Wextra -std=c++11
+TARGET = main.exe
+SRC = main.cpp
 
-## defines the Chombo variables
-include $(CHOMBO_HOME)/mk/Make.defs
+all: $(TARGET)
 
-## this is the name of the file with 'main()'
-ebase := main
+$(TARGET): $(SRC)
+	$(CXX) $(CXXFLAGS) -o $(TARGET) $(SRC)
 
-## Chombo libraries needed by this program
-LibNames := AMRElliptic AMRTools BoxTools
+clean:
+	rm -f $(TARGET)
 
-## Other libraries needed by this program (using -L and -l options)
-XTRALIBFLAGS :=
-
-## ’all’ is the default target and ’all-test’ is defined in Make.rules
-all: all-test
-
-include $(CHOMBO_HOME)/mk/Make.rules
+.PHONY: all clean

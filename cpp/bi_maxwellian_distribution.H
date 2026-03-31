@@ -25,7 +25,7 @@ template <typename RealType= double> class BiMaxwellianDistribution
         typedef BiMaxwellianDistribution<RealType> DistributionType;
 
         ParamType(RealType theta_perp= RealType(1.0), RealType theta_para= RealType(1.0),
-                  Point3D ub= Point3D({RealType(0.0), RealType(0.0), RealType(1.0)}))
+                  Point3D ub= Point3D({RealType(0.0), RealType(0.0), RealType(0.0)}))
             : m_theta_perp(theta_perp), m_theta_para(theta_para), m_ub(ub)
         {
             if (m_theta_perp <= RealType(0.0) || m_theta_para <= RealType(0.0))
@@ -60,7 +60,7 @@ template <typename RealType= double> class BiMaxwellianDistribution
 
     explicit BiMaxwellianDistribution(RealType theta_perp, RealType theta_para= RealType(1.0),
                                       Point3D ub= Point3D({RealType(0.0), RealType(0.0),
-                                                           RealType(1.0)}))
+                                                           RealType(0.0)}))
         : m_params(theta_perp, theta_para, ub), m_standardNormal(RealType(0.0), RealType(1.0))
     {
     }
@@ -92,8 +92,14 @@ template <typename RealType= double> class BiMaxwellianDistribution
         point[1]= vy;
         point[2]= vz;
 
-        // Rotate from local field-aligned coordinates to global coordinates.
-        return rotate_from_fieldAligned_frame(point, params.ub());
+        // Rotate only when ub is explicitly set (non-zero).
+        Point3D ub= params.ub();
+        RealType ubNorm2= ub[0] * ub[0] + ub[1] * ub[1] + ub[2] * ub[2];
+        if (ubNorm2 > RealType(0.0))
+        {
+            return rotate_from_fieldAligned_frame(point, ub);
+        }
+        return point;
     }
 
     ParamType param() const { return m_params; }

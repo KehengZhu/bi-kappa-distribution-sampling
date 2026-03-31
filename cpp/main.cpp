@@ -3,9 +3,7 @@
 #include <iostream>
 #include <fstream>
 
-// Chombo headers
-#include "REAL.H"
-#include "parstream.H"
+typedef double Real;
 
 // Local headers
 #include "bi_kappa_distribution.H"
@@ -35,7 +33,7 @@ int test_transform()
     };
 
     {
-        pout() << "=== Transform self-test (BiKappa/BiMaxwellian) ===" << std::endl;
+        std::cout << "=== Transform self-test (BiKappa/BiMaxwellian) ===" << std::endl;
 
         const Real tol = Real(1e-10);
         bool all_ok = true;
@@ -60,16 +58,16 @@ int test_transform()
             bool ok = approx_equal(parallel, local[2], Real(1e-9)) &&
                       approx_equal(perpNormSq, localPerpNormSq, Real(1e-8));
             all_ok = all_ok && ok;
-            pout() << "BiKappa component decomposition: " << (ok ? "PASS" : "FAIL")
+            std::cout << "BiKappa component decomposition: " << (ok ? "PASS" : "FAIL")
                    << std::endl;
             if (!ok)
             {
-                pout() << "  local: (" << local[0] << ", " << local[1] << ", " << local[2] << ")\n";
-                pout() << "  ub: (" << ub[0] << ", " << ub[1] << ", " << ub[2] << ")\n";
-                pout() << "  out: (" << out[0] << ", " << out[1] << ", " << out[2] << ")\n";
-                pout() << "  parallel(out, ubHat): " << parallel << " expected " << local[2]
+                std::cout << "  local: (" << local[0] << ", " << local[1] << ", " << local[2] << ")\n";
+                std::cout << "  ub: (" << ub[0] << ", " << ub[1] << ", " << ub[2] << ")\n";
+                std::cout << "  out: (" << out[0] << ", " << out[1] << ", " << out[2] << ")\n";
+                std::cout << "  parallel(out, ubHat): " << parallel << " expected " << local[2]
                        << "\n";
-                pout() << "  perp^2(out): " << perpNormSq << " expected " << localPerpNormSq
+                std::cout << "  perp^2(out): " << perpNormSq << " expected " << localPerpNormSq
                        << "\n";
             }
         }
@@ -85,7 +83,7 @@ int test_transform()
                       approx_equal(out[1], Real(3.0), tol) &&
                       approx_equal(out[2], Real(0.0), tol);
             all_ok = all_ok && ok;
-            pout() << "BiMaxwellian parallel-axis mapping: " << (ok ? "PASS" : "FAIL")
+            std::cout << "BiMaxwellian parallel-axis mapping: " << (ok ? "PASS" : "FAIL")
                    << std::endl;
         }
 
@@ -101,7 +99,7 @@ int test_transform()
 
             bool ok = approx_equal(dot3(a, b), dot3(ra, rb), Real(1e-9));
             all_ok = all_ok && ok;
-            pout() << "BiKappa dot-product preservation: " << (ok ? "PASS" : "FAIL")
+            std::cout << "BiKappa dot-product preservation: " << (ok ? "PASS" : "FAIL")
                    << std::endl;
         }
 
@@ -124,15 +122,15 @@ int test_transform()
                       approx_equal(tab[1], tSum[1], Real(1e-9)) &&
                       approx_equal(tab[2], tSum[2], Real(1e-9));
             all_ok = all_ok && ok;
-            pout() << "BiMaxwellian linearity: " << (ok ? "PASS" : "FAIL") << std::endl;
+            std::cout << "BiMaxwellian linearity: " << (ok ? "PASS" : "FAIL") << std::endl;
         }
 
         if (!all_ok)
         {
-            pout() << "Transform self-test failed. Exiting." << std::endl;
+            std::cout << "Transform self-test failed. Exiting." << std::endl;
             return 1;
         }
-        pout() << "Transform self-test: ALL PASS" << std::endl;
+        std::cout << "Transform self-test: ALL PASS" << std::endl;
     }
     return 0;
 }
@@ -142,19 +140,19 @@ int main()
     const Real kappa = 2.0;
     const Real theta_perp = 1.0;
     const Real theta_para = 2.0;
-    const int n_particle = 1000000;
+    const int n_particle = 100000;
 
     std::random_device rd;
     std::mt19937 gen(rd());
 
-    pout() << "=== Test: Rotation transform ===" << std::endl;
+    std::cout << "=== Test: Rotation transform ===" << std::endl;
     if (test_transform() != 0)
     {
         return 1;
     }
-    pout() << std::endl;
+    std::cout << std::endl;
 
-    pout() << "=== Example 1: BiKappaDistribution ===" << std::endl;
+    std::cout << "=== Example 1: BiKappaDistribution ===" << std::endl;
     BiKappaDistribution<Real> biKappa(kappa, theta_perp, theta_para);
     {
         std::ofstream out("samples_bikappa.txt");
@@ -162,10 +160,10 @@ int main()
             const BiKappaDistribution<Real>::Point3D v = biKappa(gen);
             out << v[0] << " " << v[1] << " " << v[2] << "\n";
         }
-        pout() << "wrote " << n_particle << " samples to samples_bikappa.txt" << std::endl;
+        std::cout << "wrote " << n_particle << " samples to samples_bikappa.txt" << std::endl;
     }
 
-    pout() << "\n=== Example 2: BiMaxwellianDistribution ===" << std::endl;
+    std::cout << "\n=== Example 2: BiMaxwellianDistribution ===" << std::endl;
     BiMaxwellianDistribution<Real> biMaxwell(theta_perp, theta_para);
     {
         std::ofstream out("samples_bimaxwellian.txt");
@@ -173,11 +171,11 @@ int main()
             const BiMaxwellianDistribution<Real>::Point3D v = biMaxwell(gen);
             out << v[0] << " " << v[1] << " " << v[2] << "\n";
         }
-        pout() << "wrote " << n_particle << " samples to samples_bimaxwellian.txt"
+        std::cout << "wrote " << n_particle << " samples to samples_bimaxwellian.txt"
                << std::endl;
     }
 
-    pout() << "\n=== Example 3: GeneralVelocityGenerator (f(E)=exp(-E)) ===" << std::endl;
+    std::cout << "\n=== Example 3: GeneralVelocityGenerator (f(E)=exp(-E)) ===" << std::endl;
     auto energyPdf = [](Real E) -> Real { return std::exp(-E); };
     GeneralVelocityGenerator<Real> velocityGen(energyPdf,
                                                static_cast<Real>(0.0),
@@ -189,13 +187,13 @@ int main()
             const GeneralVelocityGenerator<Real>::Point3D v = velocityGen(gen);
             out << v[0] << " " << v[1] << " " << v[2] << "\n";
         }
-        pout() << "wrote " << n_particle << " samples to samples_general_velocity.txt"
+        std::cout << "wrote " << n_particle << " samples to samples_general_velocity.txt"
                << std::endl;
     }
 
-    pout() << "\n=== Example 4: GeneralPositionGenerator (rho=1+sin(x)sin(y)) ==="
-           << std::endl;
-    auto rho = [](const GeneralPositionGenerator<Real>::PositionVector &x) -> Real {
+    std::cout << "\n=== Example 4: GeneralPositionGenerator (rho=1+sin(x)sin(y)) ===" << std::endl;
+    typedef GeneralPositionGenerator<Real>::PositionVector PositionVector;
+    auto rho = [](const PositionVector &x) -> Real {
         return 1 + std::sin(x[0])*std::sin(x[1]);
     };
     static double pi = 3.14159;
@@ -206,10 +204,10 @@ int main()
     {
         std::ofstream out("samples_general_position.txt");
         for (int i = 0; i < n_particle; ++i) {
-            const GeneralPositionGenerator<Real>::PositionVector x = positionGen(gen);
+            const PositionVector x = positionGen(gen);
             out << x[0] << " " << x[1] << " " << x[2] << "\n";
         }
-        pout() << "wrote " << n_particle << " samples to samples_general_position.txt"
+        std::cout << "wrote " << n_particle << " samples to samples_general_position.txt"
                << std::endl;
     }
 
