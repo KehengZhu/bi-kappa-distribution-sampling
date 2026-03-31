@@ -39,7 +39,7 @@ template <typename RealType= double> class bi_maxwellian_distribution
 
         bool operator==(const param_type &other) const
         {
-                 return m_theta_perp == other.m_theta_perp && m_theta_par == other.m_theta_par &&
+            return m_theta_perp == other.m_theta_perp && m_theta_par == other.m_theta_par &&
                    m_ub == other.m_ub;
         }
 

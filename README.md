@@ -15,7 +15,7 @@ Monte Carlo particle sampling project with:
 	- `general_velocity_generator.H`: rejection sampler for user-defined energy PDF
 	- `general_position_generator.H`: rejection sampler for user-defined spatial density
 	- `main.cpp`: transform self-tests + sample generation driver
-	- `GNUmakefile`: Chombo-based build entry
+	- `GNUmakefile`: Makefile
 - `python/`
 	- `general_generators.py`: Python implementations of general velocity/position generators
 	- `visualize_samples.ipynb`: analysis and visualization notebook

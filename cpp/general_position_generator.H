@@ -16,19 +16,18 @@
 template <typename RealType= double> class general_position_generator
 {
   public:
-        using result_type = std::vector<RealType>;
-        using point_type = result_type;
-        using density_function = std::function<RealType(const point_type &)>;
+    using result_type= std::vector<RealType>;
+    using point_type= result_type;
+    using density_function= std::function<RealType(const point_type &)>;
 
-        general_position_generator(int dimension, const point_type &lower_bounds,
-                                                             const point_type &upper_bounds,
-                                                             density_function density_function,
-                                                             int probe_points= 4096, int max_reject_tries= 200000)
+    general_position_generator(int dimension, const point_type &lower_bounds,
+                               const point_type &upper_bounds, density_function density_function,
+                               int probe_points= 4096, int max_reject_tries= 200000)
         : m_dimension(dimension), m_lowerBounds(lower_bounds), m_upperBounds(upper_bounds),
-                    m_rangeWidths(static_cast<std::size_t>(dimension), RealType(0.0)),
-                    m_densityFunction(density_function), m_maxRejectTries(max_reject_tries),
-                    m_densityUpperBound(RealType(0.0)), m_distAccept(RealType(0.0), RealType(1.0)),
-                    m_distUnit(RealType(0.0), RealType(1.0))
+          m_rangeWidths(static_cast<std::size_t>(dimension), RealType(0.0)),
+          m_densityFunction(density_function), m_maxRejectTries(max_reject_tries),
+          m_densityUpperBound(RealType(0.0)), m_distAccept(RealType(0.0), RealType(1.0)),
+          m_distUnit(RealType(0.0), RealType(1.0))
     {
         if (!(m_dimension >= 1 && m_dimension <= 3))
         {
@@ -71,9 +70,8 @@ template <typename RealType= double> class general_position_generator
                                         "domain");
         }
 
-        m_distAccept.param(
-            typename std::uniform_real_distribution<RealType>::param_type(RealType(0.0),
-                                                                           m_densityUpperBound));
+        m_distAccept.param(typename std::uniform_real_distribution<RealType>::param_type(
+            RealType(0.0), m_densityUpperBound));
     }
 
     void reset()
@@ -82,22 +80,10 @@ template <typename RealType= double> class general_position_generator
         m_distUnit.reset();
     }
 
-    int dimension() const
-    {
-        return m_dimension;
-    }
-    const point_type &lowerBounds() const
-    {
-        return m_lowerBounds;
-    }
-    const point_type &upperBounds() const
-    {
-        return m_upperBounds;
-    }
-    RealType densityUpperBound() const
-    {
-        return m_densityUpperBound;
-    }
+    int dimension() const { return m_dimension; }
+    const point_type &lowerBounds() const { return m_lowerBounds; }
+    const point_type &upperBounds() const { return m_upperBounds; }
+    RealType densityUpperBound() const { return m_densityUpperBound; }
 
     template <typename GeneratorType> point_type operator()(GeneratorType &gen) const
     {

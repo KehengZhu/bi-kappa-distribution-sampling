@@ -51,8 +51,8 @@ template <typename RealType= double> class bi_kappa_distribution
 
         bool operator==(const param_type &other) const
         {
-                 return m_kappa == other.m_kappa && m_theta_perp == other.m_theta_perp &&
-                     m_theta_par == other.m_theta_par;
+            return m_kappa == other.m_kappa && m_theta_perp == other.m_theta_perp &&
+                   m_theta_par == other.m_theta_par;
         }
 
         bool operator!=(const param_type &other) const { return !(*this == other); }
@@ -72,11 +72,11 @@ template <typename RealType= double> class bi_kappa_distribution
     {
     }
 
-        explicit bi_kappa_distribution(RealType kappa, RealType theta_perp= RealType(1.0),
-                                                                     RealType theta_par= RealType(1.0),
+    explicit bi_kappa_distribution(RealType kappa, RealType theta_perp= RealType(1.0),
+                                   RealType theta_par= RealType(1.0),
                                    point_type ub= point_type({RealType(0.0), RealType(0.0),
                                                               RealType(0.0)}))
-                : m_params(kappa, theta_perp, theta_par, ub), m_distX1(RealType(1.5), RealType(1.0)),
+        : m_params(kappa, theta_perp, theta_par, ub), m_distX1(RealType(1.5), RealType(1.0)),
           m_distX2(RealType(1.0), RealType(1.0)), m_distCosTheta(RealType(-1.0), RealType(1.0)),
           m_distPhi(RealType(0.0), RealType(2.0) * piValue())
     {
