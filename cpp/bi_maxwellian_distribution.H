@@ -81,7 +81,7 @@ template <typename RealType= double> class bi_maxwellian_distribution
     void define(const param_type &params)
     {
         m_params= params;
-        reset();
+        reset(); // just to clear cache
     }
 
     void define(RealType theta_perp, RealType theta_par= RealType(1.0),

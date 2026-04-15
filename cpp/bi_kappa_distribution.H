@@ -108,7 +108,7 @@ template <typename RealType= double> class bi_kappa_distribution
     void define(const param_type &params)
     {
         m_params= params;
-        reset();
+        reset(); // just to clear cache
     }
 
     void define(RealType kappa, RealType theta_perp= RealType(1.0),
