@@ -10,11 +10,12 @@ Monte Carlo particle sampling project with:
 ## Project Layout
 
 - `cpp/`
-	- `bi_kappa_distribution.H`: bi-kappa velocity sampler (with frame transform)
-	- `bi_maxwellian_distribution.H`: bi-Maxwellian velocity sampler (with frame transform)
-	- `general_velocity_generator.H`: rejection sampler for user-defined energy PDF
-	- `general_position_generator.H`: rejection sampler for user-defined spatial density
-	- `main.cpp`: transform self-tests + sample generation driver
+	- `bi_kappa_distribution.H`: bi-kappa velocity sampler (with frame transform, velocity cap, and `define()`)
+	- `bi_maxwellian_distribution.H`: bi-Maxwellian velocity sampler (with frame transform, velocity cap, and `define()`)
+	- `general_velocity_generator.H`: rejection sampler for user-defined energy PDF (with `define()`)
+	- `general_position_generator.H`: rejection sampler for user-defined spatial density (with `define()`)
+	- `test_suite.H`: unit test suite; provides `run_all_tests()`
+	- `main.cpp`: test runner + sample generation driver
 	- `GNUmakefile`: Makefile
 - `python/`
 	- `general_generators.py`: Python implementations of general velocity/position generators
@@ -26,27 +27,34 @@ Monte Carlo particle sampling project with:
 ### bi_kappa_distribution
 
 - Samples 3D velocities from a bi-kappa distribution
-- Parameters include `kappa`, `theta_perp`, `theta_par`, and field direction `ub`
-- Applies a local-field-frame to global-frame transform via
-	`rotate_from_fieldAligned_frame(...)`
+- Parameters include `kappa`, `theta_perp`, `theta_par`, field direction `ub`, and optionally `max_normalized_velocity`
+- `max_normalized_velocity` caps each component in the field-aligned frame: samples with `|v_i|/theta_i > cap` are rejected and resampled (throws after 10⁶ failed attempts)
+- Applies a local-field-frame to global-frame transform via `rotate_from_fieldAligned_frame(...)`
+- Supports two-phase initialization: construct with the default constructor, then call `define(...)` before sampling
 
 ### bi_maxwellian_distribution
 
 - Samples 3D velocities from an anisotropic Gaussian (bi-Maxwellian)
-- Parameters include `theta_perp`, `theta_par`, and field direction `ub`
+- Parameters include `theta_perp`, `theta_par`, field direction `ub`, and optionally `max_normalized_velocity`
+- Same velocity cap and rejection scheme as `bi_kappa_distribution`
 - Also applies the same frame transform to map local components into global coordinates
+- Supports two-phase initialization via `define(...)`
 
 ### general_velocity_generator
 
 - Samples energy using rejection sampling from user-defined `f(E)`
 - Converts sampled energy to speed and assigns isotropic direction in 3D
+- Supports two-phase initialization: construct with the default constructor, then call `define(...)` before sampling; calling `operator()` before `define()` throws `std::runtime_error`
 
 ### general_position_generator
 
 - Samples positions from user-defined density using rejection sampling in a box domain
-- Supports 1D/2D/3D, with output padded to 3 components when needed
+- Supports 1D/2D/3D, with output as `std::vector<Real>` of length equal to `dimension`
+- Supports two-phase initialization via `define(...)`; calling `operator()` before `define()` throws `std::runtime_error`
 
 ## C++ Usage Examples
+
+All four generators support two styles of construction: single-step (constructor with parameters) and two-phase (default constructor + `define(...)`). The two styles are equivalent.
 
 ```cpp
 #include <array>
@@ -62,19 +70,21 @@ int main() {
     typedef double Real;
     std::mt19937 gen(12345u);
 
-    // 1) bi_kappa_distribution
+    // 1) bi_kappa_distribution — two-phase init; cap of 10 thermal speeds
     bi_kappa_distribution<Real>::point_type ub1 = {0.0, 0.0, 1.0};
-    bi_kappa_distribution<Real> bikappa(2.0, 1.0, 2.0, ub1);
+    bi_kappa_distribution<Real> bikappa;
+    bikappa.define(2.0, 1.0, 2.0, ub1, 10.0);
     bi_kappa_distribution<Real>::point_type vk = bikappa(gen);
 
-    // 2) bi_maxwellian_distribution
+    // 2) bi_maxwellian_distribution — single-step; no explicit cap (default 20)
     bi_maxwellian_distribution<Real>::point_type ub2 = {1.0, 0.0, 0.0};
     bi_maxwellian_distribution<Real> bimaxwell(1.0, 2.0, ub2);
     bi_maxwellian_distribution<Real>::point_type vm = bimaxwell(gen);
 
     // 3) general_velocity_generator: f(E) = exp(-E), E in [0, 20], mass = 1
     auto energyPdf = [](Real E) -> Real { return std::exp(-E); };
-    general_velocity_generator<Real> velGen(energyPdf, 0.0, 20.0, 1.0);
+    general_velocity_generator<Real> velGen;
+    velGen.define(energyPdf, Real(0.0), Real(20.0), Real(1.0));
     general_velocity_generator<Real>::point_type vg = velGen(gen);
 
     // 4) general_position_generator: rho(x, y) = 1 + sin(x) sin(y), domain [-pi, pi]^2
@@ -83,7 +93,8 @@ int main() {
         return 1.0 + std::sin(x[0]) * std::sin(x[1]);
     };
     const Real pi = 3.14159265358979323846;
-    general_position_generator<Real> posGen(2, {-pi, -pi}, {pi, pi}, rho);
+    general_position_generator<Real> posGen;
+    posGen.define(2, {-pi, -pi}, {pi, pi}, rho);
     position_point_type x = posGen(gen);
 
     return 0;
@@ -93,22 +104,23 @@ int main() {
 ### Notes for the Examples
 
 - `ub` can be non-normalized; it is normalized internally by the transform.
-- If `ub` is left at the default zero vector, transform is skipped and local-frame components are returned directly.
+- If `ub` is the default `{0, 0, 1}`, the transform is a no-op and local-frame components are returned directly.
+- `max_normalized_velocity` (default `20.0`) caps each local-frame component as `|v_i|/theta_i <= cap`. Samples outside the cap are rejected and resampled; after 10⁶ tries without a valid sample the generator throws `std::runtime_error`.
 - `general_position_generator` returns a `std::vector<Real>` of length equal to `dimension`.
+- Calling `operator()` on a `general_velocity_generator` or `general_position_generator` before `define(...)` throws `std::runtime_error`.
 - Use your project `Real` type if needed (for example from Chombo), or replace `double` above.
 
 ## C++ Transform Tests
 
-`cpp/main.cpp` runs transform self-tests before generating samples.
+`cpp/main.cpp` includes `test_suite.H` and calls `run_all_tests()` before generating samples.
 
-Current checks include:
+The test suite covers:
 
-- component decomposition consistency (parallel and perpendicular parts)
-- axis mapping for known `ub` direction
-- dot-product preservation (orthogonality property)
-- linearity check `T(a+b)=T(a)+T(b)` (T denotes transform)
+- Transform self-tests: component decomposition, axis mapping, dot-product preservation, and linearity `T(a+b)=T(a)+T(b)`
+- `define(...)` for all four generators: getter validation, re-definition with updated parameters, and sampling after re-definition
+- `max_normalized_velocity` for `bi_kappa_distribution` and `bi_maxwellian_distribution`: getter value, per-sample cap enforcement, and rejection of non-positive cap values
 
-If a test fails, the executable exits with non-zero status.
+If any test fails, the executable exits with non-zero status.
 
 ## Build and Run C++
 
