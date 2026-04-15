@@ -21,24 +21,38 @@ template <typename RealType= double> class general_velocity_generator
     using point_type= result_type;
     using energy_pdf_function= std::function<RealType(RealType)>;
 
+    general_velocity_generator()
+        : m_energyPdf(), m_energyMin(RealType(0.0)), m_energyMax(RealType(1.0)),
+          m_particleMass(RealType(1.0)), m_maxRejectTries(100000),
+          m_pdfUpperBound(RealType(0.0)), m_isDefined(false),
+          m_distEnergy(RealType(0.0), RealType(1.0)), m_distAccept(RealType(0.0), RealType(1.0)),
+          m_distCosTheta(RealType(-1.0), RealType(1.0)),
+          m_distPhi(RealType(0.0), RealType(2.0) * piValue())
+    {
+    }
+
     general_velocity_generator(energy_pdf_function energy_pdf, RealType energy_min,
                                RealType energy_max, RealType particle_mass, int probe_points= 1024,
                                int max_reject_tries= 100000)
-        : m_energyPdf(energy_pdf), m_energyMin(energy_min), m_energyMax(energy_max),
-          m_particleMass(particle_mass), m_maxRejectTries(max_reject_tries),
-          m_pdfUpperBound(RealType(0.0)), m_distEnergy(energy_min, energy_max),
-          m_distAccept(RealType(0.0), RealType(1.0)), m_distCosTheta(RealType(-1.0), RealType(1.0)),
-          m_distPhi(RealType(0.0), RealType(2.0) * piValue())
+        : general_velocity_generator()
     {
-        if (!m_energyPdf)
+        define(energy_pdf, energy_min, energy_max, particle_mass, probe_points, max_reject_tries);
+    }
+
+    void define(energy_pdf_function energy_pdf, RealType energy_min, RealType energy_max,
+                RealType particle_mass, int probe_points= 1024, int max_reject_tries= 100000)
+    {
+        m_isDefined= false;
+
+        if (!energy_pdf)
         {
             throw std::invalid_argument("energy_pdf callable must be provided");
         }
-        if (!(m_energyMin < m_energyMax))
+        if (!(energy_min < energy_max))
         {
             throw std::invalid_argument("energy_min must be strictly less than energy_max");
         }
-        if (m_particleMass <= RealType(0.0))
+        if (particle_mass <= RealType(0.0))
         {
             throw std::invalid_argument("particle_mass must be positive");
         }
@@ -46,10 +60,27 @@ template <typename RealType= double> class general_velocity_generator
         {
             throw std::invalid_argument("probe_points must be positive");
         }
-        if (m_maxRejectTries <= 0)
+        if (max_reject_tries <= 0)
         {
             throw std::invalid_argument("max_reject_tries must be positive");
         }
+
+        m_energyPdf= energy_pdf;
+        m_energyMin= energy_min;
+        m_energyMax= energy_max;
+        m_particleMass= particle_mass;
+        m_maxRejectTries= max_reject_tries;
+        m_pdfUpperBound= RealType(0.0);
+
+        m_distEnergy.param(typename std::uniform_real_distribution<RealType>::param_type(
+            m_energyMin, m_energyMax));
+        m_distAccept.param(
+            typename std::uniform_real_distribution<RealType>::param_type(RealType(0.0),
+                                                                           RealType(1.0)));
+        m_distCosTheta.param(typename std::uniform_real_distribution<RealType>::param_type(
+            RealType(-1.0), RealType(1.0)));
+        m_distPhi.param(typename std::uniform_real_distribution<RealType>::param_type(
+            RealType(0.0), RealType(2.0) * piValue()));
 
         m_pdfUpperBound= estimatePdfUpperBound(probe_points);
         if (m_pdfUpperBound <= RealType(0.0))
@@ -60,6 +91,9 @@ template <typename RealType= double> class general_velocity_generator
 
         m_distAccept.param(typename std::uniform_real_distribution<RealType>::param_type(
             RealType(0.0), m_pdfUpperBound));
+
+        reset();
+        m_isDefined= true;
     }
 
     void reset()
@@ -72,6 +106,12 @@ template <typename RealType= double> class general_velocity_generator
 
     template <typename GeneratorType> point_type operator()(GeneratorType &gen) const
     {
+        if (!m_isDefined)
+        {
+            throw std::runtime_error(
+                "general_velocity_generator must be define(...)d before sampling");
+        }
+
         const RealType kOne= RealType(1.0);
         const RealType kTwo= RealType(2.0);
 
@@ -159,6 +199,7 @@ template <typename RealType= double> class general_velocity_generator
     RealType m_particleMass;
     int m_maxRejectTries;
     RealType m_pdfUpperBound;
+    bool m_isDefined;
     mutable std::uniform_real_distribution<RealType> m_distEnergy;
     mutable std::uniform_real_distribution<RealType> m_distAccept;
     mutable std::uniform_real_distribution<RealType> m_distCosTheta;

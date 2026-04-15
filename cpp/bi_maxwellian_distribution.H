@@ -26,23 +26,30 @@ template <typename RealType= double> class bi_maxwellian_distribution
         using distribution_type= bi_maxwellian_distribution<RealType>;
 
         param_type(RealType theta_perp= RealType(1.0), RealType theta_par= RealType(1.0),
-                   point_type ub= point_type({RealType(0.0), RealType(0.0), RealType(1.0)}))
-            : m_theta_perp(theta_perp), m_theta_par(theta_par), m_ub(ub)
+                   point_type ub= point_type({RealType(0.0), RealType(0.0), RealType(1.0)}),
+                   RealType max_normalized_velocity= RealType(20.0))
+            : m_theta_perp(theta_perp), m_theta_par(theta_par), m_ub(ub),
+              m_maxNormalizedVelocity(max_normalized_velocity)
         {
             if (m_theta_perp <= RealType(0.0) || m_theta_par <= RealType(0.0))
             {
                 throw std::invalid_argument("Bi-Maxwellian temperatures must be positive");
+            }
+            if (m_maxNormalizedVelocity <= RealType(0.0))
+            {
+                throw std::invalid_argument("max_normalized_velocity must be positive");
             }
         }
 
         RealType theta_perp() const { return m_theta_perp; }
         RealType theta_par() const { return m_theta_par; }
         point_type ub() const { return m_ub; }
+        RealType max_normalized_velocity() const { return m_maxNormalizedVelocity; }
 
         bool operator==(const param_type &other) const
         {
             return m_theta_perp == other.m_theta_perp && m_theta_par == other.m_theta_par &&
-                   m_ub == other.m_ub;
+                   m_ub == other.m_ub && m_maxNormalizedVelocity == other.m_maxNormalizedVelocity;
         }
 
         bool operator!=(const param_type &other) const { return !(*this == other); }
@@ -51,20 +58,37 @@ template <typename RealType= double> class bi_maxwellian_distribution
         RealType m_theta_perp;
         RealType m_theta_par;
         point_type m_ub;
+        RealType m_maxNormalizedVelocity;
     };
 
     bi_maxwellian_distribution() : m_params(), m_standardNormal(RealType(0.0), RealType(1.0)) {}
 
     explicit bi_maxwellian_distribution(RealType theta_perp, RealType theta_par= RealType(1.0),
                                         point_type ub= point_type({RealType(0.0), RealType(0.0),
-                                                                   RealType(1.0)}))
+                                                                   RealType(1.0)}),
+                                        RealType max_normalized_velocity= RealType(20.0))
         : m_params(theta_perp, theta_par, ub), m_standardNormal(RealType(0.0), RealType(1.0))
     {
+        define(theta_perp, theta_par, ub, max_normalized_velocity);
     }
 
     explicit bi_maxwellian_distribution(const param_type &params)
         : m_params(params), m_standardNormal(RealType(0.0), RealType(1.0))
     {
+        define(params);
+    }
+
+    void define(const param_type &params)
+    {
+        m_params= params;
+        reset();
+    }
+
+    void define(RealType theta_perp, RealType theta_par= RealType(1.0),
+                point_type ub= point_type({RealType(0.0), RealType(0.0), RealType(1.0)}),
+                RealType max_normalized_velocity= RealType(20.0))
+    {
+        define(param_type(theta_perp, theta_par, ub, max_normalized_velocity));
     }
 
     void reset() { m_standardNormal.reset(); }
@@ -78,31 +102,48 @@ template <typename RealType= double> class bi_maxwellian_distribution
     result_type operator()(GeneratorType &gen, const param_type &params)
     {
         const RealType sigmaScale= RealType(1.0) / std::sqrt(RealType(2.0));
+        const int kMaxCapRejectTries= 1000000;
+        RealType maxNormalizedVelocity= params.max_normalized_velocity();
 
-        RealType vx= params.theta_perp() * sigmaScale * m_standardNormal(gen);
-        RealType vy= params.theta_perp() * sigmaScale * m_standardNormal(gen);
-        RealType vz= params.theta_par() * sigmaScale * m_standardNormal(gen);
-
-        point_type point;
-        point[0]= vx;
-        point[1]= vy;
-        point[2]= vz;
-
-        // Rotate only when ub is explicitly set (non-zero).
-        point_type ub= params.ub();
-        if (approximatelyEqual(ub[0], RealType(0.0)) && approximatelyEqual(ub[1], RealType(0.0)) &&
-            approximatelyEqual(ub[2], RealType(1.0)))
+        int tries= 0;
+        for (tries= 0; tries < kMaxCapRejectTries; ++tries)
         {
-            return point;
+            RealType vx= params.theta_perp() * sigmaScale * m_standardNormal(gen);
+            RealType vy= params.theta_perp() * sigmaScale * m_standardNormal(gen);
+            RealType vz= params.theta_par() * sigmaScale * m_standardNormal(gen);
+
+            point_type point;
+            point[0]= vx;
+            point[1]= vy;
+            point[2]= vz;
+
+            if (!withinNormalizedVelocityCap(point, params.theta_perp(), params.theta_par(),
+                                             maxNormalizedVelocity))
+            {
+                continue;
+            }
+
+            // Rotate only when ub is explicitly set (non-zero).
+            point_type ub= params.ub();
+            if (approximatelyEqual(ub[0], RealType(0.0)) &&
+                approximatelyEqual(ub[1], RealType(0.0)) &&
+                approximatelyEqual(ub[2], RealType(1.0)))
+            {
+                return point;
+            }
+            return rotate_from_fieldAligned_frame(point, ub);
         }
-        return rotate_from_fieldAligned_frame(point, ub);
+
+        throw std::runtime_error("failed to sample velocity under max_normalized_velocity cap: "
+                                 "rejection sampling exceeded internal attempt limit");
     }
 
     param_type param() const { return m_params; }
-    void param(const param_type &params) { m_params= params; }
+    void param(const param_type &params) { define(params); }
 
     RealType theta_perp() const { return m_params.theta_perp(); }
     RealType theta_par() const { return m_params.theta_par(); }
+    RealType max_normalized_velocity() const { return m_params.max_normalized_velocity(); }
 
     // Helper function: transform local velocity components to global Cartesian coordinates
     // given parallel direction ub.
@@ -169,6 +210,16 @@ template <typename RealType= double> class bi_maxwellian_distribution
     {
         RealType scale= std::max({RealType(1.0), std::abs(a), std::abs(b)});
         return std::abs(a - b) <= std::numeric_limits<RealType>::epsilon() * scale;
+    }
+
+    static bool withinNormalizedVelocityCap(const point_type &point, RealType theta_perp,
+                                            RealType theta_par, RealType max_normalized_velocity)
+    {
+        RealType norm_x= std::abs(point[0]) / theta_perp;
+        RealType norm_y= std::abs(point[1]) / theta_perp;
+        RealType norm_z= std::abs(point[2]) / theta_par;
+        return norm_x <= max_normalized_velocity && norm_y <= max_normalized_velocity &&
+               norm_z <= max_normalized_velocity;
     }
 
     param_type m_params;

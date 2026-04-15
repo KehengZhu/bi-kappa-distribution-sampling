@@ -32,8 +32,10 @@ template <typename RealType= double> class bi_kappa_distribution
 
         param_type(RealType kappa= RealType(2.0), RealType theta_perp= RealType(1.0),
                    RealType theta_par= RealType(1.0),
-                   point_type ub= point_type({RealType(0.0), RealType(0.0), RealType(1.0)}))
-            : m_kappa(kappa), m_theta_perp(theta_perp), m_theta_par(theta_par), m_ub(ub)
+                   point_type ub= point_type({RealType(0.0), RealType(0.0), RealType(1.0)}),
+                   RealType max_normalized_velocity= RealType(20.0))
+            : m_kappa(kappa), m_theta_perp(theta_perp), m_theta_par(theta_par), m_ub(ub),
+              m_maxNormalizedVelocity(max_normalized_velocity)
         {
             if (m_kappa <= RealType(0.5))
             {
@@ -43,17 +45,23 @@ template <typename RealType= double> class bi_kappa_distribution
             {
                 throw std::invalid_argument("Temperature parameters must be positive");
             }
+            if (m_maxNormalizedVelocity <= RealType(0.0))
+            {
+                throw std::invalid_argument("max_normalized_velocity must be positive");
+            }
         }
 
         RealType kappa() const { return m_kappa; }
         RealType theta_perp() const { return m_theta_perp; }
         RealType theta_par() const { return m_theta_par; }
         point_type ub() const { return m_ub; }
+        RealType max_normalized_velocity() const { return m_maxNormalizedVelocity; }
 
         bool operator==(const param_type &other) const
         {
             return m_kappa == other.m_kappa && m_theta_perp == other.m_theta_perp &&
-                   m_theta_par == other.m_theta_par;
+                   m_theta_par == other.m_theta_par && m_ub == other.m_ub &&
+                   m_maxNormalizedVelocity == other.m_maxNormalizedVelocity;
         }
 
         bool operator!=(const param_type &other) const { return !(*this == other); }
@@ -63,6 +71,7 @@ template <typename RealType= double> class bi_kappa_distribution
         RealType m_theta_perp;
         RealType m_theta_par;
         point_type m_ub;
+        RealType m_maxNormalizedVelocity;
     };
 
     // Constructors
@@ -76,11 +85,14 @@ template <typename RealType= double> class bi_kappa_distribution
     explicit bi_kappa_distribution(RealType kappa, RealType theta_perp= RealType(1.0),
                                    RealType theta_par= RealType(1.0),
                                    point_type ub= point_type({RealType(0.0), RealType(0.0),
-                                                              RealType(1.0)}))
-        : m_params(kappa, theta_perp, theta_par, ub), m_distX1(RealType(1.5), RealType(1.0)),
-          m_distX2(RealType(1.0), RealType(1.0)), m_distCosTheta(RealType(-1.0), RealType(1.0)),
+                                                              RealType(1.0)}),
+                                   RealType max_normalized_velocity= RealType(20.0))
+        : m_params(kappa, theta_perp, theta_par, ub, max_normalized_velocity),
+          m_distX1(RealType(1.5), RealType(1.0)), m_distX2(RealType(1.0), RealType(1.0)),
+          m_distCosTheta(RealType(-1.0), RealType(1.0)),
           m_distPhi(RealType(0.0), RealType(2.0) * piValue())
     {
+        define(kappa, theta_perp, theta_par, ub, max_normalized_velocity);
     }
 
     explicit bi_kappa_distribution(const param_type &params)
@@ -88,6 +100,21 @@ template <typename RealType= double> class bi_kappa_distribution
           m_distX2(RealType(1.0), RealType(1.0)), m_distCosTheta(RealType(-1.0), RealType(1.0)),
           m_distPhi(RealType(0.0), RealType(2.0) * piValue())
     {
+        define(params);
+    }
+
+    void define(const param_type &params)
+    {
+        m_params= params;
+        reset();
+    }
+
+    void define(RealType kappa, RealType theta_perp= RealType(1.0),
+                RealType theta_par= RealType(1.0),
+                point_type ub= point_type({RealType(0.0), RealType(0.0), RealType(1.0)}),
+                RealType max_normalized_velocity= RealType(20.0))
+    {
+        define(param_type(kappa, theta_perp, theta_par, ub, max_normalized_velocity));
     }
 
     void reset()
@@ -109,54 +136,69 @@ template <typename RealType= double> class bi_kappa_distribution
     {
         const RealType kHalf= RealType(0.5);
         const RealType kOne= RealType(1.0);
+        const int kMaxCapRejectTries= 1000000;
 
         RealType kappa= params.kappa();
         RealType theta_perp= params.theta_perp();
         RealType theta_par= params.theta_par();
         point_type ub= params.ub();
+        RealType maxNormalizedVelocity= params.max_normalized_velocity();
 
         typename std::gamma_distribution<RealType>::param_type distX2Param(kappa - kHalf, kOne);
-
-        // Step 1: Sample radii
-        RealType x1= m_distX1(gen);
-        RealType x2= m_distX2(gen, distX2Param);
-        RealType r= std::sqrt(x1 / x2);
-
-        // Step 2: Sample directions uniformly on S^2
-        RealType cosTheta= m_distCosTheta(gen);
-        RealType sinTheta= std::sqrt(std::max(RealType(0.0), kOne - cosTheta * cosTheta));
-        RealType phi= m_distPhi(gen);
-
-        // Step 3: Compute unit vectors (u)
-        RealType ux= r * sinTheta * std::cos(phi);
-        RealType uy= r * sinTheta * std::sin(phi);
-        RealType uz= r * cosTheta;
-
-        // Step 4: Map back to v-space and return as array
         RealType sqrtKappa= std::sqrt(kappa);
 
-        point_type point;
-        point[0]= sqrtKappa * theta_perp * ux;
-        point[1]= sqrtKappa * theta_perp * uy;
-        point[2]= sqrtKappa * theta_par * uz;
-
-        if (approximatelyEqual(ub[0], RealType(0.0)) && approximatelyEqual(ub[1], RealType(0.0)) &&
-            approximatelyEqual(ub[2], RealType(1.0)))
+        int tries= 0;
+        for (tries= 0; tries < kMaxCapRejectTries; ++tries)
         {
-            return point;
+            // Step 1: Sample radii
+            RealType x1= m_distX1(gen);
+            RealType x2= m_distX2(gen, distX2Param);
+            RealType r= std::sqrt(x1 / x2);
+
+            // Step 2: Sample directions uniformly on S^2
+            RealType cosTheta= m_distCosTheta(gen);
+            RealType sinTheta= std::sqrt(std::max(RealType(0.0), kOne - cosTheta * cosTheta));
+            RealType phi= m_distPhi(gen);
+
+            // Step 3: Compute unit vectors (u)
+            RealType ux= r * sinTheta * std::cos(phi);
+            RealType uy= r * sinTheta * std::sin(phi);
+            RealType uz= r * cosTheta;
+
+            // Step 4: Map back to v-space and apply velocity cap in local frame
+            point_type point;
+            point[0]= sqrtKappa * theta_perp * ux;
+            point[1]= sqrtKappa * theta_perp * uy;
+            point[2]= sqrtKappa * theta_par * uz;
+
+            if (!withinNormalizedVelocityCap(point, theta_perp, theta_par, maxNormalizedVelocity))
+            {
+                continue;
+            }
+
+            if (approximatelyEqual(ub[0], RealType(0.0)) &&
+                approximatelyEqual(ub[1], RealType(0.0)) &&
+                approximatelyEqual(ub[2], RealType(1.0)))
+            {
+                return point;
+            }
+
+            // Step 5: rotate from local field-aligned frame to global frame
+            return rotate_from_fieldAligned_frame(point, ub);
         }
 
-        // Step 5: rotate from local field-aligned frame to global frame
-        return rotate_from_fieldAligned_frame(point, ub);
+        throw std::runtime_error("failed to sample velocity under max_normalized_velocity cap: "
+                                 "rejection sampling exceeded internal attempt limit");
     }
 
     // Parameter access
     param_type param() const { return m_params; }
-    void param(const param_type &params) { m_params= params; }
+    void param(const param_type &params) { define(params); }
 
     RealType kappa() const { return m_params.kappa(); }
     RealType theta_perp() const { return m_params.theta_perp(); }
     RealType theta_par() const { return m_params.theta_par(); }
+    RealType max_normalized_velocity() const { return m_params.max_normalized_velocity(); }
 
     // Helper function: transform from velocity components (v_perp, v_par) to
     // vector velocity (vx,vy,vz) given parallel direction ub
@@ -228,6 +270,16 @@ template <typename RealType= double> class bi_kappa_distribution
     {
         RealType scale= std::max({RealType(1.0), std::abs(a), std::abs(b)});
         return std::abs(a - b) <= std::numeric_limits<RealType>::epsilon() * scale;
+    }
+
+    static bool withinNormalizedVelocityCap(const point_type &point, RealType theta_perp,
+                                            RealType theta_par, RealType max_normalized_velocity)
+    {
+        RealType norm_x= std::abs(point[0]) / theta_perp;
+        RealType norm_y= std::abs(point[1]) / theta_perp;
+        RealType norm_z= std::abs(point[2]) / theta_par;
+        return norm_x <= max_normalized_velocity && norm_y <= max_normalized_velocity &&
+               norm_z <= max_normalized_velocity;
     }
 
     param_type m_params;

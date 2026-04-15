@@ -20,25 +20,38 @@ template <typename RealType= double> class general_position_generator
     using point_type= result_type;
     using density_function= std::function<RealType(const point_type &)>;
 
+    general_position_generator()
+        : m_dimension(0), m_lowerBounds(), m_upperBounds(), m_rangeWidths(), m_densityFunction(),
+          m_maxRejectTries(200000), m_densityUpperBound(RealType(0.0)), m_isDefined(false),
+          m_distAccept(RealType(0.0), RealType(1.0)), m_distUnit(RealType(0.0), RealType(1.0))
+    {
+    }
+
     general_position_generator(int dimension, const point_type &lower_bounds,
                                const point_type &upper_bounds, density_function density_function,
                                int probe_points= 4096, int max_reject_tries= 200000)
-        : m_dimension(dimension), m_lowerBounds(lower_bounds), m_upperBounds(upper_bounds),
-          m_rangeWidths(static_cast<std::size_t>(dimension), RealType(0.0)),
-          m_densityFunction(density_function), m_maxRejectTries(max_reject_tries),
-          m_densityUpperBound(RealType(0.0)), m_distAccept(RealType(0.0), RealType(1.0)),
-          m_distUnit(RealType(0.0), RealType(1.0))
+        : general_position_generator()
     {
-        if (!(m_dimension >= 1 && m_dimension <= 3))
+        define(dimension, lower_bounds, upper_bounds, density_function, probe_points,
+               max_reject_tries);
+    }
+
+    void define(int dimension, const point_type &lower_bounds, const point_type &upper_bounds,
+                density_function density_function, int probe_points= 4096,
+                int max_reject_tries= 200000)
+    {
+        m_isDefined= false;
+
+        if (!(dimension >= 1 && dimension <= 3))
         {
             throw std::invalid_argument("dimension must be 1, 2, or 3");
         }
-        if (!m_densityFunction)
+        if (!density_function)
         {
             throw std::invalid_argument("density_function callable must be provided");
         }
-        if (m_lowerBounds.size() != static_cast<std::size_t>(m_dimension) ||
-            m_upperBounds.size() != static_cast<std::size_t>(m_dimension))
+        if (lower_bounds.size() != static_cast<std::size_t>(dimension) ||
+            upper_bounds.size() != static_cast<std::size_t>(dimension))
         {
             throw std::invalid_argument("lower_bounds and upper_bounds sizes must match dimension");
         }
@@ -46,22 +59,39 @@ template <typename RealType= double> class general_position_generator
         {
             throw std::invalid_argument("probe_points must be positive");
         }
-        if (m_maxRejectTries <= 0)
+        if (max_reject_tries <= 0)
         {
             throw std::invalid_argument("max_reject_tries must be positive");
         }
 
+        point_type range_widths(static_cast<std::size_t>(dimension), RealType(0.0));
+
         int d= 0;
-        for (d= 0; d < m_dimension; ++d)
+        for (d= 0; d < dimension; ++d)
         {
             std::size_t idx= static_cast<std::size_t>(d);
-            if (!(m_lowerBounds[idx] < m_upperBounds[idx]))
+            if (!(lower_bounds[idx] < upper_bounds[idx]))
             {
                 throw std::invalid_argument("each lower bound must be strictly less than its upper "
                                             "bound");
             }
-            m_rangeWidths[idx]= m_upperBounds[idx] - m_lowerBounds[idx];
+            range_widths[idx]= upper_bounds[idx] - lower_bounds[idx];
         }
+
+        m_dimension= dimension;
+        m_lowerBounds= lower_bounds;
+        m_upperBounds= upper_bounds;
+        m_rangeWidths= range_widths;
+        m_densityFunction= density_function;
+        m_maxRejectTries= max_reject_tries;
+        m_densityUpperBound= RealType(0.0);
+
+        m_distAccept.param(
+            typename std::uniform_real_distribution<RealType>::param_type(RealType(0.0),
+                                                                           RealType(1.0)));
+        m_distUnit.param(
+            typename std::uniform_real_distribution<RealType>::param_type(RealType(0.0),
+                                                                           RealType(1.0)));
 
         m_densityUpperBound= estimateDensityUpperBound(probe_points);
         if (m_densityUpperBound <= RealType(0.0))
@@ -72,6 +102,9 @@ template <typename RealType= double> class general_position_generator
 
         m_distAccept.param(typename std::uniform_real_distribution<RealType>::param_type(
             RealType(0.0), m_densityUpperBound));
+
+        reset();
+        m_isDefined= true;
     }
 
     void reset()
@@ -87,6 +120,12 @@ template <typename RealType= double> class general_position_generator
 
     template <typename GeneratorType> point_type operator()(GeneratorType &gen) const
     {
+        if (!m_isDefined)
+        {
+            throw std::runtime_error(
+                "general_position_generator must be define(...)d before sampling");
+        }
+
         int tries= 0;
         for (tries= 0; tries < m_maxRejectTries; ++tries)
         {
@@ -158,6 +197,7 @@ template <typename RealType= double> class general_position_generator
     density_function m_densityFunction;
     int m_maxRejectTries;
     RealType m_densityUpperBound;
+    bool m_isDefined;
     mutable std::uniform_real_distribution<RealType> m_distAccept;
     mutable std::uniform_real_distribution<RealType> m_distUnit;
 };
