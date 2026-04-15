@@ -61,19 +61,19 @@ template <typename RealType= double> class bi_maxwellian_distribution
         RealType m_maxNormalizedVelocity;
     };
 
-    bi_maxwellian_distribution() : m_params(), m_standardNormal(RealType(0.0), RealType(1.0)) {}
+    bi_maxwellian_distribution() : m_params(), m_gen(std::random_device{}()), m_standardNormal(RealType(0.0), RealType(1.0)) {}
 
     explicit bi_maxwellian_distribution(RealType theta_perp, RealType theta_par= RealType(1.0),
                                         point_type ub= point_type({RealType(0.0), RealType(0.0),
                                                                    RealType(1.0)}),
                                         RealType max_normalized_velocity= RealType(20.0))
-        : m_params(theta_perp, theta_par, ub), m_standardNormal(RealType(0.0), RealType(1.0))
+        : m_params(theta_perp, theta_par, ub), m_gen(std::random_device{}()), m_standardNormal(RealType(0.0), RealType(1.0))
     {
         define(theta_perp, theta_par, ub, max_normalized_velocity);
     }
 
     explicit bi_maxwellian_distribution(const param_type &params)
-        : m_params(params), m_standardNormal(RealType(0.0), RealType(1.0))
+        : m_params(params), m_gen(std::random_device{}()), m_standardNormal(RealType(0.0), RealType(1.0))
     {
         define(params);
     }
@@ -91,11 +91,27 @@ template <typename RealType= double> class bi_maxwellian_distribution
         define(param_type(theta_perp, theta_par, ub, max_normalized_velocity));
     }
 
+    void define(const param_type &params, int seed) { applySeed(m_gen, seed); define(params); }
+
+    void define(RealType theta_perp, RealType theta_par,
+                point_type ub, RealType max_normalized_velocity, int seed)
+    {
+        applySeed(m_gen, seed);
+        define(theta_perp, theta_par, ub, max_normalized_velocity);
+    }
+
+    void seed(int s) { applySeed(m_gen, s); }
+
     void reset() { m_standardNormal.reset(); }
 
     template <typename GeneratorType> result_type operator()(GeneratorType &gen)
     {
         return (*this)(gen, m_params);
+    }
+
+    result_type operator()()
+    {
+        return (*this)(m_gen);
     }
 
     template <typename GeneratorType>
@@ -206,6 +222,14 @@ template <typename RealType= double> class bi_maxwellian_distribution
     bool operator!=(const bi_maxwellian_distribution &other) const { return !(*this == other); }
 
   private:
+    static void applySeed(std::mt19937 &gen, int s)
+    {
+        if (s < 0)
+            gen.seed(std::random_device{}());
+        else
+            gen.seed(static_cast<unsigned int>(s));
+    }
+
     static bool approximatelyEqual(RealType a, RealType b)
     {
         RealType scale= std::max({RealType(1.0), std::abs(a), std::abs(b)});
@@ -223,6 +247,7 @@ template <typename RealType= double> class bi_maxwellian_distribution
     }
 
     param_type m_params;
+    std::mt19937 m_gen;
     std::normal_distribution<RealType> m_standardNormal;
 };
 

@@ -644,6 +644,236 @@ static int test_max_normalized_velocity_bimaxwellian()
 }
 
 // ================================================================
+// test_seed_api
+// Tests the internal seeded generator: define(..., seed), seed(s),
+// and the no-arg operator()().  The external operator()(gen) path
+// is already exercised in the D3 and V2/V3 tests above.
+// ================================================================
+static int test_seed_api()
+{
+    std::cout << "=== test_seed_api ===" << std::endl;
+    bool all_ok= true;
+
+    // S1: bi_kappa define(..., seed) + operator()() is reproducible
+    {
+        const int seed= 55555;
+        const int n= 100;
+        bi_kappa_distribution<TestReal>::point_type ub= {TestReal(0.0), TestReal(0.0),
+                                                         TestReal(1.0)};
+        bi_kappa_distribution<TestReal> dist;
+        dist.define(TestReal(2.0), TestReal(1.0), TestReal(2.0), ub, TestReal(20.0), seed);
+        TestReal sum1= TestReal(0.0);
+        for (int i= 0; i < n; ++i)
+        {
+            auto v= dist();
+            sum1+= v[0] + v[1] + v[2];
+        }
+
+        dist.define(TestReal(2.0), TestReal(1.0), TestReal(2.0), ub, TestReal(20.0), seed);
+        TestReal sum2= TestReal(0.0);
+        for (int i= 0; i < n; ++i)
+        {
+            auto v= dist();
+            sum2+= v[0] + v[1] + v[2];
+        }
+
+        bool ok= (sum1 == sum2);
+        all_ok= all_ok && ok;
+        std::cout << "  S1 bi_kappa define(..., seed): " << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    // S2: bi_kappa seed(s) reseeds the internal generator reproducibly
+    {
+        const int seed= 33333;
+        const int n= 100;
+        bi_kappa_distribution<TestReal> dist;
+        dist.define(TestReal(2.0), TestReal(1.0), TestReal(2.0));
+
+        dist.seed(seed);
+        TestReal sum1= TestReal(0.0);
+        for (int i= 0; i < n; ++i)
+        {
+            auto v= dist();
+            sum1+= v[0] + v[1] + v[2];
+        }
+
+        dist.seed(seed);
+        TestReal sum2= TestReal(0.0);
+        for (int i= 0; i < n; ++i)
+        {
+            auto v= dist();
+            sum2+= v[0] + v[1] + v[2];
+        }
+
+        bool ok= (sum1 == sum2);
+        all_ok= all_ok && ok;
+        std::cout << "  S2 bi_kappa seed(s): " << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    // S3: bi_maxwellian define(..., seed) + operator()() is reproducible
+    {
+        const int seed= 77777;
+        const int n= 100;
+        bi_maxwellian_distribution<TestReal>::point_type ub= {TestReal(0.0), TestReal(0.0),
+                                                               TestReal(1.0)};
+        bi_maxwellian_distribution<TestReal> dist;
+        dist.define(TestReal(1.0), TestReal(2.0), ub, TestReal(20.0), seed);
+        TestReal sum1= TestReal(0.0);
+        for (int i= 0; i < n; ++i)
+        {
+            auto v= dist();
+            sum1+= v[0] + v[1] + v[2];
+        }
+
+        dist.define(TestReal(1.0), TestReal(2.0), ub, TestReal(20.0), seed);
+        TestReal sum2= TestReal(0.0);
+        for (int i= 0; i < n; ++i)
+        {
+            auto v= dist();
+            sum2+= v[0] + v[1] + v[2];
+        }
+
+        bool ok= (sum1 == sum2);
+        all_ok= all_ok && ok;
+        std::cout << "  S3 bi_maxwellian define(..., seed): " << (ok ? "PASS" : "FAIL")
+                  << std::endl;
+    }
+
+    // S4: bi_maxwellian seed(s) reseeds reproducibly
+    {
+        const int seed= 88888;
+        const int n= 100;
+        bi_maxwellian_distribution<TestReal> dist;
+        dist.define(TestReal(1.0), TestReal(2.0));
+
+        dist.seed(seed);
+        TestReal sum1= TestReal(0.0);
+        for (int i= 0; i < n; ++i)
+        {
+            auto v= dist();
+            sum1+= v[0] + v[1] + v[2];
+        }
+
+        dist.seed(seed);
+        TestReal sum2= TestReal(0.0);
+        for (int i= 0; i < n; ++i)
+        {
+            auto v= dist();
+            sum2+= v[0] + v[1] + v[2];
+        }
+
+        bool ok= (sum1 == sum2);
+        all_ok= all_ok && ok;
+        std::cout << "  S4 bi_maxwellian seed(s): " << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    // S5: general_velocity_generator seed(s) + operator()() is reproducible
+    {
+        const int seed= 44444;
+        const int n= 50;
+        auto energyPdf= [](TestReal E) -> TestReal { return std::exp(-E); };
+        general_velocity_generator<TestReal> vgen;
+        vgen.define(energyPdf, TestReal(0.0), TestReal(10.0), TestReal(1.0));
+
+        vgen.seed(seed);
+        TestReal sum1= TestReal(0.0);
+        for (int i= 0; i < n; ++i)
+        {
+            auto v= vgen();
+            sum1+= v[0] + v[1] + v[2];
+        }
+
+        vgen.seed(seed);
+        TestReal sum2= TestReal(0.0);
+        for (int i= 0; i < n; ++i)
+        {
+            auto v= vgen();
+            sum2+= v[0] + v[1] + v[2];
+        }
+
+        bool ok= (sum1 == sum2);
+        all_ok= all_ok && ok;
+        std::cout << "  S5 general_velocity_generator seed(s): " << (ok ? "PASS" : "FAIL")
+                  << std::endl;
+    }
+
+    // S6: general_position_generator seed(s) + operator()() is reproducible
+    {
+        const int seed= 22222;
+        const int n= 50;
+        typedef general_position_generator<TestReal>::point_type pvec;
+        auto rho= [](const pvec &x) -> TestReal { return TestReal(1.0) + std::sin(x[0]); };
+        general_position_generator<TestReal> pgen;
+        pgen.define(1, {TestReal(0.0)}, {TestReal(6.28)}, rho);
+
+        pgen.seed(seed);
+        TestReal sum1= TestReal(0.0);
+        for (int i= 0; i < n; ++i)
+            sum1+= pgen()[0];
+
+        pgen.seed(seed);
+        TestReal sum2= TestReal(0.0);
+        for (int i= 0; i < n; ++i)
+            sum2+= pgen()[0];
+
+        bool ok= (sum1 == sum2);
+        all_ok= all_ok && ok;
+        std::cout << "  S6 general_position_generator seed(s): " << (ok ? "PASS" : "FAIL")
+                  << std::endl;
+    }
+
+    // S7: negative seed on bi_kappa routes through random_device; output is finite
+    {
+        bool ok= false;
+        try
+        {
+            bi_kappa_distribution<TestReal> dist;
+            dist.define(TestReal(2.0), TestReal(1.0), TestReal(2.0));
+            dist.seed(-1);
+            auto v= dist();
+            ok= std::isfinite(v[0]) && std::isfinite(v[1]) && std::isfinite(v[2]);
+        }
+        catch (...)
+        {
+        }
+        all_ok= all_ok && ok;
+        std::cout << "  S7 negative seed (random_device) gives finite output: "
+                  << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    // S8: two different fixed seeds produce different sequences for bi_maxwellian
+    {
+        const int n= 100;
+        bi_maxwellian_distribution<TestReal> dist;
+
+        dist.define(TestReal(1.0), TestReal(1.0));
+        dist.seed(1111);
+        TestReal sumA= TestReal(0.0);
+        for (int i= 0; i < n; ++i)
+        {
+            auto v= dist();
+            sumA+= v[0] + v[1] + v[2];
+        }
+
+        dist.seed(9999);
+        TestReal sumB= TestReal(0.0);
+        for (int i= 0; i < n; ++i)
+        {
+            auto v= dist();
+            sumB+= v[0] + v[1] + v[2];
+        }
+
+        bool ok= (sumA != sumB);
+        all_ok= all_ok && ok;
+        std::cout << "  S8 different seeds produce different sequences: "
+                  << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    std::cout << "test_seed_api: " << (all_ok ? "PASS" : "FAIL") << std::endl;
+    return all_ok ? 0 : 1;
+}
+
+// ================================================================
 // run_all_tests – call this from main()
 // Returns 0 if all tests pass, 1 if any test fails.
 // ================================================================
@@ -657,6 +887,7 @@ static int run_all_tests()
     result|= test_define_general_position();
     result|= test_max_normalized_velocity_bikappa();
     result|= test_max_normalized_velocity_bimaxwellian();
+    result|= test_seed_api();
     std::cout << "\n=== Test suite: " << (result == 0 ? "ALL PASS" : "SOME FAILED") << " ==="
               << std::endl;
     return result;

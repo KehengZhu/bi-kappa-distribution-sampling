@@ -24,7 +24,7 @@ template <typename RealType= double> class general_velocity_generator
     general_velocity_generator()
         : m_energyPdf(), m_energyMin(RealType(0.0)), m_energyMax(RealType(1.0)),
           m_particleMass(RealType(1.0)), m_maxRejectTries(100000),
-          m_pdfUpperBound(RealType(0.0)), m_isDefined(false),
+          m_pdfUpperBound(RealType(0.0)), m_isDefined(false), m_gen(std::random_device{}()),
           m_distEnergy(RealType(0.0), RealType(1.0)), m_distAccept(RealType(0.0), RealType(1.0)),
           m_distCosTheta(RealType(-1.0), RealType(1.0)),
           m_distPhi(RealType(0.0), RealType(2.0) * piValue())
@@ -96,6 +96,8 @@ template <typename RealType= double> class general_velocity_generator
         m_isDefined= true;
     }
 
+    void seed(int s) { applySeed(m_gen, s); }
+
     void reset()
     {
         m_distEnergy.reset();
@@ -131,6 +133,11 @@ template <typename RealType= double> class general_velocity_generator
         point[1]= vy;
         point[2]= vz;
         return point;
+    }
+
+    point_type operator()() const
+    {
+        return (*this)(m_gen);
     }
 
     RealType energyMin() const { return m_energyMin; }
@@ -191,6 +198,14 @@ template <typename RealType= double> class general_velocity_generator
                                  "exceeded max_reject_tries");
     }
 
+    static void applySeed(std::mt19937 &gen, int s)
+    {
+        if (s < 0)
+            gen.seed(std::random_device{}());
+        else
+            gen.seed(static_cast<unsigned int>(s));
+    }
+
     static RealType piValue() { return RealType(3.14159265358979323846264338327950288L); }
 
     energy_pdf_function m_energyPdf;
@@ -200,6 +215,7 @@ template <typename RealType= double> class general_velocity_generator
     int m_maxRejectTries;
     RealType m_pdfUpperBound;
     bool m_isDefined;
+    mutable std::mt19937 m_gen;
     mutable std::uniform_real_distribution<RealType> m_distEnergy;
     mutable std::uniform_real_distribution<RealType> m_distAccept;
     mutable std::uniform_real_distribution<RealType> m_distCosTheta;

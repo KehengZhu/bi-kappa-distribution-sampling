@@ -23,6 +23,7 @@ template <typename RealType= double> class general_position_generator
     general_position_generator()
         : m_dimension(0), m_lowerBounds(), m_upperBounds(), m_rangeWidths(), m_densityFunction(),
           m_maxRejectTries(200000), m_densityUpperBound(RealType(0.0)), m_isDefined(false),
+          m_gen(std::random_device{}()),
           m_distAccept(RealType(0.0), RealType(1.0)), m_distUnit(RealType(0.0), RealType(1.0))
     {
     }
@@ -107,6 +108,8 @@ template <typename RealType= double> class general_position_generator
         m_isDefined= true;
     }
 
+    void seed(int s) { applySeed(m_gen, s); }
+
     void reset()
     {
         m_distAccept.reset();
@@ -142,7 +145,20 @@ template <typename RealType= double> class general_position_generator
                                  "sampling exceeded max_reject_tries");
     }
 
+    point_type operator()() const
+    {
+        return (*this)(m_gen);
+    }
+
   private:
+    static void applySeed(std::mt19937 &gen, int s)
+    {
+        if (s < 0)
+            gen.seed(std::random_device{}());
+        else
+            gen.seed(static_cast<unsigned int>(s));
+    }
+
     RealType evaluateDensity(const point_type &point) const
     {
         RealType value= m_densityFunction(point);
@@ -198,6 +214,7 @@ template <typename RealType= double> class general_position_generator
     int m_maxRejectTries;
     RealType m_densityUpperBound;
     bool m_isDefined;
+    mutable std::mt19937 m_gen;
     mutable std::uniform_real_distribution<RealType> m_distAccept;
     mutable std::uniform_real_distribution<RealType> m_distUnit;
 };

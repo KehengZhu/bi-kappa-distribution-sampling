@@ -76,7 +76,7 @@ template <typename RealType= double> class bi_kappa_distribution
 
     // Constructors
     bi_kappa_distribution()
-        : m_params(), m_distX1(RealType(1.5), RealType(1.0)),
+        : m_params(), m_gen(std::random_device{}()), m_distX1(RealType(1.5), RealType(1.0)),
           m_distX2(RealType(1.0), RealType(1.0)), m_distCosTheta(RealType(-1.0), RealType(1.0)),
           m_distPhi(RealType(0.0), RealType(2.0) * piValue())
     {
@@ -88,6 +88,7 @@ template <typename RealType= double> class bi_kappa_distribution
                                                               RealType(1.0)}),
                                    RealType max_normalized_velocity= RealType(20.0))
         : m_params(kappa, theta_perp, theta_par, ub, max_normalized_velocity),
+          m_gen(std::random_device{}()),
           m_distX1(RealType(1.5), RealType(1.0)), m_distX2(RealType(1.0), RealType(1.0)),
           m_distCosTheta(RealType(-1.0), RealType(1.0)),
           m_distPhi(RealType(0.0), RealType(2.0) * piValue())
@@ -96,7 +97,8 @@ template <typename RealType= double> class bi_kappa_distribution
     }
 
     explicit bi_kappa_distribution(const param_type &params)
-        : m_params(params), m_distX1(RealType(1.5), RealType(1.0)),
+        : m_params(params), m_gen(std::random_device{}()),
+          m_distX1(RealType(1.5), RealType(1.0)),
           m_distX2(RealType(1.0), RealType(1.0)), m_distCosTheta(RealType(-1.0), RealType(1.0)),
           m_distPhi(RealType(0.0), RealType(2.0) * piValue())
     {
@@ -117,6 +119,17 @@ template <typename RealType= double> class bi_kappa_distribution
         define(param_type(kappa, theta_perp, theta_par, ub, max_normalized_velocity));
     }
 
+    void define(const param_type &params, int seed) { applySeed(m_gen, seed); define(params); }
+
+    void define(RealType kappa, RealType theta_perp, RealType theta_par,
+                point_type ub, RealType max_normalized_velocity, int seed)
+    {
+        applySeed(m_gen, seed);
+        define(kappa, theta_perp, theta_par, ub, max_normalized_velocity);
+    }
+
+    void seed(int s) { applySeed(m_gen, s); }
+
     void reset()
     {
         m_distX1.reset();
@@ -129,6 +142,11 @@ template <typename RealType= double> class bi_kappa_distribution
     template <typename GeneratorType> result_type operator()(GeneratorType &gen)
     {
         return (*this)(gen, m_params);
+    }
+
+    result_type operator()()
+    {
+        return (*this)(m_gen);
     }
 
     template <typename GeneratorType>
@@ -264,6 +282,14 @@ template <typename RealType= double> class bi_kappa_distribution
     bool operator!=(const bi_kappa_distribution &other) const { return !(*this == other); }
 
   private:
+    static void applySeed(std::mt19937 &gen, int s)
+    {
+        if (s < 0)
+            gen.seed(std::random_device{}());
+        else
+            gen.seed(static_cast<unsigned int>(s));
+    }
+
     static RealType piValue() { return RealType(3.14159265358979323846264338327950288L); }
 
     static bool approximatelyEqual(RealType a, RealType b)
@@ -283,6 +309,7 @@ template <typename RealType= double> class bi_kappa_distribution
     }
 
     param_type m_params;
+    std::mt19937 m_gen;
     std::gamma_distribution<RealType> m_distX1;
     std::gamma_distribution<RealType> m_distX2;
     std::uniform_real_distribution<RealType> m_distCosTheta;

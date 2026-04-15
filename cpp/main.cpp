@@ -19,9 +19,6 @@ int main()
     const Real theta_par = 2.0;
     const int n_particle = 100000;
 
-    const unsigned int seed = 20030410u;
-    std::mt19937 gen(seed);
-
     if (run_all_tests() != 0)
     {
         return 1;
@@ -30,11 +27,11 @@ int main()
 
     std::cout << "=== Example 1: BiKappaDistribution ===" << std::endl;
     bi_kappa_distribution<Real> biKappa;
-    biKappa.define(kappa, theta_perp, theta_par, {0,0,1}, 100.0);
+    biKappa.define(kappa, theta_perp, theta_par, {0,0,1}, 100.0, 20030410);
     {
         std::ofstream out("samples_bikappa.txt");
         for (int i = 0; i < n_particle; ++i) {
-            const bi_kappa_distribution<Real>::point_type v = biKappa(gen);
+            const bi_kappa_distribution<Real>::point_type v = biKappa();
             out << v[0] << " " << v[1] << " " << v[2] << "\n";
         }
         std::cout << "wrote " << n_particle << " samples to samples_bikappa.txt" << std::endl;
@@ -42,11 +39,11 @@ int main()
 
     std::cout << "\n=== Example 2: BiMaxwellianDistribution ===" << std::endl;
     bi_maxwellian_distribution<Real> biMaxwell;
-    biMaxwell.define(theta_perp, theta_par);
+    biMaxwell.define(theta_perp, theta_par, {0,0,1}, 20.0, 20030410);
     {
         std::ofstream out("samples_bimaxwellian.txt");
         for (int i = 0; i < n_particle; ++i) {
-            const bi_maxwellian_distribution<Real>::point_type v = biMaxwell(gen);
+            const bi_maxwellian_distribution<Real>::point_type v = biMaxwell();
             out << v[0] << " " << v[1] << " " << v[2] << "\n";
         }
         std::cout << "wrote " << n_particle << " samples to samples_bimaxwellian.txt" << std::endl;
@@ -59,10 +56,11 @@ int main()
                        static_cast<Real>(0.0),
                        static_cast<Real>(20.0),
                        static_cast<Real>(1.0));
+    velocityGen.seed(20030410);
     {
         std::ofstream out("samples_general_velocity.txt");
         for (int i = 0; i < n_particle; ++i) {
-            const general_velocity_generator<Real>::point_type v = velocityGen(gen);
+            const general_velocity_generator<Real>::point_type v = velocityGen();
             out << v[0] << " " << v[1] << " " << v[2] << "\n";
         }
         std::cout << "wrote " << n_particle << " samples to samples_general_velocity.txt"
@@ -77,10 +75,11 @@ int main()
     static double pi = 3.14159;
     general_position_generator<Real> positionGen;
     positionGen.define(2, {-pi, -pi}, {pi, pi}, rho);
+    positionGen.seed(20030410);
     {
         std::ofstream out("samples_general_position.txt");
         for (int i = 0; i < n_particle; ++i) {
-            const position_point_type x = positionGen(gen);
+            const position_point_type x = positionGen();
             out << x[0] << " " << x[1] << "\n";
         }
         std::cout << "wrote " << n_particle << " samples to samples_general_position.txt"

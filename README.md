@@ -31,6 +31,8 @@ Monte Carlo particle sampling project with:
 - `max_normalized_velocity` caps each component in the field-aligned frame: samples with `|v_i|/theta_i > cap` are rejected and resampled (throws after 10⁶ failed attempts)
 - Applies a local-field-frame to global-frame transform via `rotate_from_fieldAligned_frame(...)`
 - Supports two-phase initialization: construct with the default constructor, then call `define(...)` before sampling
+- Owns an internal `std::mt19937`; pass an integer `seed` to `define(...)` or call `seed(s)` to (re-)seed it. Negative seed routes through `std::random_device`. The user does not need to manage a generator object.
+- `operator()(gen)` is also available for callers that prefer to supply an external generator
 
 ### bi_maxwellian_distribution
 
@@ -39,22 +41,29 @@ Monte Carlo particle sampling project with:
 - Same velocity cap and rejection scheme as `bi_kappa_distribution`
 - Also applies the same frame transform to map local components into global coordinates
 - Supports two-phase initialization via `define(...)`
+- Same internal seeded generator API as `bi_kappa_distribution`
 
 ### general_velocity_generator
 
 - Samples energy using rejection sampling from user-defined `f(E)`
 - Converts sampled energy to speed and assigns isotropic direction in 3D
 - Supports two-phase initialization: construct with the default constructor, then call `define(...)` before sampling; calling `operator()` before `define()` throws `std::runtime_error`
+- Owns an internal `std::mt19937`; call `seed(s)` to (re-)seed it. Negative `s` uses `std::random_device`.
+- `operator()(gen)` is also available for callers that prefer to supply an external generator
 
 ### general_position_generator
 
 - Samples positions from user-defined density using rejection sampling in a box domain
 - Supports 1D/2D/3D, with output as `std::vector<Real>` of length equal to `dimension`
 - Supports two-phase initialization via `define(...)`; calling `operator()` before `define()` throws `std::runtime_error`
+- Owns an internal `std::mt19937`; call `seed(s)` to (re-)seed it. Negative `s` uses `std::random_device`.
+- `operator()(gen)` is also available for callers that prefer to supply an external generator
 
 ## C++ Usage Examples
 
-All four generators support two styles of construction: single-step (constructor with parameters) and two-phase (default constructor + `define(...)`). The two styles are equivalent.
+All four generators own an internal `std::mt19937`. Pass an integer seed to `define(...)` (distributions) or call `.seed(s)` after `define(...)` (general generators) to initialize it. A negative seed picks an unpredictable value from `std::random_device`. Once seeded, call `v = dist()` with no arguments — no generator object is needed at the call site.
+
+The external-generator overload `operator()(gen)` remains available for code that manages its own `std::mt19937`.
 
 ```cpp
 #include <array>
@@ -68,24 +77,26 @@ All four generators support two styles of construction: single-step (constructor
 
 int main() {
     typedef double Real;
-    std::mt19937 gen(12345u);
 
-    // 1) bi_kappa_distribution — two-phase init; cap of 10 thermal speeds
+    // 1) bi_kappa_distribution: seed = 12345, cap = 20 thermal speeds
     bi_kappa_distribution<Real>::point_type ub1 = {0.0, 0.0, 1.0};
     bi_kappa_distribution<Real> bikappa;
-    bikappa.define(2.0, 1.0, 2.0, ub1, 10.0);
-    bi_kappa_distribution<Real>::point_type vk = bikappa(gen);
+    bikappa.define(2.0, 1.0, 2.0, ub1, 20.0, 12345); // seed in define()
+    bi_kappa_distribution<Real>::point_type vk = bikappa(); // no-arg call
 
-    // 2) bi_maxwellian_distribution — single-step; no explicit cap (default 20)
+    // 2) bi_maxwellian_distribution: seed set separately
     bi_maxwellian_distribution<Real>::point_type ub2 = {1.0, 0.0, 0.0};
-    bi_maxwellian_distribution<Real> bimaxwell(1.0, 2.0, ub2);
-    bi_maxwellian_distribution<Real>::point_type vm = bimaxwell(gen);
+    bi_maxwellian_distribution<Real> bimaxwell;
+    bimaxwell.define(1.0, 2.0, ub2, 20.0);
+    bimaxwell.seed(12345);                // re-seed after define()
+    bi_maxwellian_distribution<Real>::point_type vm = bimaxwell();
 
     // 3) general_velocity_generator: f(E) = exp(-E), E in [0, 20], mass = 1
     auto energyPdf = [](Real E) -> Real { return std::exp(-E); };
     general_velocity_generator<Real> velGen;
     velGen.define(energyPdf, Real(0.0), Real(20.0), Real(1.0));
-    general_velocity_generator<Real>::point_type vg = velGen(gen);
+    velGen.seed(12345);
+    general_velocity_generator<Real>::point_type vg = velGen();
 
     // 4) general_position_generator: rho(x, y) = 1 + sin(x) sin(y), domain [-pi, pi]^2
     typedef general_position_generator<Real>::point_type position_point_type;
@@ -95,7 +106,12 @@ int main() {
     const Real pi = 3.14159265358979323846;
     general_position_generator<Real> posGen;
     posGen.define(2, {-pi, -pi}, {pi, pi}, rho);
-    position_point_type x = posGen(gen);
+    posGen.seed(12345);
+    position_point_type x = posGen();
+
+    // Alternative: pass an external std::mt19937 directly (both APIs coexist)
+    std::mt19937 sharedGen(99u);
+    bi_kappa_distribution<Real>::point_type vk2 = bikappa(sharedGen);
 
     return 0;
 }
@@ -105,9 +121,10 @@ int main() {
 
 - `ub` can be non-normalized; it is normalized internally by the transform.
 - If `ub` is the default `{0, 0, 1}`, the transform is a no-op and local-frame components are returned directly.
-- `max_normalized_velocity` (default `20.0`) caps each local-frame component as `|v_i|/theta_i <= cap`. Samples outside the cap are rejected and resampled; after 10⁶ tries without a valid sample the generator throws `std::runtime_error`.
+- `max_normalized_velocity` (default `20.0`) caps each local-frame component as `|v_i|/theta_i <= cap`. Samples outside the cap are rejected and resampled; after 10⁶ tries the generator throws `std::runtime_error`.
 - `general_position_generator` returns a `std::vector<Real>` of length equal to `dimension`.
 - Calling `operator()` on a `general_velocity_generator` or `general_position_generator` before `define(...)` throws `std::runtime_error`.
+- **Seed rules**: a non-negative integer seeds `std::mt19937` deterministically; a negative integer seeds from `std::random_device` (non-reproducible). Calling `seed(s)` after `define(...)` re-seeds without affecting the distribution parameters.
 - Use your project `Real` type if needed (for example from Chombo), or replace `double` above.
 
 ## C++ Transform Tests
@@ -116,9 +133,10 @@ int main() {
 
 The test suite covers:
 
-- Transform self-tests: component decomposition, axis mapping, dot-product preservation, and linearity `T(a+b)=T(a)+T(b)`
-- `define(...)` for all four generators: getter validation, re-definition with updated parameters, and sampling after re-definition
-- `max_normalized_velocity` for `bi_kappa_distribution` and `bi_maxwellian_distribution`: getter value, per-sample cap enforcement, and rejection of non-positive cap values
+- **Transform tests**: component decomposition, axis mapping, dot-product preservation, and linearity `T(a+b)=T(a)+T(b)`
+- **`define(...)` tests** for all four generators: getter validation, re-definition with updated parameters, and sampling after re-definition
+- **`max_normalized_velocity` tests** for `bi_kappa_distribution` and `bi_maxwellian_distribution`: getter value, per-sample cap enforcement, and rejection of non-positive cap values
+- **Seed API tests** (`test_seed_api`): `define(..., seed)` and `seed(s)` produce reproducible sequences; re-using the same seed gives identical output; a negative seed (random_device path) gives finite output; two different seeds give different sequences. Both `operator()()` (internal gen) and `operator()(gen)` (external gen) paths are exercised.
 
 If any test fails, the executable exits with non-zero status.
 
