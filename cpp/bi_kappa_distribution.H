@@ -108,8 +108,10 @@ template <typename RealType= double> class bi_kappa_distribution
     }
 
     // ====================================================================
-    // Bulk configuration
+    // Setters
     // ====================================================================
+
+    // Bulk configuration
     void define(const param_type &params)
     {
         m_params= params;
@@ -133,9 +135,7 @@ template <typename RealType= double> class bi_kappa_distribution
         define(kappa, theta_perp, theta_par, ub, max_normalized_velocity);
     }
 
-    // ====================================================================
     // Individual parameter setters
-    // ====================================================================
     void kappa(RealType value)
     {
         define(value, m_params.theta_perp(), m_params.theta_par(), m_params.ub(),
@@ -167,11 +167,13 @@ template <typename RealType= double> class bi_kappa_distribution
     }
 
     // ====================================================================
-    // Parameter access
+    // Getters
     // ====================================================================
-    param_type param() const { return m_params; }
-    void param(const param_type &params) { define(params); }
 
+    // Bulk getter
+    param_type param() const { return m_params; }
+
+    // Individual parameter getter
     RealType kappa() const { return m_params.kappa(); }
     RealType theta_perp() const { return m_params.theta_perp(); }
     RealType theta_par() const { return m_params.theta_par(); }
