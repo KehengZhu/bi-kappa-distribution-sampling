@@ -31,6 +31,7 @@ Monte Carlo particle sampling project with:
 - `max_normalized_velocity` caps each component in the field-aligned frame: samples with `|v_i|/theta_i > cap` are rejected and resampled (throws after 10⁶ failed attempts)
 - Applies a local-field-frame to global-frame transform via `rotate_from_fieldAligned_frame(...)`
 - Supports two-phase initialization: construct with the default constructor, then call `define(...)` before sampling
+- Also exposes convenience per-parameter setters and getters: `kappa(...)`, `theta_perp(...)`, `theta_par(...)`, `ub(...)`, and `max_normalized_velocity(...)`
 - Owns an internal `std::mt19937`; pass an integer `seed` to `define(...)` or call `seed(s)` to (re-)seed it. Negative seed routes through `std::random_device`. The user does not need to manage a generator object.
 - `operator()(gen)` is also available for callers that prefer to supply an external generator
 
@@ -41,6 +42,7 @@ Monte Carlo particle sampling project with:
 - Same velocity cap and rejection scheme as `bi_kappa_distribution`
 - Also applies the same frame transform to map local components into global coordinates
 - Supports two-phase initialization via `define(...)`
+- Also exposes convenience per-parameter setters and getters: `theta_perp(...)`, `theta_par(...)`, `ub(...)`, and `max_normalized_velocity(...)`
 - Same internal seeded generator API as `bi_kappa_distribution`
 
 ### general_velocity_generator
@@ -65,6 +67,8 @@ All four generators own an internal `std::mt19937`. Pass an integer seed to `def
 
 The external-generator overload `operator()(gen)` remains available for code that manages its own `std::mt19937`.
 
+For the two velocity distributions, `define(...)` and `param(...)` remain the canonical bulk-configuration APIs. The per-parameter setters are convenience wrappers that rebuild validated parameter state one field at a time.
+
 ```cpp
 #include <array>
 #include <cmath>
@@ -82,12 +86,14 @@ int main() {
     bi_kappa_distribution<Real>::point_type ub1 = {0.0, 0.0, 1.0};
     bi_kappa_distribution<Real> bikappa;
     bikappa.define(2.0, 1.0, 2.0, ub1, 20.0, 12345); // seed in define()
+    bikappa.max_normalized_velocity(10.0);           // convenience setter
     bi_kappa_distribution<Real>::point_type vk = bikappa(); // no-arg call
 
     // 2) bi_maxwellian_distribution: seed set separately
     bi_maxwellian_distribution<Real>::point_type ub2 = {1.0, 0.0, 0.0};
     bi_maxwellian_distribution<Real> bimaxwell;
     bimaxwell.define(1.0, 2.0, ub2, 20.0);
+    bimaxwell.ub({0.0, 1.0, 0.0});        // convenience setter
     bimaxwell.seed(12345);                // re-seed after define()
     bi_maxwellian_distribution<Real>::point_type vm = bimaxwell();
 

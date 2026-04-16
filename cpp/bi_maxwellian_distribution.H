@@ -61,6 +61,9 @@ template <typename RealType= double> class bi_maxwellian_distribution
         RealType m_maxNormalizedVelocity;
     };
 
+    // ====================================================================
+    // Construction
+    // ====================================================================
     bi_maxwellian_distribution() : m_params(), m_gen(std::random_device{}()), m_standardNormal(RealType(0.0), RealType(1.0)) {}
 
     explicit bi_maxwellian_distribution(RealType theta_perp, RealType theta_par= RealType(1.0),
@@ -78,6 +81,9 @@ template <typename RealType= double> class bi_maxwellian_distribution
         define(params);
     }
 
+    // ====================================================================
+    // Bulk configuration
+    // ====================================================================
     void define(const param_type &params)
     {
         m_params= params;
@@ -100,10 +106,40 @@ template <typename RealType= double> class bi_maxwellian_distribution
         define(theta_perp, theta_par, ub, max_normalized_velocity);
     }
 
+    // ====================================================================
+    // Individual parameter setters
+    // ====================================================================
+    void theta_perp(RealType value)
+    {
+        define(value, m_params.theta_par(), m_params.ub(), m_params.max_normalized_velocity());
+    }
+
+    void theta_par(RealType value)
+    {
+        define(m_params.theta_perp(), value, m_params.ub(), m_params.max_normalized_velocity());
+    }
+
+    void ub(const point_type &value)
+    {
+        define(m_params.theta_perp(), m_params.theta_par(), value,
+               m_params.max_normalized_velocity());
+    }
+
+    void max_normalized_velocity(RealType value)
+    {
+        define(m_params.theta_perp(), m_params.theta_par(), m_params.ub(), value);
+    }
+
+    // ====================================================================
+    // Random engine control
+    // ====================================================================
     void seed(int s) { applySeed(m_gen, s); }
 
     void reset() { m_standardNormal.reset(); }
 
+    // ====================================================================
+    // Sampling
+    // ====================================================================
     template <typename GeneratorType> result_type operator()(GeneratorType &gen)
     {
         return (*this)(gen, m_params);
@@ -154,15 +190,22 @@ template <typename RealType= double> class bi_maxwellian_distribution
                                  "rejection sampling exceeded internal attempt limit");
     }
 
+    // ====================================================================
+    // Parameter access
+    // ====================================================================
     param_type param() const { return m_params; }
     void param(const param_type &params) { define(params); }
 
     RealType theta_perp() const { return m_params.theta_perp(); }
     RealType theta_par() const { return m_params.theta_par(); }
+    point_type ub() const { return m_params.ub(); }
     RealType max_normalized_velocity() const { return m_params.max_normalized_velocity(); }
 
-    // Helper function: transform local velocity components to global Cartesian coordinates
-    // given parallel direction ub.
+    // ====================================================================
+    // Geometry helper
+    // ====================================================================
+    // Transform local velocity components to global Cartesian coordinates given the parallel
+    // direction ub.
     point_type rotate_from_fieldAligned_frame(const point_type &local, const point_type &ub) const
     {
         const RealType kZero= RealType(0.0);
@@ -214,6 +257,9 @@ template <typename RealType= double> class bi_maxwellian_distribution
         return point;
     }
 
+    // ====================================================================
+    // Comparison
+    // ====================================================================
     bool operator==(const bi_maxwellian_distribution &other) const
     {
         return m_params == other.m_params;
@@ -222,6 +268,9 @@ template <typename RealType= double> class bi_maxwellian_distribution
     bool operator!=(const bi_maxwellian_distribution &other) const { return !(*this == other); }
 
   private:
+    // ====================================================================
+    // Internal helpers
+    // ====================================================================
     static void applySeed(std::mt19937 &gen, int s)
     {
         if (s < 0)

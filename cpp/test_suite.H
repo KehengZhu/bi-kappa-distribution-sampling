@@ -178,7 +178,32 @@ static int test_define_bikappa()
         std::cout << "  D2 define(param_type): " << (ok ? "PASS" : "FAIL") << std::endl;
     }
 
-    // D3: redefine with larger theta_par – mean |vz| should scale proportionally
+    // D3: individual setters update the canonical parameter state
+    {
+        bi_kappa_distribution<TestReal> dist;
+        bi_kappa_distribution<TestReal>::point_type ub= {TestReal(1.0), TestReal(2.0),
+                                                         TestReal(3.0)};
+        dist.define(TestReal(2.0), TestReal(1.0), TestReal(1.0));
+        dist.kappa(TestReal(5.0));
+        dist.theta_perp(TestReal(1.5));
+        dist.theta_par(TestReal(2.5));
+        dist.ub(ub);
+        dist.max_normalized_velocity(TestReal(7.0));
+
+        bi_kappa_distribution<TestReal>::param_type params= dist.param();
+        bool ok= (dist.kappa() == TestReal(5.0)) && (dist.theta_perp() == TestReal(1.5)) &&
+                 (dist.theta_par() == TestReal(2.5)) && (dist.ub() == ub) &&
+                 (dist.max_normalized_velocity() == TestReal(7.0)) &&
+                 (params.kappa() == TestReal(5.0)) &&
+                 (params.theta_perp() == TestReal(1.5)) &&
+                 (params.theta_par() == TestReal(2.5)) && (params.ub() == ub) &&
+                 (params.max_normalized_velocity() == TestReal(7.0));
+        all_ok= all_ok && ok;
+        std::cout << "  D3 individual setters update params: " << (ok ? "PASS" : "FAIL")
+                  << std::endl;
+    }
+
+    // D4: redefine with larger theta_par – mean |vz| should scale proportionally
     {
         const unsigned int seed= 42u;
         const int n= 2000;
@@ -204,7 +229,7 @@ static int test_define_bikappa()
         TestReal ratio= (vz_sum_1 > TestReal(0.0)) ? vz_sum_2 / vz_sum_1 : TestReal(0.0);
         bool ok= (ratio > TestReal(3.0)) && (ratio < TestReal(8.0));
         all_ok= all_ok && ok;
-        std::cout << "  D3 redefine scales vz (ratio=" << ratio << "): "
+        std::cout << "  D4 redefine scales vz (ratio=" << ratio << "): "
                   << (ok ? "PASS" : "FAIL") << std::endl;
     }
 
@@ -240,7 +265,30 @@ static int test_define_bimaxwellian()
         std::cout << "  D2 define(param_type): " << (ok ? "PASS" : "FAIL") << std::endl;
     }
 
-    // D3: redefine with larger theta_perp – mean |vx| should scale proportionally
+    // D3: individual setters update the canonical parameter state
+    {
+        bi_maxwellian_distribution<TestReal> dist;
+        bi_maxwellian_distribution<TestReal>::point_type ub= {TestReal(3.0), TestReal(1.0),
+                                                              TestReal(4.0)};
+        dist.define(TestReal(1.0), TestReal(1.0));
+        dist.theta_perp(TestReal(2.5));
+        dist.theta_par(TestReal(4.5));
+        dist.ub(ub);
+        dist.max_normalized_velocity(TestReal(8.0));
+
+        bi_maxwellian_distribution<TestReal>::param_type params= dist.param();
+        bool ok= (dist.theta_perp() == TestReal(2.5)) &&
+                 (dist.theta_par() == TestReal(4.5)) && (dist.ub() == ub) &&
+                 (dist.max_normalized_velocity() == TestReal(8.0)) &&
+                 (params.theta_perp() == TestReal(2.5)) &&
+                 (params.theta_par() == TestReal(4.5)) && (params.ub() == ub) &&
+                 (params.max_normalized_velocity() == TestReal(8.0));
+        all_ok= all_ok && ok;
+        std::cout << "  D3 individual setters update params: " << (ok ? "PASS" : "FAIL")
+                  << std::endl;
+    }
+
+    // D4: redefine with larger theta_perp – mean |vx| should scale proportionally
     {
         const unsigned int seed= 42u;
         const int n= 2000;
@@ -265,7 +313,7 @@ static int test_define_bimaxwellian()
         TestReal ratio= (vx_sum_1 > TestReal(0.0)) ? vx_sum_2 / vx_sum_1 : TestReal(0.0);
         bool ok= (ratio > TestReal(3.0)) && (ratio < TestReal(8.0));
         all_ok= all_ok && ok;
-        std::cout << "  D3 redefine scales vx (ratio=" << ratio << "): "
+    std::cout << "  D4 redefine scales vx (ratio=" << ratio << "): "
                   << (ok ? "PASS" : "FAIL") << std::endl;
     }
 
