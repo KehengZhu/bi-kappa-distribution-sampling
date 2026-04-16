@@ -167,6 +167,18 @@ template <typename RealType= double> class bi_kappa_distribution
     }
 
     // ====================================================================
+    // Parameter access
+    // ====================================================================
+    param_type param() const { return m_params; }
+    void param(const param_type &params) { define(params); }
+
+    RealType kappa() const { return m_params.kappa(); }
+    RealType theta_perp() const { return m_params.theta_perp(); }
+    RealType theta_par() const { return m_params.theta_par(); }
+    point_type ub() const { return m_params.ub(); }
+    RealType max_normalized_velocity() const { return m_params.max_normalized_velocity(); }
+
+    // ====================================================================
     // Random engine control
     // ====================================================================
     void seed(int s) { applySeed(m_gen, s); }
@@ -251,18 +263,6 @@ template <typename RealType= double> class bi_kappa_distribution
         throw std::runtime_error("failed to sample velocity under max_normalized_velocity cap: "
                                  "rejection sampling exceeded internal attempt limit");
     }
-
-    // ====================================================================
-    // Parameter access
-    // ====================================================================
-    param_type param() const { return m_params; }
-    void param(const param_type &params) { define(params); }
-
-    RealType kappa() const { return m_params.kappa(); }
-    RealType theta_perp() const { return m_params.theta_perp(); }
-    RealType theta_par() const { return m_params.theta_par(); }
-    point_type ub() const { return m_params.ub(); }
-    RealType max_normalized_velocity() const { return m_params.max_normalized_velocity(); }
 
     // ====================================================================
     // Geometry helper
