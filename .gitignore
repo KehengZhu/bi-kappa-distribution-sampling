@@ -67,3 +67,14 @@ cpp/p/
 
 # vscode settings
 .vscode
+
+# Locally-installed Claude Code skills (large vendored asset bundles)
+.claude/skills/
+
+# overleaf project
+paper/overleaf
+
+DISTRIBUTION_NOTES.md
+CLAUDE.md
+
+uv.lock
