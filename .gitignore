@@ -78,3 +78,5 @@ DISTRIBUTION_NOTES.md
 CLAUDE.md
 
 uv.lock
+.DS_Store
+.clang-format
