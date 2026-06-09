@@ -32,7 +32,6 @@ var NAVTREE =
     [ "Tests", "index.html#autotoc_md6", null ],
     [ "Documentation", "index.html#autotoc_md7", null ],
     [ "License", "index.html#autotoc_md8", null ],
-    [ "uniform_theta", "md_python_2uniform__theta.html", null ],
     [ "Usage Examples", "usage.html", [
       [ "Building and running the demo", "usage.html#usage_build", null ],
       [ "Bi-kappa velocity samples", "usage.html#usage_bikappa", null ],
