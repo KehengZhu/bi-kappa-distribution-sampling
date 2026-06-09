@@ -1,5 +1,7 @@
 # bi-kappa
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20617011.svg)](https://doi.org/10.5281/zenodo.20617011)
+
 Monte Carlo particle samplers for plasma **velocity** and **position** distributions, in C++ and Python.
 
 - **C++** (`cpp/`) — header-only samplers: bi-kappa & bi-Maxwellian velocities, plus rejection samplers for any energy or spatial density you define.
