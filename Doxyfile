@@ -21,10 +21,13 @@ GENERATE_LATEX         = NO
 #---------------------------------------------------------------------------
 # Inputs
 #---------------------------------------------------------------------------
-INPUT                  = cpp python README.md
+INPUT                  = cpp python README.md usage.dox
 FILE_PATTERNS          = *.H *.cpp *.py *.md
 RECURSIVE              = YES
 USE_MDFILE_AS_MAINPAGE = README.md
+
+# Files referenced by \include / \snippet in usage.dox
+EXAMPLE_PATH           = cpp
 
 #---------------------------------------------------------------------------
 # What to document  (public API reference; hide internals)

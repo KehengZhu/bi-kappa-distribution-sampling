@@ -1,0 +1,176 @@
+/**
+\page usage Usage Examples
+
+Practical, copy-pasteable recipes for the four samplers. Every snippet uses
+`Real = double`; substitute `float` or your project's `Real` as needed. All
+generators follow the same lifecycle: **construct → `define(...)` → call**.
+
+\tableofcontents
+
+\section usage_build Building and running the demo
+
+The bundled driver runs the test suite and writes 100k samples from each
+generator to `samples_*.txt`:
+
+\code{.sh}
+cd cpp
+make
+./main.exe
+\endcode
+
+\section usage_bikappa Bi-kappa velocity samples
+
+Sample a 3D bi-kappa velocity distribution, anisotropic about the field
+direction `ub`, and stream the samples to a file.
+
+\code{.cpp}
+#include "bi_kappa_distribution.H"
+#include <fstream>
+using Real = double;
+
+bi_kappa_distribution<Real> biKappa;
+//             kappa  theta_perp  theta_par  ub          cap     seed
+biKappa.define(2.0,   1.0,        2.0,       {0, 0, 1},  100.0,  20030410);
+
+std::ofstream out("samples_bikappa.txt");
+for (int i = 0; i < 100000; ++i) {
+    bi_kappa_distribution<Real>::point_type v = biKappa();   // {vx, vy, vz}, global frame
+    out << v[0] << ' ' << v[1] << ' ' << v[2] << '\n';
+}
+\endcode
+
+\section usage_bimaxwell Bi-Maxwellian velocity samples
+
+Same pattern, without the `kappa` parameter.
+
+\code{.cpp}
+#include "bi_maxwellian_distribution.H"
+using Real = double;
+
+bi_maxwellian_distribution<Real> biMaxwell;
+//               theta_perp  theta_par  ub          cap    seed
+biMaxwell.define(1.0,        2.0,       {0, 0, 1},  20.0,  20030410);
+
+bi_maxwellian_distribution<Real>::point_type v = biMaxwell();
+\endcode
+
+\section usage_reproducible Reproducible runs (seeding)
+
+Each sampler owns an internal `std::mt19937`. Seed it for byte-for-byte
+reproducible sequences; re-seeding with the same value restarts the stream.
+
+\code{.cpp}
+bi_kappa_distribution<Real> dist;
+
+// (a) seed as the last define() argument (bi_kappa only):
+dist.define(2.0, 1.0, 2.0, {0, 0, 1}, 20.0, /*seed*/ 55555);
+
+// (b) or seed any time after define() (all samplers):
+dist.define(2.0, 1.0, 2.0);
+dist.seed(55555);            // same seed  -> identical sequence
+dist.seed(-1);               // negative   -> unpredictable seed from std::random_device
+\endcode
+
+\section usage_external_rng Sharing one RNG across samplers
+
+Pass your own `std::mt19937` to `operator()` when several samplers should draw
+from a single stream (e.g. for coordinated reproducibility).
+
+\code{.cpp}
+#include <random>
+std::mt19937 gen(42u);
+
+bi_kappa_distribution<Real> perp, par;
+perp.define(2.0, 1.0, 1.0);
+par.define (2.0, 1.0, 5.0);
+
+auto vp = perp(gen);   // both consume the same gen
+auto vq = par (gen);
+\endcode
+
+\section usage_redefine Reconfiguring a sampler
+
+Reconfigure everything with `define(...)`, or change one parameter at a time
+with the convenience setters — each setter re-validates the full parameter set.
+
+\code{.cpp}
+bi_kappa_distribution<Real> dist;
+dist.define(2.0, 1.0, 1.0);     // initial configuration
+
+dist.kappa(5.0);                // change one field...
+dist.theta_par(2.5);            // ...each rebuilds + re-validates
+dist.ub({1, 2, 3});
+
+dist.define(3.0, 1.5, 2.5, {0, 0, 1}, 20.0);   // or replace the whole config at once
+\endcode
+
+\section usage_velocity Custom energy distribution
+
+`general_velocity_generator` draws a speed from any energy PDF `f(E)` you
+supply (by rejection sampling) and assigns an isotropic 3D direction, with
+`E = ½·mass·|V|²`.
+
+\code{.cpp}
+#include "general_velocity_generator.H"
+#include <cmath>
+using Real = double;
+
+auto fE = [](Real E) -> Real { return std::exp(-E); };   // any positive f(E)
+
+general_velocity_generator<Real> velGen;
+//            f    E_min  E_max  mass
+velGen.define(fE,  0.0,   20.0,  1.0);
+velGen.seed(20030410);
+
+general_velocity_generator<Real>::point_type v = velGen();
+\endcode
+
+\section usage_position Custom spatial density
+
+`general_position_generator` draws positions in 1D/2D/3D from any density
+`rho(x)` by rejection sampling in an axis-aligned box. The returned point is a
+`std::vector<Real>` of length `dimension`.
+
+\code{.cpp}
+#include "general_position_generator.H"
+#include <cmath>
+using Real = double;
+using pos_t = general_position_generator<Real>::point_type;   // std::vector<Real>
+
+auto rho = [](const pos_t& x) -> Real { return 1.0 + std::sin(x[0]) * std::sin(x[1]); };
+
+general_position_generator<Real> posGen;
+const Real pi = 3.14159265358979;
+//            dim  lower         upper        density
+posGen.define(2,   {-pi, -pi},   {pi, pi},    rho);
+posGen.seed(20030410);
+
+pos_t x = posGen();   // length-2 vector
+\endcode
+
+\section usage_errors Error handling
+
+- The two general generators throw `std::runtime_error` if called before
+  `define(...)`.
+- `define(...)` throws `std::invalid_argument` on bad input (e.g. `kappa <= 0.5`,
+  non-positive `theta`/`cap`, `E_min >= E_max`, `dimension` outside 1–3).
+- Velocity samplers throw `std::runtime_error` if the cap rejection loop fails
+  10⁶ times in a row.
+
+\code{.cpp}
+try {
+    general_velocity_generator<Real> g;
+    auto v = g();                 // not define()d yet -> throws
+} catch (const std::runtime_error& e) {
+    // handle "must be define(...)d before sampling"
+}
+\endcode
+
+\section usage_full Complete worked example
+
+The full driver below configures all four generators and writes their samples.
+See `test_suite.H` for further patterns (reproducible seeding, cap enforcement,
+and redefinition).
+
+\include main.cpp
+*/

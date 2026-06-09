@@ -13,6 +13,14 @@
  *
  * Components are independent Gaussians with anisotropic thermal widths:
  * Vx ~ N(0, theta_perp^2/2), Vy ~ N(0, theta_perp^2/2), Vz ~ N(0, theta_par^2/2).
+ *
+ * @code{.cpp}
+ * bi_maxwellian_distribution<double> dist;
+ * dist.define(1.0, 2.0, {0, 0, 1}, 20.0, 12345); // theta_perp, theta_par, ub, cap, seed
+ * auto v = dist();                                // {vx, vy, vz}, global frame
+ * @endcode
+ *
+ * @see \ref usage for more recipes (seeding, external RNG, reconfiguration).
  */
 template <typename RealType= double> class bi_maxwellian_distribution
 {

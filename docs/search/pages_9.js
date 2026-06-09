@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['tests_0',['Tests',['../index.html#autotoc_md6',1,'']]],
-  ['the_20four_20samplers_1',['The four samplers',['../index.html#autotoc_md3',1,'']]]
+  ['maxwellian_20velocity_20samples_0',['Bi-Maxwellian velocity samples',['../usage.html#usage_bimaxwell',1,'']]]
 ];

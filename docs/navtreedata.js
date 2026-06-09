@@ -33,6 +33,18 @@ var NAVTREE =
     [ "Documentation", "index.html#autotoc_md7", null ],
     [ "License", "index.html#autotoc_md8", null ],
     [ "uniform_theta", "md_python_2uniform__theta.html", null ],
+    [ "Usage Examples", "usage.html", [
+      [ "Building and running the demo", "usage.html#usage_build", null ],
+      [ "Bi-kappa velocity samples", "usage.html#usage_bikappa", null ],
+      [ "Bi-Maxwellian velocity samples", "usage.html#usage_bimaxwell", null ],
+      [ "Reproducible runs (seeding)", "usage.html#usage_reproducible", null ],
+      [ "Sharing one RNG across samplers", "usage.html#usage_external_rng", null ],
+      [ "Reconfiguring a sampler", "usage.html#usage_redefine", null ],
+      [ "Custom energy distribution", "usage.html#usage_velocity", null ],
+      [ "Custom spatial density", "usage.html#usage_position", null ],
+      [ "Error handling", "usage.html#usage_errors", null ],
+      [ "Complete worked example", "usage.html#usage_full", null ]
+    ] ],
     [ "Namespaces", "namespaces.html", [
       [ "Namespace List", "namespaces.html", "namespaces_dup" ],
       [ "Namespace Members", "namespacemembers.html", [

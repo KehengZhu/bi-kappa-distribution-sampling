@@ -1,17 +1,15 @@
 var searchData=
 [
-  ['test_5fdefine_5fbikappa_0',['test_define_bikappa',['../test__suite_8_h.html#a46df522fbf077c86bc66ebcbaef2e4d6',1,'test_suite.H']]],
-  ['test_5fdefine_5fbimaxwellian_1',['test_define_bimaxwellian',['../test__suite_8_h.html#a4228003d9b8dbb6330996dc06045a30f',1,'test_suite.H']]],
-  ['test_5fdefine_5fgeneral_5fposition_2',['test_define_general_position',['../test__suite_8_h.html#a11204538085a4e01ecf578f7378e832e',1,'test_suite.H']]],
-  ['test_5fdefine_5fgeneral_5fvelocity_3',['test_define_general_velocity',['../test__suite_8_h.html#a49425f4af3c406fc231df39318728180',1,'test_suite.H']]],
-  ['test_5fmax_5fnormalized_5fvelocity_5fbikappa_4',['test_max_normalized_velocity_bikappa',['../test__suite_8_h.html#ab3564cecae2053a9fef7dcb109367de4',1,'test_suite.H']]],
-  ['test_5fmax_5fnormalized_5fvelocity_5fbimaxwellian_5',['test_max_normalized_velocity_bimaxwellian',['../test__suite_8_h.html#a0796d4fd4193a1c743aa97df9e8d3adb',1,'test_suite.H']]],
-  ['test_5fseed_5fapi_6',['test_seed_api',['../test__suite_8_h.html#a7894413556c13f99c59a535f63272aa2',1,'test_suite.H']]],
-  ['test_5fsuite_2eh_7',['test_suite.H',['../test__suite_8_h.html',1,'']]],
-  ['test_5ftransform_8',['test_transform',['../test__suite_8_h.html#a1e0fb244a50f1c3e8fd048f809ed816e',1,'test_suite.H']]],
-  ['testreal_9',['TestReal',['../test__suite_8_h.html#a0bbb694e3515353d2a22f098eccad628',1,'test_suite.H']]],
-  ['tests_10',['Tests',['../index.html#autotoc_md6',1,'']]],
-  ['the_20four_20samplers_11',['The four samplers',['../index.html#autotoc_md3',1,'']]],
-  ['theta_5fpar_12',['theta_par',['../classbi__kappa__distribution_1_1param__type.html#a3042417fe47ef29891a013acd5f66f63',1,'bi_kappa_distribution::param_type::theta_par()'],['../classbi__kappa__distribution.html#a971b78635ab0856bc35c9c9493ffa128',1,'bi_kappa_distribution::theta_par(RealType value)'],['../classbi__kappa__distribution.html#a3bfc76c0214f09eceef88469ae3a7277',1,'bi_kappa_distribution::theta_par() const'],['../classbi__maxwellian__distribution_1_1param__type.html#a831a7a7dd1bc7fa62056b7c6b06454a4',1,'bi_maxwellian_distribution::param_type::theta_par()'],['../classbi__maxwellian__distribution.html#af34264ec5592312b6b21429055d5eb8a',1,'bi_maxwellian_distribution::theta_par(RealType value)'],['../classbi__maxwellian__distribution.html#a75e231f0b56f4f4d9075580f4d823ab9',1,'bi_maxwellian_distribution::theta_par() const']]],
-  ['theta_5fperp_13',['theta_perp',['../classbi__kappa__distribution_1_1param__type.html#aa8277f36dd7b8729d6d530fdb71165d6',1,'bi_kappa_distribution::param_type::theta_perp()'],['../classbi__kappa__distribution.html#aa3adfef659bf1c10d191926903cd69df',1,'bi_kappa_distribution::theta_perp(RealType value)'],['../classbi__kappa__distribution.html#ac9127046147c88fbfe6b382d233043b0',1,'bi_kappa_distribution::theta_perp() const'],['../classbi__maxwellian__distribution_1_1param__type.html#a6d2b8921dda616403ceeb4df89415e0f',1,'bi_maxwellian_distribution::param_type::theta_perp()'],['../classbi__maxwellian__distribution.html#ab254252bace3eb7465b74f5a8aa5fc82',1,'bi_maxwellian_distribution::theta_perp(RealType value)'],['../classbi__maxwellian__distribution.html#a3fb8333a4fb95552715b39fb5405ed5c',1,'bi_maxwellian_distribution::theta_perp() const']]]
+  ['readme_2emd_0',['README.md',['../_r_e_a_d_m_e_8md.html',1,'']]],
+  ['real_1',['Real',['../main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907',1,'main.cpp']]],
+  ['reconfiguring_20a_20sampler_2',['Reconfiguring a sampler',['../usage.html#usage_redefine',1,'']]],
+  ['reproducible_20runs_20seeding_3',['Reproducible runs (seeding)',['../usage.html#usage_reproducible',1,'']]],
+  ['reset_4',['reset',['../classbi__kappa__distribution.html#a2f8d649fef1d5532d6bd4e3bc45324a8',1,'bi_kappa_distribution::reset()'],['../classbi__maxwellian__distribution.html#af1edb7ef9fd3a2857ee273a3706a2af2',1,'bi_maxwellian_distribution::reset()'],['../classgeneral__position__generator.html#a5d5e62e8eed5496bfc5a599d31004f6f',1,'general_position_generator::reset()'],['../classgeneral__velocity__generator.html#a6eb5239cc6bbfbe61815f4750914d4b0',1,'general_velocity_generator::reset()']]],
+  ['result_5ftype_5',['result_type',['../classbi__kappa__distribution.html#a64162f45ffce3f90655f46c15bb14c30',1,'bi_kappa_distribution::result_type'],['../classbi__maxwellian__distribution.html#abc0d31b3b84ff3f7a4ff253f577fd375',1,'bi_maxwellian_distribution::result_type'],['../classgeneral__position__generator.html#acfba11b9d52cd35e108d4f19bf8685de',1,'general_position_generator::result_type'],['../classgeneral__velocity__generator.html#ae395ee3ce03eb8d37e3b9365b247e3fe',1,'general_velocity_generator::result_type']]],
+  ['rng_6',['rng',['../namespacesphere__sampling__bias.html#af6ee1e3d4a60d80705ae2c37c4fe5af3',1,'sphere_sampling_bias']]],
+  ['rng_20across_20samplers_7',['Sharing one RNG across samplers',['../usage.html#usage_external_rng',1,'']]],
+  ['rotate_5ffrom_5ffieldaligned_5fframe_8',['rotate_from_fieldAligned_frame',['../classbi__kappa__distribution.html#a93ef6fadd952c439e57c187149ab75ee',1,'bi_kappa_distribution::rotate_from_fieldAligned_frame()'],['../classbi__maxwellian__distribution.html#a40b30a374cad055ec042049a2a9d49e0',1,'bi_maxwellian_distribution::rotate_from_fieldAligned_frame()']]],
+  ['run_5fall_5ftests_9',['run_all_tests',['../test__suite_8_h.html#af13f216ba3cfa17d37698394e4a39826',1,'test_suite.H']]],
+  ['running_20the_20demo_10',['Building and running the demo',['../usage.html#usage_build',1,'']]],
+  ['runs_20seeding_11',['Reproducible runs (seeding)',['../usage.html#usage_reproducible',1,'']]]
 ];

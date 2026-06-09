@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['uniform_5ftheta_0',['uniform_theta',['../md_python_2uniform__theta.html',1,'']]]
+  ['one_20rng_20across_20samplers_0',['Sharing one RNG across samplers',['../usage.html#usage_external_rng',1,'']]]
 ];

@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['visualize_0',['Visualize',['../index.html#autotoc_md5',1,'']]]
+  ['python_0',['Quick start — Python',['../index.html#autotoc_md4',1,'']]]
 ];

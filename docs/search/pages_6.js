@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['python_0',['Quick start — Python',['../index.html#autotoc_md4',1,'']]]
+  ['handling_0',['Error handling',['../usage.html#usage_errors',1,'']]]
 ];

@@ -13,6 +13,16 @@
  * @brief Samples velocities from a user-defined energy distribution f(E).
  *
  * The sampled velocity satisfies E = m * |V|^2 / 2 and direction is isotropic in 3D.
+ *
+ * @code{.cpp}
+ * auto fE = [](double E){ return std::exp(-E); };  // any positive f(E)
+ * general_velocity_generator<double> gen;
+ * gen.define(fE, 0.0, 20.0, 1.0);                   // f, E_min, E_max, mass
+ * gen.seed(12345);
+ * auto v = gen();
+ * @endcode
+ *
+ * @see \ref usage for more recipes.
  */
 template <typename RealType= double> class general_velocity_generator
 {

@@ -150,9 +150,18 @@ Public Member Functions</h2></td></tr>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;typename RealType = double&gt;<br />
 class general_velocity_generator&lt; RealType &gt;</div><p>Samples velocities from a user-defined energy distribution f(E). </p>
-<p>The sampled velocity satisfies E = m * |V|^2 / 2 and direction is isotropic in 3D. </p>
+<p>The sampled velocity satisfies E = m * |V|^2 / 2 and direction is isotropic in 3D.</p>
+<div class="fragment"><div class="line"><span class="keyword">auto</span> fE = [](<span class="keywordtype">double</span> E){ <span class="keywordflow">return</span> std::exp(-E); };  <span class="comment">// any positive f(E)</span></div>
+<div class="line"><a class="code hl_class" href="classgeneral__velocity__generator.html">general_velocity_generator&lt;double&gt;</a> gen;</div>
+<div class="line">gen.<a class="code hl_function" href="#a4d1c53da5e695cce1467746cbe41cc21">define</a>(fE, 0.0, 20.0, 1.0);                   <span class="comment">// f, E_min, E_max, mass</span></div>
+<div class="line">gen.<a class="code hl_function" href="#a2e42f5bd2170a5adc0a2382071574935">seed</a>(12345);</div>
+<div class="line"><span class="keyword">auto</span> v = gen();</div>
+<div class="ttc" id="aclassgeneral__velocity__generator_html"><div class="ttname"><a href="classgeneral__velocity__generator.html">general_velocity_generator</a></div><div class="ttdoc">Samples velocities from a user-defined energy distribution f(E).</div><div class="ttdef"><b>Definition</b> <a href="general__velocity__generator_8_h_source.html#l00027">general_velocity_generator.H:28</a></div></div>
+<div class="ttc" id="aclassgeneral__velocity__generator_html_a2e42f5bd2170a5adc0a2382071574935"><div class="ttname"><a href="#a2e42f5bd2170a5adc0a2382071574935">general_velocity_generator::seed</a></div><div class="ttdeci">void seed(int s)</div><div class="ttdef"><b>Definition</b> <a href="general__velocity__generator_8_h_source.html#l00109">general_velocity_generator.H:109</a></div></div>
+<div class="ttc" id="aclassgeneral__velocity__generator_html_a4d1c53da5e695cce1467746cbe41cc21"><div class="ttname"><a href="#a4d1c53da5e695cce1467746cbe41cc21">general_velocity_generator::define</a></div><div class="ttdeci">void define(energy_pdf_function energy_pdf, RealType energy_min, RealType energy_max, RealType particle_mass, int probe_points=1024, int max_reject_tries=100000)</div><div class="ttdef"><b>Definition</b> <a href="general__velocity__generator_8_h_source.html#l00052">general_velocity_generator.H:52</a></div></div>
+</div><!-- fragment --><dl class="section see"><dt>See also</dt><dd><a class="el" href="usage.html" title="Usage Examples">Usage Examples</a> for more recipes. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00017">17</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00027">27</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
 </div><a name="doc-typedef-members" id="doc-typedef-members"></a><h2 id="header-doc-typedef-members" class="groupheader">Member Typedef Documentation</h2>
 <a id="a5bcc818afc3ac416379234ba1bdccdc6" name="a5bcc818afc3ac416379234ba1bdccdc6"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a5bcc818afc3ac416379234ba1bdccdc6">&#9670;&#160;</a></span>energy_pdf_function</h2>
@@ -168,7 +177,7 @@ template&lt;typename RealType = double&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00022">22</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00032">32</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
 
 </div>
 </div>
@@ -186,7 +195,7 @@ template&lt;typename RealType = double&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00021">21</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00031">31</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
 
 </div>
 </div>
@@ -204,7 +213,7 @@ template&lt;typename RealType = double&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00020">20</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00030">30</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
 
 </div>
 </div>
@@ -234,9 +243,9 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00024">24</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00034">34</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="general__velocity__generator_8_h_source.html#l00034">general_velocity_generator()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="general__velocity__generator_8_h_source.html#l00044">general_velocity_generator()</a>.</p>
 
 </div>
 </div>
@@ -289,9 +298,9 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00034">34</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00044">44</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
 
-<p class="reference">References <a class="el" href="general__velocity__generator_8_h_source.html#l00024">general_velocity_generator()</a>, and <a class="el" href="general__velocity__generator_8_h_source.html#l00042">define()</a>.</p>
+<p class="reference">References <a class="el" href="general__velocity__generator_8_h_source.html#l00034">general_velocity_generator()</a>, and <a class="el" href="general__velocity__generator_8_h_source.html#l00052">define()</a>.</p>
 
 </div>
 </div>
@@ -345,11 +354,11 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00042">42</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00052">52</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
 
-<p class="reference">References <a class="el" href="general__velocity__generator_8_h_source.html#l00101">reset()</a>.</p>
+<p class="reference">References <a class="el" href="general__velocity__generator_8_h_source.html#l00111">reset()</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="general__velocity__generator_8_h_source.html#l00034">general_velocity_generator()</a>, <a class="el" href="main_8cpp_source.html#l00015">main()</a>, <a class="el" href="test__suite_8_h_source.html#l00327">test_define_general_velocity()</a>, and <a class="el" href="test__suite_8_h_source.html#l00700">test_seed_api()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="general__velocity__generator_8_h_source.html#l00044">general_velocity_generator()</a>, <a class="el" href="main_8cpp_source.html#l00015">main()</a>, <a class="el" href="test__suite_8_h_source.html#l00327">test_define_general_velocity()</a>, and <a class="el" href="test__suite_8_h_source.html#l00700">test_seed_api()</a>.</p>
 
 </div>
 </div>
@@ -378,7 +387,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00144">144</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00154">154</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
 
 </div>
 </div>
@@ -407,7 +416,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00143">143</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00153">153</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
 
 </div>
 </div>
@@ -436,7 +445,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00138">138</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00148">148</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
 
 </div>
 </div>
@@ -467,7 +476,7 @@ template&lt;typename GeneratorType&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00109">109</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00119">119</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
 
 </div>
 </div>
@@ -496,7 +505,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00145">145</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00155">155</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
 
 </div>
 </div>
@@ -525,7 +534,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00146">146</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00156">156</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
 
 </div>
 </div>
@@ -554,9 +563,9 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00101">101</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00111">111</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="general__velocity__generator_8_h_source.html#l00042">define()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="general__velocity__generator_8_h_source.html#l00052">define()</a>.</p>
 
 </div>
 </div>
@@ -585,7 +594,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00099">99</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00109">109</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="main_8cpp_source.html#l00015">main()</a>, and <a class="el" href="test__suite_8_h_source.html#l00700">test_seed_api()</a>.</p>
 

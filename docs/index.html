@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('index.html',''
 <li><b>C++</b> (<span class="tt">cpp/</span>) — header-only samplers: bi-kappa &amp; bi-Maxwellian velocities, plus rejection samplers for any energy or spatial density you define.</li>
 <li><b>Python</b> (<span class="tt">python/</span>) — equivalent general samplers + Jupyter notebooks to visualize the output.</li>
 </ul>
-<p>📖 <b>API reference:</b> <a href="https://kehengzhu.github.io/bi-kappa-distribution-sampling/">kehengzhu.github.io/bi-kappa-distribution-sampling</a> (full Doxygen docs — live once GitHub Pages is enabled; see DocumentationDocumentation). Locally, open <a href="docs/index.html"><span class="tt">docs/index.html</span></a> in a browser.</p>
+<p>📖 <b>API reference:</b> <a href="https://kehengzhu.github.io/bi-kappa-distribution-sampling/">kehengzhu.github.io/bi-kappa-distribution-sampling</a>. Locally, open <a href="docs/index.html"><span class="tt">docs/index.html</span></a> in a browser.</p>
 <hr  />
 <h1 class="doxsection"><a class="anchor" id="autotoc_md2"></a>
 Quick start — C++</h1>
@@ -140,8 +140,8 @@ Quick start — C++</h1>
 <div class="line"> </div>
 <div class="line"><span class="keyword">auto</span> v = dist();     <span class="comment">// v = {vx, vy, vz}, sampled in the global frame</span></div>
 <div class="ttc" id="abi__kappa__distribution_8_h_html"><div class="ttname"><a href="bi__kappa__distribution_8_h.html">bi_kappa_distribution.H</a></div></div>
-<div class="ttc" id="aclassbi__kappa__distribution_html"><div class="ttname"><a href="classbi__kappa__distribution.html">bi_kappa_distribution</a></div><div class="ttdoc">Bi-Kappa distribution class for sampling 3D velocity vectors.</div><div class="ttdef"><b>Definition</b> <a href="bi__kappa__distribution_8_h_source.html#l00019">bi_kappa_distribution.H:20</a></div></div>
-<div class="ttc" id="aclassbi__kappa__distribution_html_a138df5909e003c80dc061b63da6d1e76"><div class="ttname"><a href="classbi__kappa__distribution.html#a138df5909e003c80dc061b63da6d1e76">bi_kappa_distribution::define</a></div><div class="ttdeci">void define(const param_type &amp;params)</div><div class="ttdef"><b>Definition</b> <a href="bi__kappa__distribution_8_h_source.html#l00115">bi_kappa_distribution.H:115</a></div></div>
+<div class="ttc" id="aclassbi__kappa__distribution_html"><div class="ttname"><a href="classbi__kappa__distribution.html">bi_kappa_distribution</a></div><div class="ttdoc">Bi-Kappa distribution class for sampling 3D velocity vectors.</div><div class="ttdef"><b>Definition</b> <a href="bi__kappa__distribution_8_h_source.html#l00027">bi_kappa_distribution.H:28</a></div></div>
+<div class="ttc" id="aclassbi__kappa__distribution_html_a138df5909e003c80dc061b63da6d1e76"><div class="ttname"><a href="classbi__kappa__distribution.html#a138df5909e003c80dc061b63da6d1e76">bi_kappa_distribution::define</a></div><div class="ttdeci">void define(const param_type &amp;params)</div><div class="ttdef"><b>Definition</b> <a href="bi__kappa__distribution_8_h_source.html#l00123">bi_kappa_distribution.H:123</a></div></div>
 </div><!-- fragment --><p><em>Prerequisite: any C++11 compiler. Set <span class="tt">CXX</span> in <span class="tt">cpp/GNUmakefile</span> if not <span class="tt">g++</span>.</em></p>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md3"></a>
 The four samplers</h1>
@@ -187,12 +187,6 @@ Tests</h1>
 Documentation</h1>
 <p>The full API reference is generated from the in-source comments with <a href="https://www.doxygen.nl/">Doxygen</a> and lives in <a href="docs/"><span class="tt">docs/</span></a>.</p>
 <p><b>Read it locally</b> — open <a href="docs/index.html"><span class="tt">docs/index.html</span></a> in a browser. (Note: clicking that file on github.com shows the HTML <em>source</em>, not the rendered page — use GitHub Pages below for a live site.)</p>
-<p><b>Publish it as a website (GitHub Pages):</b></p><ol type="1">
-<li>Commit the <span class="tt">docs/</span> folder.</li>
-<li>On GitHub go to <b>Settings → Pages → Build and deployment</b>, set <b>Source: Deploy from a branch</b>, then pick <b>branch <span class="tt"><a class="el" href="main_8cpp.html#ae66f6b31b5ad750f1fe042a706a4e3d4">main</a></span>, folder <span class="tt">/docs</span></b>, and Save.</li>
-<li>After a minute the site is live at <span class="tt"><a href="https://kehengzhu.github.io/bi-kappa-distribution-sampling/">https://kehengzhu.github.io/bi-kappa-distribution-sampling/</a></span>.</li>
-</ol>
-<p>The <span class="tt">docs/.nojekyll</span> file must stay — it tells GitHub to serve Doxygen's assets unmodified.</p>
 <p><b>Regenerate after changing code or comments:</b> </p><div class="fragment"><div class="line">doxygen Doxyfile      # run from the repo root; rewrites docs/</div>
 </div><!-- fragment --><p> Install Doxygen first if needed: <span class="tt">brew install doxygen</span>.</p>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md8"></a>

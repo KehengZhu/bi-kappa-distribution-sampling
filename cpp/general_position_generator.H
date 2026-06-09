@@ -12,6 +12,16 @@
  * @brief Samples positions in 1D/2D/3D from a user density rho(x), rho(x,y), or rho(x,y,z).
  *
  * The generator uses rejection sampling in an axis-aligned box domain.
+ *
+ * @code{.cpp}
+ * auto rho = [](const std::vector<double>& x){ return 1.0 + std::sin(x[0]) * std::sin(x[1]); };
+ * general_position_generator<double> gen;
+ * gen.define(2, {-3.14159, -3.14159}, {3.14159, 3.14159}, rho); // dim, lower, upper, density
+ * gen.seed(12345);
+ * auto x = gen();   // std::vector<double> of length 2
+ * @endcode
+ *
+ * @see \ref usage for more recipes.
  */
 template <typename RealType= double> class general_position_generator
 {

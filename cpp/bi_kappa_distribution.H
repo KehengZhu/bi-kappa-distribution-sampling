@@ -14,6 +14,14 @@
  * This class follows the interface pattern of standard library distributions
  * like std::uniform_real_distribution<T>.
  *
+ * @code{.cpp}
+ * bi_kappa_distribution<double> dist;
+ * dist.define(2.0, 1.0, 2.0, {0, 0, 1}, 20.0, 12345); // kappa, theta_perp, theta_par, ub, cap, seed
+ * auto v = dist();                                     // {vx, vy, vz}, global frame
+ * @endcode
+ *
+ * @see \ref usage for more recipes (seeding, external RNG, reconfiguration).
+ *
  * @tparam RealType The floating-point type (e.g., double, float)
  */
 template <typename RealType= double> class bi_kappa_distribution

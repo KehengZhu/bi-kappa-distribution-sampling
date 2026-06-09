@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['license_0',['License',['../index.html#autotoc_md8',1,'']]]
+  ['four_20samplers_0',['The four samplers',['../index.html#autotoc_md3',1,'']]]
 ];

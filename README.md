@@ -5,7 +5,7 @@ Monte Carlo particle samplers for plasma **velocity** and **position** distribut
 - **C++** (`cpp/`) — header-only samplers: bi-kappa & bi-Maxwellian velocities, plus rejection samplers for any energy or spatial density you define.
 - **Python** (`python/`) — equivalent general samplers + Jupyter notebooks to visualize the output.
 
-📖 **API reference:** [kehengzhu.github.io/bi-kappa-distribution-sampling](https://kehengzhu.github.io/bi-kappa-distribution-sampling/) (full Doxygen docs — live once GitHub Pages is enabled; see [Documentation](#documentation)). Locally, open [`docs/index.html`](docs/index.html) in a browser.
+📖 **API reference:** [kehengzhu.github.io/bi-kappa-distribution-sampling](https://kehengzhu.github.io/bi-kappa-distribution-sampling/). Locally, open [`docs/index.html`](docs/index.html) in a browser.
 
 ---
 
@@ -75,13 +75,6 @@ Open [`python/visualize_samples.ipynb`](python/visualize_samples.ipynb) and run 
 The full API reference is generated from the in-source comments with [Doxygen](https://www.doxygen.nl/) and lives in [`docs/`](docs/).
 
 **Read it locally** — open [`docs/index.html`](docs/index.html) in a browser. (Note: clicking that file on github.com shows the HTML *source*, not the rendered page — use GitHub Pages below for a live site.)
-
-**Publish it as a website (GitHub Pages):**
-1. Commit the `docs/` folder.
-2. On GitHub go to **Settings → Pages → Build and deployment**, set **Source: Deploy from a branch**, then pick **branch `main`, folder `/docs`**, and Save.
-3. After a minute the site is live at `https://kehengzhu.github.io/bi-kappa-distribution-sampling/`.
-
-The `docs/.nojekyll` file must stay — it tells GitHub to serve Doxygen's assets unmodified.
 
 **Regenerate after changing code or comments:**
 ```bash

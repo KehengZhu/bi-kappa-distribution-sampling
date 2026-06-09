@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['quick_20start_20—_20c_0',['Quick start — C++',['../index.html#autotoc_md2',1,'']]],
-  ['quick_20start_20—_20python_1',['Quick start — Python',['../index.html#autotoc_md4',1,'']]]
+  ['kappa_0',['bi-kappa',['../index.html',1,'']]],
+  ['kappa_20velocity_20samples_1',['Bi-kappa velocity samples',['../usage.html#usage_bikappa',1,'']]]
 ];
