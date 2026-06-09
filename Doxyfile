@@ -1,0 +1,78 @@
+# Doxygen configuration for the bi-kappa reference docs.
+# Generate with:  doxygen Doxyfile   (run from the repo root)
+# Output lands in docs/ so it can be served directly via GitHub Pages (/docs).
+
+#---------------------------------------------------------------------------
+# Project
+#---------------------------------------------------------------------------
+PROJECT_NAME           = "bi-kappa"
+PROJECT_BRIEF          = "Monte Carlo particle samplers for plasma velocity and position distributions"
+OUTPUT_LANGUAGE        = English
+
+#---------------------------------------------------------------------------
+# Output location  (./docs)
+#---------------------------------------------------------------------------
+OUTPUT_DIRECTORY       = .
+HTML_OUTPUT            = docs
+CREATE_SUBDIRS         = NO
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+
+#---------------------------------------------------------------------------
+# Inputs
+#---------------------------------------------------------------------------
+INPUT                  = cpp python README.md
+FILE_PATTERNS          = *.H *.cpp *.py *.md
+RECURSIVE              = YES
+USE_MDFILE_AS_MAINPAGE = README.md
+
+#---------------------------------------------------------------------------
+# What to document  (public API reference; hide internals)
+#---------------------------------------------------------------------------
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = NO
+EXTRACT_STATIC         = YES
+HIDE_UNDOC_MEMBERS     = NO
+HIDE_SCOPE_NAMES       = NO
+SORT_MEMBERS_CTORS_1ST = YES
+
+#---------------------------------------------------------------------------
+# Parsing  (C++ with STL, plus Python)
+#---------------------------------------------------------------------------
+JAVADOC_AUTOBRIEF      = YES
+QT_AUTOBRIEF           = YES
+OPTIMIZE_OUTPUT_FOR_C  = NO
+BUILTIN_STL_SUPPORT    = YES
+MARKDOWN_SUPPORT       = YES
+
+#---------------------------------------------------------------------------
+# Source browsing  (cross-link declarations to source, cppreference-style)
+#---------------------------------------------------------------------------
+SOURCE_BROWSER         = YES
+INLINE_SOURCES         = NO
+REFERENCED_BY_RELATION = YES
+REFERENCES_RELATION    = YES
+VERBATIM_HEADERS       = YES
+
+#---------------------------------------------------------------------------
+# HTML look  (navigation sidebar = more website-like)
+#---------------------------------------------------------------------------
+GENERATE_TREEVIEW      = YES
+DISABLE_INDEX          = NO
+FULL_SIDEBAR           = NO
+HTML_COLORSTYLE        = LIGHT
+HTML_DYNAMIC_SECTIONS  = YES
+SEARCHENGINE           = YES
+
+#---------------------------------------------------------------------------
+# Diagrams off (no graphviz dependency)
+#---------------------------------------------------------------------------
+HAVE_DOT               = NO
+CLASS_GRAPH            = YES
+
+#---------------------------------------------------------------------------
+# Warnings / noise
+#---------------------------------------------------------------------------
+QUIET                  = YES
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = NO
