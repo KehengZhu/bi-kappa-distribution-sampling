@@ -301,7 +301,7 @@ Complete worked example</h1>
 <div class="line">    <span class="keyword">const</span> <a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> kappa = 2.0;</div>
 <div class="line">    <span class="keyword">const</span> <a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> theta_perp = 1.0;</div>
 <div class="line">    <span class="keyword">const</span> <a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> theta_par = 2.0;</div>
-<div class="line">    <span class="keyword">const</span> <span class="keywordtype">int</span> n_particle = 100000;</div>
+<div class="line">    <span class="keyword">const</span> <span class="keywordtype">int</span> n_particle = 200000;</div>
 <div class="line"> </div>
 <div class="line">    <span class="keywordflow">if</span> (<a class="code hl_function" href="test__suite_8_h.html#af13f216ba3cfa17d37698394e4a39826">run_all_tests</a>() != 0)</div>
 <div class="line">    {</div>
@@ -333,13 +333,21 @@ Complete worked example</h1>
 <div class="line">        std::cout &lt;&lt; <span class="stringliteral">&quot;wrote &quot;</span> &lt;&lt; n_particle &lt;&lt; <span class="stringliteral">&quot; samples to samples_bimaxwellian.txt&quot;</span> &lt;&lt; std::endl;</div>
 <div class="line">    }</div>
 <div class="line"> </div>
-<div class="line">    std::cout &lt;&lt; <span class="stringliteral">&quot;\n=== Example 3: general_velocity_generator (g(w)=exp(-w/2), w=|v|^2) ===&quot;</span></div>
+<div class="line">    std::cout &lt;&lt; <span class="stringliteral">&quot;\n=== Example 3: general_velocity_generator (isotropic Maxwellian via w=|v|^2) ===&quot;</span></div>
 <div class="line">              &lt;&lt; std::endl;</div>
-<div class="line">    <span class="keyword">auto</span> speedSqPdf = [](<a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> w) -&gt; <a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> { <span class="keywordflow">return</span> std::exp(-<a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a>(0.5) * w); };</div>
+<div class="line">    <span class="comment">// g(w) = sqrt(w) * exp(-w/theta^2) with w = |v|^2 is the speed-squared density</span></div>
+<div class="line">    <span class="comment">// of an isotropic Maxwellian of thermal speed theta: with dw = 2|v| d|v| it maps</span></div>
+<div class="line">    <span class="comment">// to the Maxwell speed pdf ~ |v|^2 exp(-|v|^2/theta^2), i.e. each Cartesian</span></div>
+<div class="line">    <span class="comment">// component is N(0, theta^2/2). theta = theta_perp = 1 here, and w_max = 25</span></div>
+<div class="line">    <span class="comment">// truncates at |v| = 5 theta.</span></div>
+<div class="line">    <span class="keyword">const</span> <a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> theta_iso = theta_perp;</div>
+<div class="line">    <span class="keyword">auto</span> speedSqPdf = [theta_iso](<a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> w) -&gt; <a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> {</div>
+<div class="line">        <span class="keywordflow">return</span> std::sqrt(w) * std::exp(-w / (theta_iso * theta_iso));</div>
+<div class="line">    };</div>
 <div class="line">    <a class="code hl_class" href="classgeneral__velocity__generator.html">general_velocity_generator&lt;Real&gt;</a> velocityGen;</div>
 <div class="line">    velocityGen.<a class="code hl_function" href="classgeneral__velocity__generator.html#af5fe31734db1a1197f95aecb99451aa1">define</a>(speedSqPdf,</div>
 <div class="line">                       <span class="keyword">static_cast&lt;</span><a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a><span class="keyword">&gt;</span>(0.0),</div>
-<div class="line">                       <span class="keyword">static_cast&lt;</span><a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a><span class="keyword">&gt;</span>(40.0));</div>
+<div class="line">                       <span class="keyword">static_cast&lt;</span><a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a><span class="keyword">&gt;</span>(25.0));</div>
 <div class="line">    velocityGen.<a class="code hl_function" href="classgeneral__velocity__generator.html#a2e42f5bd2170a5adc0a2382071574935">seed</a>(20030410);</div>
 <div class="line">    {</div>
 <div class="line">        std::ofstream out(<span class="stringliteral">&quot;samples_general_velocity.txt&quot;</span>);</div>
@@ -370,15 +378,22 @@ Complete worked example</h1>
 <div class="line">                  &lt;&lt; std::endl;</div>
 <div class="line">    }</div>
 <div class="line"> </div>
-<div class="line">    std::cout &lt;&lt; <span class="stringliteral">&quot;\n=== Example 5: field_aligned_velocity_generator (g(w)=exp(-w/2), B=z, +) ===&quot;</span></div>
+<div class="line">    std::cout &lt;&lt; <span class="stringliteral">&quot;\n=== Example 5: field_aligned_velocity_generator (beam along B=(1,1,1)) ===&quot;</span></div>
 <div class="line">              &lt;&lt; std::endl;</div>
-<div class="line">    <span class="keyword">auto</span> parallelSpeedSqPdf = [](<a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> w) -&gt; <a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> { <span class="keywordflow">return</span> std::exp(-<a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a>(0.5) * w); };</div>
+<div class="line">    <span class="comment">// g(w_par) = exp(-w_par/theta_par^2) with w_par = v_par^2 gives the Rayleigh</span></div>
+<div class="line">    <span class="comment">// parallel beam p(v_par) = (2 v_par/theta_par^2) exp(-v_par^2/theta_par^2),</span></div>
+<div class="line">    <span class="comment">// v_par &gt;= 0, peaking at v_par = theta_par/sqrt(2). The perpendicular plane is</span></div>
+<div class="line">    <span class="comment">// Maxwellian with thermal speed theta_perp. B is tilted off the axes so the</span></div>
+<div class="line">    <span class="comment">// field-aligned rotation is exercised; w_max = 100 truncates at v_par = 5 theta_par.</span></div>
+<div class="line">    <span class="keyword">auto</span> parallelSpeedSqPdf = [theta_par](<a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> w) -&gt; <a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> {</div>
+<div class="line">        <span class="keywordflow">return</span> std::exp(-w / (theta_par * theta_par));</div>
+<div class="line">    };</div>
 <div class="line">    <a class="code hl_class" href="classfield__aligned__velocity__generator.html">field_aligned_velocity_generator&lt;Real&gt;</a> fieldAlignedGen;</div>
 <div class="line">    fieldAlignedGen.<a class="code hl_function" href="classfield__aligned__velocity__generator.html#aadd6d41ebcbbe0650097ae75df83f1fe">define</a>(parallelSpeedSqPdf,</div>
 <div class="line">                           <span class="keyword">static_cast&lt;</span><a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a><span class="keyword">&gt;</span>(0.0),</div>
-<div class="line">                           <span class="keyword">static_cast&lt;</span><a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a><span class="keyword">&gt;</span>(40.0),</div>
+<div class="line">                           <span class="keyword">static_cast&lt;</span><a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a><span class="keyword">&gt;</span>(100.0),</div>
 <div class="line">                           theta_perp,</div>
-<div class="line">                           {0, 0, 1},</div>
+<div class="line">                           {1, 1, 1},</div>
 <div class="line">                           +1);</div>
 <div class="line">    fieldAlignedGen.<a class="code hl_function" href="classfield__aligned__velocity__generator.html#a7de700c28adc297d1fcee9864767266a">seed</a>(20030410);</div>
 <div class="line">    {</div>

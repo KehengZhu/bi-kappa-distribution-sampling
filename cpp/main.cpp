@@ -10,6 +10,7 @@ typedef double Real;
 #include "bi_maxwellian_distribution.H"
 #include "general_position_generator.H"
 #include "general_velocity_generator.H"
+#include "field_aligned_velocity_generator.H"
 #include "test_suite.H"
 
 int main()
@@ -17,7 +18,7 @@ int main()
     const Real kappa = 2.0;
     const Real theta_perp = 1.0;
     const Real theta_par = 2.0;
-    const int n_particle = 100000;
+    const int n_particle = 200000;
 
     if (run_all_tests() != 0)
     {
@@ -49,13 +50,21 @@ int main()
         std::cout << "wrote " << n_particle << " samples to samples_bimaxwellian.txt" << std::endl;
     }
 
-    std::cout << "\n=== Example 3: general_velocity_generator (f(E)=exp(-E)) ===" << std::endl;
-    auto energyPdf = [](Real E) -> Real { return std::exp(-E); };
+    std::cout << "\n=== Example 3: general_velocity_generator (isotropic Maxwellian via w=|v|^2) ==="
+              << std::endl;
+    // g(w) = sqrt(w) * exp(-w/theta^2) with w = |v|^2 is the speed-squared density
+    // of an isotropic Maxwellian of thermal speed theta: with dw = 2|v| d|v| it maps
+    // to the Maxwell speed pdf ~ |v|^2 exp(-|v|^2/theta^2), i.e. each Cartesian
+    // component is N(0, theta^2/2). theta = theta_perp = 1 here, and w_max = 25
+    // truncates at |v| = 5 theta.
+    const Real theta_iso = theta_perp;
+    auto speedSqPdf = [theta_iso](Real w) -> Real {
+        return std::sqrt(w) * std::exp(-w / (theta_iso * theta_iso));
+    };
     general_velocity_generator<Real> velocityGen;
-    velocityGen.define(energyPdf,
+    velocityGen.define(speedSqPdf,
                        static_cast<Real>(0.0),
-                       static_cast<Real>(20.0),
-                       static_cast<Real>(1.0));
+                       static_cast<Real>(25.0));
     velocityGen.seed(20030410);
     {
         std::ofstream out("samples_general_velocity.txt");
@@ -83,6 +92,34 @@ int main()
             out << x[0] << " " << x[1] << "\n";
         }
         std::cout << "wrote " << n_particle << " samples to samples_general_position.txt"
+                  << std::endl;
+    }
+
+    std::cout << "\n=== Example 5: field_aligned_velocity_generator (beam along B=(1,1,1)) ==="
+              << std::endl;
+    // g(w_par) = exp(-w_par/theta_par^2) with w_par = v_par^2 gives the Rayleigh
+    // parallel beam p(v_par) = (2 v_par/theta_par^2) exp(-v_par^2/theta_par^2),
+    // v_par >= 0, peaking at v_par = theta_par/sqrt(2). The perpendicular plane is
+    // Maxwellian with thermal speed theta_perp. B is tilted off the axes so the
+    // field-aligned rotation is exercised; w_max = 100 truncates at v_par = 5 theta_par.
+    auto parallelSpeedSqPdf = [theta_par](Real w) -> Real {
+        return std::exp(-w / (theta_par * theta_par));
+    };
+    field_aligned_velocity_generator<Real> fieldAlignedGen;
+    fieldAlignedGen.define(parallelSpeedSqPdf,
+                           static_cast<Real>(0.0),
+                           static_cast<Real>(100.0),
+                           theta_perp,
+                           {1, 1, 1},
+                           +1);
+    fieldAlignedGen.seed(20030410);
+    {
+        std::ofstream out("samples_field_aligned.txt");
+        for (int i = 0; i < n_particle; ++i) {
+            const field_aligned_velocity_generator<Real>::point_type v = fieldAlignedGen();
+            out << v[0] << " " << v[1] << " " << v[2] << "\n";
+        }
+        std::cout << "wrote " << n_particle << " samples to samples_field_aligned.txt"
                   << std::endl;
     }
 

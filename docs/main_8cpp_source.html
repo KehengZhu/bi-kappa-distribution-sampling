@@ -141,7 +141,7 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('main_8cpp_sour
 <div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span>    <span class="keyword">const</span> <a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> kappa = 2.0;</div>
 <div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span>    <span class="keyword">const</span> <a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> theta_perp = 1.0;</div>
 <div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>    <span class="keyword">const</span> <a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> theta_par = 2.0;</div>
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>    <span class="keyword">const</span> <span class="keywordtype">int</span> n_particle = 100000;</div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>    <span class="keyword">const</span> <span class="keywordtype">int</span> n_particle = 200000;</div>
 <div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span> </div>
 <div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>    <span class="keywordflow">if</span> (<a class="code hl_function" href="test__suite_8_h.html#af13f216ba3cfa17d37698394e4a39826">run_all_tests</a>() != 0)</div>
 <div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>    {</div>
@@ -173,66 +173,81 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('main_8cpp_sour
 <div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>        std::cout &lt;&lt; <span class="stringliteral">&quot;wrote &quot;</span> &lt;&lt; n_particle &lt;&lt; <span class="stringliteral">&quot; samples to samples_bimaxwellian.txt&quot;</span> &lt;&lt; std::endl;</div>
 <div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>    }</div>
 <div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span> </div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>    std::cout &lt;&lt; <span class="stringliteral">&quot;\n=== Example 3: general_velocity_generator (g(w)=exp(-w/2), w=|v|^2) ===&quot;</span></div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>    std::cout &lt;&lt; <span class="stringliteral">&quot;\n=== Example 3: general_velocity_generator (isotropic Maxwellian via w=|v|^2) ===&quot;</span></div>
 <div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>              &lt;&lt; std::endl;</div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>    <span class="keyword">auto</span> speedSqPdf = [](<a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> w) -&gt; <a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> { <span class="keywordflow">return</span> std::exp(-<a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a>(0.5) * w); };</div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>    <a class="code hl_class" href="classgeneral__velocity__generator.html">general_velocity_generator&lt;Real&gt;</a> velocityGen;</div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>    velocityGen.<a class="code hl_function" href="classgeneral__velocity__generator.html#af5fe31734db1a1197f95aecb99451aa1">define</a>(speedSqPdf,</div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>                       <span class="keyword">static_cast&lt;</span><a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a><span class="keyword">&gt;</span>(0.0),</div>
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>                       <span class="keyword">static_cast&lt;</span><a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a><span class="keyword">&gt;</span>(40.0));</div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>    velocityGen.<a class="code hl_function" href="classgeneral__velocity__generator.html#a2e42f5bd2170a5adc0a2382071574935">seed</a>(20030410);</div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>    {</div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>        std::ofstream out(<span class="stringliteral">&quot;samples_general_velocity.txt&quot;</span>);</div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; n_particle; ++i) {</div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>            <span class="keyword">const</span> <a class="code hl_typedef" href="classgeneral__velocity__generator.html#a8e63947f15d8d53218b6b99caef4ee32">general_velocity_generator&lt;Real&gt;::point_type</a> v = velocityGen();</div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>            out &lt;&lt; v[0] &lt;&lt; <span class="stringliteral">&quot; &quot;</span> &lt;&lt; v[1] &lt;&lt; <span class="stringliteral">&quot; &quot;</span> &lt;&lt; v[2] &lt;&lt; <span class="stringliteral">&quot;\n&quot;</span>;</div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>        }</div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>        std::cout &lt;&lt; <span class="stringliteral">&quot;wrote &quot;</span> &lt;&lt; n_particle &lt;&lt; <span class="stringliteral">&quot; samples to samples_general_velocity.txt&quot;</span></div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>                  &lt;&lt; std::endl;</div>
-<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>    }</div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span> </div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>    std::cout &lt;&lt; <span class="stringliteral">&quot;\n=== Example 4: general_position_generator (rho=1+sin(x)sin(y)) ===&quot;</span> &lt;&lt; std::endl;</div>
-<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>    <span class="keyword">typedef</span> <a class="code hl_typedef" href="classgeneral__position__generator.html#aee6d9e415a826e7a1f25068ce06bd976">general_position_generator&lt;Real&gt;::point_type</a> position_point_type;</div>
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>    <span class="keyword">auto</span> rho = [](<span class="keyword">const</span> position_point_type &amp;x) -&gt; <a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> {</div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>        <span class="keywordflow">return</span> 1 + std::sin(x[0]) * std::sin(x[1]);</div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>    };</div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>    <span class="keyword">static</span> <span class="keywordtype">double</span> pi = 3.14159;</div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>    <a class="code hl_class" href="classgeneral__position__generator.html">general_position_generator&lt;Real&gt;</a> positionGen;</div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>    positionGen.<a class="code hl_function" href="classgeneral__position__generator.html#a512e552fc35b0758430453661deb4963">define</a>(2, {-pi, -pi}, {pi, pi}, rho);</div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>    positionGen.<a class="code hl_function" href="classgeneral__position__generator.html#a9e24551cc12367f1dfc653a95bdddd88">seed</a>(20030410);</div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>    {</div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>        std::ofstream out(<span class="stringliteral">&quot;samples_general_position.txt&quot;</span>);</div>
-<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; n_particle; ++i) {</div>
-<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>            <span class="keyword">const</span> position_point_type x = positionGen();</div>
-<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>            out &lt;&lt; x[0] &lt;&lt; <span class="stringliteral">&quot; &quot;</span> &lt;&lt; x[1] &lt;&lt; <span class="stringliteral">&quot;\n&quot;</span>;</div>
-<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>        }</div>
-<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>        std::cout &lt;&lt; <span class="stringliteral">&quot;wrote &quot;</span> &lt;&lt; n_particle &lt;&lt; <span class="stringliteral">&quot; samples to samples_general_position.txt&quot;</span></div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>                  &lt;&lt; std::endl;</div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>    }</div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span> </div>
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>    std::cout &lt;&lt; <span class="stringliteral">&quot;\n=== Example 5: field_aligned_velocity_generator (g(w)=exp(-w/2), B=z, +) ===&quot;</span></div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>              &lt;&lt; std::endl;</div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>    <span class="keyword">auto</span> parallelSpeedSqPdf = [](<a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> w) -&gt; <a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> { <span class="keywordflow">return</span> std::exp(-<a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a>(0.5) * w); };</div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>    <a class="code hl_class" href="classfield__aligned__velocity__generator.html">field_aligned_velocity_generator&lt;Real&gt;</a> fieldAlignedGen;</div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>    fieldAlignedGen.<a class="code hl_function" href="classfield__aligned__velocity__generator.html#aadd6d41ebcbbe0650097ae75df83f1fe">define</a>(parallelSpeedSqPdf,</div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>                           <span class="keyword">static_cast&lt;</span><a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a><span class="keyword">&gt;</span>(0.0),</div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>                           <span class="keyword">static_cast&lt;</span><a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a><span class="keyword">&gt;</span>(40.0),</div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>                           theta_perp,</div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>                           {0, 0, 1},</div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>                           +1);</div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>    fieldAlignedGen.<a class="code hl_function" href="classfield__aligned__velocity__generator.html#a7de700c28adc297d1fcee9864767266a">seed</a>(20030410);</div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>    {</div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>        std::ofstream out(<span class="stringliteral">&quot;samples_field_aligned.txt&quot;</span>);</div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; n_particle; ++i) {</div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>            <span class="keyword">const</span> <a class="code hl_typedef" href="classfield__aligned__velocity__generator.html#ae31b56b2be9502231edd5d3ab87516dc">field_aligned_velocity_generator&lt;Real&gt;::point_type</a> v = fieldAlignedGen();</div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>            out &lt;&lt; v[0] &lt;&lt; <span class="stringliteral">&quot; &quot;</span> &lt;&lt; v[1] &lt;&lt; <span class="stringliteral">&quot; &quot;</span> &lt;&lt; v[2] &lt;&lt; <span class="stringliteral">&quot;\n&quot;</span>;</div>
-<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>        }</div>
-<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>        std::cout &lt;&lt; <span class="stringliteral">&quot;wrote &quot;</span> &lt;&lt; n_particle &lt;&lt; <span class="stringliteral">&quot; samples to samples_field_aligned.txt&quot;</span></div>
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>                  &lt;&lt; std::endl;</div>
-<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>    }</div>
-<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span> </div>
-<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>    <span class="keywordflow">return</span> 0;</div>
-<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>}</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>    <span class="comment">// g(w) = sqrt(w) * exp(-w/theta^2) with w = |v|^2 is the speed-squared density</span></div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>    <span class="comment">// of an isotropic Maxwellian of thermal speed theta: with dw = 2|v| d|v| it maps</span></div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>    <span class="comment">// to the Maxwell speed pdf ~ |v|^2 exp(-|v|^2/theta^2), i.e. each Cartesian</span></div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>    <span class="comment">// component is N(0, theta^2/2). theta = theta_perp = 1 here, and w_max = 25</span></div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>    <span class="comment">// truncates at |v| = 5 theta.</span></div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>    <span class="keyword">const</span> <a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> theta_iso = theta_perp;</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>    <span class="keyword">auto</span> speedSqPdf = [theta_iso](<a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> w) -&gt; <a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> {</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>        <span class="keywordflow">return</span> std::sqrt(w) * std::exp(-w / (theta_iso * theta_iso));</div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    };</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>    <a class="code hl_class" href="classgeneral__velocity__generator.html">general_velocity_generator&lt;Real&gt;</a> velocityGen;</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>    velocityGen.<a class="code hl_function" href="classgeneral__velocity__generator.html#af5fe31734db1a1197f95aecb99451aa1">define</a>(speedSqPdf,</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>                       <span class="keyword">static_cast&lt;</span><a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a><span class="keyword">&gt;</span>(0.0),</div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>                       <span class="keyword">static_cast&lt;</span><a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a><span class="keyword">&gt;</span>(25.0));</div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>    velocityGen.<a class="code hl_function" href="classgeneral__velocity__generator.html#a2e42f5bd2170a5adc0a2382071574935">seed</a>(20030410);</div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>    {</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>        std::ofstream out(<span class="stringliteral">&quot;samples_general_velocity.txt&quot;</span>);</div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; n_particle; ++i) {</div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>            <span class="keyword">const</span> <a class="code hl_typedef" href="classgeneral__velocity__generator.html#a8e63947f15d8d53218b6b99caef4ee32">general_velocity_generator&lt;Real&gt;::point_type</a> v = velocityGen();</div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>            out &lt;&lt; v[0] &lt;&lt; <span class="stringliteral">&quot; &quot;</span> &lt;&lt; v[1] &lt;&lt; <span class="stringliteral">&quot; &quot;</span> &lt;&lt; v[2] &lt;&lt; <span class="stringliteral">&quot;\n&quot;</span>;</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>        }</div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>        std::cout &lt;&lt; <span class="stringliteral">&quot;wrote &quot;</span> &lt;&lt; n_particle &lt;&lt; <span class="stringliteral">&quot; samples to samples_general_velocity.txt&quot;</span></div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>                  &lt;&lt; std::endl;</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>    }</div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span> </div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>    std::cout &lt;&lt; <span class="stringliteral">&quot;\n=== Example 4: general_position_generator (rho=1+sin(x)sin(y)) ===&quot;</span> &lt;&lt; std::endl;</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>    <span class="keyword">typedef</span> <a class="code hl_typedef" href="classgeneral__position__generator.html#aee6d9e415a826e7a1f25068ce06bd976">general_position_generator&lt;Real&gt;::point_type</a> position_point_type;</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>    <span class="keyword">auto</span> rho = [](<span class="keyword">const</span> position_point_type &amp;x) -&gt; <a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> {</div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>        <span class="keywordflow">return</span> 1 + std::sin(x[0]) * std::sin(x[1]);</div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>    };</div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>    <span class="keyword">static</span> <span class="keywordtype">double</span> pi = 3.14159;</div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>    <a class="code hl_class" href="classgeneral__position__generator.html">general_position_generator&lt;Real&gt;</a> positionGen;</div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>    positionGen.<a class="code hl_function" href="classgeneral__position__generator.html#a512e552fc35b0758430453661deb4963">define</a>(2, {-pi, -pi}, {pi, pi}, rho);</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>    positionGen.<a class="code hl_function" href="classgeneral__position__generator.html#a9e24551cc12367f1dfc653a95bdddd88">seed</a>(20030410);</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>    {</div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>        std::ofstream out(<span class="stringliteral">&quot;samples_general_position.txt&quot;</span>);</div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; n_particle; ++i) {</div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>            <span class="keyword">const</span> position_point_type x = positionGen();</div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>            out &lt;&lt; x[0] &lt;&lt; <span class="stringliteral">&quot; &quot;</span> &lt;&lt; x[1] &lt;&lt; <span class="stringliteral">&quot;\n&quot;</span>;</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>        }</div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>        std::cout &lt;&lt; <span class="stringliteral">&quot;wrote &quot;</span> &lt;&lt; n_particle &lt;&lt; <span class="stringliteral">&quot; samples to samples_general_position.txt&quot;</span></div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>                  &lt;&lt; std::endl;</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>    }</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span> </div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>    std::cout &lt;&lt; <span class="stringliteral">&quot;\n=== Example 5: field_aligned_velocity_generator (beam along B=(1,1,1)) ===&quot;</span></div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>              &lt;&lt; std::endl;</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>    <span class="comment">// g(w_par) = exp(-w_par/theta_par^2) with w_par = v_par^2 gives the Rayleigh</span></div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>    <span class="comment">// parallel beam p(v_par) = (2 v_par/theta_par^2) exp(-v_par^2/theta_par^2),</span></div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>    <span class="comment">// v_par &gt;= 0, peaking at v_par = theta_par/sqrt(2). The perpendicular plane is</span></div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>    <span class="comment">// Maxwellian with thermal speed theta_perp. B is tilted off the axes so the</span></div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>    <span class="comment">// field-aligned rotation is exercised; w_max = 100 truncates at v_par = 5 theta_par.</span></div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>    <span class="keyword">auto</span> parallelSpeedSqPdf = [theta_par](<a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> w) -&gt; <a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> {</div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>        <span class="keywordflow">return</span> std::exp(-w / (theta_par * theta_par));</div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>    };</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>    <a class="code hl_class" href="classfield__aligned__velocity__generator.html">field_aligned_velocity_generator&lt;Real&gt;</a> fieldAlignedGen;</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>    fieldAlignedGen.<a class="code hl_function" href="classfield__aligned__velocity__generator.html#aadd6d41ebcbbe0650097ae75df83f1fe">define</a>(parallelSpeedSqPdf,</div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>                           <span class="keyword">static_cast&lt;</span><a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a><span class="keyword">&gt;</span>(0.0),</div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>                           <span class="keyword">static_cast&lt;</span><a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a><span class="keyword">&gt;</span>(100.0),</div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>                           theta_perp,</div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>                           {1, 1, 1},</div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>                           +1);</div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>    fieldAlignedGen.<a class="code hl_function" href="classfield__aligned__velocity__generator.html#a7de700c28adc297d1fcee9864767266a">seed</a>(20030410);</div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>    {</div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>        std::ofstream out(<span class="stringliteral">&quot;samples_field_aligned.txt&quot;</span>);</div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; n_particle; ++i) {</div>
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>            <span class="keyword">const</span> <a class="code hl_typedef" href="classfield__aligned__velocity__generator.html#ae31b56b2be9502231edd5d3ab87516dc">field_aligned_velocity_generator&lt;Real&gt;::point_type</a> v = fieldAlignedGen();</div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>            out &lt;&lt; v[0] &lt;&lt; <span class="stringliteral">&quot; &quot;</span> &lt;&lt; v[1] &lt;&lt; <span class="stringliteral">&quot; &quot;</span> &lt;&lt; v[2] &lt;&lt; <span class="stringliteral">&quot;\n&quot;</span>;</div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>        }</div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>        std::cout &lt;&lt; <span class="stringliteral">&quot;wrote &quot;</span> &lt;&lt; n_particle &lt;&lt; <span class="stringliteral">&quot; samples to samples_field_aligned.txt&quot;</span></div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>                  &lt;&lt; std::endl;</div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>    }</div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span> </div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>    <span class="keywordflow">return</span> 0;</div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>}</div>
 </div>
 <div class="ttc" id="abi__kappa__distribution_8_h_html"><div class="ttname"><a href="bi__kappa__distribution_8_h.html">bi_kappa_distribution.H</a></div></div>
 <div class="ttc" id="abi__maxwellian__distribution_8_h_html"><div class="ttname"><a href="bi__maxwellian__distribution_8_h.html">bi_maxwellian_distribution.H</a></div></div>

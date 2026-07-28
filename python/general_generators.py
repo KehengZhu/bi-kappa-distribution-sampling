@@ -3,39 +3,45 @@ from typing import Callable, List
 
 
 class GeneralVelocityGenerator:
-    """Samples velocities from a user-defined energy distribution f(E)."""
-    
-    def __init__(self, energy_pdf: Callable, energy_min: float, energy_max: float, 
-                 particle_mass: float, probe_points: int = 1024, max_reject_tries: int = 100000):
-        self.energy_pdf = energy_pdf
-        self.energy_min = energy_min
-        self.energy_max = energy_max
-        self.particle_mass = particle_mass
+    """Samples velocities from a user-defined speed-squared distribution g(w), w = |v|^2.
+
+    The speed is |v| = sqrt(w); the direction is isotropic in 3D. (For a
+    distribution originally posed in energy, w = |v|^2 = 2E/m, so the mass drops
+    out of this generator entirely.)"""
+
+    def __init__(self, speed_sq_pdf: Callable, speed_sq_min: float, speed_sq_max: float,
+                 probe_points: int = 1024, max_reject_tries: int = 100000):
+        if speed_sq_min < 0.0:
+            raise ValueError("speed_sq_min must be non-negative (w = |v|^2 >= 0)")
+        if not (speed_sq_min < speed_sq_max):
+            raise ValueError("speed_sq_min must be strictly less than speed_sq_max")
+        self.speed_sq_pdf = speed_sq_pdf
+        self.speed_sq_min = speed_sq_min
+        self.speed_sq_max = speed_sq_max
         self.max_reject_tries = max_reject_tries
-        
+
         # Estimate upper bound of the PDF
         self.pdf_upper_bound = self._estimate_pdf_upper_bound(probe_points)
-    
+
     def _estimate_pdf_upper_bound(self, probe_points: int) -> float:
-        """Estimate the maximum value of the energy PDF in the given range."""
-        energies = np.linspace(self.energy_min, self.energy_max, probe_points)
-        pdf_values = np.array([self.energy_pdf(E) for E in energies])
+        """Estimate the maximum value of the speed-squared PDF in the given range."""
+        grid = np.linspace(self.speed_sq_min, self.speed_sq_max, probe_points)
+        pdf_values = np.array([self.speed_sq_pdf(w) for w in grid])
         return np.max(pdf_values)
-    
-    def sample_energy(self, rng: np.random.Generator) -> float:
-        """Sample energy using rejection sampling."""
+
+    def sample_speed_sq(self, rng: np.random.Generator) -> float:
+        """Sample w = |v|^2 using rejection sampling."""
         for _ in range(self.max_reject_tries):
-            E = rng.uniform(self.energy_min, self.energy_max)
+            w = rng.uniform(self.speed_sq_min, self.speed_sq_max)
             u = rng.uniform(0, self.pdf_upper_bound)
-            if u <= self.energy_pdf(E):
-                return E
-        raise RuntimeError("Failed to sample energy after max_reject_tries attempts")
-    
+            if u <= self.speed_sq_pdf(w):
+                return w
+        raise RuntimeError("Failed to sample speed_sq after max_reject_tries attempts")
+
     def __call__(self, rng: np.random.Generator) -> np.ndarray:
         """Generate a random 3D velocity vector."""
-        energy = self.sample_energy(rng)
-        speed = np.sqrt(2.0 * energy / self.particle_mass)
-        
+        speed = np.sqrt(self.sample_speed_sq(rng))
+
         # Isotropic direction on sphere
         cos_theta = rng.uniform(-1.0, 1.0)
         sin_theta = np.sqrt(max(0.0, 1.0 - cos_theta**2))
@@ -87,15 +93,95 @@ class GeneralPositionGenerator:
         raise RuntimeError("Failed to sample position after max_reject_tries attempts")
 
 
+class FieldAlignedVelocityGenerator:
+    """Samples field-aligned velocities: an arbitrary parallel speed-squared
+    distribution g(w_par), w_par = v_par^2, along B, with a Maxwellian
+    perpendicular spread (thermal speed theta_perp). (For a distribution
+    originally posed in energy, w_par = v_par^2 = 2E_par/m, so the mass drops
+    out.)"""
+
+    def __init__(self, speed_sq_pdf: Callable, speed_sq_min: float, speed_sq_max: float,
+                 theta_perp: float, ub: List[float], parallel_sign: int,
+                 probe_points: int = 1024, max_reject_tries: int = 100000):
+        if speed_sq_min < 0.0:
+            raise ValueError("speed_sq_min must be non-negative (w = v_par^2 >= 0)")
+        if not (speed_sq_min < speed_sq_max):
+            raise ValueError("speed_sq_min must be strictly less than speed_sq_max")
+        if theta_perp <= 0.0:
+            raise ValueError("theta_perp must be positive")
+        if parallel_sign not in (1, -1):
+            raise ValueError("parallel_sign must be exactly +1 or -1")
+        ub = np.asarray(ub, dtype=float)
+        if np.dot(ub, ub) == 0.0:
+            raise ValueError("ub (magnetic field) must be a non-zero vector")
+
+        self.speed_sq_pdf = speed_sq_pdf
+        self.speed_sq_min = speed_sq_min
+        self.speed_sq_max = speed_sq_max
+        self.theta_perp = theta_perp
+        self.parallel_sign = float(parallel_sign)
+        self.max_reject_tries = max_reject_tries
+
+        # Field-aligned orthonormal frame (e1, e2 perpendicular; e3 = B/|B|).
+        self.e1, self.e2, self.e3 = self._build_frame(ub)
+
+        # Estimate upper bound of the parallel speed-squared PDF.
+        self.pdf_upper_bound = self._estimate_pdf_upper_bound(probe_points)
+
+    @staticmethod
+    def _build_frame(ub: np.ndarray):
+        """Right-handed orthonormal frame with e3 aligned to ub."""
+        e3 = ub / np.linalg.norm(ub)
+        # Pick a seed vector least aligned with e3 to stay well-conditioned.
+        seed = np.zeros(3)
+        seed[np.argmin(np.abs(e3))] = 1.0
+        e1 = np.cross(e3, seed)
+        e1 /= np.linalg.norm(e1)
+        e2 = np.cross(e3, e1)
+        return e1, e2, e3
+
+    def _estimate_pdf_upper_bound(self, probe_points: int) -> float:
+        grid = np.linspace(self.speed_sq_min, self.speed_sq_max, probe_points)
+        pdf_values = np.array([self.speed_sq_pdf(w) for w in grid])
+        return np.max(pdf_values) * 1.05
+
+    def sample_speed_sq(self, rng: np.random.Generator) -> float:
+        """Sample w_par = v_par^2 using rejection sampling."""
+        for _ in range(self.max_reject_tries):
+            w = rng.uniform(self.speed_sq_min, self.speed_sq_max)
+            u = rng.uniform(0, self.pdf_upper_bound)
+            if u <= self.speed_sq_pdf(w):
+                return w
+        raise RuntimeError("Failed to sample speed_sq after max_reject_tries attempts")
+
+    def __call__(self, rng: np.random.Generator) -> np.ndarray:
+        """Generate a random 3D velocity vector in the global frame."""
+        v_par = self.parallel_sign * np.sqrt(self.sample_speed_sq(rng))
+
+        # Perpendicular 2D Maxwellian: N(0, theta_perp^2/2) per component.
+        sigma_perp = self.theta_perp / np.sqrt(2.0)
+        v_perp1 = sigma_perp * rng.standard_normal()
+        v_perp2 = sigma_perp * rng.standard_normal()
+
+        return v_perp1 * self.e1 + v_perp2 * self.e2 + v_par * self.e3
+
+
 def main():
     """Generate samples from General Velocity and General Position distributions."""
-    n_particle = 1000000
+    n_particle = 200000
     rng = np.random.default_rng()
-    
-    print("=== Example 1: GeneralVelocityGenerator f(E)=exp(-E) ===")
-    energy_pdf = lambda E: np.exp(-E)
-    vel_gen = GeneralVelocityGenerator(energy_pdf, 0.0, 20.0, 1.0)
-    
+
+    theta_perp = 1.0
+    theta_par = 2.0
+
+    # g(w) = sqrt(w) exp(-w/theta^2) with w = |v|^2 is the speed-squared density of an
+    # isotropic Maxwellian of thermal speed theta: dw = 2|v| d|v| turns the sqrt(w) into
+    # the |v|^2 of the Maxwell speed pdf, so each Cartesian component is N(0, theta^2/2).
+    print("=== Example 1: GeneralVelocityGenerator g(w)=sqrt(w)exp(-w/theta^2), w=|v|^2 ===")
+    theta_iso = theta_perp
+    speed_sq_pdf = lambda w: np.sqrt(w) * np.exp(-w / theta_iso**2)
+    vel_gen = GeneralVelocityGenerator(speed_sq_pdf, 0.0, 25.0)
+
     samples_velocity = []
     for i in range(n_particle):
         v = vel_gen(rng)
@@ -126,8 +212,30 @@ def main():
     # Write to file
     with open("samples_general_position.txt", "w") as f:
         for x in samples_position:
-            f.write(f"{x[0]} {x[1]} {x[2]}\n")
-    print(f"Wrote {n_particle} samples to samples_general_position.txt")
+            f.write(f"{x[0]} {x[1]}\n")
+    print(f"Wrote {n_particle} samples to samples_general_position.txt\n")
+
+    # g(w) = exp(-w/theta_par^2) with w = v_par^2 gives the Rayleigh parallel beam
+    # p(v_par) = (2 v_par/theta_par^2) exp(-v_par^2/theta_par^2), peaking at
+    # v_par = theta_par/sqrt(2); B is tilted off the axes to exercise the rotation.
+    print("=== Example 3: FieldAlignedVelocityGenerator g(w)=exp(-w/theta_par^2), B=(1,1,1), + ===")
+    parallel_speed_sq_pdf = lambda w: np.exp(-w / theta_par**2)
+    fa_gen = FieldAlignedVelocityGenerator(parallel_speed_sq_pdf, 0.0, 100.0,
+                                           theta_perp=theta_perp, ub=[1.0, 1.0, 1.0],
+                                           parallel_sign=+1)
+
+    samples_field_aligned = []
+    for i in range(n_particle):
+        v = fa_gen(rng)
+        samples_field_aligned.append(v)
+        if (i + 1) % 100000 == 0:
+            print(f"  generated {i + 1} samples")
+
+    # Write to file
+    with open("samples_field_aligned.txt", "w") as f:
+        for v in samples_field_aligned:
+            f.write(f"{v[0]} {v[1]} {v[2]}\n")
+    print(f"Wrote {n_particle} samples to samples_field_aligned.txt")
 
 
 if __name__ == "__main__":
