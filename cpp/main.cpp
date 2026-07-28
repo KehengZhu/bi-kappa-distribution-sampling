@@ -95,20 +95,20 @@ int main()
                   << std::endl;
     }
 
-    std::cout << "\n=== Example 5: field_aligned_velocity_generator (beam along B=(1,1,1)) ==="
+    std::cout << "\n=== Example 5: field_aligned_velocity_generator (uniform w_par, B=(1,1,1)) ==="
               << std::endl;
-    // g(w_par) = exp(-w_par/theta_par^2) with w_par = v_par^2 gives the Rayleigh
-    // parallel beam p(v_par) = (2 v_par/theta_par^2) exp(-v_par^2/theta_par^2),
-    // v_par >= 0, peaking at v_par = theta_par/sqrt(2). The perpendicular plane is
-    // Maxwellian with thermal speed theta_perp. B is tilted off the axes so the
-    // field-aligned rotation is exercised; w_max = 100 truncates at v_par = 5 theta_par.
-    auto parallelSpeedSqPdf = [theta_par](Real w) -> Real {
-        return std::exp(-w / (theta_par * theta_par));
-    };
+    // The simplest possible input: g(w_par) = 1 makes w_par = v_par^2 uniform on
+    // [0, w_max], and the Jacobian dw = 2 v_par d(v_par) turns that into the linear
+    // ramp p(v_par) = 2 v_par / w_max on [0, sqrt(w_max)]. A density that is flat in
+    // w is a straight line in v_par -- the clearest illustration of what the change
+    // of variables does. The perpendicular plane is Maxwellian with thermal speed
+    // theta_perp, and B is tilted off the axes so the rotation is exercised.
+    const Real w_max_par = 4.0;   // v_par spans [0, 2]
+    auto parallelSpeedSqPdf = [](Real) -> Real { return Real(1.0); };
     field_aligned_velocity_generator<Real> fieldAlignedGen;
     fieldAlignedGen.define(parallelSpeedSqPdf,
                            static_cast<Real>(0.0),
-                           static_cast<Real>(100.0),
+                           w_max_par,
                            theta_perp,
                            {1, 1, 1},
                            +1);

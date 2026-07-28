@@ -172,7 +172,6 @@ def main():
     rng = np.random.default_rng()
 
     theta_perp = 1.0
-    theta_par = 2.0
 
     # g(w) = sqrt(w) exp(-w/theta^2) with w = |v|^2 is the speed-squared density of an
     # isotropic Maxwellian of thermal speed theta: dw = 2|v| d|v| turns the sqrt(w) into
@@ -215,12 +214,14 @@ def main():
             f.write(f"{x[0]} {x[1]}\n")
     print(f"Wrote {n_particle} samples to samples_general_position.txt\n")
 
-    # g(w) = exp(-w/theta_par^2) with w = v_par^2 gives the Rayleigh parallel beam
-    # p(v_par) = (2 v_par/theta_par^2) exp(-v_par^2/theta_par^2), peaking at
-    # v_par = theta_par/sqrt(2); B is tilted off the axes to exercise the rotation.
-    print("=== Example 3: FieldAlignedVelocityGenerator g(w)=exp(-w/theta_par^2), B=(1,1,1), + ===")
-    parallel_speed_sq_pdf = lambda w: np.exp(-w / theta_par**2)
-    fa_gen = FieldAlignedVelocityGenerator(parallel_speed_sq_pdf, 0.0, 100.0,
+    # The simplest possible input: g(w) = 1 makes w = v_par^2 uniform on [0, w_max],
+    # and dw = 2 v_par d(v_par) turns that into the linear ramp
+    # p(v_par) = 2 v_par / w_max on [0, sqrt(w_max)]; B is tilted off the axes to
+    # exercise the rotation.
+    print("=== Example 3: FieldAlignedVelocityGenerator g(w)=1, B=(1,1,1), + ===")
+    w_max_par = 4.0    # v_par spans [0, 2]
+    parallel_speed_sq_pdf = lambda _w: 1.0
+    fa_gen = FieldAlignedVelocityGenerator(parallel_speed_sq_pdf, 0.0, w_max_par,
                                            theta_perp=theta_perp, ub=[1.0, 1.0, 1.0],
                                            parallel_sign=+1)
 
