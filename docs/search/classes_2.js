@@ -1,4 +1,7 @@
 var searchData=
 [
-  ['param_5ftype_0',['param_type',['../classbi__kappa__distribution_1_1param__type.html',1,'bi_kappa_distribution&lt; RealType &gt;::param_type'],['../classbi__maxwellian__distribution_1_1param__type.html',1,'bi_maxwellian_distribution&lt; RealType &gt;::param_type']]]
+  ['general_5fposition_5fgenerator_0',['general_position_generator',['../classgeneral__position__generator.html',1,'']]],
+  ['general_5fvelocity_5fgenerator_1',['general_velocity_generator',['../classgeneral__velocity__generator.html',1,'']]],
+  ['generalpositiongenerator_2',['GeneralPositionGenerator',['../classgeneral__generators_1_1_general_position_generator.html',1,'general_generators']]],
+  ['generalvelocitygenerator_3',['GeneralVelocityGenerator',['../classgeneral__generators_1_1_general_velocity_generator.html',1,'general_generators']]]
 ];

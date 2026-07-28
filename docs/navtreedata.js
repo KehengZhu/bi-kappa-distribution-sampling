@@ -26,7 +26,7 @@ var NAVTREE =
 [
   [ "bi-kappa", "index.html", [
     [ "Quick start — C++", "index.html#autotoc_md2", null ],
-    [ "The four samplers", "index.html#autotoc_md3", null ],
+    [ "The five samplers", "index.html#autotoc_md3", null ],
     [ "Quick start — Python", "index.html#autotoc_md4", null ],
     [ "Visualize", "index.html#autotoc_md5", null ],
     [ "Tests", "index.html#autotoc_md6", null ],
@@ -39,7 +39,8 @@ var NAVTREE =
       [ "Reproducible runs (seeding)", "usage.html#usage_reproducible", null ],
       [ "Sharing one RNG across samplers", "usage.html#usage_external_rng", null ],
       [ "Reconfiguring a sampler", "usage.html#usage_redefine", null ],
-      [ "Custom energy distribution", "usage.html#usage_velocity", null ],
+      [ "Custom speed-squared distribution", "usage.html#usage_velocity", null ],
+      [ "Field-aligned velocity (anisotropic)", "usage.html#usage_field_aligned", null ],
       [ "Custom spatial density", "usage.html#usage_position", null ],
       [ "Error handling", "usage.html#usage_errors", null ],
       [ "Complete worked example", "usage.html#usage_full", null ]
@@ -75,7 +76,8 @@ var NAVTREE =
 
 var NAVTREEINDEX =
 [
-"annotated.html"
+"annotated.html",
+"test__suite_8_h.html#a0796d4fd4193a1c743aa97df9e8d3adb"
 ];
 
 const SYNCONMSG = 'click to disable panel synchronization';

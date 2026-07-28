@@ -1,7 +1,7 @@
 /**
 \page usage Usage Examples
 
-Practical, copy-pasteable recipes for the four samplers. Every snippet uses
+Practical, copy-pasteable recipes for the five samplers. Every snippet uses
 `Real = double`; substitute `float` or your project's `Real` as needed. All
 generators follow the same lifecycle: **construct → `define(...)` → call**.
 
@@ -104,25 +104,51 @@ dist.ub({1, 2, 3});
 dist.define(3.0, 1.5, 2.5, {0, 0, 1}, 20.0);   // or replace the whole config at once
 \endcode
 
-\section usage_velocity Custom energy distribution
+\section usage_velocity Custom speed-squared distribution
 
-`general_velocity_generator` draws a speed from any energy PDF `f(E)` you
-supply (by rejection sampling) and assigns an isotropic 3D direction, with
-`E = ½·mass·|V|²`.
+`general_velocity_generator` draws a speed from any speed-squared PDF `g(w)`
+you supply (by rejection sampling, with `w = |V|²`) and assigns an isotropic 3D
+direction, so `|V| = sqrt(w)`. There is no mass parameter: for a distribution
+originally posed in energy, `w = |V|² = 2E/m`, so the mass drops out.
 
 \code{.cpp}
 #include "general_velocity_generator.H"
 #include <cmath>
 using Real = double;
 
-auto fE = [](Real E) -> Real { return std::exp(-E); };   // any positive f(E)
+auto gW = [](Real w) -> Real { return std::exp(-0.5 * w); };   // any positive g(w), w = |v|^2
 
 general_velocity_generator<Real> velGen;
-//            f    E_min  E_max  mass
-velGen.define(fE,  0.0,   20.0,  1.0);
+//            g    v2_min  v2_max
+velGen.define(gW,  0.0,    40.0);
 velGen.seed(20030410);
 
 general_velocity_generator<Real>::point_type v = velGen();
+\endcode
+
+\section usage_field_aligned Field-aligned velocity (anisotropic)
+
+`field_aligned_velocity_generator` builds an anisotropic velocity about the
+field direction `ub`: the parallel component draws `v_par² ` from your
+speed-squared PDF `g(w)` (so `|v_par| = sqrt(w)`), pointing along `ub` for
+`sign = +1` or opposite it for `sign = -1`, while the two perpendicular
+components are a Maxwellian with thermal speed `theta_perp` (each
+`~ N(0, theta_perp²/2)`, the same convention as `bi_maxwellian_distribution`).
+The result is returned in the global frame.
+
+\code{.cpp}
+#include "field_aligned_velocity_generator.H"
+#include <cmath>
+using Real = double;
+
+auto gW = [](Real w) -> Real { return std::exp(-0.5 * w); };   // any positive g(w), w = v_par^2
+
+field_aligned_velocity_generator<Real> faGen;
+//           g    v2_min  v2_max  theta_perp  ub          sign
+faGen.define(gW,  0.0,    40.0,   1.0,        {0, 0, 1},  +1);
+faGen.seed(20030410);
+
+field_aligned_velocity_generator<Real>::point_type v = faGen();   // {vx, vy, vz}, global frame
 \endcode
 
 \section usage_position Custom spatial density
@@ -150,10 +176,11 @@ pos_t x = posGen();   // length-2 vector
 
 \section usage_errors Error handling
 
-- The two general generators throw `std::runtime_error` if called before
-  `define(...)`.
+- The general and field-aligned velocity generators throw `std::runtime_error`
+  if called before `define(...)`.
 - `define(...)` throws `std::invalid_argument` on bad input (e.g. `kappa <= 0.5`,
-  non-positive `theta`/`cap`, `E_min >= E_max`, `dimension` outside 1–3).
+  non-positive `theta`/`cap`, `v2_min >= v2_max`, `v2_min < 0`, a zero `ub`,
+  `sign` other than ±1, `dimension` outside 1–3).
 - Velocity samplers throw `std::runtime_error` if the cap rejection loop fails
   10⁶ times in a row.
 

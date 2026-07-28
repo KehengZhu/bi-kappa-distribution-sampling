@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('usage.html',''
   <div class="headertitle"><div class="title">Usage Examples </div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>Practical, copy-pasteable recipes for the four samplers.</p>
+<div class="textblock"><p>Practical, copy-pasteable recipes for the five samplers.</p>
 <p>Every snippet uses <span class="tt"><a class="el" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> = double</span>; substitute <span class="tt">float</span> or your project's <span class="tt"><a class="el" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a></span> as needed. All generators follow the same lifecycle: <b>construct → <span class="tt">define(...)</span> → call</b>.</p>
 <h1 class="doxsection"><a class="anchor" id="usage_build"></a>
 Building and running the demo</h1>
@@ -204,25 +204,45 @@ Reconfiguring a sampler</h1>
 <div class="ttc" id="aclassbi__kappa__distribution_html_a758a03458aaab59b2577811af7a095cd"><div class="ttname"><a href="classbi__kappa__distribution.html#a758a03458aaab59b2577811af7a095cd">bi_kappa_distribution::kappa</a></div><div class="ttdeci">void kappa(RealType value)</div><div class="ttdef"><b>Definition</b> <a href="bi__kappa__distribution_8_h_source.html#l00147">bi_kappa_distribution.H:147</a></div></div>
 <div class="ttc" id="aclassbi__kappa__distribution_html_a971b78635ab0856bc35c9c9493ffa128"><div class="ttname"><a href="classbi__kappa__distribution.html#a971b78635ab0856bc35c9c9493ffa128">bi_kappa_distribution::theta_par</a></div><div class="ttdeci">void theta_par(RealType value)</div><div class="ttdef"><b>Definition</b> <a href="bi__kappa__distribution_8_h_source.html#l00159">bi_kappa_distribution.H:159</a></div></div>
 </div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="usage_velocity"></a>
-Custom energy distribution</h1>
-<p><span class="tt"><a class="el" href="classgeneral__velocity__generator.html" title="Samples velocities from a user-defined energy distribution f(E).">general_velocity_generator</a></span> draws a speed from any energy PDF <span class="tt">f(E)</span> you supply (by rejection sampling) and assigns an isotropic 3D direction, with <span class="tt">E = ½·mass·|V|²</span>.</p>
+Custom speed-squared distribution</h1>
+<p><span class="tt"><a class="el" href="classgeneral__velocity__generator.html" title="Samples velocities from a user-defined speed-squared distribution g(w).">general_velocity_generator</a></span> draws a speed from any speed-squared PDF <span class="tt">g(w)</span> you supply (by rejection sampling, with <span class="tt">w = |V|²</span>) and assigns an isotropic 3D direction, so <span class="tt">|V| = sqrt(w)</span>. There is no mass parameter: for a distribution originally posed in energy, <span class="tt">w = |V|² = 2E/m</span>, so the mass drops out.</p>
 <div class="fragment"><div class="line"><span class="preprocessor">#include &quot;<a class="code" href="general__velocity__generator_8_h.html">general_velocity_generator.H</a>&quot;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;cmath&gt;</span></div>
 <div class="line"><span class="keyword">using </span><a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> = double;</div>
 <div class="line"> </div>
-<div class="line"><span class="keyword">auto</span> fE = [](<a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> E) -&gt; <a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> { <span class="keywordflow">return</span> std::exp(-E); };   <span class="comment">// any positive f(E)</span></div>
+<div class="line"><span class="keyword">auto</span> gW = [](<a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> w) -&gt; <a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> { <span class="keywordflow">return</span> std::exp(-0.5 * w); };   <span class="comment">// any positive g(w), w = |v|^2</span></div>
 <div class="line"> </div>
 <div class="line"><a class="code hl_class" href="classgeneral__velocity__generator.html">general_velocity_generator&lt;Real&gt;</a> velGen;</div>
-<div class="line"><span class="comment">//            f    E_min  E_max  mass</span></div>
-<div class="line">velGen.<a class="code hl_function" href="classgeneral__velocity__generator.html#a4d1c53da5e695cce1467746cbe41cc21">define</a>(fE,  0.0,   20.0,  1.0);</div>
+<div class="line"><span class="comment">//            g    v2_min  v2_max</span></div>
+<div class="line">velGen.<a class="code hl_function" href="classgeneral__velocity__generator.html#af5fe31734db1a1197f95aecb99451aa1">define</a>(gW,  0.0,    40.0);</div>
 <div class="line">velGen.<a class="code hl_function" href="classgeneral__velocity__generator.html#a2e42f5bd2170a5adc0a2382071574935">seed</a>(20030410);</div>
 <div class="line"> </div>
 <div class="line"><a class="code hl_typedef" href="classgeneral__velocity__generator.html#a8e63947f15d8d53218b6b99caef4ee32">general_velocity_generator&lt;Real&gt;::point_type</a> v = velGen();</div>
-<div class="ttc" id="aclassgeneral__velocity__generator_html"><div class="ttname"><a href="classgeneral__velocity__generator.html">general_velocity_generator</a></div><div class="ttdoc">Samples velocities from a user-defined energy distribution f(E).</div><div class="ttdef"><b>Definition</b> <a href="general__velocity__generator_8_h_source.html#l00027">general_velocity_generator.H:28</a></div></div>
-<div class="ttc" id="aclassgeneral__velocity__generator_html_a2e42f5bd2170a5adc0a2382071574935"><div class="ttname"><a href="classgeneral__velocity__generator.html#a2e42f5bd2170a5adc0a2382071574935">general_velocity_generator::seed</a></div><div class="ttdeci">void seed(int s)</div><div class="ttdef"><b>Definition</b> <a href="general__velocity__generator_8_h_source.html#l00109">general_velocity_generator.H:109</a></div></div>
-<div class="ttc" id="aclassgeneral__velocity__generator_html_a4d1c53da5e695cce1467746cbe41cc21"><div class="ttname"><a href="classgeneral__velocity__generator.html#a4d1c53da5e695cce1467746cbe41cc21">general_velocity_generator::define</a></div><div class="ttdeci">void define(energy_pdf_function energy_pdf, RealType energy_min, RealType energy_max, RealType particle_mass, int probe_points=1024, int max_reject_tries=100000)</div><div class="ttdef"><b>Definition</b> <a href="general__velocity__generator_8_h_source.html#l00052">general_velocity_generator.H:52</a></div></div>
-<div class="ttc" id="aclassgeneral__velocity__generator_html_a8e63947f15d8d53218b6b99caef4ee32"><div class="ttname"><a href="classgeneral__velocity__generator.html#a8e63947f15d8d53218b6b99caef4ee32">general_velocity_generator::point_type</a></div><div class="ttdeci">result_type point_type</div><div class="ttdef"><b>Definition</b> <a href="general__velocity__generator_8_h_source.html#l00031">general_velocity_generator.H:31</a></div></div>
+<div class="ttc" id="aclassgeneral__velocity__generator_html"><div class="ttname"><a href="classgeneral__velocity__generator.html">general_velocity_generator</a></div><div class="ttdoc">Samples velocities from a user-defined speed-squared distribution g(w).</div><div class="ttdef"><b>Definition</b> <a href="general__velocity__generator_8_h_source.html#l00029">general_velocity_generator.H:30</a></div></div>
+<div class="ttc" id="aclassgeneral__velocity__generator_html_a2e42f5bd2170a5adc0a2382071574935"><div class="ttname"><a href="classgeneral__velocity__generator.html#a2e42f5bd2170a5adc0a2382071574935">general_velocity_generator::seed</a></div><div class="ttdeci">void seed(int s)</div><div class="ttdef"><b>Definition</b> <a href="general__velocity__generator_8_h_source.html#l00110">general_velocity_generator.H:110</a></div></div>
+<div class="ttc" id="aclassgeneral__velocity__generator_html_a8e63947f15d8d53218b6b99caef4ee32"><div class="ttname"><a href="classgeneral__velocity__generator.html#a8e63947f15d8d53218b6b99caef4ee32">general_velocity_generator::point_type</a></div><div class="ttdeci">result_type point_type</div><div class="ttdef"><b>Definition</b> <a href="general__velocity__generator_8_h_source.html#l00033">general_velocity_generator.H:33</a></div></div>
+<div class="ttc" id="aclassgeneral__velocity__generator_html_af5fe31734db1a1197f95aecb99451aa1"><div class="ttname"><a href="classgeneral__velocity__generator.html#af5fe31734db1a1197f95aecb99451aa1">general_velocity_generator::define</a></div><div class="ttdeci">void define(speed_sq_pdf_function speed_sq_pdf, RealType speed_sq_min, RealType speed_sq_max, int probe_points=1024, int max_reject_tries=100000)</div><div class="ttdef"><b>Definition</b> <a href="general__velocity__generator_8_h_source.html#l00054">general_velocity_generator.H:54</a></div></div>
 <div class="ttc" id="ageneral__velocity__generator_8_h_html"><div class="ttname"><a href="general__velocity__generator_8_h.html">general_velocity_generator.H</a></div></div>
+</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="usage_field_aligned"></a>
+Field-aligned velocity (anisotropic)</h1>
+<p><span class="tt"><a class="el" href="classfield__aligned__velocity__generator.html" title="Samples field-aligned velocities: an arbitrary parallel speed-squared distribution along B,...">field_aligned_velocity_generator</a></span> builds an anisotropic velocity about the field direction <span class="tt">ub</span>: the parallel component draws <span class="tt">v_par² </span> from your speed-squared PDF <span class="tt">g(w)</span> (so <span class="tt">|v_par| = sqrt(w)</span>), pointing along <span class="tt">ub</span> for <span class="tt">sign = +1</span> or opposite it for <span class="tt">sign = -1</span>, while the two perpendicular components are a Maxwellian with thermal speed <span class="tt">theta_perp</span> (each <span class="tt">~ N(0, theta_perp²/2)</span>, the same convention as <span class="tt"><a class="el" href="classbi__maxwellian__distribution.html" title="Bi-Maxwellian distribution for 3D velocity sampling.">bi_maxwellian_distribution</a></span>). The result is returned in the global frame.</p>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &quot;<a class="code" href="field__aligned__velocity__generator_8_h.html">field_aligned_velocity_generator.H</a>&quot;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;cmath&gt;</span></div>
+<div class="line"><span class="keyword">using </span><a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> = double;</div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">auto</span> gW = [](<a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> w) -&gt; <a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> { <span class="keywordflow">return</span> std::exp(-0.5 * w); };   <span class="comment">// any positive g(w), w = v_par^2</span></div>
+<div class="line"> </div>
+<div class="line"><a class="code hl_class" href="classfield__aligned__velocity__generator.html">field_aligned_velocity_generator&lt;Real&gt;</a> faGen;</div>
+<div class="line"><span class="comment">//           g    v2_min  v2_max  theta_perp  ub          sign</span></div>
+<div class="line">faGen.<a class="code hl_function" href="classfield__aligned__velocity__generator.html#aadd6d41ebcbbe0650097ae75df83f1fe">define</a>(gW,  0.0,    40.0,   1.0,        {0, 0, 1},  +1);</div>
+<div class="line">faGen.<a class="code hl_function" href="classfield__aligned__velocity__generator.html#a7de700c28adc297d1fcee9864767266a">seed</a>(20030410);</div>
+<div class="line"> </div>
+<div class="line"><a class="code hl_typedef" href="classfield__aligned__velocity__generator.html#ae31b56b2be9502231edd5d3ab87516dc">field_aligned_velocity_generator&lt;Real&gt;::point_type</a> v = faGen();   <span class="comment">// {vx, vy, vz}, global frame</span></div>
+<div class="ttc" id="aclassfield__aligned__velocity__generator_html"><div class="ttname"><a href="classfield__aligned__velocity__generator.html">field_aligned_velocity_generator</a></div><div class="ttdoc">Samples field-aligned velocities: an arbitrary parallel speed-squared distribution along B,...</div><div class="ttdef"><b>Definition</b> <a href="field__aligned__velocity__generator_8_h_source.html#l00036">field_aligned_velocity_generator.H:37</a></div></div>
+<div class="ttc" id="aclassfield__aligned__velocity__generator_html_a7de700c28adc297d1fcee9864767266a"><div class="ttname"><a href="classfield__aligned__velocity__generator.html#a7de700c28adc297d1fcee9864767266a">field_aligned_velocity_generator::seed</a></div><div class="ttdeci">void seed(int s)</div><div class="ttdef"><b>Definition</b> <a href="field__aligned__velocity__generator_8_h_source.html#l00134">field_aligned_velocity_generator.H:134</a></div></div>
+<div class="ttc" id="aclassfield__aligned__velocity__generator_html_aadd6d41ebcbbe0650097ae75df83f1fe"><div class="ttname"><a href="classfield__aligned__velocity__generator.html#aadd6d41ebcbbe0650097ae75df83f1fe">field_aligned_velocity_generator::define</a></div><div class="ttdeci">void define(speed_sq_pdf_function speed_sq_pdf, RealType speed_sq_min, RealType speed_sq_max, RealType theta_perp, point_type ub, int parallel_sign, int probe_points=1024, int max_reject_tries=100000)</div><div class="ttdef"><b>Definition</b> <a href="field__aligned__velocity__generator_8_h_source.html#l00064">field_aligned_velocity_generator.H:64</a></div></div>
+<div class="ttc" id="aclassfield__aligned__velocity__generator_html_ae31b56b2be9502231edd5d3ab87516dc"><div class="ttname"><a href="classfield__aligned__velocity__generator.html#ae31b56b2be9502231edd5d3ab87516dc">field_aligned_velocity_generator::point_type</a></div><div class="ttdeci">result_type point_type</div><div class="ttdef"><b>Definition</b> <a href="field__aligned__velocity__generator_8_h_source.html#l00040">field_aligned_velocity_generator.H:40</a></div></div>
+<div class="ttc" id="afield__aligned__velocity__generator_8_h_html"><div class="ttname"><a href="field__aligned__velocity__generator_8_h.html">field_aligned_velocity_generator.H</a></div></div>
 </div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="usage_position"></a>
 Custom spatial density</h1>
 <p><span class="tt"><a class="el" href="classgeneral__position__generator.html" title="Samples positions in 1D/2D/3D from a user density rho(x), rho(x,y), or rho(x,y,z).">general_position_generator</a></span> draws positions in 1D/2D/3D from any density <span class="tt">rho(x)</span> by rejection sampling in an axis-aligned box. The returned point is a <span class="tt">std::vector&lt;<a class="el" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a>&gt;</span> of length <span class="tt">dimension</span>.</p>
@@ -248,8 +268,8 @@ Custom spatial density</h1>
 </div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="usage_errors"></a>
 Error handling</h1>
 <ul>
-<li>The two general generators throw <span class="tt">std::runtime_error</span> if called before <span class="tt">define(...)</span>.</li>
-<li><span class="tt">define(...)</span> throws <span class="tt">std::invalid_argument</span> on bad input (e.g. <span class="tt">kappa &lt;= 0.5</span>, non-positive <span class="tt">theta</span>/<span class="tt">cap</span>, <span class="tt">E_min &gt;= E_max</span>, <span class="tt">dimension</span> outside 1–3).</li>
+<li>The general and field-aligned velocity generators throw <span class="tt">std::runtime_error</span> if called before <span class="tt">define(...)</span>.</li>
+<li><span class="tt">define(...)</span> throws <span class="tt">std::invalid_argument</span> on bad input (e.g. <span class="tt">kappa &lt;= 0.5</span>, non-positive <span class="tt">theta</span>/<span class="tt">cap</span>, <span class="tt">v2_min &gt;= v2_max</span>, <span class="tt">v2_min &lt; 0</span>, a zero <span class="tt">ub</span>, <span class="tt">sign</span> other than ±1, <span class="tt">dimension</span> outside 1–3).</li>
 <li>Velocity samplers throw <span class="tt">std::runtime_error</span> if the cap rejection loop fails 10⁶ times in a row.</li>
 </ul>
 <div class="fragment"><div class="line"><span class="keywordflow">try</span> {</div>
@@ -273,6 +293,7 @@ Complete worked example</h1>
 <div class="line"><span class="preprocessor">#include &quot;<a class="code" href="bi__maxwellian__distribution_8_h.html">bi_maxwellian_distribution.H</a>&quot;</span></div>
 <div class="line"><span class="preprocessor">#include &quot;<a class="code" href="general__position__generator_8_h.html">general_position_generator.H</a>&quot;</span></div>
 <div class="line"><span class="preprocessor">#include &quot;<a class="code" href="general__velocity__generator_8_h.html">general_velocity_generator.H</a>&quot;</span></div>
+<div class="line"><span class="preprocessor">#include &quot;<a class="code" href="field__aligned__velocity__generator_8_h.html">field_aligned_velocity_generator.H</a>&quot;</span></div>
 <div class="line"><span class="preprocessor">#include &quot;<a class="code" href="test__suite_8_h.html">test_suite.H</a>&quot;</span></div>
 <div class="line"> </div>
 <div class="line"><span class="keywordtype">int</span> <a class="code hl_function" href="main_8cpp.html#ae66f6b31b5ad750f1fe042a706a4e3d4">main</a>()</div>
@@ -312,13 +333,13 @@ Complete worked example</h1>
 <div class="line">        std::cout &lt;&lt; <span class="stringliteral">&quot;wrote &quot;</span> &lt;&lt; n_particle &lt;&lt; <span class="stringliteral">&quot; samples to samples_bimaxwellian.txt&quot;</span> &lt;&lt; std::endl;</div>
 <div class="line">    }</div>
 <div class="line"> </div>
-<div class="line">    std::cout &lt;&lt; <span class="stringliteral">&quot;\n=== Example 3: general_velocity_generator (f(E)=exp(-E)) ===&quot;</span> &lt;&lt; std::endl;</div>
-<div class="line">    <span class="keyword">auto</span> energyPdf = [](<a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> E) -&gt; <a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> { <span class="keywordflow">return</span> std::exp(-E); };</div>
+<div class="line">    std::cout &lt;&lt; <span class="stringliteral">&quot;\n=== Example 3: general_velocity_generator (g(w)=exp(-w/2), w=|v|^2) ===&quot;</span></div>
+<div class="line">              &lt;&lt; std::endl;</div>
+<div class="line">    <span class="keyword">auto</span> speedSqPdf = [](<a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> w) -&gt; <a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> { <span class="keywordflow">return</span> std::exp(-<a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a>(0.5) * w); };</div>
 <div class="line">    <a class="code hl_class" href="classgeneral__velocity__generator.html">general_velocity_generator&lt;Real&gt;</a> velocityGen;</div>
-<div class="line">    velocityGen.<a class="code hl_function" href="classgeneral__velocity__generator.html#a4d1c53da5e695cce1467746cbe41cc21">define</a>(energyPdf,</div>
+<div class="line">    velocityGen.<a class="code hl_function" href="classgeneral__velocity__generator.html#af5fe31734db1a1197f95aecb99451aa1">define</a>(speedSqPdf,</div>
 <div class="line">                       <span class="keyword">static_cast&lt;</span><a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a><span class="keyword">&gt;</span>(0.0),</div>
-<div class="line">                       <span class="keyword">static_cast&lt;</span><a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a><span class="keyword">&gt;</span>(20.0),</div>
-<div class="line">                       <span class="keyword">static_cast&lt;</span><a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a><span class="keyword">&gt;</span>(1.0));</div>
+<div class="line">                       <span class="keyword">static_cast&lt;</span><a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a><span class="keyword">&gt;</span>(40.0));</div>
 <div class="line">    velocityGen.<a class="code hl_function" href="classgeneral__velocity__generator.html#a2e42f5bd2170a5adc0a2382071574935">seed</a>(20030410);</div>
 <div class="line">    {</div>
 <div class="line">        std::ofstream out(<span class="stringliteral">&quot;samples_general_velocity.txt&quot;</span>);</div>
@@ -349,11 +370,32 @@ Complete worked example</h1>
 <div class="line">                  &lt;&lt; std::endl;</div>
 <div class="line">    }</div>
 <div class="line"> </div>
+<div class="line">    std::cout &lt;&lt; <span class="stringliteral">&quot;\n=== Example 5: field_aligned_velocity_generator (g(w)=exp(-w/2), B=z, +) ===&quot;</span></div>
+<div class="line">              &lt;&lt; std::endl;</div>
+<div class="line">    <span class="keyword">auto</span> parallelSpeedSqPdf = [](<a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> w) -&gt; <a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> { <span class="keywordflow">return</span> std::exp(-<a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a>(0.5) * w); };</div>
+<div class="line">    <a class="code hl_class" href="classfield__aligned__velocity__generator.html">field_aligned_velocity_generator&lt;Real&gt;</a> fieldAlignedGen;</div>
+<div class="line">    fieldAlignedGen.<a class="code hl_function" href="classfield__aligned__velocity__generator.html#aadd6d41ebcbbe0650097ae75df83f1fe">define</a>(parallelSpeedSqPdf,</div>
+<div class="line">                           <span class="keyword">static_cast&lt;</span><a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a><span class="keyword">&gt;</span>(0.0),</div>
+<div class="line">                           <span class="keyword">static_cast&lt;</span><a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a><span class="keyword">&gt;</span>(40.0),</div>
+<div class="line">                           theta_perp,</div>
+<div class="line">                           {0, 0, 1},</div>
+<div class="line">                           +1);</div>
+<div class="line">    fieldAlignedGen.<a class="code hl_function" href="classfield__aligned__velocity__generator.html#a7de700c28adc297d1fcee9864767266a">seed</a>(20030410);</div>
+<div class="line">    {</div>
+<div class="line">        std::ofstream out(<span class="stringliteral">&quot;samples_field_aligned.txt&quot;</span>);</div>
+<div class="line">        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; n_particle; ++i) {</div>
+<div class="line">            <span class="keyword">const</span> <a class="code hl_typedef" href="classfield__aligned__velocity__generator.html#ae31b56b2be9502231edd5d3ab87516dc">field_aligned_velocity_generator&lt;Real&gt;::point_type</a> v = fieldAlignedGen();</div>
+<div class="line">            out &lt;&lt; v[0] &lt;&lt; <span class="stringliteral">&quot; &quot;</span> &lt;&lt; v[1] &lt;&lt; <span class="stringliteral">&quot; &quot;</span> &lt;&lt; v[2] &lt;&lt; <span class="stringliteral">&quot;\n&quot;</span>;</div>
+<div class="line">        }</div>
+<div class="line">        std::cout &lt;&lt; <span class="stringliteral">&quot;wrote &quot;</span> &lt;&lt; n_particle &lt;&lt; <span class="stringliteral">&quot; samples to samples_field_aligned.txt&quot;</span></div>
+<div class="line">                  &lt;&lt; std::endl;</div>
+<div class="line">    }</div>
+<div class="line"> </div>
 <div class="line">    <span class="keywordflow">return</span> 0;</div>
 <div class="line">}</div>
-<div class="ttc" id="amain_8cpp_html_ae66f6b31b5ad750f1fe042a706a4e3d4"><div class="ttname"><a href="main_8cpp.html#ae66f6b31b5ad750f1fe042a706a4e3d4">main</a></div><div class="ttdeci">int main()</div><div class="ttdef"><b>Definition</b> <a href="main_8cpp_source.html#l00015">main.cpp:15</a></div></div>
+<div class="ttc" id="amain_8cpp_html_ae66f6b31b5ad750f1fe042a706a4e3d4"><div class="ttname"><a href="main_8cpp.html#ae66f6b31b5ad750f1fe042a706a4e3d4">main</a></div><div class="ttdeci">int main()</div><div class="ttdef"><b>Definition</b> <a href="main_8cpp_source.html#l00016">main.cpp:16</a></div></div>
 <div class="ttc" id="atest__suite_8_h_html"><div class="ttname"><a href="test__suite_8_h.html">test_suite.H</a></div></div>
-<div class="ttc" id="atest__suite_8_h_html_af13f216ba3cfa17d37698394e4a39826"><div class="ttname"><a href="test__suite_8_h.html#af13f216ba3cfa17d37698394e4a39826">run_all_tests</a></div><div class="ttdeci">static int run_all_tests()</div><div class="ttdef"><b>Definition</b> <a href="test__suite_8_h_source.html#l00928">test_suite.H:928</a></div></div>
+<div class="ttc" id="atest__suite_8_h_html_af13f216ba3cfa17d37698394e4a39826"><div class="ttname"><a href="test__suite_8_h.html#af13f216ba3cfa17d37698394e4a39826">run_all_tests</a></div><div class="ttdeci">static int run_all_tests()</div><div class="ttdef"><b>Definition</b> <a href="test__suite_8_h_source.html#l01150">test_suite.H:1150</a></div></div>
 </div><!-- fragment --> </div></div><!-- contents -->
 </div><!-- PageDoc -->
 </div><!-- doc-content -->

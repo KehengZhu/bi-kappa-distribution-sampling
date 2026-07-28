@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['energy_5fmax_0',['energy_max',['../classgeneral__generators_1_1_general_velocity_generator.html#a25b7f36ec9890355e7ad0d6f1736bbed',1,'general_generators::GeneralVelocityGenerator']]],
-  ['energy_5fmin_1',['energy_min',['../classgeneral__generators_1_1_general_velocity_generator.html#ad12142cb51d7bbe5b9a5b4d494854339',1,'general_generators::GeneralVelocityGenerator']]],
-  ['energy_5fpdf_2',['energy_pdf',['../classgeneral__generators_1_1_general_velocity_generator.html#a30bfaa92fc78c41d8132d7192506c63f',1,'general_generators::GeneralVelocityGenerator']]]
+  ['e1_0',['e1',['../classgeneral__generators_1_1_field_aligned_velocity_generator.html#a9d873c0e5b37c9a5d0c71251f7e6b25a',1,'general_generators::FieldAlignedVelocityGenerator']]],
+  ['e2_1',['e2',['../classgeneral__generators_1_1_field_aligned_velocity_generator.html#afa3d1932cf8bd74739b0d6504838d4ca',1,'general_generators::FieldAlignedVelocityGenerator']]],
+  ['e3_2',['e3',['../classgeneral__generators_1_1_field_aligned_velocity_generator.html#a5bf672c263aca9ff56bc19b0e9d33297',1,'general_generators::FieldAlignedVelocityGenerator']]]
 ];

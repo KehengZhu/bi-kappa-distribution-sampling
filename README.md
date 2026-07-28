@@ -4,7 +4,7 @@
 
 Monte Carlo particle samplers for plasma **velocity** and **position** distributions, in C++ and Python.
 
-- **C++** (`cpp/`) — header-only samplers: bi-kappa & bi-Maxwellian velocities, plus rejection samplers for any energy or spatial density you define.
+- **C++** (`cpp/`) — header-only samplers: bi-kappa & bi-Maxwellian velocities, plus rejection samplers for any speed-squared (|v|²) or spatial density you define.
 - **Python** (`python/`) — equivalent general samplers + Jupyter notebooks to visualize the output.
 
 📖 **API reference:** [kehengzhu.github.io/bi-kappa-distribution-sampling](https://kehengzhu.github.io/bi-kappa-distribution-sampling/). Locally, open [`docs/index.html`](docs/index.html) in a browser.
@@ -31,13 +31,14 @@ auto v = dist();     // v = {vx, vy, vz}, sampled in the global frame
 
 *Prerequisite: any C++11 compiler. Set `CXX` in `cpp/GNUmakefile` if not `g++`.*
 
-## The four samplers
+## The five samplers
 
 | Header | Samples | define(...) takes |
 |---|---|---|
 | `bi_kappa_distribution` | 3D bi-kappa velocity | `kappa, theta_perp, theta_par, ub, cap[, seed]` |
 | `bi_maxwellian_distribution` | 3D bi-Maxwellian velocity | `theta_perp, theta_par, ub, cap` |
-| `general_velocity_generator` | speed from your `f(E)`, isotropic direction | `f, E_min, E_max, mass` |
+| `general_velocity_generator` | speed from your `g(w)`, `w = \|v\|²`, isotropic direction | `g, v²_min, v²_max` |
+| `field_aligned_velocity_generator` | parallel speed from your `g(w)`, `w = v_par²`, along `ub`; Maxwellian perpendicular | `g, v²_min, v²_max, theta_perp, ub, sign` |
 | `general_position_generator` | position from your density `rho(x)` | `dimension, lower, upper, rho` |
 
 They all share the same behavior:
@@ -49,17 +50,17 @@ They all share the same behavior:
 - **`cap`** (default `20`) rejects any component with `|v_i| / theta_i > cap` and resamples; throws after 10⁶ failed tries.
 - **Change one parameter** without re-specifying the rest: `dist.kappa(3.0)`, `dist.ub({0,1,0})`, etc.
 
-For the full API — every overload, parameter constraint, and the Python classes — see the [API reference](https://kehengzhu.github.io/bi-kappa-distribution-sampling/). A worked example using all four samplers lives in [`cpp/main.cpp`](cpp/main.cpp).
+For the full API — every overload, parameter constraint, and the Python classes — see the [API reference](https://kehengzhu.github.io/bi-kappa-distribution-sampling/). A worked example using all five samplers lives in [`cpp/main.cpp`](cpp/main.cpp).
 
 ## Quick start — Python
 
 ```bash
 cd python
 uv sync                # or: pip install numpy scipy pandas matplotlib ipykernel
-python general_generators.py     # writes samples_general_{velocity,position}.txt
+python general_generators.py     # writes samples_general_{velocity,position}.txt and samples_field_aligned.txt
 ```
 
-`general_generators.py` provides `GeneralVelocityGenerator` and `GeneralPositionGenerator` — the Python equivalents of the C++ general samplers.
+`general_generators.py` provides `GeneralVelocityGenerator`, `FieldAlignedVelocityGenerator`, and `GeneralPositionGenerator` — the Python equivalents of the C++ general samplers.
 
 ## Visualize
 

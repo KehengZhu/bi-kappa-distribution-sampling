@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['energymax_0',['energyMax',['../classgeneral__velocity__generator.html#a9fdb8d5f0e951f64aafc7df70e1ded8a',1,'general_velocity_generator']]],
-  ['energymin_1',['energyMin',['../classgeneral__velocity__generator.html#abd9ec8daef1cc82a6b41ac532134709c',1,'general_velocity_generator']]]
+  ['field_5faligned_5fvelocity_5fgenerator_0',['field_aligned_velocity_generator',['../classfield__aligned__velocity__generator.html#ab3a3e7f1c92da8b8a21ef794850e7d4d',1,'field_aligned_velocity_generator::field_aligned_velocity_generator()'],['../classfield__aligned__velocity__generator.html#abf45c2717651aaeb820addcec81af9ef',1,'field_aligned_velocity_generator::field_aligned_velocity_generator(speed_sq_pdf_function speed_sq_pdf, RealType speed_sq_min, RealType speed_sq_max, RealType theta_perp, point_type ub, int parallel_sign, int probe_points=1024, int max_reject_tries=100000)']]]
 ];

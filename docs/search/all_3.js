@@ -6,6 +6,6 @@ var searchData=
   ['c_5fgood_3',['C_GOOD',['../namespacesphere__sampling__bias.html#abf05095dcfb22843438161db6f1b2061',1,'sphere_sampling_bias']]],
   ['c_5fref_4',['C_REF',['../namespacesphere__sampling__bias.html#a89039091ec7f09010c909cd70aee341f',1,'sphere_sampling_bias']]],
   ['complete_20worked_20example_5',['Complete worked example',['../usage.html#usage_full',1,'']]],
-  ['custom_20energy_20distribution_6',['Custom energy distribution',['../usage.html#usage_velocity',1,'']]],
-  ['custom_20spatial_20density_7',['Custom spatial density',['../usage.html#usage_position',1,'']]]
+  ['custom_20spatial_20density_6',['Custom spatial density',['../usage.html#usage_position',1,'']]],
+  ['custom_20speed_20squared_20distribution_7',['Custom speed-squared distribution',['../usage.html#usage_velocity',1,'']]]
 ];

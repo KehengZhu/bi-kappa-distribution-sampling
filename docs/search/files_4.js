@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['sphere_5fsampling_5fbias_2epy_0',['sphere_sampling_bias.py',['../sphere__sampling__bias_8py.html',1,'']]]
+  ['readme_2emd_0',['README.md',['../_r_e_a_d_m_e_8md.html',1,'']]]
 ];

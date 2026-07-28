@@ -14,6 +14,7 @@
 #include "bi_maxwellian_distribution.H"
 #include "general_position_generator.H"
 #include "general_velocity_generator.H"
+#include "field_aligned_velocity_generator.H"
 
 // All test functions are static to avoid ODR issues if this header is ever
 // included from more than one translation unit.
@@ -329,7 +330,7 @@ static int test_define_general_velocity()
     std::cout << "=== test_define_general_velocity ===" << std::endl;
     bool all_ok= true;
 
-    auto energyPdf= [](TestReal E) -> TestReal { return std::exp(-E); };
+    auto speedSqPdf= [](TestReal w) -> TestReal { return std::exp(-TestReal(0.5) * w); };
     std::mt19937 gen(99u);
 
     // D1: default construct + define + sample succeeds with finite output
@@ -338,7 +339,7 @@ static int test_define_general_velocity()
         try
         {
             general_velocity_generator<TestReal> vgen;
-            vgen.define(energyPdf, TestReal(0.0), TestReal(10.0), TestReal(1.0));
+            vgen.define(speedSqPdf, TestReal(0.0), TestReal(20.0));
             auto v= vgen(gen);
             ok= std::isfinite(v[0]) && std::isfinite(v[1]) && std::isfinite(v[2]);
         }
@@ -376,8 +377,8 @@ static int test_define_general_velocity()
         try
         {
             general_velocity_generator<TestReal> vgen;
-            vgen.define(energyPdf, TestReal(0.0), TestReal(10.0), TestReal(1.0));
-            vgen.define(energyPdf, TestReal(0.0), TestReal(5.0), TestReal(2.0));
+            vgen.define(speedSqPdf, TestReal(0.0), TestReal(20.0));
+            vgen.define(speedSqPdf, TestReal(0.0), TestReal(10.0));
             auto v= vgen(gen);
             ok= std::isfinite(v[0]) && std::isfinite(v[1]) && std::isfinite(v[2]);
         }
@@ -386,6 +387,26 @@ static int test_define_general_velocity()
         }
         all_ok= all_ok && ok;
         std::cout << "  D3 redefine then sample: " << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    // D4: negative speed_sq_min throws std::invalid_argument
+    {
+        bool threw= false;
+        try
+        {
+            general_velocity_generator<TestReal> vgen;
+            vgen.define(speedSqPdf, TestReal(-1.0), TestReal(10.0));
+        }
+        catch (const std::invalid_argument &)
+        {
+            threw= true;
+        }
+        catch (...)
+        {
+        }
+        all_ok= all_ok && threw;
+        std::cout << "  D4 negative speed_sq_min throws: " << (threw ? "PASS" : "FAIL")
+                  << std::endl;
     }
 
     std::cout << "test_define_general_velocity: " << (all_ok ? "PASS" : "FAIL") << std::endl;
@@ -819,9 +840,9 @@ static int test_seed_api()
     {
         const int seed= 44444;
         const int n= 50;
-        auto energyPdf= [](TestReal E) -> TestReal { return std::exp(-E); };
+        auto speedSqPdf= [](TestReal w) -> TestReal { return std::exp(-TestReal(0.5) * w); };
         general_velocity_generator<TestReal> vgen;
-        vgen.define(energyPdf, TestReal(0.0), TestReal(10.0), TestReal(1.0));
+        vgen.define(speedSqPdf, TestReal(0.0), TestReal(20.0));
 
         vgen.seed(seed);
         TestReal sum1= TestReal(0.0);
@@ -922,6 +943,207 @@ static int test_seed_api()
 }
 
 // ================================================================
+// test_define_field_aligned
+// Statistical checks for the field-aligned velocity generator:
+// signed parallel speed along B + Maxwellian perpendicular spread.
+// ================================================================
+static int test_define_field_aligned()
+{
+    std::cout << "=== test_define_field_aligned ===" << std::endl;
+    bool all_ok= true;
+
+    typedef field_aligned_velocity_generator<TestReal>::point_type F3;
+    auto speedSqPdf= [](TestReal w) -> TestReal { return std::exp(-TestReal(0.5) * w); };
+
+    // D1: default construct + define + sample succeeds with finite output
+    {
+        std::mt19937 gen(99u);
+        bool ok= false;
+        try
+        {
+            field_aligned_velocity_generator<TestReal> fgen;
+            fgen.define(speedSqPdf, TestReal(0.0), TestReal(40.0), TestReal(1.0),
+                        F3({TestReal(0.0), TestReal(0.0), TestReal(1.0)}), +1);
+            auto v= fgen(gen);
+            ok= std::isfinite(v[0]) && std::isfinite(v[1]) && std::isfinite(v[2]);
+        }
+        catch (...)
+        {
+        }
+        all_ok= all_ok && ok;
+        std::cout << "  D1 default construct + define + sample: " << (ok ? "PASS" : "FAIL")
+                  << std::endl;
+    }
+
+    // D2: sampling before define() throws std::runtime_error
+    {
+        std::mt19937 gen(99u);
+        bool threw= false;
+        try
+        {
+            field_aligned_velocity_generator<TestReal> fgen;
+            fgen(gen);
+        }
+        catch (const std::runtime_error &)
+        {
+            threw= true;
+        }
+        catch (...)
+        {
+        }
+        all_ok= all_ok && threw;
+        std::cout << "  D2 sample before define throws: " << (threw ? "PASS" : "FAIL")
+                  << std::endl;
+    }
+
+    // S1: with B=z, vz is one-signed (matches +1 sign) and vx,vy Maxwellian
+    //     with mean~0 and variance ~ theta_perp^2/2.
+    {
+        const TestReal theta_perp= TestReal(2.0);
+        field_aligned_velocity_generator<TestReal> fgen;
+        fgen.define(speedSqPdf, TestReal(0.0), TestReal(40.0), theta_perp,
+                    F3({TestReal(0.0), TestReal(0.0), TestReal(1.0)}), +1);
+        std::mt19937 gen(12345u);
+
+        const int n= 200000;
+        TestReal sum_x= 0, sum_y= 0, sum_xx= 0, sum_yy= 0, sum_xy= 0;
+        bool vz_all_positive= true;
+        for (int i= 0; i < n; ++i)
+        {
+            auto v= fgen(gen);
+            sum_x+= v[0];
+            sum_y+= v[1];
+            sum_xx+= v[0] * v[0];
+            sum_yy+= v[1] * v[1];
+            sum_xy+= v[0] * v[1];
+            if (v[2] <= TestReal(0.0))
+            {
+                vz_all_positive= false;
+            }
+        }
+        TestReal mean_x= sum_x / n;
+        TestReal mean_y= sum_y / n;
+        TestReal var_x= sum_xx / n - mean_x * mean_x;
+        TestReal var_y= sum_yy / n - mean_y * mean_y;
+        TestReal cov_xy= sum_xy / n - mean_x * mean_y;
+        TestReal expected_var= theta_perp * theta_perp / TestReal(2.0);
+
+        bool sign_ok= vz_all_positive;
+        bool mean_ok= std::abs(mean_x) < TestReal(0.05) && std::abs(mean_y) < TestReal(0.05);
+        bool var_ok= std::abs(var_x - expected_var) < TestReal(0.1) &&
+                     std::abs(var_y - expected_var) < TestReal(0.1);
+        bool iso_ok= std::abs(var_x - var_y) < TestReal(0.1) &&
+                     std::abs(cov_xy) < TestReal(0.1);
+
+        all_ok= all_ok && sign_ok && mean_ok && var_ok && iso_ok;
+        std::cout << "  S1 vz>0 for sign=+1: " << (sign_ok ? "PASS" : "FAIL") << std::endl;
+        std::cout << "  S1 perp mean~0: " << (mean_ok ? "PASS" : "FAIL") << " (" << mean_x << ", "
+                  << mean_y << ")" << std::endl;
+        std::cout << "  S1 perp var~theta_perp^2/2=" << expected_var << ": "
+                  << (var_ok ? "PASS" : "FAIL") << " (" << var_x << ", " << var_y << ")"
+                  << std::endl;
+        std::cout << "  S1 perp isotropy (var_x~var_y, cov~0): " << (iso_ok ? "PASS" : "FAIL")
+                  << std::endl;
+    }
+
+    // S2: sign=-1 flips the parallel direction (vz all negative for B=z).
+    {
+        field_aligned_velocity_generator<TestReal> fgen;
+        fgen.define(speedSqPdf, TestReal(0.0), TestReal(40.0), TestReal(1.0),
+                    F3({TestReal(0.0), TestReal(0.0), TestReal(1.0)}), -1);
+        std::mt19937 gen(2024u);
+        bool vz_all_negative= true;
+        for (int i= 0; i < 20000; ++i)
+        {
+            auto v= fgen(gen);
+            if (v[2] >= TestReal(0.0))
+            {
+                vz_all_negative= false;
+                break;
+            }
+        }
+        all_ok= all_ok && vz_all_negative;
+        std::cout << "  S2 vz<0 for sign=-1: " << (vz_all_negative ? "PASS" : "FAIL")
+                  << std::endl;
+    }
+
+    // S3: with a tilted B, the perpendicular part is orthogonal to B, i.e. the
+    //     parallel projection v.b_hat is one-signed and removing it leaves
+    //     v_perp with v_perp.B ~ 0 for every sample.
+    {
+        F3 B= {TestReal(1.0), TestReal(1.0), TestReal(1.0)};
+        TestReal Bnorm= std::sqrt(B[0] * B[0] + B[1] * B[1] + B[2] * B[2]);
+        F3 bhat= {B[0] / Bnorm, B[1] / Bnorm, B[2] / Bnorm};
+
+        field_aligned_velocity_generator<TestReal> fgen;
+        fgen.define(speedSqPdf, TestReal(0.0), TestReal(40.0), TestReal(1.5), B, +1);
+        std::mt19937 gen(7u);
+
+        bool ortho_ok= true;
+        bool proj_positive= true;
+        for (int i= 0; i < 20000; ++i)
+        {
+            auto v= fgen(gen);
+            TestReal vpar= v[0] * bhat[0] + v[1] * bhat[1] + v[2] * bhat[2];
+            F3 vperp= {v[0] - vpar * bhat[0], v[1] - vpar * bhat[1], v[2] - vpar * bhat[2]};
+            TestReal vperp_dot_B= vperp[0] * B[0] + vperp[1] * B[1] + vperp[2] * B[2];
+            if (std::abs(vperp_dot_B) > TestReal(1e-9) * (TestReal(1.0) + std::abs(vpar) * Bnorm))
+            {
+                ortho_ok= false;
+            }
+            if (vpar <= TestReal(0.0))
+            {
+                proj_positive= false;
+            }
+        }
+        all_ok= all_ok && ortho_ok && proj_positive;
+        std::cout << "  S3 v_perp orthogonal to tilted B: " << (ortho_ok ? "PASS" : "FAIL")
+                  << std::endl;
+        std::cout << "  S3 v.b_hat>0 for sign=+1: " << (proj_positive ? "PASS" : "FAIL")
+                  << std::endl;
+    }
+
+    // E1: invalid arguments throw std::invalid_argument.
+    {
+        int threw= 0;
+        int expected= 5;
+        // zero B
+        try { field_aligned_velocity_generator<TestReal> f;
+            f.define(speedSqPdf, TestReal(0.0), TestReal(1.0), TestReal(1.0),
+                     F3({TestReal(0.0), TestReal(0.0), TestReal(0.0)}), +1); }
+        catch (const std::invalid_argument &) { ++threw; } catch (...) {}
+        // theta_perp <= 0
+        try { field_aligned_velocity_generator<TestReal> f;
+            f.define(speedSqPdf, TestReal(0.0), TestReal(1.0), TestReal(0.0),
+                     F3({TestReal(0.0), TestReal(0.0), TestReal(1.0)}), +1); }
+        catch (const std::invalid_argument &) { ++threw; } catch (...) {}
+        // speed_sq_min >= speed_sq_max
+        try { field_aligned_velocity_generator<TestReal> f;
+            f.define(speedSqPdf, TestReal(1.0), TestReal(1.0), TestReal(1.0),
+                     F3({TestReal(0.0), TestReal(0.0), TestReal(1.0)}), +1); }
+        catch (const std::invalid_argument &) { ++threw; } catch (...) {}
+        // speed_sq_min < 0
+        try { field_aligned_velocity_generator<TestReal> f;
+            f.define(speedSqPdf, TestReal(-1.0), TestReal(1.0), TestReal(1.0),
+                     F3({TestReal(0.0), TestReal(0.0), TestReal(1.0)}), +1); }
+        catch (const std::invalid_argument &) { ++threw; } catch (...) {}
+        // parallel_sign not +/-1
+        try { field_aligned_velocity_generator<TestReal> f;
+            f.define(speedSqPdf, TestReal(0.0), TestReal(1.0), TestReal(1.0),
+                     F3({TestReal(0.0), TestReal(0.0), TestReal(1.0)}), 2); }
+        catch (const std::invalid_argument &) { ++threw; } catch (...) {}
+
+        bool ok= (threw == expected);
+        all_ok= all_ok && ok;
+        std::cout << "  E1 invalid args throw (" << threw << "/" << expected << "): "
+                  << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    std::cout << "test_define_field_aligned: " << (all_ok ? "PASS" : "FAIL") << std::endl;
+    return all_ok ? 0 : 1;
+}
+
+// ================================================================
 // run_all_tests – call this from main()
 // Returns 0 if all tests pass, 1 if any test fails.
 // ================================================================
@@ -933,6 +1155,7 @@ static int run_all_tests()
     result|= test_define_bimaxwellian();
     result|= test_define_general_velocity();
     result|= test_define_general_position();
+    result|= test_define_field_aligned();
     result|= test_max_normalized_velocity_bikappa();
     result|= test_max_normalized_velocity_bimaxwellian();
     result|= test_seed_api();

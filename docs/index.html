@@ -124,7 +124,7 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('index.html',''
 <p><a href="https://doi.org/10.5281/zenodo.20617011"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.20617011.svg" alt="DOI" style="pointer-events: none;" class="inline"/></a></p>
 <p>Monte Carlo particle samplers for plasma <b>velocity</b> and <b>position</b> distributions, in C++ and Python.</p>
 <ul>
-<li><b>C++</b> (<span class="tt">cpp/</span>) — header-only samplers: bi-kappa &amp; bi-Maxwellian velocities, plus rejection samplers for any energy or spatial density you define.</li>
+<li><b>C++</b> (<span class="tt">cpp/</span>) — header-only samplers: bi-kappa &amp; bi-Maxwellian velocities, plus rejection samplers for any speed-squared (|v|²) or spatial density you define.</li>
 <li><b>Python</b> (<span class="tt">python/</span>) — equivalent general samplers + Jupyter notebooks to visualize the output.</li>
 </ul>
 <p>📖 <b>API reference:</b> <a href="https://kehengzhu.github.io/bi-kappa-distribution-sampling/">kehengzhu.github.io/bi-kappa-distribution-sampling</a>. Locally, open <a href="docs/index.html"><span class="tt">docs/index.html</span></a> in a browser.</p>
@@ -145,7 +145,7 @@ Quick start — C++</h1>
 <div class="ttc" id="aclassbi__kappa__distribution_html_a138df5909e003c80dc061b63da6d1e76"><div class="ttname"><a href="classbi__kappa__distribution.html#a138df5909e003c80dc061b63da6d1e76">bi_kappa_distribution::define</a></div><div class="ttdeci">void define(const param_type &amp;params)</div><div class="ttdef"><b>Definition</b> <a href="bi__kappa__distribution_8_h_source.html#l00123">bi_kappa_distribution.H:123</a></div></div>
 </div><!-- fragment --><p><em>Prerequisite: any C++11 compiler. Set <span class="tt">CXX</span> in <span class="tt">cpp/GNUmakefile</span> if not <span class="tt">g++</span>.</em></p>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md3"></a>
-The four samplers</h1>
+The five samplers</h1>
 <table class="markdownTable">
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Header  </th><th class="markdownTableHeadNone">Samples  </th><th class="markdownTableHeadNone">define(...) takes  </th></tr>
@@ -154,8 +154,10 @@ The four samplers</h1>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><span class="tt"><a class="el" href="classbi__maxwellian__distribution.html" title="Bi-Maxwellian distribution for 3D velocity sampling.">bi_maxwellian_distribution</a></span>  </td><td class="markdownTableBodyNone">3D bi-Maxwellian velocity  </td><td class="markdownTableBodyNone"><span class="tt">theta_perp, theta_par, ub, cap</span>  </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><span class="tt"><a class="el" href="classgeneral__velocity__generator.html" title="Samples velocities from a user-defined energy distribution f(E).">general_velocity_generator</a></span>  </td><td class="markdownTableBodyNone">speed from your <span class="tt">f(E)</span>, isotropic direction  </td><td class="markdownTableBodyNone"><span class="tt">f, E_min, E_max, mass</span>  </td></tr>
+<td class="markdownTableBodyNone"><span class="tt"><a class="el" href="classgeneral__velocity__generator.html" title="Samples velocities from a user-defined speed-squared distribution g(w).">general_velocity_generator</a></span>  </td><td class="markdownTableBodyNone">speed from your <span class="tt">g(w)</span>, <span class="tt">w = \|v\|²</span>, isotropic direction  </td><td class="markdownTableBodyNone"><span class="tt">g, v²_min, v²_max</span>  </td></tr>
 <tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><span class="tt"><a class="el" href="classfield__aligned__velocity__generator.html" title="Samples field-aligned velocities: an arbitrary parallel speed-squared distribution along B,...">field_aligned_velocity_generator</a></span>  </td><td class="markdownTableBodyNone">parallel speed from your <span class="tt">g(w)</span>, <span class="tt">w = v_par²</span>, along <span class="tt">ub</span>; Maxwellian perpendicular  </td><td class="markdownTableBodyNone"><span class="tt">g, v²_min, v²_max, theta_perp, ub, sign</span>  </td></tr>
+<tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><span class="tt"><a class="el" href="classgeneral__position__generator.html" title="Samples positions in 1D/2D/3D from a user density rho(x), rho(x,y), or rho(x,y,z).">general_position_generator</a></span>  </td><td class="markdownTableBodyNone">position from your density <span class="tt">rho(x)</span>  </td><td class="markdownTableBodyNone"><span class="tt">dimension, lower, upper, rho</span>  </td></tr>
 </table>
 <p>They all share the same behavior:</p>
@@ -167,13 +169,13 @@ The four samplers</h1>
 <li><b><span class="tt">cap</span></b> (default <span class="tt">20</span>) rejects any component with <span class="tt">|v_i| / theta_i &gt; cap</span> and resamples; throws after 10⁶ failed tries.</li>
 <li><b>Change one parameter</b> without re-specifying the rest: <span class="tt">dist.kappa(3.0)</span>, <span class="tt">dist.ub({0,1,0})</span>, etc.</li>
 </ul>
-<p>For the full API — every overload, parameter constraint, and the Python classes — see the <a href="https://kehengzhu.github.io/bi-kappa-distribution-sampling/">API reference</a>. A worked example using all four samplers lives in <a href="cpp/main.cpp"><span class="tt">cpp/main.cpp</span></a>.</p>
+<p>For the full API — every overload, parameter constraint, and the Python classes — see the <a href="https://kehengzhu.github.io/bi-kappa-distribution-sampling/">API reference</a>. A worked example using all five samplers lives in <a href="cpp/main.cpp"><span class="tt">cpp/main.cpp</span></a>.</p>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md4"></a>
 Quick start — Python</h1>
 <div class="fragment"><div class="line">cd python</div>
 <div class="line">uv sync                # or: pip install numpy scipy pandas matplotlib ipykernel</div>
-<div class="line">python general_generators.py     # writes samples_general_{velocity,position}.txt</div>
-</div><!-- fragment --><p><span class="tt"><a class="el" href="general__generators_8py.html">general_generators.py</a></span> provides <span class="tt">GeneralVelocityGenerator</span> and <span class="tt">GeneralPositionGenerator</span> — the Python equivalents of the C++ general samplers.</p>
+<div class="line">python general_generators.py     # writes samples_general_{velocity,position}.txt and samples_field_aligned.txt</div>
+</div><!-- fragment --><p><span class="tt"><a class="el" href="general__generators_8py.html">general_generators.py</a></span> provides <span class="tt">GeneralVelocityGenerator</span>, <span class="tt">FieldAlignedVelocityGenerator</span>, and <span class="tt">GeneralPositionGenerator</span> — the Python equivalents of the C++ general samplers.</p>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md5"></a>
 Visualize</h1>
 <p>Open <a href="python/visualize_samples.ipynb"><span class="tt">python/visualize_samples.ipynb</span></a> and run all cells. Point <span class="tt">workspace_root</span> at your sample files:</p>

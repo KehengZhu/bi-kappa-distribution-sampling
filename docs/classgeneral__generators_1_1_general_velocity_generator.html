@@ -123,16 +123,15 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('classgeneral__
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-methods" class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a579634dc733d56c6d7655060fdca30ce" id="r_a579634dc733d56c6d7655060fdca30ce"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a579634dc733d56c6d7655060fdca30ce">__init__</a> (self, Callable energy_pdf, float energy_min, float energy_max, float particle_mass, int probe_points=1024, int max_reject_tries=100000)</td></tr>
-<tr class="memitem:a72a7e52f1731d2b2ee8a43f549cd915e" id="r_a72a7e52f1731d2b2ee8a43f549cd915e"><td class="memItemLeft">float&#160;</td><td class="memItemRight"><a class="el" href="#a72a7e52f1731d2b2ee8a43f549cd915e">sample_energy</a> (self, np.random.Generator rng)</td></tr>
+<tr class="memitem:a09370c519319ce5894bb1b314a74573f" id="r_a09370c519319ce5894bb1b314a74573f"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a09370c519319ce5894bb1b314a74573f">__init__</a> (self, Callable speed_sq_pdf, float speed_sq_min, float speed_sq_max, int probe_points=1024, int max_reject_tries=100000)</td></tr>
+<tr class="memitem:a6259ab2d8e130bd7a86c42ee338222c2" id="r_a6259ab2d8e130bd7a86c42ee338222c2"><td class="memItemLeft">float&#160;</td><td class="memItemRight"><a class="el" href="#a6259ab2d8e130bd7a86c42ee338222c2">sample_speed_sq</a> (self, np.random.Generator rng)</td></tr>
 <tr class="memitem:a44a40de2566f1f77fc837366a49e1615" id="r_a44a40de2566f1f77fc837366a49e1615"><td class="memItemLeft">np.ndarray&#160;</td><td class="memItemRight"><a class="el" href="#a44a40de2566f1f77fc837366a49e1615">__call__</a> (self, np.random.Generator rng)</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-attribs" class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
-<tr class="memitem:a30bfaa92fc78c41d8132d7192506c63f" id="r_a30bfaa92fc78c41d8132d7192506c63f"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a30bfaa92fc78c41d8132d7192506c63f">energy_pdf</a> = energy_pdf</td></tr>
-<tr class="memitem:ad12142cb51d7bbe5b9a5b4d494854339" id="r_ad12142cb51d7bbe5b9a5b4d494854339"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#ad12142cb51d7bbe5b9a5b4d494854339">energy_min</a> = energy_min</td></tr>
-<tr class="memitem:a25b7f36ec9890355e7ad0d6f1736bbed" id="r_a25b7f36ec9890355e7ad0d6f1736bbed"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a25b7f36ec9890355e7ad0d6f1736bbed">energy_max</a> = energy_max</td></tr>
-<tr class="memitem:ad86d7087cb116bfde56c13d970afffbf" id="r_ad86d7087cb116bfde56c13d970afffbf"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#ad86d7087cb116bfde56c13d970afffbf">particle_mass</a> = particle_mass</td></tr>
+<tr class="memitem:ace267739d2df6dad9343da3400b7858a" id="r_ace267739d2df6dad9343da3400b7858a"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#ace267739d2df6dad9343da3400b7858a">speed_sq_pdf</a> = speed_sq_pdf</td></tr>
+<tr class="memitem:a53f853526684eeb2cb98d0d2adc28a90" id="r_a53f853526684eeb2cb98d0d2adc28a90"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a53f853526684eeb2cb98d0d2adc28a90">speed_sq_min</a> = speed_sq_min</td></tr>
+<tr class="memitem:a2ece22d170339f79b9baf4c57aaf2aa1" id="r_a2ece22d170339f79b9baf4c57aaf2aa1"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a2ece22d170339f79b9baf4c57aaf2aa1">speed_sq_max</a> = speed_sq_max</td></tr>
 <tr class="memitem:a018eda951a34d6a0426d971210806f1a" id="r_a018eda951a34d6a0426d971210806f1a"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a018eda951a34d6a0426d971210806f1a">max_reject_tries</a> = max_reject_tries</td></tr>
 <tr class="memitem:a920ddca0a73e6a4e84038c2d4d386592" id="r_a920ddca0a73e6a4e84038c2d4d386592"><td class="memItemLeft">float&#160;</td><td class="memItemRight"><a class="el" href="#a920ddca0a73e6a4e84038c2d4d386592">pdf_upper_bound</a> = self._estimate_pdf_upper_bound(probe_points)</td></tr>
 </table><table class="memberdecls">
@@ -141,11 +140,15 @@ Protected Member Functions</h2></td></tr>
 <tr class="memitem:a827f4117e2afbf2bf4935cf2fe2c95b2" id="r_a827f4117e2afbf2bf4935cf2fe2c95b2"><td class="memItemLeft">float&#160;</td><td class="memItemRight"><a class="el" href="#a827f4117e2afbf2bf4935cf2fe2c95b2">_estimate_pdf_upper_bound</a> (self, int probe_points)</td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
-<div class="textblock"><pre class="fragment">Samples velocities from a user-defined energy distribution f(E).</pre> 
+<div class="textblock"><pre class="fragment">Samples velocities from a user-defined speed-squared distribution g(w), w = |v|^2.
+
+The speed is |v| = sqrt(w); the direction is isotropic in 3D. (For a
+distribution originally posed in energy, w = |v|^2 = 2E/m, so the mass drops
+out of this generator entirely.)</pre> 
 <p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00005">5</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
 </div><a name="doc-constructors" id="doc-constructors"></a><h2 id="header-doc-constructors" class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a579634dc733d56c6d7655060fdca30ce" name="a579634dc733d56c6d7655060fdca30ce"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a579634dc733d56c6d7655060fdca30ce">&#9670;&#160;</a></span>__init__()</h2>
+<a id="a09370c519319ce5894bb1b314a74573f" name="a09370c519319ce5894bb1b314a74573f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a09370c519319ce5894bb1b314a74573f">&#9670;&#160;</a></span>__init__()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -158,22 +161,17 @@ Protected Member Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">Callable</td>          <td class="paramname"><span class="paramname"><em>energy_pdf</em></span>, </td>
+          <td class="paramtype">Callable</td>          <td class="paramname"><span class="paramname"><em>speed_sq_pdf</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">float</td>          <td class="paramname"><span class="paramname"><em>energy_min</em></span>, </td>
+          <td class="paramtype">float</td>          <td class="paramname"><span class="paramname"><em>speed_sq_min</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">float</td>          <td class="paramname"><span class="paramname"><em>energy_max</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">float</td>          <td class="paramname"><span class="paramname"><em>particle_mass</em></span>, </td>
+          <td class="paramtype">float</td>          <td class="paramname"><span class="paramname"><em>speed_sq_max</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -188,7 +186,7 @@ Protected Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00008">8</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00012">12</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
 
 </div>
 </div>
@@ -212,9 +210,9 @@ Protected Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <pre class="fragment">Generate a random 3D velocity vector.</pre> 
-<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00034">34</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00041">41</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
 
-<p class="reference">References <a class="el" href="general__generators_8py_source.html#l00013">particle_mass</a>, and <a class="el" href="general__generators_8py_source.html#l00025">sample_energy()</a>.</p>
+<p class="reference">References <a class="el" href="general__generators_8py_source.html#l00032">sample_speed_sq()</a>.</p>
 
 </div>
 </div>
@@ -244,21 +242,21 @@ Protected Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<pre class="fragment">Estimate the maximum value of the energy PDF in the given range.</pre> 
-<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00019">19</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
+<pre class="fragment">Estimate the maximum value of the speed-squared PDF in the given range.</pre> 
+<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00026">26</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
 
-<p class="reference">References <a class="el" href="general__generators_8py_source.html#l00012">energy_max</a>, <a class="el" href="general__generators_8py_source.html#l00011">energy_min</a>, and <a class="el" href="general__generators_8py_source.html#l00010">energy_pdf</a>.</p>
+<p class="reference">References <a class="el" href="general__generators_8py_source.html#l00020">speed_sq_max</a>, <a class="el" href="general__generators_8py_source.html#l00019">speed_sq_min</a>, and <a class="el" href="general__generators_8py_source.html#l00018">speed_sq_pdf</a>.</p>
 
 </div>
 </div>
-<a id="a72a7e52f1731d2b2ee8a43f549cd915e" name="a72a7e52f1731d2b2ee8a43f549cd915e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a72a7e52f1731d2b2ee8a43f549cd915e">&#9670;&#160;</a></span>sample_energy()</h2>
+<a id="a6259ab2d8e130bd7a86c42ee338222c2" name="a6259ab2d8e130bd7a86c42ee338222c2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6259ab2d8e130bd7a86c42ee338222c2">&#9670;&#160;</a></span>sample_speed_sq()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"> float general_generators.GeneralVelocityGenerator.sample_energy </td>
+          <td class="memname"> float general_generators.GeneralVelocityGenerator.sample_speed_sq </td>
           <td>(</td>
           <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>self</em></span>, </td>
         </tr>
@@ -269,70 +267,16 @@ Protected Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<pre class="fragment">Sample energy using rejection sampling.</pre> 
-<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00025">25</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
+<pre class="fragment">Sample w = |v|^2 using rejection sampling.</pre> 
+<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00032">32</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
 
-<p class="reference">References <a class="el" href="general__generators_8py_source.html#l00012">energy_max</a>, <a class="el" href="general__generators_8py_source.html#l00011">energy_min</a>, <a class="el" href="general__generators_8py_source.html#l00010">energy_pdf</a>, <a class="el" href="general__generators_8py_source.html#l00014">max_reject_tries</a>, and <a class="el" href="general__generators_8py_source.html#l00017">pdf_upper_bound</a>.</p>
+<p class="reference">References <a class="el" href="general__generators_8py_source.html#l00021">max_reject_tries</a>, <a class="el" href="general__generators_8py_source.html#l00024">pdf_upper_bound</a>, <a class="el" href="general__generators_8py_source.html#l00020">speed_sq_max</a>, <a class="el" href="general__generators_8py_source.html#l00019">speed_sq_min</a>, and <a class="el" href="general__generators_8py_source.html#l00018">speed_sq_pdf</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00034">__call__()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00157">general_generators.FieldAlignedVelocityGenerator.__call__()</a>, and <a class="el" href="general__generators_8py_source.html#l00041">__call__()</a>.</p>
 
 </div>
 </div>
 <a name="doc-variable-members" id="doc-variable-members"></a><h2 id="header-doc-variable-members" class="groupheader">Member Data Documentation</h2>
-<a id="a25b7f36ec9890355e7ad0d6f1736bbed" name="a25b7f36ec9890355e7ad0d6f1736bbed"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a25b7f36ec9890355e7ad0d6f1736bbed">&#9670;&#160;</a></span>energy_max</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">general_generators.GeneralVelocityGenerator.energy_max = energy_max</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00012">12</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
-
-<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00019">_estimate_pdf_upper_bound()</a>, and <a class="el" href="general__generators_8py_source.html#l00025">sample_energy()</a>.</p>
-
-</div>
-</div>
-<a id="ad12142cb51d7bbe5b9a5b4d494854339" name="ad12142cb51d7bbe5b9a5b4d494854339"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad12142cb51d7bbe5b9a5b4d494854339">&#9670;&#160;</a></span>energy_min</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">general_generators.GeneralVelocityGenerator.energy_min = energy_min</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00011">11</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
-
-<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00019">_estimate_pdf_upper_bound()</a>, and <a class="el" href="general__generators_8py_source.html#l00025">sample_energy()</a>.</p>
-
-</div>
-</div>
-<a id="a30bfaa92fc78c41d8132d7192506c63f" name="a30bfaa92fc78c41d8132d7192506c63f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a30bfaa92fc78c41d8132d7192506c63f">&#9670;&#160;</a></span>energy_pdf</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">general_generators.GeneralVelocityGenerator.energy_pdf = energy_pdf</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00010">10</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
-
-<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00019">_estimate_pdf_upper_bound()</a>, and <a class="el" href="general__generators_8py_source.html#l00025">sample_energy()</a>.</p>
-
-</div>
-</div>
 <a id="a018eda951a34d6a0426d971210806f1a" name="a018eda951a34d6a0426d971210806f1a"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a018eda951a34d6a0426d971210806f1a">&#9670;&#160;</a></span>max_reject_tries</h2>
 
@@ -345,27 +289,9 @@ Protected Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00014">14</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00021">21</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00074">general_generators.GeneralPositionGenerator.__call__()</a>, and <a class="el" href="general__generators_8py_source.html#l00025">sample_energy()</a>.</p>
-
-</div>
-</div>
-<a id="ad86d7087cb116bfde56c13d970afffbf" name="ad86d7087cb116bfde56c13d970afffbf"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad86d7087cb116bfde56c13d970afffbf">&#9670;&#160;</a></span>particle_mass</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">general_generators.GeneralVelocityGenerator.particle_mass = particle_mass</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00013">13</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
-
-<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00034">__call__()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00080">general_generators.GeneralPositionGenerator.__call__()</a>, <a class="el" href="general__generators_8py_source.html#l00148">general_generators.FieldAlignedVelocityGenerator.sample_speed_sq()</a>, and <a class="el" href="general__generators_8py_source.html#l00032">sample_speed_sq()</a>.</p>
 
 </div>
 </div>
@@ -381,9 +307,63 @@ Protected Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00017">17</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00024">24</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00025">sample_energy()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00148">general_generators.FieldAlignedVelocityGenerator.sample_speed_sq()</a>, and <a class="el" href="general__generators_8py_source.html#l00032">sample_speed_sq()</a>.</p>
+
+</div>
+</div>
+<a id="a2ece22d170339f79b9baf4c57aaf2aa1" name="a2ece22d170339f79b9baf4c57aaf2aa1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2ece22d170339f79b9baf4c57aaf2aa1">&#9670;&#160;</a></span>speed_sq_max</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">general_generators.GeneralVelocityGenerator.speed_sq_max = speed_sq_max</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00020">20</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00143">general_generators.FieldAlignedVelocityGenerator._estimate_pdf_upper_bound()</a>, <a class="el" href="general__generators_8py_source.html#l00026">_estimate_pdf_upper_bound()</a>, <a class="el" href="general__generators_8py_source.html#l00148">general_generators.FieldAlignedVelocityGenerator.sample_speed_sq()</a>, and <a class="el" href="general__generators_8py_source.html#l00032">sample_speed_sq()</a>.</p>
+
+</div>
+</div>
+<a id="a53f853526684eeb2cb98d0d2adc28a90" name="a53f853526684eeb2cb98d0d2adc28a90"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a53f853526684eeb2cb98d0d2adc28a90">&#9670;&#160;</a></span>speed_sq_min</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">general_generators.GeneralVelocityGenerator.speed_sq_min = speed_sq_min</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00019">19</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00143">general_generators.FieldAlignedVelocityGenerator._estimate_pdf_upper_bound()</a>, <a class="el" href="general__generators_8py_source.html#l00026">_estimate_pdf_upper_bound()</a>, <a class="el" href="general__generators_8py_source.html#l00148">general_generators.FieldAlignedVelocityGenerator.sample_speed_sq()</a>, and <a class="el" href="general__generators_8py_source.html#l00032">sample_speed_sq()</a>.</p>
+
+</div>
+</div>
+<a id="ace267739d2df6dad9343da3400b7858a" name="ace267739d2df6dad9343da3400b7858a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ace267739d2df6dad9343da3400b7858a">&#9670;&#160;</a></span>speed_sq_pdf</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">general_generators.GeneralVelocityGenerator.speed_sq_pdf = speed_sq_pdf</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00018">18</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00143">general_generators.FieldAlignedVelocityGenerator._estimate_pdf_upper_bound()</a>, <a class="el" href="general__generators_8py_source.html#l00026">_estimate_pdf_upper_bound()</a>, <a class="el" href="general__generators_8py_source.html#l00148">general_generators.FieldAlignedVelocityGenerator.sample_speed_sq()</a>, and <a class="el" href="general__generators_8py_source.html#l00032">sample_speed_sq()</a>.</p>
 
 </div>
 </div>

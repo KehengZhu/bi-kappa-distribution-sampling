@@ -1,7 +1,5 @@
 var searchData=
 [
-  ['general_5fposition_5fgenerator_0',['general_position_generator',['../classgeneral__position__generator.html',1,'']]],
-  ['general_5fvelocity_5fgenerator_1',['general_velocity_generator',['../classgeneral__velocity__generator.html',1,'']]],
-  ['generalpositiongenerator_2',['GeneralPositionGenerator',['../classgeneral__generators_1_1_general_position_generator.html',1,'general_generators']]],
-  ['generalvelocitygenerator_3',['GeneralVelocityGenerator',['../classgeneral__generators_1_1_general_velocity_generator.html',1,'general_generators']]]
+  ['field_5faligned_5fvelocity_5fgenerator_0',['field_aligned_velocity_generator',['../classfield__aligned__velocity__generator.html',1,'']]],
+  ['fieldalignedvelocitygenerator_1',['FieldAlignedVelocityGenerator',['../classgeneral__generators_1_1_field_aligned_velocity_generator.html',1,'general_generators']]]
 ];
