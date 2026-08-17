@@ -10,10 +10,14 @@ PROJECT_BRIEF          = "Monte Carlo particle samplers for plasma velocity and 
 OUTPUT_LANGUAGE        = English
 
 #---------------------------------------------------------------------------
-# Output location  (./docs)
+# Output location  (./docs/api)
+#
+# docs/ is the GitHub Pages root.  Only docs/api/ is Doxygen-generated and may
+# be overwritten by a doxygen run; docs/revision/ holds hand-written revision
+# working documents and must never be touched by the generator.
 #---------------------------------------------------------------------------
 OUTPUT_DIRECTORY       = .
-HTML_OUTPUT            = docs
+HTML_OUTPUT            = docs/api
 CREATE_SUBDIRS         = NO
 GENERATE_HTML          = YES
 GENERATE_LATEX         = NO

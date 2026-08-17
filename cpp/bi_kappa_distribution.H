@@ -53,9 +53,14 @@ template <typename RealType= double> class bi_kappa_distribution
             {
                 throw std::invalid_argument("Temperature parameters must be positive");
             }
-            if (m_maxNormalizedVelocity <= RealType(0.0))
+            // A positive finite value selects the capped mode.  no_cap() (= +inf)
+            // selects the untruncated mode, in which no acceptance-rejection loop
+            // runs at all and samples follow the full bi-Kappa law.
+            if (!(m_maxNormalizedVelocity > RealType(0.0)))
             {
-                throw std::invalid_argument("max_normalized_velocity must be positive");
+                throw std::invalid_argument(
+                    "max_normalized_velocity must be positive, or no_cap() for the "
+                    "untruncated distribution");
             }
         }
 
@@ -64,6 +69,11 @@ template <typename RealType= double> class bi_kappa_distribution
         RealType theta_par() const { return m_theta_par; }
         point_type ub() const { return m_ub; }
         RealType max_normalized_velocity() const { return m_maxNormalizedVelocity; }
+
+        /// True when a finite component-wise cap is in force, i.e. when the
+        /// sampled law is the bi-Kappa distribution conditioned on the cap event
+        /// rather than the bi-Kappa distribution itself.
+        bool capped() const { return std::isfinite(m_maxNormalizedVelocity); }
 
         bool operator==(const param_type &other) const
         {
@@ -81,6 +91,21 @@ template <typename RealType= double> class bi_kappa_distribution
         point_type m_ub;
         RealType m_maxNormalizedVelocity;
     };
+
+    /// Sentinel selecting the untruncated sampler.  Pass as
+    /// max_normalized_velocity to disable the component-wise cap entirely:
+    ///
+    ///     bi_kappa_distribution<double> d(2.0, 1.0, 2.0, {0,0,1},
+    ///                                     bi_kappa_distribution<double>::no_cap());
+    ///
+    /// In this mode the draw uses a fixed sequence of high-level variates with no
+    /// outer acceptance-rejection loop, and the sampled law is the full bi-Kappa
+    /// distribution.  With a finite cap the sampled law is instead that
+    /// distribution conditioned on all normalized components lying inside the box.
+    static constexpr RealType no_cap()
+    {
+        return std::numeric_limits<RealType>::infinity();
+    }
 
     // ====================================================================
     // Construction
@@ -230,13 +255,22 @@ template <typename RealType= double> class bi_kappa_distribution
         typename std::gamma_distribution<RealType>::param_type distX2Param(kappa - kHalf, kOne);
         RealType sqrtKappa= std::sqrt(kappa);
 
+        // Untruncated mode runs the core mapping exactly once; capped mode redraws
+        // until the sample falls inside the box.
+        const bool capped= params.capped();
+        const int maxTries= capped ? kMaxCapRejectTries : 1;
+
         int tries= 0;
-        for (tries= 0; tries < kMaxCapRejectTries; ++tries)
+        for (tries= 0; tries < maxTries; ++tries)
         {
-            // Step 1: Sample radii
+            // Step 1: Sample radii.
+            // Take the two square roots separately rather than forming the ratio
+            // first: T = x1/x2 overflows for x2 near the underflow limit even where
+            // R = sqrt(T) is perfectly representable, which discards valid draws at
+            // small kappa (shape(x2) = kappa - 1/2 << 1).
             RealType x1= m_distX1(gen);
             RealType x2= m_distX2(gen, distX2Param);
-            RealType r= std::sqrt(x1 / x2);
+            RealType r= std::sqrt(x1) / std::sqrt(x2);
 
             // Step 2: Sample directions uniformly on S^2
             RealType cosTheta= m_distCosTheta(gen);
@@ -254,7 +288,8 @@ template <typename RealType= double> class bi_kappa_distribution
             point[1]= sqrtKappa * theta_perp * uy;
             point[2]= sqrtKappa * theta_par * uz;
 
-            if (!withinNormalizedVelocityCap(point, theta_perp, theta_par, maxNormalizedVelocity))
+            if (capped &&
+                !withinNormalizedVelocityCap(point, theta_perp, theta_par, maxNormalizedVelocity))
             {
                 continue;
             }
