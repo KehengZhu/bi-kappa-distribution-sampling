@@ -77,6 +77,34 @@ paper/overleaf
 DISTRIBUTION_NOTES.md
 CLAUDE.md
 
+# ---------------------------------------------------------------------------
+# Experiment provenance exceptions (R1.2 reproducibility)
+#
+# The generic *.csv / *.pdf / *.txt rules above are deliberately kept, but a
+# small, enumerated set of experiment artifacts must be tracked or the reported
+# numbers are not reproducible.  Four tiers, and only three of them are tracked:
+#
+#   source/config        exp*_*.cpp, exp*_*.py, GNUmakefile, README.md
+#                        -> already tracked; no rule needed
+#   manifest/provenance  raw/manifest.csv, raw/checksums.sha256, env.json
+#                        -> whitelisted below
+#   compact summaries    results/*.json, results/*.md
+#                        -> already tracked; no rule needed
+#   manuscript figures   results/*.pdf  (vector, canonical)
+#                        -> whitelisted below
+#
+# NOT tracked, on purpose:
+#   raw/*.bin            bulk draws, ~300 MB, regenerable via `make run`
+#   results/*.png        raster preview of the canonical .pdf, regenerable
+#   exp*_*.exe           build output
+#
+# Keep these patterns file-specific.  Do not broaden to `!experiments/**`.
+# ---------------------------------------------------------------------------
+!experiments/*/raw/manifest.csv
+!experiments/*/raw/checksums.sha256
+!experiments/*/results/*.pdf
+!experiments/*/*.env.json
+
 uv.lock
 .DS_Store
 .clang-format

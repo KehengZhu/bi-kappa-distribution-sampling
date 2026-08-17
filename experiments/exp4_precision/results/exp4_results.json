@@ -1,0 +1,2946 @@
+{
+  "experiment": "exp4_precision",
+  "question": "What is the supported numerical range of the released implementation as a function of kappa, precision and standard library, and how much of the observed failure is avoidable?",
+  "mode": "uncapped except the Q5 block",
+  "environment": {
+    "python": "3.12.11",
+    "numpy": "2.4.3",
+    "scipy": "1.17.1",
+    "platform": "macOS-26.6.1-arm64-arm-64bit",
+    "machine": "arm64",
+    "git": {
+      "commit": "12378d6f67af82aef2befb7b77e7e24de99cff0b",
+      "dirty": true
+    }
+  },
+  "toolchains": [
+    [
+      "clang 21.0.0 (clang-2100.1.1.101)",
+      "libc++",
+      "arm64"
+    ],
+    [
+      "gcc 15.2.0",
+      "libstdc++",
+      "arm64"
+    ]
+  ],
+  "variates": [
+    {
+      "stdlib": "libc++",
+      "precision": "double",
+      "kappa": 0.5001,
+      "shape_x2": 9.999999999998899e-05,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "counts": {
+        "x2_zero": 4642449,
+        "x2_subnormal": 16983,
+        "ratio_nonfinite": 4658821,
+        "split_nonfinite": 4642449,
+        "recovered_by_split": 16372,
+        "honest_overflow": 4339958,
+        "spurious_ratio": 318863,
+        "spurious_split": 302491
+      },
+      "frac": {
+        "x2_zero": 0.9284898,
+        "x2_subnormal": 0.0033966,
+        "ratio_nonfinite": 0.9317642,
+        "split_nonfinite": 0.9284898,
+        "recovered_by_split": 0.0032744,
+        "honest_overflow": 0.8679916,
+        "spurious_ratio": 0.0637726,
+        "spurious_split": 0.0604982
+      },
+      "finite_frac_ratio": 0.06823579999999996,
+      "finite_frac_split": 0.07151019999999997,
+      "finite_frac_logdomain_bound": 0.13200840000000003,
+      "max_finite_log_r": 373.3139866,
+      "max_log_r_true": 76339.70681
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "double",
+      "kappa": 0.501,
+      "shape_x2": 0.0010000000000000009,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "counts": {
+        "x2_zero": 2375621,
+        "x2_subnormal": 88506,
+        "ratio_nonfinite": 2460834,
+        "split_nonfinite": 2375621,
+        "recovered_by_split": 85213,
+        "honest_overflow": 1209495,
+        "spurious_ratio": 1251339,
+        "spurious_split": 1166126
+      },
+      "frac": {
+        "x2_zero": 0.4751242,
+        "x2_subnormal": 0.0177012,
+        "ratio_nonfinite": 0.4921668,
+        "split_nonfinite": 0.4751242,
+        "recovered_by_split": 0.0170426,
+        "honest_overflow": 0.241899,
+        "spurious_ratio": 0.2502678,
+        "spurious_split": 0.2332252
+      },
+      "finite_frac_ratio": 0.5078332,
+      "finite_frac_split": 0.5248758,
+      "finite_frac_logdomain_bound": 0.758101,
+      "max_finite_log_r": 373.32251,
+      "max_log_r_true": 7634.496761
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "double",
+      "kappa": 0.505,
+      "shape_x2": 0.0050000000000000044,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "counts": {
+        "x2_zero": 120527,
+        "x2_subnormal": 24389,
+        "ratio_nonfinite": 143953,
+        "split_nonfinite": 120527,
+        "recovered_by_split": 23426,
+        "honest_overflow": 4087,
+        "spurious_ratio": 139866,
+        "spurious_split": 116440
+      },
+      "frac": {
+        "x2_zero": 0.0241054,
+        "x2_subnormal": 0.0048778,
+        "ratio_nonfinite": 0.0287906,
+        "split_nonfinite": 0.0241054,
+        "recovered_by_split": 0.0046852,
+        "honest_overflow": 0.0008174,
+        "spurious_ratio": 0.0279732,
+        "spurious_split": 0.023288
+      },
+      "finite_frac_ratio": 0.9712094,
+      "finite_frac_split": 0.9758946,
+      "finite_frac_logdomain_bound": 0.9991826,
+      "max_finite_log_r": 373.2888612,
+      "max_log_r_true": 1527.360205
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "double",
+      "kappa": 0.51,
+      "shape_x2": 0.010000000000000009,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "counts": {
+        "x2_zero": 2839,
+        "x2_subnormal": 1317,
+        "ratio_nonfinite": 4095,
+        "split_nonfinite": 2839,
+        "recovered_by_split": 1256,
+        "honest_overflow": 5,
+        "spurious_ratio": 4090,
+        "spurious_split": 2834
+      },
+      "frac": {
+        "x2_zero": 0.0005678,
+        "x2_subnormal": 0.0002634,
+        "ratio_nonfinite": 0.000819,
+        "split_nonfinite": 0.0005678,
+        "recovered_by_split": 0.0002512,
+        "honest_overflow": 1e-06,
+        "spurious_ratio": 0.000818,
+        "spurious_split": 0.0005668
+      },
+      "finite_frac_ratio": 0.999181,
+      "finite_frac_split": 0.9994322,
+      "finite_frac_logdomain_bound": 0.999999,
+      "max_finite_log_r": 373.0419634,
+      "max_log_r_true": 763.9604953
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "double",
+      "kappa": 0.55,
+      "shape_x2": 0.050000000000000044,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "counts": {
+        "x2_zero": 0,
+        "x2_subnormal": 0,
+        "ratio_nonfinite": 0,
+        "split_nonfinite": 0,
+        "recovered_by_split": 0,
+        "honest_overflow": 0,
+        "spurious_ratio": 0,
+        "spurious_split": 0
+      },
+      "frac": {
+        "x2_zero": 0.0,
+        "x2_subnormal": 0.0,
+        "ratio_nonfinite": 0.0,
+        "split_nonfinite": 0.0,
+        "recovered_by_split": 0.0,
+        "honest_overflow": 0.0,
+        "spurious_ratio": 0.0,
+        "spurious_split": 0.0
+      },
+      "finite_frac_ratio": 1.0,
+      "finite_frac_split": 1.0,
+      "finite_frac_logdomain_bound": 1.0,
+      "max_finite_log_r": 152.7907797,
+      "max_log_r_true": 152.7907797
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "double",
+      "kappa": 0.6,
+      "shape_x2": 0.09999999999999998,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "counts": {
+        "x2_zero": 0,
+        "x2_subnormal": 0,
+        "ratio_nonfinite": 0,
+        "split_nonfinite": 0,
+        "recovered_by_split": 0,
+        "honest_overflow": 0,
+        "spurious_ratio": 0,
+        "spurious_split": 0
+      },
+      "frac": {
+        "x2_zero": 0.0,
+        "x2_subnormal": 0.0,
+        "ratio_nonfinite": 0.0,
+        "split_nonfinite": 0.0,
+        "recovered_by_split": 0.0,
+        "honest_overflow": 0.0,
+        "spurious_ratio": 0.0,
+        "spurious_split": 0.0
+      },
+      "finite_frac_ratio": 1.0,
+      "finite_frac_split": 1.0,
+      "finite_frac_logdomain_bound": 1.0,
+      "max_finite_log_r": 76.71802799,
+      "max_log_r_true": 76.71802799
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "double",
+      "kappa": 0.75,
+      "shape_x2": 0.25,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "counts": {
+        "x2_zero": 0,
+        "x2_subnormal": 0,
+        "ratio_nonfinite": 0,
+        "split_nonfinite": 0,
+        "recovered_by_split": 0,
+        "honest_overflow": 0,
+        "spurious_ratio": 0,
+        "spurious_split": 0
+      },
+      "frac": {
+        "x2_zero": 0.0,
+        "x2_subnormal": 0.0,
+        "ratio_nonfinite": 0.0,
+        "split_nonfinite": 0.0,
+        "recovered_by_split": 0.0,
+        "honest_overflow": 0.0,
+        "spurious_ratio": 0.0,
+        "spurious_split": 0.0
+      },
+      "finite_frac_ratio": 1.0,
+      "finite_frac_split": 1.0,
+      "finite_frac_logdomain_bound": 1.0,
+      "max_finite_log_r": 30.81139342,
+      "max_log_r_true": 30.81139342
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "double",
+      "kappa": 1,
+      "shape_x2": 0.5,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "counts": {
+        "x2_zero": 0,
+        "x2_subnormal": 0,
+        "ratio_nonfinite": 0,
+        "split_nonfinite": 0,
+        "recovered_by_split": 0,
+        "honest_overflow": 0,
+        "spurious_ratio": 0,
+        "spurious_split": 0
+      },
+      "frac": {
+        "x2_zero": 0.0,
+        "x2_subnormal": 0.0,
+        "ratio_nonfinite": 0.0,
+        "split_nonfinite": 0.0,
+        "recovered_by_split": 0.0,
+        "honest_overflow": 0.0,
+        "spurious_ratio": 0.0,
+        "spurious_split": 0.0
+      },
+      "finite_frac_ratio": 1.0,
+      "finite_frac_split": 1.0,
+      "finite_frac_logdomain_bound": 1.0,
+      "max_finite_log_r": 16.4429059,
+      "max_log_r_true": 16.4429059
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "double",
+      "kappa": 1.5,
+      "shape_x2": 1.0,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "counts": {
+        "x2_zero": 0,
+        "x2_subnormal": 0,
+        "ratio_nonfinite": 0,
+        "split_nonfinite": 0,
+        "recovered_by_split": 0,
+        "honest_overflow": 0,
+        "spurious_ratio": 0,
+        "spurious_split": 0
+      },
+      "frac": {
+        "x2_zero": 0.0,
+        "x2_subnormal": 0.0,
+        "ratio_nonfinite": 0.0,
+        "split_nonfinite": 0.0,
+        "recovered_by_split": 0.0,
+        "honest_overflow": 0.0,
+        "spurious_ratio": 0.0,
+        "spurious_split": 0.0
+      },
+      "finite_frac_ratio": 1.0,
+      "finite_frac_split": 1.0,
+      "finite_frac_logdomain_bound": 1.0,
+      "max_finite_log_r": 9.326365514,
+      "max_log_r_true": 9.326365514
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "float",
+      "kappa": 0.5001,
+      "shape_x2": 9.999999999998899e-05,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "counts": {
+        "x2_zero": 4948314,
+        "x2_subnormal": 8201,
+        "ratio_nonfinite": 4955834,
+        "split_nonfinite": 4948314,
+        "recovered_by_split": 7520,
+        "honest_overflow": 4912082,
+        "spurious_ratio": 43752,
+        "spurious_split": 36232
+      },
+      "frac": {
+        "x2_zero": 0.9896628,
+        "x2_subnormal": 0.0016402,
+        "ratio_nonfinite": 0.9911668,
+        "split_nonfinite": 0.9896628,
+        "recovered_by_split": 0.001504,
+        "honest_overflow": 0.9824164,
+        "spurious_ratio": 0.0087504,
+        "spurious_split": 0.0072464
+      },
+      "finite_frac_ratio": 0.008833199999999986,
+      "finite_frac_split": 0.010337200000000046,
+      "finite_frac_logdomain_bound": 0.017583600000000033,
+      "max_finite_log_r": 52.60739639,
+      "max_log_r_true": 73839.71875
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "float",
+      "kappa": 0.501,
+      "shape_x2": 0.0010000000000000009,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "counts": {
+        "x2_zero": 4509833,
+        "x2_subnormal": 74204,
+        "ratio_nonfinite": 4577964,
+        "split_nonfinite": 4509833,
+        "recovered_by_split": 68131,
+        "honest_overflow": 4189491,
+        "spurious_ratio": 388473,
+        "spurious_split": 320342
+      },
+      "frac": {
+        "x2_zero": 0.9019666,
+        "x2_subnormal": 0.0148408,
+        "ratio_nonfinite": 0.9155928,
+        "split_nonfinite": 0.9019666,
+        "recovered_by_split": 0.0136262,
+        "honest_overflow": 0.8378982,
+        "spurious_ratio": 0.0776946,
+        "spurious_split": 0.0640684
+      },
+      "finite_frac_ratio": 0.08440720000000002,
+      "finite_frac_split": 0.09803340000000005,
+      "finite_frac_logdomain_bound": 0.16210179999999996,
+      "max_finite_log_r": 52.87588677,
+      "max_log_r_true": 7385.429688
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "float",
+      "kappa": 0.505,
+      "shape_x2": 0.0050000000000000044,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "counts": {
+        "x2_zero": 2985283,
+        "x2_subnormal": 254957,
+        "ratio_nonfinite": 3218420,
+        "split_nonfinite": 2985283,
+        "recovered_by_split": 233137,
+        "honest_overflow": 2065785,
+        "spurious_ratio": 1152635,
+        "spurious_split": 919498
+      },
+      "frac": {
+        "x2_zero": 0.5970566,
+        "x2_subnormal": 0.0509914,
+        "ratio_nonfinite": 0.643684,
+        "split_nonfinite": 0.5970566,
+        "recovered_by_split": 0.0466274,
+        "honest_overflow": 0.413157,
+        "spurious_ratio": 0.230527,
+        "spurious_split": 0.1838996
+      },
+      "finite_frac_ratio": 0.35631599999999997,
+      "finite_frac_split": 0.40294339999999995,
+      "finite_frac_logdomain_bound": 0.586843,
+      "max_finite_log_r": 52.83778414,
+      "max_log_r_true": 1477.187988
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "float",
+      "kappa": 0.51,
+      "shape_x2": 0.010000000000000009,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "counts": {
+        "x2_zero": 1780183,
+        "x2_subnormal": 320220,
+        "ratio_nonfinite": 2072531,
+        "split_nonfinite": 1780183,
+        "recovered_by_split": 292348,
+        "honest_overflow": 853283,
+        "spurious_ratio": 1219248,
+        "spurious_split": 926900
+      },
+      "frac": {
+        "x2_zero": 0.3560366,
+        "x2_subnormal": 0.064044,
+        "ratio_nonfinite": 0.4145062,
+        "split_nonfinite": 0.3560366,
+        "recovered_by_split": 0.0584696,
+        "honest_overflow": 0.1706566,
+        "spurious_ratio": 0.2438496,
+        "spurious_split": 0.18538
+      },
+      "finite_frac_ratio": 0.5854938000000001,
+      "finite_frac_split": 0.6439634000000001,
+      "finite_frac_logdomain_bound": 0.8293434,
+      "max_finite_log_r": 52.74416922,
+      "max_log_r_true": 738.6652222
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "float",
+      "kappa": 0.55,
+      "shape_x2": 0.050000000000000044,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "counts": {
+        "x2_zero": 28511,
+        "x2_subnormal": 36740,
+        "ratio_nonfinite": 61161,
+        "split_nonfinite": 28511,
+        "recovered_by_split": 32650,
+        "honest_overflow": 689,
+        "spurious_ratio": 60472,
+        "spurious_split": 27822
+      },
+      "frac": {
+        "x2_zero": 0.0057022,
+        "x2_subnormal": 0.007348,
+        "ratio_nonfinite": 0.0122322,
+        "split_nonfinite": 0.0057022,
+        "recovered_by_split": 0.00653,
+        "honest_overflow": 0.0001378,
+        "spurious_ratio": 0.0120944,
+        "spurious_split": 0.0055644
+      },
+      "finite_frac_ratio": 0.9877678,
+      "finite_frac_split": 0.9942978,
+      "finite_frac_logdomain_bound": 0.9998622,
+      "max_finite_log_r": 52.82881556,
+      "max_log_r_true": 147.8203583
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "float",
+      "kappa": 0.6,
+      "shape_x2": 0.09999999999999998,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "counts": {
+        "x2_zero": 144,
+        "x2_subnormal": 695,
+        "ratio_nonfinite": 740,
+        "split_nonfinite": 144,
+        "recovered_by_split": 596,
+        "honest_overflow": 0,
+        "spurious_ratio": 740,
+        "spurious_split": 144
+      },
+      "frac": {
+        "x2_zero": 2.88e-05,
+        "x2_subnormal": 0.000139,
+        "ratio_nonfinite": 0.000148,
+        "split_nonfinite": 2.88e-05,
+        "recovered_by_split": 0.0001192,
+        "honest_overflow": 0.0,
+        "spurious_ratio": 0.000148,
+        "spurious_split": 2.88e-05
+      },
+      "finite_frac_ratio": 0.999852,
+      "finite_frac_split": 0.9999712,
+      "finite_frac_logdomain_bound": 1.0,
+      "max_finite_log_r": 52.32873147,
+      "max_log_r_true": 73.93424988
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "float",
+      "kappa": 0.75,
+      "shape_x2": 0.25,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "counts": {
+        "x2_zero": 0,
+        "x2_subnormal": 0,
+        "ratio_nonfinite": 0,
+        "split_nonfinite": 0,
+        "recovered_by_split": 0,
+        "honest_overflow": 0,
+        "spurious_ratio": 0,
+        "spurious_split": 0
+      },
+      "frac": {
+        "x2_zero": 0.0,
+        "x2_subnormal": 0.0,
+        "ratio_nonfinite": 0.0,
+        "split_nonfinite": 0.0,
+        "recovered_by_split": 0.0,
+        "honest_overflow": 0.0,
+        "spurious_ratio": 0.0,
+        "spurious_split": 0.0
+      },
+      "finite_frac_ratio": 1.0,
+      "finite_frac_split": 1.0,
+      "finite_frac_logdomain_bound": 1.0,
+      "max_finite_log_r": 28.99575128,
+      "max_log_r_true": 28.99575233
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "float",
+      "kappa": 1,
+      "shape_x2": 0.5,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "counts": {
+        "x2_zero": 0,
+        "x2_subnormal": 0,
+        "ratio_nonfinite": 0,
+        "split_nonfinite": 0,
+        "recovered_by_split": 0,
+        "honest_overflow": 0,
+        "spurious_ratio": 0,
+        "spurious_split": 0
+      },
+      "frac": {
+        "x2_zero": 0.0,
+        "x2_subnormal": 0.0,
+        "ratio_nonfinite": 0.0,
+        "split_nonfinite": 0.0,
+        "recovered_by_split": 0.0,
+        "honest_overflow": 0.0,
+        "spurious_ratio": 0.0,
+        "spurious_split": 0.0
+      },
+      "finite_frac_ratio": 1.0,
+      "finite_frac_split": 1.0,
+      "finite_frac_logdomain_bound": 1.0,
+      "max_finite_log_r": 14.32357836,
+      "max_log_r_true": 14.32357883
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "float",
+      "kappa": 1.5,
+      "shape_x2": 1.0,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "counts": {
+        "x2_zero": 0,
+        "x2_subnormal": 0,
+        "ratio_nonfinite": 0,
+        "split_nonfinite": 0,
+        "recovered_by_split": 0,
+        "honest_overflow": 0,
+        "spurious_ratio": 0,
+        "spurious_split": 0
+      },
+      "frac": {
+        "x2_zero": 0.0,
+        "x2_subnormal": 0.0,
+        "ratio_nonfinite": 0.0,
+        "split_nonfinite": 0.0,
+        "recovered_by_split": 0.0,
+        "honest_overflow": 0.0,
+        "spurious_ratio": 0.0,
+        "spurious_split": 0.0
+      },
+      "finite_frac_ratio": 1.0,
+      "finite_frac_split": 1.0,
+      "finite_frac_logdomain_bound": 1.0,
+      "max_finite_log_r": 7.914196507,
+      "max_log_r_true": 7.914196491
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "double",
+      "kappa": 0.5001,
+      "shape_x2": 9.999999999998899e-05,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "counts": {
+        "x2_zero": 4640753,
+        "x2_subnormal": 17146,
+        "ratio_nonfinite": 4657257,
+        "split_nonfinite": 4640753,
+        "recovered_by_split": 16504,
+        "honest_overflow": 4338953,
+        "spurious_ratio": 318304,
+        "spurious_split": 301800
+      },
+      "frac": {
+        "x2_zero": 0.9281506,
+        "x2_subnormal": 0.0034292,
+        "ratio_nonfinite": 0.9314514,
+        "split_nonfinite": 0.9281506,
+        "recovered_by_split": 0.0033008,
+        "honest_overflow": 0.8677906,
+        "spurious_ratio": 0.0636608,
+        "spurious_split": 0.06036
+      },
+      "finite_frac_ratio": 0.06854859999999996,
+      "finite_frac_split": 0.07184939999999995,
+      "finite_frac_logdomain_bound": 0.13220940000000003,
+      "max_finite_log_r": 373.2664128,
+      "max_log_r_true": 75958.87812
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "double",
+      "kappa": 0.501,
+      "shape_x2": 0.0010000000000000009,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "counts": {
+        "x2_zero": 2374978,
+        "x2_subnormal": 88526,
+        "ratio_nonfinite": 2460179,
+        "split_nonfinite": 2374978,
+        "recovered_by_split": 85201,
+        "honest_overflow": 1209275,
+        "spurious_ratio": 1250904,
+        "spurious_split": 1165703
+      },
+      "frac": {
+        "x2_zero": 0.4749956,
+        "x2_subnormal": 0.0177052,
+        "ratio_nonfinite": 0.4920358,
+        "split_nonfinite": 0.4749956,
+        "recovered_by_split": 0.0170402,
+        "honest_overflow": 0.241855,
+        "spurious_ratio": 0.2501808,
+        "spurious_split": 0.2331406
+      },
+      "finite_frac_ratio": 0.5079642,
+      "finite_frac_split": 0.5250044,
+      "finite_frac_logdomain_bound": 0.7581450000000001,
+      "max_finite_log_r": 373.3763312,
+      "max_log_r_true": 7596.767135
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "double",
+      "kappa": 0.505,
+      "shape_x2": 0.0050000000000000044,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "counts": {
+        "x2_zero": 120801,
+        "x2_subnormal": 24028,
+        "ratio_nonfinite": 143864,
+        "split_nonfinite": 120801,
+        "recovered_by_split": 23063,
+        "honest_overflow": 4178,
+        "spurious_ratio": 139686,
+        "spurious_split": 116623
+      },
+      "frac": {
+        "x2_zero": 0.0241602,
+        "x2_subnormal": 0.0048056,
+        "ratio_nonfinite": 0.0287728,
+        "split_nonfinite": 0.0241602,
+        "recovered_by_split": 0.0046126,
+        "honest_overflow": 0.0008356,
+        "spurious_ratio": 0.0279372,
+        "spurious_split": 0.0233246
+      },
+      "finite_frac_ratio": 0.9712272,
+      "finite_frac_split": 0.9758398,
+      "finite_frac_logdomain_bound": 0.9991644,
+      "max_finite_log_r": 373.3325605,
+      "max_log_r_true": 1520.126773
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "double",
+      "kappa": 0.51,
+      "shape_x2": 0.010000000000000009,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "counts": {
+        "x2_zero": 2909,
+        "x2_subnormal": 1361,
+        "ratio_nonfinite": 4199,
+        "split_nonfinite": 2909,
+        "recovered_by_split": 1290,
+        "honest_overflow": 3,
+        "spurious_ratio": 4196,
+        "spurious_split": 2906
+      },
+      "frac": {
+        "x2_zero": 0.0005818,
+        "x2_subnormal": 0.0002722,
+        "ratio_nonfinite": 0.0008398,
+        "split_nonfinite": 0.0005818,
+        "recovered_by_split": 0.000258,
+        "honest_overflow": 6e-07,
+        "spurious_ratio": 0.0008392,
+        "spurious_split": 0.0005812
+      },
+      "finite_frac_ratio": 0.9991602,
+      "finite_frac_split": 0.9994182,
+      "finite_frac_logdomain_bound": 0.9999994,
+      "max_finite_log_r": 372.9271537,
+      "max_log_r_true": 760.5373483
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "double",
+      "kappa": 0.55,
+      "shape_x2": 0.050000000000000044,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "counts": {
+        "x2_zero": 0,
+        "x2_subnormal": 0,
+        "ratio_nonfinite": 0,
+        "split_nonfinite": 0,
+        "recovered_by_split": 0,
+        "honest_overflow": 0,
+        "spurious_ratio": 0,
+        "spurious_split": 0
+      },
+      "frac": {
+        "x2_zero": 0.0,
+        "x2_subnormal": 0.0,
+        "ratio_nonfinite": 0.0,
+        "split_nonfinite": 0.0,
+        "recovered_by_split": 0.0,
+        "honest_overflow": 0.0,
+        "spurious_ratio": 0.0,
+        "spurious_split": 0.0
+      },
+      "finite_frac_ratio": 1.0,
+      "finite_frac_split": 1.0,
+      "finite_frac_logdomain_bound": 1.0,
+      "max_finite_log_r": 165.8984254,
+      "max_log_r_true": 165.8984254
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "double",
+      "kappa": 0.6,
+      "shape_x2": 0.09999999999999998,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "counts": {
+        "x2_zero": 0,
+        "x2_subnormal": 0,
+        "ratio_nonfinite": 0,
+        "split_nonfinite": 0,
+        "recovered_by_split": 0,
+        "honest_overflow": 0,
+        "spurious_ratio": 0,
+        "spurious_split": 0
+      },
+      "frac": {
+        "x2_zero": 0.0,
+        "x2_subnormal": 0.0,
+        "ratio_nonfinite": 0.0,
+        "split_nonfinite": 0.0,
+        "recovered_by_split": 0.0,
+        "honest_overflow": 0.0,
+        "spurious_ratio": 0.0,
+        "spurious_split": 0.0
+      },
+      "finite_frac_ratio": 1.0,
+      "finite_frac_split": 1.0,
+      "finite_frac_logdomain_bound": 1.0,
+      "max_finite_log_r": 82.89730908,
+      "max_log_r_true": 82.89730908
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "double",
+      "kappa": 0.75,
+      "shape_x2": 0.25,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "counts": {
+        "x2_zero": 0,
+        "x2_subnormal": 0,
+        "ratio_nonfinite": 0,
+        "split_nonfinite": 0,
+        "recovered_by_split": 0,
+        "honest_overflow": 0,
+        "spurious_ratio": 0,
+        "spurious_split": 0
+      },
+      "frac": {
+        "x2_zero": 0.0,
+        "x2_subnormal": 0.0,
+        "ratio_nonfinite": 0.0,
+        "split_nonfinite": 0.0,
+        "recovered_by_split": 0.0,
+        "honest_overflow": 0.0,
+        "spurious_ratio": 0.0,
+        "spurious_split": 0.0
+      },
+      "finite_frac_ratio": 1.0,
+      "finite_frac_split": 1.0,
+      "finite_frac_logdomain_bound": 1.0,
+      "max_finite_log_r": 33.06462659,
+      "max_log_r_true": 33.06462659
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "double",
+      "kappa": 1,
+      "shape_x2": 0.5,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "counts": {
+        "x2_zero": 0,
+        "x2_subnormal": 0,
+        "ratio_nonfinite": 0,
+        "split_nonfinite": 0,
+        "recovered_by_split": 0,
+        "honest_overflow": 0,
+        "spurious_ratio": 0,
+        "spurious_split": 0
+      },
+      "frac": {
+        "x2_zero": 0.0,
+        "x2_subnormal": 0.0,
+        "ratio_nonfinite": 0.0,
+        "split_nonfinite": 0.0,
+        "recovered_by_split": 0.0,
+        "honest_overflow": 0.0,
+        "spurious_ratio": 0.0,
+        "spurious_split": 0.0
+      },
+      "finite_frac_ratio": 1.0,
+      "finite_frac_split": 1.0,
+      "finite_frac_logdomain_bound": 1.0,
+      "max_finite_log_r": 16.40793154,
+      "max_log_r_true": 16.40793154
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "double",
+      "kappa": 1.5,
+      "shape_x2": 1.0,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "counts": {
+        "x2_zero": 0,
+        "x2_subnormal": 0,
+        "ratio_nonfinite": 0,
+        "split_nonfinite": 0,
+        "recovered_by_split": 0,
+        "honest_overflow": 0,
+        "spurious_ratio": 0,
+        "spurious_split": 0
+      },
+      "frac": {
+        "x2_zero": 0.0,
+        "x2_subnormal": 0.0,
+        "ratio_nonfinite": 0.0,
+        "split_nonfinite": 0.0,
+        "recovered_by_split": 0.0,
+        "honest_overflow": 0.0,
+        "spurious_ratio": 0.0,
+        "spurious_split": 0.0
+      },
+      "finite_frac_ratio": 1.0,
+      "finite_frac_split": 1.0,
+      "finite_frac_logdomain_bound": 1.0,
+      "max_finite_log_r": 8.914167944,
+      "max_log_r_true": 8.914167944
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "float",
+      "kappa": 0.5001,
+      "shape_x2": 9.999999999998899e-05,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "counts": {
+        "x2_zero": 4948504,
+        "x2_subnormal": 8175,
+        "ratio_nonfinite": 4956005,
+        "split_nonfinite": 4948504,
+        "recovered_by_split": 7501,
+        "honest_overflow": 4912135,
+        "spurious_ratio": 43870,
+        "spurious_split": 36369
+      },
+      "frac": {
+        "x2_zero": 0.9897008,
+        "x2_subnormal": 0.001635,
+        "ratio_nonfinite": 0.991201,
+        "split_nonfinite": 0.9897008,
+        "recovered_by_split": 0.0015002,
+        "honest_overflow": 0.982427,
+        "spurious_ratio": 0.008774,
+        "spurious_split": 0.0072738
+      },
+      "finite_frac_ratio": 0.008799000000000001,
+      "finite_frac_split": 0.010299199999999953,
+      "finite_frac_logdomain_bound": 0.01757299999999995,
+      "max_finite_log_r": 52.64623024,
+      "max_log_r_true": 79314.36719
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "float",
+      "kappa": 0.501,
+      "shape_x2": 0.0010000000000000009,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "counts": {
+        "x2_zero": 4508844,
+        "x2_subnormal": 75569,
+        "ratio_nonfinite": 4578210,
+        "split_nonfinite": 4508844,
+        "recovered_by_split": 69366,
+        "honest_overflow": 4189492,
+        "spurious_ratio": 388718,
+        "spurious_split": 319352
+      },
+      "frac": {
+        "x2_zero": 0.9017688,
+        "x2_subnormal": 0.0151138,
+        "ratio_nonfinite": 0.915642,
+        "split_nonfinite": 0.9017688,
+        "recovered_by_split": 0.0138732,
+        "honest_overflow": 0.8378984,
+        "spurious_ratio": 0.0777436,
+        "spurious_split": 0.0638704
+      },
+      "finite_frac_ratio": 0.08435800000000004,
+      "finite_frac_split": 0.09823119999999996,
+      "finite_frac_logdomain_bound": 0.16210159999999996,
+      "max_finite_log_r": 52.78539404,
+      "max_log_r_true": 7933.54834
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "float",
+      "kappa": 0.505,
+      "shape_x2": 0.0050000000000000044,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "counts": {
+        "x2_zero": 2985115,
+        "x2_subnormal": 256179,
+        "ratio_nonfinite": 3219353,
+        "split_nonfinite": 2985115,
+        "recovered_by_split": 234238,
+        "honest_overflow": 2065427,
+        "spurious_ratio": 1153926,
+        "spurious_split": 919688
+      },
+      "frac": {
+        "x2_zero": 0.597023,
+        "x2_subnormal": 0.0512358,
+        "ratio_nonfinite": 0.6438706,
+        "split_nonfinite": 0.597023,
+        "recovered_by_split": 0.0468476,
+        "honest_overflow": 0.4130854,
+        "spurious_ratio": 0.2307852,
+        "spurious_split": 0.1839376
+      },
+      "finite_frac_ratio": 0.35612940000000004,
+      "finite_frac_split": 0.40297700000000003,
+      "finite_frac_logdomain_bound": 0.5869146000000001,
+      "max_finite_log_r": 52.87174596,
+      "max_log_r_true": 1587.304443
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "float",
+      "kappa": 0.51,
+      "shape_x2": 0.010000000000000009,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "counts": {
+        "x2_zero": 1780947,
+        "x2_subnormal": 318606,
+        "ratio_nonfinite": 2071571,
+        "split_nonfinite": 1780947,
+        "recovered_by_split": 290624,
+        "honest_overflow": 853173,
+        "spurious_ratio": 1218398,
+        "spurious_split": 927774
+      },
+      "frac": {
+        "x2_zero": 0.3561894,
+        "x2_subnormal": 0.0637212,
+        "ratio_nonfinite": 0.4143142,
+        "split_nonfinite": 0.3561894,
+        "recovered_by_split": 0.0581248,
+        "honest_overflow": 0.1706346,
+        "spurious_ratio": 0.2436796,
+        "spurious_split": 0.1855548
+      },
+      "finite_frac_ratio": 0.5856858,
+      "finite_frac_split": 0.6438106,
+      "finite_frac_logdomain_bound": 0.8293654,
+      "max_finite_log_r": 52.81382034,
+      "max_log_r_true": 794.0324707
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "float",
+      "kappa": 0.55,
+      "shape_x2": 0.050000000000000044,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "counts": {
+        "x2_zero": 28707,
+        "x2_subnormal": 36479,
+        "ratio_nonfinite": 60935,
+        "split_nonfinite": 28707,
+        "recovered_by_split": 32228,
+        "honest_overflow": 732,
+        "spurious_ratio": 60203,
+        "spurious_split": 27975
+      },
+      "frac": {
+        "x2_zero": 0.0057414,
+        "x2_subnormal": 0.0072958,
+        "ratio_nonfinite": 0.012187,
+        "split_nonfinite": 0.0057414,
+        "recovered_by_split": 0.0064456,
+        "honest_overflow": 0.0001464,
+        "spurious_ratio": 0.0120406,
+        "spurious_split": 0.005595
+      },
+      "finite_frac_ratio": 0.987813,
+      "finite_frac_split": 0.9942586,
+      "finite_frac_logdomain_bound": 0.9998536,
+      "max_finite_log_r": 52.61888543,
+      "max_log_r_true": 159.3898773
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "float",
+      "kappa": 0.6,
+      "shape_x2": 0.09999999999999998,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "counts": {
+        "x2_zero": 156,
+        "x2_subnormal": 718,
+        "ratio_nonfinite": 756,
+        "split_nonfinite": 156,
+        "recovered_by_split": 600,
+        "honest_overflow": 0,
+        "spurious_ratio": 756,
+        "spurious_split": 156
+      },
+      "frac": {
+        "x2_zero": 3.12e-05,
+        "x2_subnormal": 0.0001436,
+        "ratio_nonfinite": 0.0001512,
+        "split_nonfinite": 3.12e-05,
+        "recovered_by_split": 0.00012,
+        "honest_overflow": 0.0,
+        "spurious_ratio": 0.0001512,
+        "spurious_split": 3.12e-05
+      },
+      "finite_frac_ratio": 0.9998488,
+      "finite_frac_split": 0.9999688,
+      "finite_frac_logdomain_bound": 1.0,
+      "max_finite_log_r": 52.38746217,
+      "max_log_r_true": 80.0304718
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "float",
+      "kappa": 0.75,
+      "shape_x2": 0.25,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "counts": {
+        "x2_zero": 0,
+        "x2_subnormal": 0,
+        "ratio_nonfinite": 0,
+        "split_nonfinite": 0,
+        "recovered_by_split": 0,
+        "honest_overflow": 0,
+        "spurious_ratio": 0,
+        "spurious_split": 0
+      },
+      "frac": {
+        "x2_zero": 0.0,
+        "x2_subnormal": 0.0,
+        "ratio_nonfinite": 0.0,
+        "split_nonfinite": 0.0,
+        "recovered_by_split": 0.0,
+        "honest_overflow": 0.0,
+        "spurious_ratio": 0.0,
+        "spurious_split": 0.0
+      },
+      "finite_frac_ratio": 1.0,
+      "finite_frac_split": 1.0,
+      "finite_frac_logdomain_bound": 1.0,
+      "max_finite_log_r": 32.34774246,
+      "max_log_r_true": 32.34774399
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "float",
+      "kappa": 1,
+      "shape_x2": 0.5,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "counts": {
+        "x2_zero": 0,
+        "x2_subnormal": 0,
+        "ratio_nonfinite": 0,
+        "split_nonfinite": 0,
+        "recovered_by_split": 0,
+        "honest_overflow": 0,
+        "spurious_ratio": 0,
+        "spurious_split": 0
+      },
+      "frac": {
+        "x2_zero": 0.0,
+        "x2_subnormal": 0.0,
+        "ratio_nonfinite": 0.0,
+        "split_nonfinite": 0.0,
+        "recovered_by_split": 0.0,
+        "honest_overflow": 0.0,
+        "spurious_ratio": 0.0,
+        "spurious_split": 0.0
+      },
+      "finite_frac_ratio": 1.0,
+      "finite_frac_split": 1.0,
+      "finite_frac_logdomain_bound": 1.0,
+      "max_finite_log_r": 15.48401093,
+      "max_log_r_true": 15.48400974
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "float",
+      "kappa": 1.5,
+      "shape_x2": 1.0,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "counts": {
+        "x2_zero": 0,
+        "x2_subnormal": 0,
+        "ratio_nonfinite": 0,
+        "split_nonfinite": 0,
+        "recovered_by_split": 0,
+        "honest_overflow": 0,
+        "spurious_ratio": 0,
+        "spurious_split": 0
+      },
+      "frac": {
+        "x2_zero": 0.0,
+        "x2_subnormal": 0.0,
+        "ratio_nonfinite": 0.0,
+        "split_nonfinite": 0.0,
+        "recovered_by_split": 0.0,
+        "honest_overflow": 0.0,
+        "spurious_ratio": 0.0,
+        "spurious_split": 0.0
+      },
+      "finite_frac_ratio": 1.0,
+      "finite_frac_split": 1.0,
+      "finite_frac_logdomain_bound": 1.0,
+      "max_finite_log_r": 7.745484944,
+      "max_log_r_true": 7.745484829
+    }
+  ],
+  "released": [
+    {
+      "stdlib": "libc++",
+      "precision": "double",
+      "kappa": 0.5001,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "nonfinite": 4641522,
+      "nonfinite_frac": 0.9283044,
+      "thrown": 0,
+      "max_finite_log_r": 372.8322445
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "double",
+      "kappa": 0.501,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "nonfinite": 2375531,
+      "nonfinite_frac": 0.4751062,
+      "thrown": 0,
+      "max_finite_log_r": 373.0890488
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "double",
+      "kappa": 0.505,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "nonfinite": 121098,
+      "nonfinite_frac": 0.0242196,
+      "thrown": 0,
+      "max_finite_log_r": 372.9304458
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "double",
+      "kappa": 0.51,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "nonfinite": 2932,
+      "nonfinite_frac": 0.0005864,
+      "thrown": 0,
+      "max_finite_log_r": 372.9124847
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "double",
+      "kappa": 0.55,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "nonfinite": 0,
+      "nonfinite_frac": 0.0,
+      "thrown": 0,
+      "max_finite_log_r": 177.3633943
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "double",
+      "kappa": 0.6,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "nonfinite": 0,
+      "nonfinite_frac": 0.0,
+      "thrown": 0,
+      "max_finite_log_r": 88.80903298
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "double",
+      "kappa": 0.75,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "nonfinite": 0,
+      "nonfinite_frac": 0.0,
+      "thrown": 0,
+      "max_finite_log_r": 35.76188457
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "double",
+      "kappa": 1,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "nonfinite": 0,
+      "nonfinite_frac": 0.0,
+      "thrown": 0,
+      "max_finite_log_r": 18.18615222
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "double",
+      "kappa": 1.5,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "nonfinite": 0,
+      "nonfinite_frac": 0.0,
+      "thrown": 0,
+      "max_finite_log_r": 9.529098068
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "float",
+      "kappa": 0.5001,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "nonfinite": 4948283,
+      "nonfinite_frac": 0.9896566,
+      "thrown": 0,
+      "max_finite_log_r": 52.30630602
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "float",
+      "kappa": 0.501,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "nonfinite": 4508852,
+      "nonfinite_frac": 0.9017704,
+      "thrown": 0,
+      "max_finite_log_r": 52.37297453
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "float",
+      "kappa": 0.505,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "nonfinite": 2981852,
+      "nonfinite_frac": 0.5963704,
+      "thrown": 0,
+      "max_finite_log_r": 52.48039058
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "float",
+      "kappa": 0.51,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "nonfinite": 1776854,
+      "nonfinite_frac": 0.3553708,
+      "thrown": 0,
+      "max_finite_log_r": 52.50863264
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "float",
+      "kappa": 0.55,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "nonfinite": 28179,
+      "nonfinite_frac": 0.0056358,
+      "thrown": 0,
+      "max_finite_log_r": 52.36246559
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "float",
+      "kappa": 0.6,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "nonfinite": 163,
+      "nonfinite_frac": 3.26e-05,
+      "thrown": 0,
+      "max_finite_log_r": 51.98166843
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "float",
+      "kappa": 0.75,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "nonfinite": 0,
+      "nonfinite_frac": 0.0,
+      "thrown": 0,
+      "max_finite_log_r": 29.31442568
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "float",
+      "kappa": 1,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "nonfinite": 0,
+      "nonfinite_frac": 0.0,
+      "thrown": 0,
+      "max_finite_log_r": 14.74552546
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "float",
+      "kappa": 1.5,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "nonfinite": 0,
+      "nonfinite_frac": 0.0,
+      "thrown": 0,
+      "max_finite_log_r": 8.076940926
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "double",
+      "kappa": 0.5001,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "nonfinite": 4640915,
+      "nonfinite_frac": 0.928183,
+      "thrown": 0,
+      "max_finite_log_r": 372.9370119
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "double",
+      "kappa": 0.501,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "nonfinite": 2374666,
+      "nonfinite_frac": 0.4749332,
+      "thrown": 0,
+      "max_finite_log_r": 372.9098711
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "double",
+      "kappa": 0.505,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "nonfinite": 121373,
+      "nonfinite_frac": 0.0242746,
+      "thrown": 0,
+      "max_finite_log_r": 372.9513064
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "double",
+      "kappa": 0.51,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "nonfinite": 2811,
+      "nonfinite_frac": 0.0005622,
+      "thrown": 0,
+      "max_finite_log_r": 372.5829443
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "double",
+      "kappa": 0.55,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "nonfinite": 0,
+      "nonfinite_frac": 0.0,
+      "thrown": 0,
+      "max_finite_log_r": 160.6260974
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "double",
+      "kappa": 0.6,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "nonfinite": 0,
+      "nonfinite_frac": 0.0,
+      "thrown": 0,
+      "max_finite_log_r": 81.21620158
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "double",
+      "kappa": 0.75,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "nonfinite": 0,
+      "nonfinite_frac": 0.0,
+      "thrown": 0,
+      "max_finite_log_r": 33.42741029
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "double",
+      "kappa": 1,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "nonfinite": 0,
+      "nonfinite_frac": 0.0,
+      "thrown": 0,
+      "max_finite_log_r": 17.35837565
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "double",
+      "kappa": 1.5,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "nonfinite": 0,
+      "nonfinite_frac": 0.0,
+      "thrown": 0,
+      "max_finite_log_r": 7.780674514
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "float",
+      "kappa": 0.5001,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "nonfinite": 4948353,
+      "nonfinite_frac": 0.9896706,
+      "thrown": 0,
+      "max_finite_log_r": 52.29784608
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "float",
+      "kappa": 0.501,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "nonfinite": 4509009,
+      "nonfinite_frac": 0.9018018,
+      "thrown": 0,
+      "max_finite_log_r": 52.3971979
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "float",
+      "kappa": 0.505,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "nonfinite": 2984047,
+      "nonfinite_frac": 0.5968094,
+      "thrown": 0,
+      "max_finite_log_r": 52.50619388
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "float",
+      "kappa": 0.51,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "nonfinite": 1778798,
+      "nonfinite_frac": 0.3557596,
+      "thrown": 0,
+      "max_finite_log_r": 52.57415572
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "float",
+      "kappa": 0.55,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "nonfinite": 28672,
+      "nonfinite_frac": 0.0057344,
+      "thrown": 0,
+      "max_finite_log_r": 52.38205467
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "float",
+      "kappa": 0.6,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "nonfinite": 165,
+      "nonfinite_frac": 3.3e-05,
+      "thrown": 0,
+      "max_finite_log_r": 52.24418734
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "float",
+      "kappa": 0.75,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "nonfinite": 0,
+      "nonfinite_frac": 0.0,
+      "thrown": 0,
+      "max_finite_log_r": 29.91828737
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "float",
+      "kappa": 1,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "nonfinite": 0,
+      "nonfinite_frac": 0.0,
+      "thrown": 0,
+      "max_finite_log_r": 15.77701091
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "float",
+      "kappa": 1.5,
+      "n_draws": 5000000,
+      "n_seeds": 5,
+      "nonfinite": 0,
+      "nonfinite_frac": 0.0,
+      "thrown": 0,
+      "max_finite_log_r": 8.031983891
+    }
+  ],
+  "capped": [
+    {
+      "stdlib": "libc++",
+      "precision": "double",
+      "kappa": 0.5001,
+      "lambda": 5,
+      "n_accepted": 10000,
+      "attempts": 27044924,
+      "acceptance": 0.00036975515257502665,
+      "nonfinite_redrawn": 25103918,
+      "nonfinite_redrawn_per_attempt": 0.9282303030320957,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "double",
+      "kappa": 0.5001,
+      "lambda": 20,
+      "n_accepted": 10000,
+      "attempts": 15359885,
+      "acceptance": 0.0006510465410385559,
+      "nonfinite_redrawn": 14256609,
+      "nonfinite_redrawn_per_attempt": 0.9281715976389147,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "double",
+      "kappa": 0.51,
+      "lambda": 5,
+      "n_accepted": 10000,
+      "attempts": 277650,
+      "acceptance": 0.03601656762110571,
+      "nonfinite_redrawn": 154,
+      "nonfinite_redrawn_per_attempt": 0.0005546551413650279,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "double",
+      "kappa": 0.51,
+      "lambda": 20,
+      "n_accepted": 10000,
+      "attempts": 160997,
+      "acceptance": 0.06211295862655826,
+      "nonfinite_redrawn": 94,
+      "nonfinite_redrawn_per_attempt": 0.0005838618110896477,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "double",
+      "kappa": 0.55,
+      "lambda": 5,
+      "n_accepted": 10000,
+      "attempts": 60742,
+      "acceptance": 0.16463073326528596,
+      "nonfinite_redrawn": 0,
+      "nonfinite_redrawn_per_attempt": 0.0,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "double",
+      "kappa": 0.55,
+      "lambda": 20,
+      "n_accepted": 10000,
+      "attempts": 37067,
+      "acceptance": 0.26978174656702725,
+      "nonfinite_redrawn": 0,
+      "nonfinite_redrawn_per_attempt": 0.0,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "double",
+      "kappa": 0.75,
+      "lambda": 5,
+      "n_accepted": 10000,
+      "attempts": 17609,
+      "acceptance": 0.5678914191606564,
+      "nonfinite_redrawn": 0,
+      "nonfinite_redrawn_per_attempt": 0.0,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "double",
+      "kappa": 0.75,
+      "lambda": 20,
+      "n_accepted": 10000,
+      "attempts": 12747,
+      "acceptance": 0.7844983133286263,
+      "nonfinite_redrawn": 0,
+      "nonfinite_redrawn_per_attempt": 0.0,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "double",
+      "kappa": 1.5,
+      "lambda": 5,
+      "n_accepted": 10000,
+      "attempts": 10615,
+      "acceptance": 0.9420631182289213,
+      "nonfinite_redrawn": 0,
+      "nonfinite_redrawn_per_attempt": 0.0,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "double",
+      "kappa": 1.5,
+      "lambda": 20,
+      "n_accepted": 10000,
+      "attempts": 10033,
+      "acceptance": 0.9967108541812021,
+      "nonfinite_redrawn": 0,
+      "nonfinite_redrawn_per_attempt": 0.0,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "float",
+      "kappa": 0.5001,
+      "lambda": 5,
+      "n_accepted": 10000,
+      "attempts": 27109996,
+      "acceptance": 0.00036886763096534577,
+      "nonfinite_redrawn": 26831119,
+      "nonfinite_redrawn_per_attempt": 0.9897131301679277,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "float",
+      "kappa": 0.5001,
+      "lambda": 20,
+      "n_accepted": 10000,
+      "attempts": 15676304,
+      "acceptance": 0.0006379054654719633,
+      "nonfinite_redrawn": 15515298,
+      "nonfinite_redrawn_per_attempt": 0.9897293392626221,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "float",
+      "kappa": 0.51,
+      "lambda": 5,
+      "n_accepted": 10000,
+      "attempts": 275328,
+      "acceptance": 0.03632031613203161,
+      "nonfinite_redrawn": 97889,
+      "nonfinite_redrawn_per_attempt": 0.3555359425848443,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "float",
+      "kappa": 0.51,
+      "lambda": 20,
+      "n_accepted": 10000,
+      "attempts": 160460,
+      "acceptance": 0.0623208276205908,
+      "nonfinite_redrawn": 57045,
+      "nonfinite_redrawn_per_attempt": 0.3555091611616602,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "float",
+      "kappa": 0.55,
+      "lambda": 5,
+      "n_accepted": 10000,
+      "attempts": 59880,
+      "acceptance": 0.16700066800267202,
+      "nonfinite_redrawn": 345,
+      "nonfinite_redrawn_per_attempt": 0.005761523046092184,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "float",
+      "kappa": 0.55,
+      "lambda": 20,
+      "n_accepted": 10000,
+      "attempts": 36020,
+      "acceptance": 0.277623542476402,
+      "nonfinite_redrawn": 220,
+      "nonfinite_redrawn_per_attempt": 0.006107717934480844,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "float",
+      "kappa": 0.75,
+      "lambda": 5,
+      "n_accepted": 10000,
+      "attempts": 17425,
+      "acceptance": 0.5738880918220947,
+      "nonfinite_redrawn": 0,
+      "nonfinite_redrawn_per_attempt": 0.0,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "float",
+      "kappa": 0.75,
+      "lambda": 20,
+      "n_accepted": 10000,
+      "attempts": 12768,
+      "acceptance": 0.7832080200501254,
+      "nonfinite_redrawn": 0,
+      "nonfinite_redrawn_per_attempt": 0.0,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "float",
+      "kappa": 1.5,
+      "lambda": 5,
+      "n_accepted": 10000,
+      "attempts": 10588,
+      "acceptance": 0.9444654325651681,
+      "nonfinite_redrawn": 0,
+      "nonfinite_redrawn_per_attempt": 0.0,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libc++",
+      "precision": "float",
+      "kappa": 1.5,
+      "lambda": 20,
+      "n_accepted": 10000,
+      "attempts": 10035,
+      "acceptance": 0.9965122072745392,
+      "nonfinite_redrawn": 0,
+      "nonfinite_redrawn_per_attempt": 0.0,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "double",
+      "kappa": 0.5001,
+      "lambda": 5,
+      "n_accepted": 10000,
+      "attempts": 26850716,
+      "acceptance": 0.0003724295471301398,
+      "nonfinite_redrawn": 24923925,
+      "nonfinite_redrawn_per_attempt": 0.928240610045557,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "double",
+      "kappa": 0.5001,
+      "lambda": 20,
+      "n_accepted": 10000,
+      "attempts": 15503218,
+      "acceptance": 0.0006450273743167386,
+      "nonfinite_redrawn": 14390292,
+      "nonfinite_redrawn_per_attempt": 0.9282132264411169,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "double",
+      "kappa": 0.51,
+      "lambda": 5,
+      "n_accepted": 10000,
+      "attempts": 277557,
+      "acceptance": 0.03602863555954273,
+      "nonfinite_redrawn": 168,
+      "nonfinite_redrawn_per_attempt": 0.0006052810774003178,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "double",
+      "kappa": 0.51,
+      "lambda": 20,
+      "n_accepted": 10000,
+      "attempts": 159512,
+      "acceptance": 0.06269120818496414,
+      "nonfinite_redrawn": 82,
+      "nonfinite_redrawn_per_attempt": 0.000514067907116706,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "double",
+      "kappa": 0.55,
+      "lambda": 5,
+      "n_accepted": 10000,
+      "attempts": 60327,
+      "acceptance": 0.1657632569164719,
+      "nonfinite_redrawn": 0,
+      "nonfinite_redrawn_per_attempt": 0.0,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "double",
+      "kappa": 0.55,
+      "lambda": 20,
+      "n_accepted": 10000,
+      "attempts": 36888,
+      "acceptance": 0.27109086965950985,
+      "nonfinite_redrawn": 0,
+      "nonfinite_redrawn_per_attempt": 0.0,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "double",
+      "kappa": 0.75,
+      "lambda": 5,
+      "n_accepted": 10000,
+      "attempts": 17481,
+      "acceptance": 0.5720496539099594,
+      "nonfinite_redrawn": 0,
+      "nonfinite_redrawn_per_attempt": 0.0,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "double",
+      "kappa": 0.75,
+      "lambda": 20,
+      "n_accepted": 10000,
+      "attempts": 12744,
+      "acceptance": 0.7846829880728186,
+      "nonfinite_redrawn": 0,
+      "nonfinite_redrawn_per_attempt": 0.0,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "double",
+      "kappa": 1.5,
+      "lambda": 5,
+      "n_accepted": 10000,
+      "attempts": 10642,
+      "acceptance": 0.9396729937981583,
+      "nonfinite_redrawn": 0,
+      "nonfinite_redrawn_per_attempt": 0.0,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "double",
+      "kappa": 1.5,
+      "lambda": 20,
+      "n_accepted": 10000,
+      "attempts": 10033,
+      "acceptance": 0.9967108541812021,
+      "nonfinite_redrawn": 0,
+      "nonfinite_redrawn_per_attempt": 0.0,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "float",
+      "kappa": 0.5001,
+      "lambda": 5,
+      "n_accepted": 10000,
+      "attempts": 27535281,
+      "acceptance": 0.00036317043577655883,
+      "nonfinite_redrawn": 27251488,
+      "nonfinite_redrawn_per_attempt": 0.9896934772519663,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "float",
+      "kappa": 0.5001,
+      "lambda": 20,
+      "n_accepted": 10000,
+      "attempts": 15762771,
+      "acceptance": 0.0006344062221039689,
+      "nonfinite_redrawn": 15600245,
+      "nonfinite_redrawn_per_attempt": 0.989689249434633,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "float",
+      "kappa": 0.51,
+      "lambda": 5,
+      "n_accepted": 10000,
+      "attempts": 271089,
+      "acceptance": 0.03688825441091302,
+      "nonfinite_redrawn": 96268,
+      "nonfinite_redrawn_per_attempt": 0.3551158475629775,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "float",
+      "kappa": 0.51,
+      "lambda": 20,
+      "n_accepted": 10000,
+      "attempts": 158189,
+      "acceptance": 0.06321552067463604,
+      "nonfinite_redrawn": 55927,
+      "nonfinite_redrawn_per_attempt": 0.35354544247703695,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "float",
+      "kappa": 0.55,
+      "lambda": 5,
+      "n_accepted": 10000,
+      "attempts": 59610,
+      "acceptance": 0.16775708773695688,
+      "nonfinite_redrawn": 335,
+      "nonfinite_redrawn_per_attempt": 0.0056198624391880555,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "float",
+      "kappa": 0.55,
+      "lambda": 20,
+      "n_accepted": 10000,
+      "attempts": 36339,
+      "acceptance": 0.2751864388122953,
+      "nonfinite_redrawn": 196,
+      "nonfinite_redrawn_per_attempt": 0.005393654200720989,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "float",
+      "kappa": 0.75,
+      "lambda": 5,
+      "n_accepted": 10000,
+      "attempts": 17680,
+      "acceptance": 0.5656108597285068,
+      "nonfinite_redrawn": 0,
+      "nonfinite_redrawn_per_attempt": 0.0,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "float",
+      "kappa": 0.75,
+      "lambda": 20,
+      "n_accepted": 10000,
+      "attempts": 12751,
+      "acceptance": 0.7842522155125088,
+      "nonfinite_redrawn": 0,
+      "nonfinite_redrawn_per_attempt": 0.0,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "float",
+      "kappa": 1.5,
+      "lambda": 5,
+      "n_accepted": 10000,
+      "attempts": 10677,
+      "acceptance": 0.9365926758452748,
+      "nonfinite_redrawn": 0,
+      "nonfinite_redrawn_per_attempt": 0.0,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    },
+    {
+      "stdlib": "libstdc++",
+      "precision": "float",
+      "kappa": 1.5,
+      "lambda": 20,
+      "n_accepted": 10000,
+      "attempts": 10041,
+      "acceptance": 0.9959167413604223,
+      "nonfinite_redrawn": 0,
+      "nonfinite_redrawn_per_attempt": 0.0,
+      "nonfinite_returned": 0,
+      "exhausted": 0
+    }
+  ],
+  "supported_range": [
+    {
+      "kappa": 0.5001,
+      "precision": "double",
+      "stdlib": "libc++",
+      "finite_fraction": 0.07151019999999997,
+      "spurious_failure_fraction": 0.0604982,
+      "honest_overflow_fraction": 0.8679916,
+      "recoverable_by_log_domain": 0.0604982,
+      "status": "unsupported"
+    },
+    {
+      "kappa": 0.501,
+      "precision": "double",
+      "stdlib": "libc++",
+      "finite_fraction": 0.5248758,
+      "spurious_failure_fraction": 0.2332252,
+      "honest_overflow_fraction": 0.241899,
+      "recoverable_by_log_domain": 0.2332252,
+      "status": "unsupported"
+    },
+    {
+      "kappa": 0.505,
+      "precision": "double",
+      "stdlib": "libc++",
+      "finite_fraction": 0.9758946,
+      "spurious_failure_fraction": 0.023288,
+      "honest_overflow_fraction": 0.0008174,
+      "recoverable_by_log_domain": 0.023288,
+      "status": "unsupported"
+    },
+    {
+      "kappa": 0.51,
+      "precision": "double",
+      "stdlib": "libc++",
+      "finite_fraction": 0.9994322,
+      "spurious_failure_fraction": 0.0005668,
+      "honest_overflow_fraction": 1e-06,
+      "recoverable_by_log_domain": 0.0005668,
+      "status": "degraded"
+    },
+    {
+      "kappa": 0.55,
+      "precision": "double",
+      "stdlib": "libc++",
+      "finite_fraction": 1.0,
+      "spurious_failure_fraction": 0.0,
+      "honest_overflow_fraction": 0.0,
+      "recoverable_by_log_domain": 0.0,
+      "status": "supported"
+    },
+    {
+      "kappa": 0.6,
+      "precision": "double",
+      "stdlib": "libc++",
+      "finite_fraction": 1.0,
+      "spurious_failure_fraction": 0.0,
+      "honest_overflow_fraction": 0.0,
+      "recoverable_by_log_domain": 0.0,
+      "status": "supported"
+    },
+    {
+      "kappa": 0.75,
+      "precision": "double",
+      "stdlib": "libc++",
+      "finite_fraction": 1.0,
+      "spurious_failure_fraction": 0.0,
+      "honest_overflow_fraction": 0.0,
+      "recoverable_by_log_domain": 0.0,
+      "status": "supported"
+    },
+    {
+      "kappa": 1,
+      "precision": "double",
+      "stdlib": "libc++",
+      "finite_fraction": 1.0,
+      "spurious_failure_fraction": 0.0,
+      "honest_overflow_fraction": 0.0,
+      "recoverable_by_log_domain": 0.0,
+      "status": "supported"
+    },
+    {
+      "kappa": 1.5,
+      "precision": "double",
+      "stdlib": "libc++",
+      "finite_fraction": 1.0,
+      "spurious_failure_fraction": 0.0,
+      "honest_overflow_fraction": 0.0,
+      "recoverable_by_log_domain": 0.0,
+      "status": "supported"
+    },
+    {
+      "kappa": 0.5001,
+      "precision": "float",
+      "stdlib": "libc++",
+      "finite_fraction": 0.010337200000000046,
+      "spurious_failure_fraction": 0.0072464,
+      "honest_overflow_fraction": 0.9824164,
+      "recoverable_by_log_domain": 0.0072464,
+      "status": "unsupported"
+    },
+    {
+      "kappa": 0.501,
+      "precision": "float",
+      "stdlib": "libc++",
+      "finite_fraction": 0.09803340000000005,
+      "spurious_failure_fraction": 0.0640684,
+      "honest_overflow_fraction": 0.8378982,
+      "recoverable_by_log_domain": 0.0640684,
+      "status": "unsupported"
+    },
+    {
+      "kappa": 0.505,
+      "precision": "float",
+      "stdlib": "libc++",
+      "finite_fraction": 0.40294339999999995,
+      "spurious_failure_fraction": 0.1838996,
+      "honest_overflow_fraction": 0.413157,
+      "recoverable_by_log_domain": 0.1838996,
+      "status": "unsupported"
+    },
+    {
+      "kappa": 0.51,
+      "precision": "float",
+      "stdlib": "libc++",
+      "finite_fraction": 0.6439634000000001,
+      "spurious_failure_fraction": 0.18538,
+      "honest_overflow_fraction": 0.1706566,
+      "recoverable_by_log_domain": 0.18538,
+      "status": "unsupported"
+    },
+    {
+      "kappa": 0.55,
+      "precision": "float",
+      "stdlib": "libc++",
+      "finite_fraction": 0.9942978,
+      "spurious_failure_fraction": 0.0055644,
+      "honest_overflow_fraction": 0.0001378,
+      "recoverable_by_log_domain": 0.0055644,
+      "status": "degraded"
+    },
+    {
+      "kappa": 0.6,
+      "precision": "float",
+      "stdlib": "libc++",
+      "finite_fraction": 0.9999712,
+      "spurious_failure_fraction": 2.88e-05,
+      "honest_overflow_fraction": 0.0,
+      "recoverable_by_log_domain": 2.88e-05,
+      "status": "degraded"
+    },
+    {
+      "kappa": 0.75,
+      "precision": "float",
+      "stdlib": "libc++",
+      "finite_fraction": 1.0,
+      "spurious_failure_fraction": 0.0,
+      "honest_overflow_fraction": 0.0,
+      "recoverable_by_log_domain": 0.0,
+      "status": "supported"
+    },
+    {
+      "kappa": 1,
+      "precision": "float",
+      "stdlib": "libc++",
+      "finite_fraction": 1.0,
+      "spurious_failure_fraction": 0.0,
+      "honest_overflow_fraction": 0.0,
+      "recoverable_by_log_domain": 0.0,
+      "status": "supported"
+    },
+    {
+      "kappa": 1.5,
+      "precision": "float",
+      "stdlib": "libc++",
+      "finite_fraction": 1.0,
+      "spurious_failure_fraction": 0.0,
+      "honest_overflow_fraction": 0.0,
+      "recoverable_by_log_domain": 0.0,
+      "status": "supported"
+    },
+    {
+      "kappa": 0.5001,
+      "precision": "double",
+      "stdlib": "libstdc++",
+      "finite_fraction": 0.07184939999999995,
+      "spurious_failure_fraction": 0.06036,
+      "honest_overflow_fraction": 0.8677906,
+      "recoverable_by_log_domain": 0.06036,
+      "status": "unsupported"
+    },
+    {
+      "kappa": 0.501,
+      "precision": "double",
+      "stdlib": "libstdc++",
+      "finite_fraction": 0.5250044,
+      "spurious_failure_fraction": 0.2331406,
+      "honest_overflow_fraction": 0.241855,
+      "recoverable_by_log_domain": 0.2331406,
+      "status": "unsupported"
+    },
+    {
+      "kappa": 0.505,
+      "precision": "double",
+      "stdlib": "libstdc++",
+      "finite_fraction": 0.9758398,
+      "spurious_failure_fraction": 0.0233246,
+      "honest_overflow_fraction": 0.0008356,
+      "recoverable_by_log_domain": 0.0233246,
+      "status": "unsupported"
+    },
+    {
+      "kappa": 0.51,
+      "precision": "double",
+      "stdlib": "libstdc++",
+      "finite_fraction": 0.9994182,
+      "spurious_failure_fraction": 0.0005812,
+      "honest_overflow_fraction": 6e-07,
+      "recoverable_by_log_domain": 0.0005812,
+      "status": "degraded"
+    },
+    {
+      "kappa": 0.55,
+      "precision": "double",
+      "stdlib": "libstdc++",
+      "finite_fraction": 1.0,
+      "spurious_failure_fraction": 0.0,
+      "honest_overflow_fraction": 0.0,
+      "recoverable_by_log_domain": 0.0,
+      "status": "supported"
+    },
+    {
+      "kappa": 0.6,
+      "precision": "double",
+      "stdlib": "libstdc++",
+      "finite_fraction": 1.0,
+      "spurious_failure_fraction": 0.0,
+      "honest_overflow_fraction": 0.0,
+      "recoverable_by_log_domain": 0.0,
+      "status": "supported"
+    },
+    {
+      "kappa": 0.75,
+      "precision": "double",
+      "stdlib": "libstdc++",
+      "finite_fraction": 1.0,
+      "spurious_failure_fraction": 0.0,
+      "honest_overflow_fraction": 0.0,
+      "recoverable_by_log_domain": 0.0,
+      "status": "supported"
+    },
+    {
+      "kappa": 1,
+      "precision": "double",
+      "stdlib": "libstdc++",
+      "finite_fraction": 1.0,
+      "spurious_failure_fraction": 0.0,
+      "honest_overflow_fraction": 0.0,
+      "recoverable_by_log_domain": 0.0,
+      "status": "supported"
+    },
+    {
+      "kappa": 1.5,
+      "precision": "double",
+      "stdlib": "libstdc++",
+      "finite_fraction": 1.0,
+      "spurious_failure_fraction": 0.0,
+      "honest_overflow_fraction": 0.0,
+      "recoverable_by_log_domain": 0.0,
+      "status": "supported"
+    },
+    {
+      "kappa": 0.5001,
+      "precision": "float",
+      "stdlib": "libstdc++",
+      "finite_fraction": 0.010299199999999953,
+      "spurious_failure_fraction": 0.0072738,
+      "honest_overflow_fraction": 0.982427,
+      "recoverable_by_log_domain": 0.0072738,
+      "status": "unsupported"
+    },
+    {
+      "kappa": 0.501,
+      "precision": "float",
+      "stdlib": "libstdc++",
+      "finite_fraction": 0.09823119999999996,
+      "spurious_failure_fraction": 0.0638704,
+      "honest_overflow_fraction": 0.8378984,
+      "recoverable_by_log_domain": 0.0638704,
+      "status": "unsupported"
+    },
+    {
+      "kappa": 0.505,
+      "precision": "float",
+      "stdlib": "libstdc++",
+      "finite_fraction": 0.40297700000000003,
+      "spurious_failure_fraction": 0.1839376,
+      "honest_overflow_fraction": 0.4130854,
+      "recoverable_by_log_domain": 0.1839376,
+      "status": "unsupported"
+    },
+    {
+      "kappa": 0.51,
+      "precision": "float",
+      "stdlib": "libstdc++",
+      "finite_fraction": 0.6438106,
+      "spurious_failure_fraction": 0.1855548,
+      "honest_overflow_fraction": 0.1706346,
+      "recoverable_by_log_domain": 0.1855548,
+      "status": "unsupported"
+    },
+    {
+      "kappa": 0.55,
+      "precision": "float",
+      "stdlib": "libstdc++",
+      "finite_fraction": 0.9942586,
+      "spurious_failure_fraction": 0.005595,
+      "honest_overflow_fraction": 0.0001464,
+      "recoverable_by_log_domain": 0.005595,
+      "status": "degraded"
+    },
+    {
+      "kappa": 0.6,
+      "precision": "float",
+      "stdlib": "libstdc++",
+      "finite_fraction": 0.9999688,
+      "spurious_failure_fraction": 3.12e-05,
+      "honest_overflow_fraction": 0.0,
+      "recoverable_by_log_domain": 3.12e-05,
+      "status": "degraded"
+    },
+    {
+      "kappa": 0.75,
+      "precision": "float",
+      "stdlib": "libstdc++",
+      "finite_fraction": 1.0,
+      "spurious_failure_fraction": 0.0,
+      "honest_overflow_fraction": 0.0,
+      "recoverable_by_log_domain": 0.0,
+      "status": "supported"
+    },
+    {
+      "kappa": 1,
+      "precision": "float",
+      "stdlib": "libstdc++",
+      "finite_fraction": 1.0,
+      "spurious_failure_fraction": 0.0,
+      "honest_overflow_fraction": 0.0,
+      "recoverable_by_log_domain": 0.0,
+      "status": "supported"
+    },
+    {
+      "kappa": 1.5,
+      "precision": "float",
+      "stdlib": "libstdc++",
+      "finite_fraction": 1.0,
+      "spurious_failure_fraction": 0.0,
+      "honest_overflow_fraction": 0.0,
+      "recoverable_by_log_domain": 0.0,
+      "status": "supported"
+    }
+  ],
+  "logdomain_validation": [
+    {
+      "kappa": 0.55,
+      "seed": 4001,
+      "n": 200000,
+      "ks_stat": 0.0016661103853887194,
+      "ks_p": 0.6347813002528124,
+      "ks_sqrt_n_d": 0.7451072159495098,
+      "cvm_stat": 0.07989630599325961,
+      "cvm_p": 0.6924555037898885,
+      "quantiles": {
+        "levels": [
+          0.5,
+          0.9,
+          0.99,
+          0.999
+        ],
+        "empirical_log_r": [
+          7.22752627355835,
+          23.231163597663798,
+          46.31187959199235,
+          68.85392066734454
+        ],
+        "exact_log_r": [
+          7.229763072897356,
+          23.324142584870547,
+          46.349993514810976,
+          69.37584444475141
+        ],
+        "abs_diff": [
+          0.0022367993390055574,
+          0.0929789872067488,
+          0.038113922818624246,
+          0.5219237774068688
+        ]
+      },
+      "pass": true
+    },
+    {
+      "kappa": 0.55,
+      "seed": 4002,
+      "n": 200000,
+      "ks_stat": 0.000947836147990766,
+      "ks_p": 0.993766161718451,
+      "ks_sqrt_n_d": 0.4238852116877807,
+      "cvm_stat": 0.020833214773962154,
+      "cvm_p": 0.996151086156158,
+      "quantiles": {
+        "levels": [
+          0.5,
+          0.9,
+          0.99,
+          0.999
+        ],
+        "empirical_log_r": [
+          7.227353170469362,
+          23.264558267318094,
+          46.04341290220945,
+          68.28221288509656
+        ],
+        "exact_log_r": [
+          7.229763072897356,
+          23.324142584870547,
+          46.349993514810976,
+          69.37584444475141
+        ],
+        "abs_diff": [
+          0.002409902427993771,
+          0.05958431755245286,
+          0.3065806126015289,
+          1.0936315596548525
+        ]
+      },
+      "pass": true
+    },
+    {
+      "kappa": 0.55,
+      "seed": 4003,
+      "n": 200000,
+      "ks_stat": 0.002008326180021003,
+      "ks_p": 0.39477293139563974,
+      "ks_sqrt_n_d": 0.8981507719038885,
+      "cvm_stat": 0.16225633508607828,
+      "cvm_p": 0.3542990304843475,
+      "quantiles": {
+        "levels": [
+          0.5,
+          0.9,
+          0.99,
+          0.999
+        ],
+        "empirical_log_r": [
+          7.223600009173785,
+          23.248336324628067,
+          46.38276544875132,
+          69.3279874964474
+        ],
+        "exact_log_r": [
+          7.229763072897356,
+          23.324142584870547,
+          46.349993514810976,
+          69.37584444475141
+        ],
+        "abs_diff": [
+          0.006163063723571227,
+          0.07580626024248005,
+          0.03277193394034583,
+          0.04785694830400189
+        ]
+      },
+      "pass": true
+    },
+    {
+      "kappa": 0.75,
+      "seed": 4001,
+      "n": 200000,
+      "ks_stat": 0.0020429925906548796,
+      "ks_p": 0.37365749919168956,
+      "ks_sqrt_n_d": 0.9136540620465424,
+      "cvm_stat": 0.18534089821759903,
+      "cvm_p": 0.29776381341215286,
+      "quantiles": {
+        "levels": [
+          0.5,
+          0.9,
+          0.99,
+          0.999
+        ],
+        "empirical_log_r": [
+          1.6317634043992024,
+          4.893010675220719,
+          9.501852388411839,
+          14.106917431381733
+        ],
+        "exact_log_r": [
+          1.6292822480285793,
+          4.87443524108313,
+          9.479646273964422,
+          14.08481646403701
+        ],
+        "abs_diff": [
+          0.002481156370623072,
+          0.01857543413758833,
+          0.02220611444741749,
+          0.022100967344723443
+        ]
+      },
+      "pass": true
+    },
+    {
+      "kappa": 0.75,
+      "seed": 4002,
+      "n": 200000,
+      "ks_stat": 0.0014950639179935887,
+      "ks_p": 0.7620482844631897,
+      "ks_sqrt_n_d": 0.668612910268167,
+      "cvm_stat": 0.11377349169277153,
+      "cvm_p": 0.5214812336519583,
+      "quantiles": {
+        "levels": [
+          0.5,
+          0.9,
+          0.99,
+          0.999
+        ],
+        "empirical_log_r": [
+          1.6330631760835657,
+          4.875971864665946,
+          9.433720517505364,
+          14.032434930923529
+        ],
+        "exact_log_r": [
+          1.6292822480285793,
+          4.87443524108313,
+          9.479646273964422,
+          14.08481646403701
+        ],
+        "abs_diff": [
+          0.00378092805498631,
+          0.0015366235828153663,
+          0.04592575645905761,
+          0.05238153311348093
+        ]
+      },
+      "pass": true
+    },
+    {
+      "kappa": 0.75,
+      "seed": 4003,
+      "n": 200000,
+      "ks_stat": 0.001160100740465353,
+      "ks_p": 0.950332572841474,
+      "ks_sqrt_n_d": 0.518812823285674,
+      "cvm_stat": 0.031453886327864174,
+      "cvm_p": 0.9711515085712854,
+      "quantiles": {
+        "levels": [
+          0.5,
+          0.9,
+          0.99,
+          0.999
+        ],
+        "empirical_log_r": [
+          1.6323418933715863,
+          4.882667368269764,
+          9.446441429107992,
+          13.876168928496847
+        ],
+        "exact_log_r": [
+          1.6292822480285793,
+          4.87443524108313,
+          9.479646273964422,
+          14.08481646403701
+        ],
+        "abs_diff": [
+          0.003059645343006956,
+          0.008232127186633242,
+          0.033204844856429716,
+          0.20864753554016247
+        ]
+      },
+      "pass": true
+    },
+    {
+      "kappa": 2.0,
+      "seed": 4001,
+      "n": 200000,
+      "ks_stat": 0.0027138861541225467,
+      "ks_p": 0.10488621847768786,
+      "ks_sqrt_n_d": 1.213686784762697,
+      "cvm_stat": 0.42597211934542656,
+      "cvm_p": 0.06175105878624676,
+      "quantiles": {
+        "levels": [
+          0.5,
+          0.9,
+          0.99,
+          0.999
+        ],
+        "empirical_log_r": [
+          -0.0026241445394002694,
+          0.8353270663957968,
+          1.679887839254729,
+          2.5009217861352835
+        ],
+        "exact_log_r": [
+          -2.842170943040401e-14,
+          0.8423444201845224,
+          1.6914606115146555,
+          2.4747644115373104
+        ],
+        "abs_diff": [
+          0.0026241445393718477,
+          0.007017353788725589,
+          0.01157277225992659,
+          0.02615737459797307
+        ]
+      },
+      "pass": true
+    },
+    {
+      "kappa": 2.0,
+      "seed": 4002,
+      "n": 200000,
+      "ks_stat": 0.0015367198892782818,
+      "ks_p": 0.7317430654263766,
+      "ks_sqrt_n_d": 0.6872420269604377,
+      "cvm_stat": 0.05414852126621617,
+      "cvm_p": 0.8507216738639858,
+      "quantiles": {
+        "levels": [
+          0.5,
+          0.9,
+          0.99,
+          0.999
+        ],
+        "empirical_log_r": [
+          0.001201096863579526,
+          0.8454108435985146,
+          1.69702125282881,
+          2.5048141432220654
+        ],
+        "exact_log_r": [
+          -2.842170943040401e-14,
+          0.8423444201845224,
+          1.6914606115146555,
+          2.4747644115373104
+        ],
+        "abs_diff": [
+          0.0012010968636079478,
+          0.003066423413992214,
+          0.0055606413141544575,
+          0.030049731684755
+        ]
+      },
+      "pass": true
+    },
+    {
+      "kappa": 2.0,
+      "seed": 4003,
+      "n": 200000,
+      "ks_stat": 0.0027924001241843577,
+      "ks_p": 0.08823058392949079,
+      "ks_sqrt_n_d": 1.2487992996110155,
+      "cvm_stat": 0.30225927025428284,
+      "cvm_p": 0.13320649118551253,
+      "quantiles": {
+        "levels": [
+          0.5,
+          0.9,
+          0.99,
+          0.999
+        ],
+        "empirical_log_r": [
+          -0.002281932690784569,
+          0.8400810856939402,
+          1.6817129998472793,
+          2.479125679591954
+        ],
+        "exact_log_r": [
+          -2.842170943040401e-14,
+          0.8423444201845224,
+          1.6914606115146555,
+          2.4747644115373104
+        ],
+        "abs_diff": [
+          0.002281932690756147,
+          0.002263334490582136,
+          0.009747611667376255,
+          0.004361268054643652
+        ]
+      },
+      "pass": true
+    },
+    {
+      "kappa": 5.0,
+      "seed": 4001,
+      "n": 200000,
+      "ks_stat": 0.0018996048479846817,
+      "ks_p": 0.4654688256487233,
+      "ks_sqrt_n_d": 0.8495291140963805,
+      "cvm_stat": 0.14710477450845183,
+      "cvm_p": 0.3985198330773275,
+      "quantiles": {
+        "levels": [
+          0.5,
+          0.9,
+          0.99,
+          0.999
+        ],
+        "empirical_log_r": [
+          -0.6307887874488154,
+          -0.03184958474574175,
+          0.42013500456565694,
+          0.7544263744449904
+        ],
+        "exact_log_r": [
+          -0.6295760299464077,
+          -0.032204731900489225,
+          0.42307125534481216,
+          0.7667031345142284
+        ],
+        "abs_diff": [
+          0.0012127575024076798,
+          0.0003551471547474719,
+          0.002936250779155214,
+          0.012276760069238057
+        ]
+      },
+      "pass": true
+    },
+    {
+      "kappa": 5.0,
+      "seed": 4002,
+      "n": 200000,
+      "ks_stat": 0.0014791496726946907,
+      "ks_p": 0.7734058059405683,
+      "ks_sqrt_n_d": 0.6614958434083785,
+      "cvm_stat": 0.07532833794019866,
+      "cvm_p": 0.7193047445669323,
+      "quantiles": {
+        "levels": [
+          0.5,
+          0.9,
+          0.99,
+          0.999
+        ],
+        "empirical_log_r": [
+          -0.6299059432675774,
+          -0.030979163431474874,
+          0.42668664808178347,
+          0.7568912834250376
+        ],
+        "exact_log_r": [
+          -0.6295760299464077,
+          -0.032204731900489225,
+          0.42307125534481216,
+          0.7667031345142284
+        ],
+        "abs_diff": [
+          0.00032991332116971694,
+          0.0012255684690143515,
+          0.0036153927369713124,
+          0.009811851089190804
+        ]
+      },
+      "pass": true
+    },
+    {
+      "kappa": 5.0,
+      "seed": 4003,
+      "n": 200000,
+      "ks_stat": 0.0021946610868177063,
+      "ks_p": 0.2899604042938907,
+      "ks_sqrt_n_d": 0.9814822755395918,
+      "cvm_stat": 0.2512534957346987,
+      "cvm_p": 0.18677097781848329,
+      "quantiles": {
+        "levels": [
+          0.5,
+          0.9,
+          0.99,
+          0.999
+        ],
+        "empirical_log_r": [
+          -0.627383150764578,
+          -0.03051530308577752,
+          0.4270877560683981,
+          0.7714977027786482
+        ],
+        "exact_log_r": [
+          -0.6295760299464077,
+          -0.032204731900489225,
+          0.42307125534481216,
+          0.7667031345142284
+        ],
+        "abs_diff": [
+          0.0021928791818297544,
+          0.0016894288147117041,
+          0.004016500723585947,
+          0.004794568264419707
+        ]
+      },
+      "pass": true
+    }
+  ]
+}

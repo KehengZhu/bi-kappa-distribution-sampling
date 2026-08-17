@@ -1144,6 +1144,231 @@ static int test_define_field_aligned()
 }
 
 // ================================================================
+// test_radius_formation
+//
+// Regression tests for the radial formation in bi_kappa_distribution.
+//
+// The radius is R = sqrt(X1/X2) with X1 ~ Ga(3/2,1) and X2 ~ Ga(kappa-1/2,1).
+// The two square roots must be taken SEPARATELY:
+//
+//     sqrt(x1) / sqrt(x2)        not        sqrt(x1 / x2)
+//
+// The two are algebraically identical but not numerically identical.  For small
+// kappa the shape of X2 is far below 1, X2 is frequently driven into the
+// subnormal range, and the intermediate quotient x1/x2 overflows to +inf even
+// where the final radius R is comfortably representable.  Taking the roots first
+// halves the exponent before the division and keeps those draws.
+//
+// Measured effect (experiments/exp4_precision, 5e6 draws per configuration,
+// identical variates through both formations, libc++ and libstdc++ agreeing to
+// within seed noise):
+//
+//     float,  kappa = 0.55   loss 1.22e-2 -> 5.7e-3   (fix recovers 6.5e-3)
+//     float,  kappa = 0.60   loss 1.5e-4  -> 2.9e-5   (about 5x)
+//     double, kappa = 0.51   loss 8.2e-4  -> 5.7e-4
+//
+// A1 is a direct, deterministic check of the overflow mechanism itself; A2 and A3
+// guard the released sampler at the two ends of the range.
+// ================================================================
+static int test_radius_formation()
+{
+    bool all_ok= true;
+    std::cout << "\n--- test_radius_formation ---" << std::endl;
+
+    // ---- A1: the mechanism, deterministically ----------------------------
+    // Pick x2 subnormal enough that x1/x2 overflows in float while
+    // sqrt(x1)/sqrt(x2) does not.  No RNG involved.
+    {
+        const float x1= 1.0f;
+        const float x2= std::numeric_limits<float>::denorm_min(); // ~1.4e-45
+        const float r_ratio= std::sqrt(x1 / x2);
+        const float r_split= std::sqrt(x1) / std::sqrt(x2);
+
+        const bool ratio_overflows= !std::isfinite(r_ratio);
+        const bool split_survives= std::isfinite(r_split) && r_split > 0.0f;
+        const bool ok= ratio_overflows && split_survives;
+        all_ok= all_ok && ok;
+        std::cout << "  A1 sqrt(x1)/sqrt(x2) survives where sqrt(x1/x2) overflows"
+                  << " (ratio=" << r_ratio << ", split=" << r_split << "): "
+                  << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    // ---- A2: the released sampler is clean in double at kappa >= 0.55 ----
+    // Experiment 4 measures exactly zero non-finite draws over 5e6 draws per
+    // configuration for double at every kappa >= 0.55, on both standard
+    // libraries.  Any regression here means the formation was changed back.
+    {
+        const int n= 200000;
+        int nonfinite= 0;
+        bi_kappa_distribution<double> dist(0.55, 1.0, 2.0, {0.0, 0.0, 1.0},
+                                           bi_kappa_distribution<double>::no_cap());
+        dist.seed(4001);
+        for (int i= 0; i < n; ++i)
+        {
+            const auto v= dist();
+            if (!std::isfinite(v[0]) || !std::isfinite(v[1]) || !std::isfinite(v[2]))
+                ++nonfinite;
+        }
+        const bool ok= (nonfinite == 0);
+        all_ok= all_ok && ok;
+        std::cout << "  A2 double, kappa=0.55, " << n << " draws, non-finite=" << nonfinite
+                  << " (expect 0): " << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    // ---- A3: float at kappa = 0.6 stays under the measured bound ---------
+    // Measured non-finite fraction with the split formation is 2.9e-5 (libc++)
+    // and 3.1e-5 (libstdc++); with the ratio formation it is 1.5e-4.  The bound
+    // below sits between the two, so it fails if the formation regresses and
+    // passes with ordinary seed-to-seed variation.
+    {
+        const int n= 500000;
+        int nonfinite= 0;
+        bi_kappa_distribution<float> dist(0.6f, 1.0f, 1.0f, {0.0f, 0.0f, 1.0f},
+                                          bi_kappa_distribution<float>::no_cap());
+        dist.seed(4001);
+        for (int i= 0; i < n; ++i)
+        {
+            const auto v= dist();
+            if (!std::isfinite(v[0]) || !std::isfinite(v[1]) || !std::isfinite(v[2]))
+                ++nonfinite;
+        }
+        const double frac= static_cast<double>(nonfinite) / n;
+        const bool ok= (frac < 8.0e-5);
+        all_ok= all_ok && ok;
+        std::cout << "  A3 float, kappa=0.6, non-finite fraction=" << frac
+                  << " (bound 8e-5, ratio-formation value 1.5e-4): "
+                  << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    // ---- A4: the fix does not perturb the law at ordinary kappa ----------
+    // At kappa = 2 neither formation can overflow, so the two must describe the
+    // same real number.  The right quantity to bound is the MAGNITUDE of their
+    // disagreement, not its frequency: `sqrt(x1/x2)` rounds twice and
+    // `sqrt(x1)/sqrt(x2)` rounds three times, at different points, so the two
+    // land on different ulps for a large fraction of inputs (measured: 37%)
+    // while never differing by more than a couple of ulp.  The frequency
+    // therefore carries no information about correctness and the magnitude does.
+    //
+    // Measured over 2e5 draws at kappa = 2: max relative difference 4.34e-16,
+    // i.e. 1.95 * DBL_EPSILON, max 2 ulp.  The bound below is 4 ulp-equivalent,
+    // which is tight enough to catch any real change of law and loose enough to
+    // be insensitive to the order of operations a compiler chooses.
+    {
+        const int n= 200000;
+        std::mt19937 gen(4001);
+        std::gamma_distribution<double> gX1(1.5, 1.0);
+        std::gamma_distribution<double> gX2(2.0 - 0.5, 1.0);
+        double max_rel= 0.0;
+        for (int i= 0; i < n; ++i)
+        {
+            const double x1= gX1(gen);
+            const double x2= gX2(gen);
+            const double a= std::sqrt(x1 / x2);
+            const double b= std::sqrt(x1) / std::sqrt(x2);
+            const double rel= std::abs(a - b) / std::abs(a);
+            if (rel > max_rel)
+                max_rel= rel;
+        }
+        const double bound= 4.0 * std::numeric_limits<double>::epsilon();
+        const bool ok= (max_rel <= bound);
+        all_ok= all_ok && ok;
+        std::cout << "  A4 kappa=2, max relative difference between formations=" << max_rel
+                  << " (bound " << bound << " = 4 eps): " << (ok ? "PASS" : "FAIL")
+                  << std::endl;
+    }
+
+    std::cout << "test_radius_formation: " << (all_ok ? "PASS" : "FAIL") << std::endl;
+    return all_ok ? 0 : 1;
+}
+
+// ================================================================
+// test_no_cap_semantics
+//
+// no_cap() must select the untruncated law and must not run the
+// acceptance-rejection loop.  A finite cap selects a different (conditional)
+// law.  These are different distributions and the API must keep them distinct.
+// ================================================================
+static int test_no_cap_semantics()
+{
+    bool all_ok= true;
+    std::cout << "\n--- test_no_cap_semantics ---" << std::endl;
+
+    // ---- B1: no_cap() is accepted and reports itself as uncapped ---------
+    {
+        bool ok= false;
+        try
+        {
+            bi_kappa_distribution<double> dist(2.0, 1.0, 2.0, {0.0, 0.0, 1.0},
+                                               bi_kappa_distribution<double>::no_cap());
+            ok= !dist.param().capped() &&
+                !std::isfinite(dist.max_normalized_velocity());
+        }
+        catch (...)
+        {
+            ok= false;
+        }
+        all_ok= all_ok && ok;
+        std::cout << "  B1 no_cap() constructs and reports capped()==false: "
+                  << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    // ---- B2: a finite cap reports itself as capped ------------------------
+    {
+        bi_kappa_distribution<double> dist(2.0, 1.0, 2.0, {0.0, 0.0, 1.0}, 5.0);
+        const bool ok= dist.param().capped();
+        all_ok= all_ok && ok;
+        std::cout << "  B2 finite cap reports capped()==true: " << (ok ? "PASS" : "FAIL")
+                  << std::endl;
+    }
+
+    // ---- B3: uncapped mode really is untruncated --------------------------
+    // With cap = 5 no normalized component may exceed 5.  Uncapped, some must.
+    {
+        const int n= 200000;
+        bi_kappa_distribution<double> dist(1.0, 1.0, 1.0, {0.0, 0.0, 1.0},
+                                           bi_kappa_distribution<double>::no_cap());
+        dist.seed(4002);
+        int beyond= 0;
+        for (int i= 0; i < n; ++i)
+        {
+            const auto v= dist();
+            if (std::abs(v[0]) > 5.0 || std::abs(v[1]) > 5.0 || std::abs(v[2]) > 5.0)
+                ++beyond;
+        }
+        const bool ok= (beyond > 0);
+        all_ok= all_ok && ok;
+        std::cout << "  B3 uncapped draws exceed the box (" << beyond << "/" << n
+                  << " beyond 5): " << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    // ---- B4: capped mode respects the box exactly -------------------------
+    {
+        const int n= 100000;
+        const double lambda= 5.0;
+        const double theta_perp= 1.0, theta_par= 2.0;
+        bi_kappa_distribution<double> dist(1.0, theta_perp, theta_par, {0.0, 0.0, 1.0},
+                                           lambda);
+        dist.seed(4003);
+        int violations= 0;
+        for (int i= 0; i < n; ++i)
+        {
+            const auto v= dist();
+            if (std::abs(v[0]) / theta_perp > lambda ||
+                std::abs(v[1]) / theta_perp > lambda ||
+                std::abs(v[2]) / theta_par > lambda)
+                ++violations;
+        }
+        const bool ok= (violations == 0);
+        all_ok= all_ok && ok;
+        std::cout << "  B4 capped draws never leave the box (" << violations
+                  << " violations): " << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    std::cout << "test_no_cap_semantics: " << (all_ok ? "PASS" : "FAIL") << std::endl;
+    return all_ok ? 0 : 1;
+}
+
+// ================================================================
 // run_all_tests – call this from main()
 // Returns 0 if all tests pass, 1 if any test fails.
 // ================================================================
@@ -1159,6 +1384,8 @@ static int run_all_tests()
     result|= test_max_normalized_velocity_bikappa();
     result|= test_max_normalized_velocity_bimaxwellian();
     result|= test_seed_api();
+    result|= test_radius_formation();
+    result|= test_no_cap_semantics();
     std::cout << "\n=== Test suite: " << (result == 0 ? "ALL PASS" : "SOME FAILED") << " ==="
               << std::endl;
     return result;
