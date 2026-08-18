@@ -106,16 +106,48 @@ This is a **correctness and terminology issue**, not cosmetic wording. Two diffe
 
 **New analysis required.** Formalize the two target laws and reconcile the paper with the actual public API. Quantitative cutoff evidence is consolidated under Experiment 2 in Sec. 5.
 
+**Evidence now available**
+
+**Experiment 2 answers this comment and is complete.** The referee was right on both counts:
+the capped mode is a different target law, and it is not rejection-free.
+
+| Referee's point | Evidence | Where |
+|---|---|---|
+| Capped sampling is a *different* law, not Eq. (20) | The capped output is **bitwise identical** to the uncapped draws restricted to the box, 240/240 (case, λ, seed) pairs. "Capped = uncapped conditioned on the box" is a measured fact about the shipped binary, not a claim about the code. | `subsequence_check` |
+| The cap is not rejection-free | Rejected fraction tabulated over κ × λ with a matching closed form; retry counts match `Geometric(p)` | `exp2_table.md` §1–2 |
+| Truncation changes the target, and cannot be waved off | TV distance from the target is *exactly* `1 − P(accept)` — cost and distortion are one number, decaying only as `λ^−(2κ−1)` | `tail_exponent_scaling` |
+| Do not say truncation "enforces finite moments" innocently | Capped variance at κ ≤ 3/2 is finite but is a property of λ, not the plasma: 1.28 → 65.2 at κ=0.75 as λ 3 → 100 | `exp2_table.md` §3 |
+
+Two results strengthen the referee's position beyond what was asked:
+
+- **The cap breaks axisymmetry about B.** The box is a cube in normalized coordinates, so the
+  conditioned law carries a four-fold azimuthal modulation, detected at up to −11.6σ. For PIC
+  initialization a non-gyrotropic initial condition is a physics defect, not merely a
+  statistical one.
+- **The θ's cancel exactly** from the accept/reject decision, so the capped law in the local
+  frame depends on `(κ, λ)` only. This is an algebraic identity, confirmed by 0 disagreements
+  in 6×10⁶ attempts — the empirical control is redundant confirmation, not an independent
+  physical result, and must be presented that way.
+
+**API status:** `no_cap()` and `capped()` now exist, with tests `test_no_cap_semantics` B1–B4,
+so item 5 ("add and document an actual no-cap/off mode") is **discharged in code**. The
+remaining engineering question — whether uncapped should become the *default* — is tracked in
+§9.6.
+
+**Remaining blocker**
+
+**None for evidence.** Items 1–4 and 6 are manuscript prose; item 5 is landed in code.
+
 **Recommended response strategy**
 
-Agree fully. Thank the referee for identifying a real scope inconsistency, revise terminology globally, and explain the code/API correction. Do not defend the current wording.
+Agree fully. Thank the referee for identifying a real scope inconsistency, revise terminology globally, and explain the code/API correction. Do not defend the current wording. Concede specifically that the released C++ API had no uncapped mode when the manuscript claimed one, and state that it now does.
 
 **Dependency / overlap**
 
 Directly overlaps R1.2 and R1.3; also affects R1.4, R2.A2, the Zenitani matrix, and the software/reproducibility revision.
 
 **Priority:** BLOCKER<br>
-**Status:** REQUIRES NEW WORK
+**Status:** **EVIDENCE COMPLETE** (was: REQUIRES NEW WORK). Prose not yet written.
 
 ### R1.2 — Disclose truncation settings and validation provenance
 
@@ -148,16 +180,47 @@ This is a **reproducibility and unsupported-claim issue**. The validation target
 
 **New numerical experiment required.** Existing provenance is insufficient to determine the original cutoff state reliably; regenerate the validation with explicit mode/settings and measure rejection when capped.
 
+**Evidence now available**
+
+**Experiment 2 answers this comment and is complete — and the answer is stronger than the
+referee asked for.** The referee asked us to *report* λ and the discarded fraction and to
+*support* the negligible-bias claim. The first is now a full table; the second turned out to be
+unsupportable in principle.
+
+| Referee's request | Evidence | Where |
+|---|---|---|
+| Report `λ` and the discarded fraction | Full κ × λ table, λ ladder `{3, 5, 10, 20, 50, 100}` plus uncapped, with a closed-form `P(accept)` cross-check | `exp2_table.md` §1 |
+| State mode for every dataset | `raw/manifest.csv` carries `mode` and `lambda` per run; every reported number is keyed to it | `raw/manifest.csv` |
+| Report `N`, seeds, RNG, attempts/accepted | 280 runs, 5 seeds × 10⁵, `std::mt19937` seeded per run, all in the manifest | `raw/manifest.csv` |
+| Support or drop "negligible bias" | **The inference is invalid.** At κ=1.5, λ=50: TV = 6.3×10⁻⁴ yet p99.9 speed is **24% too small** | `negligibility` |
+| Commit one reproducible driver | `make run` + `make verify`; bit-for-bit deterministic against committed checksums | `GNUmakefile` |
+
+**The decisive finding.** A small discarded fraction bounds *probabilities*; it says nothing
+about *quantiles*, which is precisely what a Kappa distribution exists to represent. The
+Abstract's negligible-rejection argument is therefore a **non-sequitur and must be deleted, not
+softened**. On the pre-registered two-part criterion (`TV < 10⁻³` **and** p99.9 within 1%),
+negligibility holds at κ=10 for λ≥5, κ=5 for λ≥10, κ=2 for λ≥50, and **for no λ in the ladder
+at κ ≤ 3/2**. At κ=0.75 the decay exponent is `2κ−1 = 0.5`, so λ=100 still rejects 9.7% and
+`TV < 10⁻³` would need λ ~ 10⁹ — so the manuscript must not imply that a large-enough λ exists.
+
+Note for the response: the library default λ=20 and the committed example's λ=100 are **both**
+non-negligible everywhere in κ ≤ 3/2. See §9.6.
+
+**Remaining blocker**
+
+**None for evidence.** What remains is manuscript prose plus regenerating Table II / Figs. 2–4
+from an auditable driver with the mode stated (shared with R1.6).
+
 **Recommended response strategy**
 
-Agree. State that the original manuscript omitted essential settings. Supply auditable regenerated results rather than infer the old settings from today's example code.
+Agree. State that the original manuscript omitted essential settings. Supply auditable regenerated results rather than infer the old settings from today's example code. Then go further than the referee asked: report that the negligibility *argument* is invalid and has been removed, not merely quantified.
 
 **Dependency / overlap**
 
 Depends on R1.1's two-mode definition and is largely answered by Experiment 2. It also overlaps R1.3, R1.5, R1.6, and reproducibility requirements.
 
 **Priority:** HIGH<br>
-**Status:** REQUIRES NEW WORK
+**Status:** **EVIDENCE COMPLETE** (was: REQUIRES NEW WORK). Prose not yet written.
 
 ### R1.3 — Expand validation to the radial law, low κ, and one truncated case
 
@@ -254,16 +317,60 @@ This is an **unsupported performance claim**. Algorithmic intuition is not evide
 
 **Benchmark required** if any speed, bottleneck-resolution, or outperformance claim is retained. Otherwise those claims must be retired.
 
+**Evidence now available**
+
+**Experiment 3 is complete, and it settles this comment against us.**
+`experiments/exp3_benchmark/` — correctness gate then timing, 10 batches × 10⁶ draws per
+configuration, `std::mt19937` for every method, Apple clang 21 / libc++ / arm64.
+
+**The released implementation is the slowest of the three methods tested.**
+
+| κ | released Gamma-ratio | A&M 2015 normal-triple | Zenitani 2025 Pareto rejection |
+|---|---|---|---|
+| 1.5 | 88.1 ns | 46.6 ns | **48.9 ns** (acc. 0.806) |
+| 2 | 129.9 ns | 88.3 ns | **49.9 ns** (acc. 0.786) |
+| 5 | 121.0 ns | 80.5 ns | **53.1 ns** (acc. 0.751) |
+| 10 | 124.2 ns | 82.3 ns | **53.7 ns** (acc. 0.740) |
+| 50 | 117.4 ns | 74.8 ns | **54.1 ns** (acc. 0.733) |
+
+- Zenitani (2025) rejection costs **0.38×–0.56×** ours over κ ∈ [1.5, 50] — i.e. **1.8×–2.6×
+  faster**, *despite* being a rejection method. The literature's implied expectation was
+  correct and ours was wrong.
+- A&M 2015's scale mixture is **≈1.4×–1.6× faster** than ours — and it is the *same
+  construction*, differing only in buying the direction from three normals rather than two
+  uniforms. So part of our cost is our own implementation choice, not the algorithm.
+- **"Constant time per sample" is contradicted by direct measurement:** the baseline ranges
+  88–130 ns/sample non-monotonically in κ, fastest at κ=1.5 and slowest at κ=2. (`shape =
+  κ−1/2` crosses 1 at κ=1.5, where library Gamma generators switch algorithm — plausible
+  mechanism, not instrumented.)
+
+**Two favourable results, both narrow:** anisotropy and arbitrary-**B** rotation cost within
+≈1–2 ns of the isotropic baseline — C2 is free. And the cap's overhead is confined to low κ
+(+36% at κ=0.75, nil for κ ≥ 1.5), tracking Exp 2's rejection rates exactly.
+
+**Faithfulness of the transcription is itself evidenced:** measured Pareto acceptance
+reproduces Zenitani's published 0.806 / 0.785 / 0.750 at κ = 1.5 / 2 / 5 to three digits, on
+a quantity we did not fit.
+
+**Bounded scope, stated so it is not overread:** `n = κ/2` requires κ > 1, so the rejection
+method is **inapplicable** at κ = 0.75 and 1.0 — recorded as a result, not skipped. Single
+machine, single toolchain; adequate to refute constant-time and establish a ≈2× ordering,
+**not** a cross-platform characterization.
+
+**Remaining blocker**
+
+**None.** The comment is answerable now — by retirement, not support.
+
 **Recommended response strategy**
 
-Agree. Either provide the benchmark in Experiment 3 or explicitly moderate the claims. In a software-centered revision, absolute performance characterization remains strongly advisable even if no superiority is claimed.
+Agree, and **retire the claims rather than defend them.** Tell the referee plainly that we benchmarked, that the dedicated rejection method of Zenitani (2025) is roughly twice as fast as ours where it applies, that our own per-sample cost is not constant in κ, and that every speed and bottleneck-resolution claim has been deleted accordingly. Retain only the measured absolute throughput and the two narrow favourable results. Reporting an unfavourable benchmark is stronger evidence of good faith than omitting it, and the referee explicitly offered "or moderate the Introduction" as an acceptable outcome.
 
 **Dependency / overlap**
 
 Overlaps R2.A2 and the Zenitani novelty-impact matrix; depends on R1.1's mode definitions.
 
 **Priority:** HIGH<br>
-**Status:** REQUIRES NEW WORK
+**Status:** **EVIDENCE COMPLETE** (was: REQUIRES NEW WORK). Prose not yet written; the required prose is deletion plus a short measured-performance paragraph.
 
 ### R1.5 — Discuss the larger κ = 2 variance errors
 
@@ -464,16 +571,44 @@ This combines **accessibility, literature, novelty, scope, and comparative-evide
 
 **Benchmark required** for the explicit outperformance part of the comment. Literature/novelty rewriting is required regardless; Experiments 1–4 support any retained implementation claims.
 
+**Evidence now available**
+
+The comment has two halves and they now have different answers.
+
+*"How does it outperform current approaches?"* — **It does not, and Experiment 3 measures that.**
+The released implementation is the slowest of the three methods benchmarked: Zenitani (2025)
+rejection is 1.8×–2.6× faster where κ > 1, and Abdul & Mace (2015)'s variant of our own
+construction is 1.4×–1.6× faster. The answer to the referee is a direct, measured "it does
+not outperform them", not a rhetorical reframe. This is the strongest available response
+because it is falsifiable and unfavourable.
+
+*"What is novel?"* — the construction is not. Prior art is Zenitani & Nakano (2022) for the
+isotropic Gamma-ratio route, A&M (2015) Eq. (22) for the trivariate scale mixture, and
+ZUM (2026) Algorithms 3.1/3.2 for the anisotropic loader **including** the θ∥ ≠ θ⊥ scaling
+(see the §9.4 withdrawal — do not claim the anisotropic extension is undocumented). What
+survives is implementation, arbitrary-**B**-frame loading, target-law semantics, validation
+depth, reproducibility, and finite-precision characterization — the ledger in §9.3.
+
+*"Why is Kappa sampling difficult?"* — the honest accessible answer is now evidence-backed:
+heavy tails mean moments may not exist (κ ≤ 3/2); a naive bounded diagnostic silently fails
+(Exp 1's `Y` vs `W`); truncation is not a free fix (Exp 2); and finite precision bites as
+κ → 1/2⁺ (Exp 4). None of these is "no closed-form inverse CDF", which is the weakest of the
+difficulties and must stop being presented as the decisive one.
+
+**Remaining blocker**
+
+**None for evidence.** Items 1–6 are prose, drawing on Exps 1–4 and the literature audit.
+
 **Recommended response strategy**
 
-Agree and substantially reframe. Tell the referee directly that the newly identified Zenitani work changes the novelty claim. Answer “how it outperforms” with data or with an honest statement that superiority is not claimed.
+Agree and substantially reframe. Tell the referee directly that the newly identified Zenitani work changes the novelty claim, and that the benchmark shows we do **not** outperform — quoting the numbers. Do not attempt to recover superiority on a different axis; state the tradeoff (our route covers κ ≤ 1, where the recommended rejection envelope is undefined) and stop there.
 
 **Dependency / overlap**
 
 Overlaps R1.3–R1.4, R1.7, R2.A1/A3/B, and the entire novelty-impact matrix.
 
 **Priority:** BLOCKER<br>
-**Status:** REQUIRES NEW WORK
+**Status:** **EVIDENCE COMPLETE** (was: REQUIRES NEW WORK). Prose not yet written; this is the largest single writing task in the revision.
 
 ### R2.A3 — Distinguish isotropic-Kappa and bi-Kappa sampling challenges
 
@@ -689,8 +824,8 @@ The central rule is: mathematical correctness can remain even when novelty does 
 | Abstract: “We present an exact sampling algorithm” | Only with qualification | Distributional exactness of an untruncated construction can be true, but the Gamma-ratio construction is not newly discovered here. Current C++ defaults to truncation. | “We implement and validate a simulation-oriented bi-Kappa sampler based on the Beta-prime/Gamma-ratio construction, independently developed and equivalent to Zenitani et al. (2026).” Scope exactness to uncapped mode. |
 | Abstract: “core mapping requires no rejection step” | Yes, narrowly | It is a property of the high-level uncapped construction, not novel. Gamma RNG internals may use rejection, and the current C++ wrapper always rejects against a cap. | “The uncapped high-level construction uses two Gamma variates and a uniform direction without an outer acceptance-rejection loop.” |
 | Abstract: optional truncation has “negligible rejection rate” | **No — and the inference behind it is invalid** | Originally: no `λ`, rejected fraction, or bias reported. **Experiment 2 now shows the argument itself is a non-sequitur**: at κ=1.5, λ=50, TV = 6.3×10⁻⁴ yet the p99.9 speed is 24% low. A negligible discarded fraction does not bound tail fidelity, which is the whole point of a Kappa distribution. On a two-part criterion, **no λ in the ladder is negligible for κ ≤ 3/2**. | **Delete the negligibility argument, do not soften it.** Report `λ`, rejected fraction (= TV distance, closed form available), and a tail-quantile ratio, per κ. State that no practical λ suffices for κ ≤ 1. |
-| Abstract/Summary: “runs in constant time per sample” / “produces one sample per call in constant time” | No, as written | No timing evidence exists. Cap retries and Gamma-library internals are variable-cost. Equivalence to prior work also prevents using fixed draw count as a unique advantage. | Report measured throughput and say only that the uncapped algorithm uses a fixed sequence of high-level variate calls. |
-| Introduction: reliable Kappa generation presents a computational challenge because inversion is intractable and naive rejection is prohibitively inefficient | Incomplete/outdated | It omits established non-inversion methods and gives no evidence for “prohibitively.” Zenitani and Student-t-related constructions directly affect this premise. | Give a balanced method survey; identify when generic rejection is inefficient and which practical gaps remain. |
+| Abstract/Summary: “runs in constant time per sample” / “produces one sample per call in constant time” | **No — now refuted, not merely unsupported** | **Experiment 3 measures 88–130 ns/sample, non-monotonic in κ** (fastest κ=1.5, slowest κ=2), consistent with the library Gamma generator switching algorithm as `shape = κ−1/2` crosses 1. Cap retries are variable-cost too. | **Delete the constant-time claim.** Report measured throughput with its hardware/toolchain, and say only that the uncapped algorithm uses a fixed number of *high-level* variate calls — which is a code-structure statement, not a cost statement. |
+| Introduction: reliable Kappa generation presents a computational challenge because inversion is intractable and naive rejection is prohibitively inefficient | **No — the rejection half is now refuted by our own measurement** | It omits established non-inversion methods, and Experiment 3 measures a *dedicated* rejection sampler at 0.73–0.81 acceptance running **1.8×–2.6× faster than our own non-rejection method**. "Prohibitively inefficient" is not merely unsourced, it is wrong for this problem. An 2022 also undercuts "inversion is intractable". | Give a balanced method survey. State that a well-chosen envelope makes rejection *competitive and in our measurements faster*, and that generic rejection is inefficient only when the envelope is poor. |
 | Introduction: “To resolve these computational bottlenecks, this paper introduces a fast and accurate algorithm” | No, as a novelty/superiority claim | The core is equivalent to published prior work, and no benchmark supports “fast” or bottleneck resolution. | Reframe around implementation, validation, frame support, reproducibility, and measured tradeoffs. |
 | Implied claim that rejection sampling is the only available alternative | No | Zenitani's generalized Gamma-ratio method and related standard-distribution constructions are non-rejection alternatives at the high-level target-law stage. | Enumerate method classes and state explicitly that equivalent rejection-free constructions predate the revised paper's publication. |
 | Sec. II.E / III.B: Beta-prime variable as a ratio of Gamma draws, culminating in `T ~ BetaPrime(3/2, κ−1/2)` | Correct but not novel | This is the central mathematical overlap for `r=0`, `q=κ+1`. | Retain as self-contained derivation needed for implementation; cite Zenitani and relevant statistical literature at the point of use. |
@@ -698,7 +833,7 @@ The central rule is: mathematical correctness can remain even when novelty does 
 | “Exact” terminology throughout | Conditionally | “Exact” may mean exact target-law sampling in ideal arithmetic, not exact floating-point values, finite moments, or novelty. It is false for a capped sample if the target named is Eq. (20). | Use “distributionally exact uncapped target in exact arithmetic” sparingly; use “capped conditional distribution” separately. |
 | “Rejection-free” terminology throughout | Conditionally | It can describe absence of an outer rejection loop in the uncapped Gamma-ratio construction. It cannot describe the current default C++ package or capped mode, and says nothing about Gamma implementation internals. | Qualify every occurrence with “uncapped high-level core”; remove it from blanket package descriptions. |
 | Sec. VI: C++ samplers implement the “exact, rejection-free algorithm” | No, for the current release | The C++ API mandates a cap and redraw loop. This is an implementation/documentation mismatch independent of priority. | Add a true uncapped API and document both targets, or call the released code capped. Emphasize tested API, integration, frame transform, licensing, and reproducibility. |
-| Speed/performance claims | Not without data | Zenitani supplies a directly relevant prior implementation context. No current timing, acceptance, κ-scaling, or failure evidence exists. | Add Experiment 3 and describe measured absolute/comparative results; otherwise remove all superiority claims. |
+| Speed/performance claims | **No — measured and refuted** | Experiment 3: the released implementation is the **slowest** of three methods. Zenitani (2025) rejection is 1.8×–2.6× faster where κ > 1; A&M 2015's variant of our own construction is 1.4×–1.6× faster. | **Remove every superiority claim.** Report measured absolute throughput (≈8–11 M samples/s, stated with hardware) plus the two narrow favourable results: anisotropy and arbitrary-**B** rotation are free, and the cap's cost is confined to low κ. State the one genuine tradeoff — our route is defined for κ ≤ 1, where Zenitani's recommended envelope index is not. |
 | Sec. VII: “We presented an exact, rejection-free algorithm” | Mathematically narrow but not novel | As a paper-level contribution claim it implies discovery and ignores the current capped implementation. | “We provide an open-source implementation and validation of a bi-Kappa loading construction equivalent to the generalized method of Zenitani et al. (2026), with explicit uncapped/capped modes and field-frame support.” Only use this if implementation catches up. |
 | Sec. VII: “Numerical experiments … confirm the algorithm's correctness” | No, too broad | Existing tests cover only selected marginals/moments and not the radial law, low κ, truncation, or numerical failures. Zenitani makes independent rigorous validation a more plausible contribution, so the evidence must be stronger. | Enumerate exactly what was tested and with what diagnostics; reserve broad correctness language for evidence that includes Experiments 1, 2, and 4. |
 | Summary/conclusion claim of a self-contained toolkit suitable for PIC initialization | Partly | The C++ library and frame support are real, but Python packaging, uncapped mode, provenance, and distributional tests are incomplete. | Describe concrete released components and tested use cases; do not imply untested production robustness. |
@@ -810,7 +945,8 @@ against committed checksums.
 transcribed and evaluated on the *uncapped* run at the same seed; because `operator()` consumes
 `x1, x2, cosΘ, φ` in the same order whether or not a cap is in force, the uncapped run **is** the
 capped run's attempt stream. Verified, not assumed: the capped output is **bitwise identical** to
-the uncapped draws restricted to the box in **200/200** (case, λ, seed) pairs.
+the uncapped draws restricted to the box in **240/240** (case, λ, seed) pairs
+(`results/exp2_results.json:subsequence_check`).
 
 **Five results, each of which changes what the manuscript may say.**
 
@@ -828,8 +964,10 @@ the uncapped draws restricted to the box in **200/200** (case, λ, seed) pairs.
    Cost and bias are the same number; they must be quoted together.
 2. **The θ's cancel exactly.** The predicate reduces to `√κ·maxᵢ|uᵢ| ≤ λ`, so `P(accept)` depends
    on `(κ, λ)` only — not on `θ⊥`, `θ∥`, or the field direction (the cap is tested *before* the
-   frame rotation). Not a statistical coincidence: **0 disagreements in 5×10⁶ attempts** on the
-   shared RNG stream. A closed form for `P(accept)` is derived and matches empirically.
+   frame rotation). Not a statistical coincidence: **0 disagreements in 6×10⁶ attempts** across
+   60 comparisons on the shared RNG stream
+   (`results/exp2_results.json:theta_independence_drawwise`). A closed form for `P(accept)` is
+   derived and matches empirically.
 3. **The cost decays only algebraically, as `λ^−(2κ−1)`.** Measured log-log slopes match the
    prediction to ~0.5%: −0.4996 vs −0.5 at κ=0.75, −18.80 vs −19 at κ=10. **The cap is not
    exponentially cheap in λ, and it is weakest exactly where Kappa distributions are physically
@@ -898,6 +1036,28 @@ What are the measured cost, acceptance behavior, κ dependence, and failure mode
 **Necessity**
 
 **Necessary if any speed, bottleneck-resolution, or outperformance claim is retained.** If all comparative claims are removed, the comparative part is useful rather than mandatory, but absolute performance characterization remains strongly recommended for the intended software-centered paper.
+
+**STATUS: COMPLETE.** `experiments/exp3_benchmark/`. Correctness gate before timing, enforced
+by the harness. Three methods, each transcribed from its primary source: the released
+Gamma-ratio header; Abdul & Mace (2015) Eq. (22) — labelled an **implementation variant**, not
+a rival algorithm, because it provably reduces to the same construction; and Zenitani (2025)
+Pareto-envelope rejection, a genuinely distinct algorithm. 10 batches × 10⁶ draws per
+configuration, one RNG type for all, κ ∈ {0.75, 1, 1.5, 2, 5, 10, 50}.
+
+**Headline, unfavourable and reported as such: the released implementation is the slowest of
+the three.** Zenitani (2025) rejection is 1.8×–2.6× faster where it applies (κ > 1); A&M 2015's
+normal-triple variant is 1.4×–1.6× faster. Per-sample cost is **not constant in κ** (88–130 ns,
+non-monotonic), so the Abstract's constant-time claim is refuted by measurement, not merely
+unsupported. Anisotropy and arbitrary-**B** rotation cost ≈nothing (within 1–2 ns). The cap's
+overhead is confined to low κ (+36% at κ=0.75), tracking Exp 2's rejection rate.
+
+Measured Pareto acceptance reproduces Zenitani's published 0.806/0.785/0.750 at κ=1.5/2/5 to
+three digits — independent evidence the transcription is faithful, which is the precondition
+this section sets before benchmarking a published method.
+
+Scope limits recorded on purpose: `n = κ/2` requires κ > 1, so the rejection method is
+inapplicable at κ ≤ 1 (recorded, not skipped); and this is one machine and one toolchain —
+enough to refute constant-time and fix a ≈2× ordering, not a cross-platform characterization.
 
 ## Experiment 4 — Low-κ floating-point and RNG robustness
 
@@ -1140,7 +1300,10 @@ parameter range or they do not travel.
 | 2026-08-17 | **Solar-wind anisotropy sources obtained** | `paper/reference/README.md`, `step1_claim_audit.md` | P2-a unblocked via Hellinger 2006 + Matteini 2007 + Pierrard 2016. Marsch 1982 full text still **BLOCKED** (abstract-level only). Ion anisotropy⊗Kappa observation **BLOCKED** — no primary source found. |
 | 2026-08-17 | **Experiment 4 complete** | exp4 `README.md`, this matrix §5 + §9.3, `cpp/test_suite.H` | Supported range established. `sqrt(x1)/sqrt(x2)` fix quantified and regression-tested. Cap shown to **mask** failure. C5 → PROMOTE narrowly, as characterization + fix. |
 | 2026-08-17 | **Experiment 2 complete** | exp2 `README.md`, this matrix §5 + R1.3 + §4 + §9.3 | R1.3 fully discharged. Cap is a conditional target whose rejected fraction **is** its TV distortion, decaying only as `λ^−(2κ−1)`; it **breaks axisymmetry about B** (a₄ at 11.6σ); and **"negligible rejection ⇒ negligible bias" is shown to be a non-sequitur** (TV 6.3×10⁻⁴ with a 24%-low p99.9). Manuscript validation must use cap OFF, and the Abstract's negligibility argument must be deleted rather than softened. |
-| _pending_ | Experiment 3 | R1.4, R2.A2 | Not started — see §9.5. |
+| 2026-08-17 | **Provenance freeze across all three experiments** | exp1/exp4 `GNUmakefile` + `*_analyze.py` + `README.md`, exp2 `README.md`, this matrix §5 | exp1 had committed `checksums.sha256` but **no committed command to generate or verify it**; exp1 and exp4 recorded no git revision or sampler hash. All three now emit checksums, expose `make verify`, and pin the sampler by content. Re-running the (deterministic) analyses changed **only** the `environment` block. Two wrong numbers corrected in §5 against `exp2_results.json`: 200/200 → **240/240** pairs, 5×10⁶ → **6×10⁶** attempts. |
+| 2026-08-17 | **Cap default flipped to uncapped** | `cpp/bi_kappa_distribution.H`, `cpp/test_suite.H`, `cpp/main.cpp`, `README.md`, `usage.dox`, this matrix R1.1 + §9.6 | The default target law is now the bi-Kappa distribution; a finite cap is opt-in. Verified behaviour-neutral for every reported number: all three experiments set the cap explicitly and **regenerate bit-for-bit identically** against the modified header. Tests B5–B8 added. |
+| 2026-08-17 | **Experiment 3 complete** | exp3 `README.md` + `results/`, this matrix §5 + R1.4 + §9.3, §9.5 blocker 2 cleared | R1.4 answerable. **Unfavourable headline: our implementation is the slowest of three tested.** Zenitani (2025) Pareto rejection 1.8×–2.6× faster where κ > 1; A&M 2015 normal-triple variant 1.4×–1.6× faster; per-sample cost **not constant in κ** (88–130 ns). Every speed/superiority claim retired by measurement. Anisotropy + **B**-rotation shown free. Transcription faithfulness evidenced by reproducing Zenitani's published acceptance to 3 digits. |
+| 2026-08-17 | **§9.4 differentiator corrected** | this matrix §9.4 + §9.3 | The claim that the anisotropic bi-Kappa loader is "never written down" in prior literature is **withdrawn** — ZUM2026 Algorithms 3.1/3.2 write it out with distinct θ∥, θ⊥, as this repository's own audit (P4-g, §3) already recorded. Tier-2 candidate retired. Surviving differentiators restated around arbitrary-**B**-frame loading, implementation, validation and target-law semantics. |
 
 ## 9.3 Contribution ledger, by evidence
 
@@ -1161,14 +1324,22 @@ parameter range or they do not travel.
 |---|---|
 | Low-κ finite-precision characterization + the `sqrt(x1)/sqrt(x2)` fix | **EARNED** by Exp 4, narrowly. Frame as quantifying an acknowledged caution (ZUM2026 §4), never as discovery. |
 | Log-domain small-shape Gamma mitigation | **MEASURED AND VALIDATED, NOT LANDED.** Authors' call — it changes the RNG stream. |
-| Performance characterization | **NOT EARNED.** Exp 3 not run. |
-| The anisotropic bi-Kappa scale-mixture written down explicitly | **CANDIDATE — newly identified.** See §9.4. |
+| Performance characterization | **EARNED as characterization, and it is a NEGATIVE result for us.** Exp 3: our implementation is the slowest of three; Zenitani (2025) rejection is 1.8×–2.6× faster; cost is not constant in κ. Publishable as honest measurement + claim retirement. The only favourable parts are narrow: arbitrary-**B** rotation and anisotropy are free, and the cap's cost is confined to low κ. **No superiority claim of any kind survives.** |
+| ~~The anisotropic bi-Kappa scale-mixture written down explicitly~~ | **RETIRED 2026-08-17.** ZUM2026 Algorithms 3.1/3.2 write the anisotropic loader down explicitly, with distinct θ∥, θ⊥. See the withdrawal notice in §9.4. Do not resurrect. |
+
+**FROZEN 2026-08-17.** All four experiments are complete and the literature audit is closed
+except the §9.5 blockers, so the ledger below is the final evidence-backed contribution
+statement. The section-by-section prose plan that follows from it is
+`manuscript_revision_plan.md`. Move an item between tiers only on new evidence, and log it
+in §9.2.
 
 **Rejected / retired — do not resurrect.**
 
 | Claim | Why |
 |---|---|
 | Discovery of the Gamma-ratio / Beta-prime construction | Zenitani & Nakano 2022 Table I Algorithm 1-1; A&M 2015 Eq. (22); ZUM2026 Eq. (6) |
+| The anisotropic bi-Kappa loader is undocumented in the literature | **Retired 2026-08-17.** ZUM2026 Algorithms 3.1/3.2 write it out with distinct θ∥, θ⊥; see §9.4. |
+| Any speed, throughput, or efficiency advantage | **Retired 2026-08-17 by measurement.** Exp 3: ours is the slowest of three methods tested. |
 | "Multivariate" Student-*t* equivalence attributed to A&M **2014** | 2014 is strictly 1-D (Bailey polar transform, one deviate at a time) |
 | Existing Kappa loaders not demonstrated in multidimensional PIC | A&M+Matthews 2021 is 2D3V, 6.7×10⁷ bi-Kappa particles/species |
 | Zenitani et al. mischaracterize Abdul & Mace 2015 | All seven characterizations checked verbatim; every one accurate |
@@ -1177,34 +1348,124 @@ parameter range or they do not travel.
 | Cross-platform bitwise reproducibility | Never demonstrated. Exp 4 shows agreement in *failure statistics*, which is not the same thing. |
 | The cap as a physical regularized-Kappa model | It is a pragmatic component-wise box → a conditional target. Regularized Kappa is a separately defined smooth distribution (Scherer et al.). |
 
-## 9.4 The differentiator that survived the literature audit
+## 9.4 The differentiator — **corrected 2026-08-17, and it is narrower than previously written**
 
-Worth stating separately because it emerged from the audit rather than from the original plan,
-and because it is the strongest surviving position.
+> ⚠ **Withdrawn in place.** This section previously claimed that "the anisotropic bi-Kappa scale
+> mixture is *used but never written down* anywhere in the prior literature", listing ZUM2026
+> with only the quote *"We can easily extend it for θ∥ ≠ θ⊥."* **That claim is not supportable
+> and is withdrawn.** It also contradicted this repository's own literature audit, which had the
+> correct reading all along (`../literature/step1_claim_audit.md` P4-g and §3): ZUM2026's
+> Algorithm 3.1 box carries the anisotropic scaling **explicitly**, in executable form:
+>
+> ```
+> v∥   ← θ∥ R x (2U₃ − 1)
+> v⊥1  ← 2 θ⊥ R x √(U₃(1−U₃)) cos(2πU₄)
+> v⊥2  ← 2 θ⊥ R x √(U₃(1−U₃)) sin(2πU₄)
+> return v∥, v⊥1, v⊥2
+> ```
+>
+> and the surrounding text says *"Trivial modifications for θ∥ ≠ θ⊥ are also included in the
+> procedure."* Re-verified against the primary PDF during this session. **Do not write any
+> sentence claiming the anisotropic loader is undocumented in the literature** — a returning
+> referee holding ZUM2026 would open the algorithm box and find it.
 
-The anisotropic bi-Kappa scale mixture is **used but never written down** anywhere in the prior
-literature:
+**What the prior art does contain.** The anisotropic loader is written down (ZUM2026 Algorithms
+3.1 and 3.2, with distinct θ∥, θ⊥). The isotropic scale mixture is written down repeatedly:
+Abdul & Mace (2015) §III B carries a general covariance **R** in Eq. (17) and then sets
+**R** = σ²**I**; Abdul (2018) PhD §2.3 is the fullest written statement and is isotropic only;
+Abdul, Matthews & Mace (2021) runs a genuine bi-Kappa in 2D3V citing the 2015 loader.
 
-- Abdul & Mace (2015) §III B carries a general covariance matrix **R** in Eq. (17), then
-  immediately sets **R** = σ²**I**. Isotropic only.
-- Abdul (2018) PhD thesis §2.3 — the fullest written statement of the loader anywhere — is
-  isotropic only.
-- Abdul, Matthews & Mace (2021) runs a genuine bi-Kappa (Summers & Thorne form) in 2D3V but
-  cites the 2015 paper for the loader without writing the anisotropic extension.
-- ZUM2026 Algorithm 3.1: *"We can easily extend it for θ∥ ≠ θ⊥."*
+**What actually survives as ours**, stated so that nothing depends on the retracted claim:
 
-Everyone treats the anisotropic extension as trivial; nobody documents it. A documented,
-validated, field-aligned bi-Kappa implementation is therefore defensible. **A novel
-construction is not** — and the "easily extend" quote must be acknowledged, not hidden, or a
-returning referee will find it.
+| Surviving | Why the prior art does not cover it |
+|---|---|
+| **Arbitrary magnetic-field-frame loading** (C2) | ZUM2026 returns `v∥, v⊥1, v⊥2` — components **in the field-aligned frame**. It does not rotate into an arbitrary **B** direction in a simulation's global frame. Our Eq. (35) transform does, and Exp 1 Block B validates it on 3 **B** directions to ~1×10⁻¹⁵. |
+| **Open-source, tested, simulation-oriented C++ implementation** (C1) | ZUM2026's release is a Zenodo Jupyter notebook (audit §1-7). No C++ library, no field-frame handling. |
+| **Explicit uncapped/capped target-law semantics** (C3) | No prior source separates the two target laws, and none quantifies the cap's distortion. |
+| **Direct 3-D validation incl. 1/2 < κ ≤ 3/2** (C4) | Prior loaders are presented with far lighter validation; none tests radial law + directional uniformity + independence + frame invariance at these κ. |
+| **Finite-precision characterization** (C5) | ZUM2026 §4 flags the zero-division caution qualitatively; Exp 4 quantifies it and removes one avoidable cause. |
+
+The honest framing throughout: **the construction is prior art; the engineering, the validation,
+the frame handling, and the target-law discipline are the contribution.** A novel construction
+is not claimed, and neither is a novel anisotropic extension.
 
 ## 9.5 Open blockers
 
 | # | Blocker | Blocks | Status |
 |---|---|---|---|
 | ~~1~~ | ~~Experiment 2~~ | ~~R1.1, R1.2, R1.3 item 5~~ | **CLEARED 2026-08-17** |
-| 2 | Experiment 3 prerequisite: a faithful, *independently distributionally validated* implementation of at least one competing method | R1.4, R2.A2 | Not started. A&M 2015 Eq. (22) is now fully specified from primary source and is implementable; the Zenitani piecewise-rejection route is not yet transcribed. **No timing may be run before each compared method passes its own distributional check.** |
+| ~~2~~ | ~~Experiment 3 prerequisite: a faithful, independently distributionally validated implementation of at least one competing method~~ | ~~R1.4, R2.A2~~ | **CLEARED 2026-08-17.** Both A&M 2015 Eq. (22) and Zenitani (2025) §2 transcribed from primary source and implemented; all three methods pass the distributional gate before any timing was believed. Zenitani's published acceptance reproduced to 3 digits. |
 | 3 | Marsch et al. (1982) full text | any page/figure-level claim from it | Not open access; abstract verified via Crossref publisher deposit. Cite for abstract-level propositions only. |
 | 4 | A primary ion observation fitted with an anisotropic bi-Kappa | the anisotropy⊗κ claim *for ions* | **BLOCKED — none found.** Pierrard et al. (2016) supplies it for **electrons**. Do not silently generalize to ions. |
 | 5 | Scherer, Fichtner & Lazar (2017) EPL 120, 50002 | regularized-Kappa citation at its origin | Optional; the 2019 anisotropic paper serves our comparison better. |
 | 6 | Published versions of Bale 2009 and Pierrard 2016 | quoted detail from either | On-disk copies are arXiv preprints. Check before any quotation ships. |
+
+## 9.6 The cap/default decision — settled 2026-08-17
+
+Recorded here because R1.1 item 5 and R1.2 both depend on what the released API actually does
+by default, and because it is a deliberate behaviour change that a returning referee may notice.
+
+**Previous behaviour.** `max_normalized_velocity` defaulted to `20.0` in `param_type`, in the
+value constructor, and in `define(...)`. A caller who omitted the argument silently sampled the
+**conditional box law**, not bi-Kappa. `no_cap()` existed but had to be asked for. The committed
+example used `100.0`; `usage.dox` and the README quick-start both showed `20.0`.
+
+**Final behaviour.** The default is `no_cap()` on every construction path. A finite cap is
+opt-in. `param_type::capped()` still reports which law is active. Nothing else changed: the
+core mapping, the RNG consumption order, and the capped-mode predicate are untouched.
+
+**Why, on evidence — not preference.**
+
+| Evidence | Consequence for a defaulted caller |
+|---|---|
+| Exp 2: TV distance to bi-Kappa is *exactly* the rejected fraction, decaying only as `λ^−(2κ−1)` | At λ=20 the default was non-negligible **everywhere in κ ≤ 3/2** on the pre-registered criterion |
+| Exp 2: small TV does not bound tail quantiles (κ=1.5, λ=50 → TV 6.3×10⁻⁴, p99.9 24% low) | The old default could not be defended as "close enough" even where TV looked tiny |
+| Exp 2: the box is a cube in normalized coordinates → four-fold azimuthal modulation at 11.6σ | A defaulted PIC initialization was **not gyrotropic** — a physics defect, silently |
+| Exp 4: a non-finite draw can never satisfy the box predicate, so the loop redraws it | Capped mode **hid** generation failure; at κ=0.51 float, 36% of internal attempts were non-finite and 0 were reported |
+
+The manuscript claims the sampler targets Eq. (20). The default now does.
+
+**Compatibility consequences.** Callers who passed a cap explicitly are unaffected — that is
+every experiment in this repository, and both existing test suites. Callers who relied on the
+default now get the untruncated law: a behaviour change, and the intended one, since the old
+behaviour was the defect R1.1 identified. Verified neutral for the scientific record: exp1,
+exp2 and exp4 were rebuilt against the modified header and **regenerate bit-for-bit identical
+raw output**, checked against the committed `checksums.sha256`. Only the recorded
+`sampler_header_sha256` changed in `results/`.
+
+**One residual footgun, documented rather than papered over.** The seed is the sixth `define(...)`
+argument, after the cap, so a caller who omits the cap *cannot* pass a seed positionally —
+`define(κ, θ⊥, θ∥, ub, 12345)` sets a **cap** of 12345, not a seed. Adding an `int`-taking
+overload would silently reinterpret existing calls that pass an integer cap, so it was not
+added. README and `usage.dox` both call this out, and `dist.seed(s)` remains the unambiguous
+route.
+
+**Not changed: `bi_maxwellian_distribution`.** Its default is still `20.0` and it has no
+`no_cap()`. The Exp-2 argument does not transfer — for a Gaussian, truncation at 20 thermal
+speeds removes ~10⁻⁸⁸ of the mass, which is negligible under any criterion including the
+two-part one. Making the two classes symmetric is an **authors' consistency choice**, not an
+evidence-driven fix, and is deliberately left open.
+
+**Test coverage.** `test_no_cap_semantics` B1–B4 (pre-existing) plus:
+
+| Test | Guards |
+|---|---|
+| B5 | the default is uncapped on *all five* construction paths, including `param_type` itself |
+| B6 | a defaulted sampler behaviourally produces out-of-box draws, not merely a flag saying so |
+| B7 | omitting the cap is **bitwise** identical to naming `no_cap()` at the same seed |
+| B8 | the two laws remain measurably different — guards against a future change making the cap a no-op |
+
+`test_radius_formation` A1–A4 continue to cover the `sqrt(x1)/sqrt(x2)` formation, which was
+already landed before this session (`bi_kappa_distribution.H:273`); A4 pins the two formations
+to 2 ulp at κ=2. Full suite passes, `main.exe` exits 0.
+
+**The capped target, for the manuscript.** Define it once, as
+
+```
+f_cap(v) = f_kappa(v) * 1{v in B_lambda} / P(v in B_lambda),
+B_lambda = { v : |v_x|/theta_perp <= lambda, |v_y|/theta_perp <= lambda, |v_z|/theta_par <= lambda }
+```
+
+and never as Eq. (20), the untruncated law, a regularized Kappa, or a physically motivated tail
+regularization. `P(v in B_lambda)` has the closed form in the Exp-2 README, depends on
+`(κ, λ)` only, and equals `1 − TV(f_cap, f_kappa)`.

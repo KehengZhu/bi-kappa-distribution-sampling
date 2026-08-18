@@ -33,7 +33,7 @@ unobtained and block four further claims.
 | P4-a | A&M 2014 = *multivariate* Student-*t* equivalence | **MODIFY — error** |
 | P4-b | A&M applied to multi-dimensional PIC loading | ~~BLOCKED~~ → **DROP — inverted** (§7.1) |
 | P4-c | Z&N 2022/2023 built on generalized Beta-prime | **MODIFY — understated** |
-| P4-d | Zenitani 2025 acceptance 0.73–0.8 | **MODIFY — scope** |
+| P4-d | Zenitani 2025 acceptance 0.73–0.8 | **MODIFY — scope** (now independently reproduced; recommended `n = κ/2` **undefined for κ ≤ 1**) |
 | P4-e | "Zenitani et al. 2026" approximate generator | **MODIFY — authorship** |
 | P4-f | (r,q) reduces to bi-Kappa at r=0, q=κ+1 | PASS |
 | P4-g | Their Algorithm 3.1 ≡ our construction, incl. anisotropy | PASS |
@@ -148,6 +148,24 @@ The efficiency depends on the envelope index `n`:
 **The scope caveat the draft misses:** the paper states *"the standard Kappa distribution is
 defined for κ > 3/2"*. Every quoted number sits at κ ≥ 1.5. We must not let it read as covering
 the `1/2 < κ ≤ 3/2` regime our own R1.3 work targets.
+
+> **Update 2026-08-17 — independently reproduced, and the scope limit is now sharper than
+> "unquoted".** Experiment 3 transcribed the §2 procedure and implemented it against the same
+> RNG as our own sampler. Measured acceptance: **0.8060 / 0.7856 / 0.7505 at κ = 1.5 / 2 / 5**,
+> and 0.7327 at κ = 50 against the stated asymptote 0.7314. Agreement to three digits on a
+> quantity we did not fit confirms the transcription is faithful.
+>
+> **The stronger point:** the envelope index must satisfy `0 < n < κ − 1/2`, so the recommended
+> `n = κ/2` is **not defined at all for κ ≤ 1** — at κ = 1 it hits the bound and `D` degenerates.
+> So this is not merely a range over which the author declined to quote a number; the recommended
+> method **does not apply** there. Experiment 3 records that as a result rather than skipping it.
+> This is the one genuine tradeoff we may state in our favour: our Gamma-ratio route is defined
+> across `1/2 < κ ≤ 1`, and Zenitani's recommended setting is not.
+>
+> ⚠ **And the unfavourable half, which must travel with it:** where it *is* defined, that
+> rejection method runs **1.8×–2.6× faster than our implementation**. The draft's
+> "prohibitively low acceptance rates" framing is not just unsourced — it is refuted by our own
+> measurement. See matrix R1.4.
 
 ### P4-e — wrong authors. **MODIFY.**
 

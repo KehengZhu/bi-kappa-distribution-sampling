@@ -1,0 +1,2813 @@
+{
+  "experiment": "Experiment 3 -- reproducible absolute and comparative performance benchmark",
+  "answers": [
+    "R1.4 (primary)",
+    "R2.A2 (performance part)"
+  ],
+  "protocol": "Phase 1 validates every compared method against the intended target law; phase 2 times only methods that passed. Timing an unvalidated sampler is explicitly refused.",
+  "methods": {
+    "gamma_ratio_spherical": "released implementation, cpp/bi_kappa_distribution.H (no_cap()); equivalent to Zenitani & Nakano 2022 Alg. 1-1 and ZUM 2026 Alg. 3.1",
+    "scale_mixture_normals": "Abdul & Mace 2015, Phys. Plasmas 22, 102107, Eq. (22) with Eqs. (19)-(20); IMPLEMENTATION VARIANT of the same construction, not a distinct algorithm; chisq_nu = 2*Ga(nu/2,1) is our choice -- the paper does not specify it",
+    "pareto_rejection": "Zenitani 2025, Res. Notes AAS 9, 299, Section 2 procedure, envelope index n = kappa/2 (the author's recommendation); genuinely distinct algorithm, uniform variates only"
+  },
+  "numerical_safety": [
+    "W = 1/(1+T) ~ Beta(kappa-1/2, 3/2) via expit(-log x); T is never formed.",
+    "Y = T/(1+T) is NOT used -- it rounds to exactly 1 at low kappa (Exp 1).",
+    "log|v| computed with hypot in the sampler; no radius is ever squared."
+  ],
+  "environment": {
+    "platform": "macOS-26.6.1-arm64-arm-64bit",
+    "machine": "arm64",
+    "processor": "arm",
+    "python": "3.12.11",
+    "numpy": "2.4.3",
+    "scipy": "1.17.1",
+    "cxx": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+    "cxxflags": "-Wall -Wextra -std=c++11 -O2",
+    "rng": "std::mt19937, seeded explicitly per run; identical type for every method",
+    "git_commit": "8b038a5344c12f686a6668cddfde8a9c985048e8",
+    "git_dirty": true,
+    "sampler_header_sha256": "6b138af5e1b4fbfcb0d48d2f512ceb488a72576970f29f855f4c9bc91644460d"
+  },
+  "correctness_gate": {
+    "gamma_ratio_spherical": {
+      "citation": "released implementation, cpp/bi_kappa_distribution.H (no_cap()); equivalent to Zenitani & Nakano 2022 Alg. 1-1 and ZUM 2026 Alg. 3.1",
+      "alpha": 0.01,
+      "multiplicity": "Holm-Bonferroni across the whole family of validation tests; per-test p-values also retained in per_run_validation",
+      "by_kappa": {
+        "0.75": {
+          "n_seeds": 3,
+          "radial_pass_all_uncorrected": true,
+          "direction_pass_all_uncorrected": true,
+          "radial_pass_all": true,
+          "direction_pass_all": true,
+          "worst_radial_p": 0.281751993932311,
+          "worst_cvm_p": 0.25248413944640413,
+          "worst_direction_p": 0.10301704545023482,
+          "total_nonfinite": 0
+        },
+        "1": {
+          "n_seeds": 3,
+          "radial_pass_all_uncorrected": true,
+          "direction_pass_all_uncorrected": true,
+          "radial_pass_all": true,
+          "direction_pass_all": true,
+          "worst_radial_p": 0.12844480502854871,
+          "worst_cvm_p": 0.22418894580051296,
+          "worst_direction_p": 0.4105492321847056,
+          "total_nonfinite": 0
+        },
+        "1.5": {
+          "n_seeds": 3,
+          "radial_pass_all_uncorrected": true,
+          "direction_pass_all_uncorrected": true,
+          "radial_pass_all": true,
+          "direction_pass_all": true,
+          "worst_radial_p": 0.44005217771582117,
+          "worst_cvm_p": 0.40813276509397634,
+          "worst_direction_p": 0.42041867080950757,
+          "total_nonfinite": 0
+        },
+        "2": {
+          "n_seeds": 3,
+          "radial_pass_all_uncorrected": true,
+          "direction_pass_all_uncorrected": true,
+          "radial_pass_all": true,
+          "direction_pass_all": true,
+          "worst_radial_p": 0.6317917129703365,
+          "worst_cvm_p": 0.5380485593050992,
+          "worst_direction_p": 0.07371583125832648,
+          "total_nonfinite": 0
+        },
+        "5": {
+          "n_seeds": 3,
+          "radial_pass_all_uncorrected": true,
+          "direction_pass_all_uncorrected": false,
+          "radial_pass_all": true,
+          "direction_pass_all": true,
+          "worst_radial_p": 0.11348231364464934,
+          "worst_cvm_p": 0.1455906993351439,
+          "worst_direction_p": 0.004387363662322236,
+          "total_nonfinite": 0
+        },
+        "10": {
+          "n_seeds": 3,
+          "radial_pass_all_uncorrected": true,
+          "direction_pass_all_uncorrected": true,
+          "radial_pass_all": true,
+          "direction_pass_all": true,
+          "worst_radial_p": 0.18709217558579716,
+          "worst_cvm_p": 0.19517676880169232,
+          "worst_direction_p": 0.050323822741502156,
+          "total_nonfinite": 0
+        }
+      },
+      "passes_everywhere_tested": true,
+      "passes_everywhere_uncorrected": false,
+      "kappa_tested": [
+        0.75,
+        1,
+        1.5,
+        2,
+        5,
+        10
+      ]
+    },
+    "scale_mixture_normals": {
+      "citation": "Abdul & Mace 2015, Phys. Plasmas 22, 102107, Eq. (22) with Eqs. (19)-(20); IMPLEMENTATION VARIANT of the same construction, not a distinct algorithm; chisq_nu = 2*Ga(nu/2,1) is our choice -- the paper does not specify it",
+      "alpha": 0.01,
+      "multiplicity": "Holm-Bonferroni across the whole family of validation tests; per-test p-values also retained in per_run_validation",
+      "by_kappa": {
+        "0.75": {
+          "n_seeds": 3,
+          "radial_pass_all_uncorrected": true,
+          "direction_pass_all_uncorrected": true,
+          "radial_pass_all": true,
+          "direction_pass_all": true,
+          "worst_radial_p": 0.2068223886733751,
+          "worst_cvm_p": 0.2826446416674808,
+          "worst_direction_p": 0.6209329398978701,
+          "total_nonfinite": 0
+        },
+        "1": {
+          "n_seeds": 3,
+          "radial_pass_all_uncorrected": true,
+          "direction_pass_all_uncorrected": true,
+          "radial_pass_all": true,
+          "direction_pass_all": true,
+          "worst_radial_p": 0.04011270293293545,
+          "worst_cvm_p": 0.04706930952563926,
+          "worst_direction_p": 0.10278517583456248,
+          "total_nonfinite": 0
+        },
+        "1.5": {
+          "n_seeds": 3,
+          "radial_pass_all_uncorrected": true,
+          "direction_pass_all_uncorrected": true,
+          "radial_pass_all": true,
+          "direction_pass_all": true,
+          "worst_radial_p": 0.3700229040031896,
+          "worst_cvm_p": 0.19188469948687814,
+          "worst_direction_p": 0.7534117237773243,
+          "total_nonfinite": 0
+        },
+        "2": {
+          "n_seeds": 3,
+          "radial_pass_all_uncorrected": true,
+          "direction_pass_all_uncorrected": true,
+          "radial_pass_all": true,
+          "direction_pass_all": true,
+          "worst_radial_p": 0.04496174963957322,
+          "worst_cvm_p": 0.05328999066269591,
+          "worst_direction_p": 0.6122328146036324,
+          "total_nonfinite": 0
+        },
+        "5": {
+          "n_seeds": 3,
+          "radial_pass_all_uncorrected": true,
+          "direction_pass_all_uncorrected": true,
+          "radial_pass_all": true,
+          "direction_pass_all": true,
+          "worst_radial_p": 0.2309031873260058,
+          "worst_cvm_p": 0.36619702875547755,
+          "worst_direction_p": 0.4741082716089996,
+          "total_nonfinite": 0
+        },
+        "10": {
+          "n_seeds": 3,
+          "radial_pass_all_uncorrected": true,
+          "direction_pass_all_uncorrected": true,
+          "radial_pass_all": true,
+          "direction_pass_all": true,
+          "worst_radial_p": 0.39183574715538216,
+          "worst_cvm_p": 0.18474216820826972,
+          "worst_direction_p": 0.22499953128908712,
+          "total_nonfinite": 0
+        }
+      },
+      "passes_everywhere_tested": true,
+      "passes_everywhere_uncorrected": true,
+      "kappa_tested": [
+        0.75,
+        1,
+        1.5,
+        2,
+        5,
+        10
+      ]
+    },
+    "pareto_rejection": {
+      "citation": "Zenitani 2025, Res. Notes AAS 9, 299, Section 2 procedure, envelope index n = kappa/2 (the author's recommendation); genuinely distinct algorithm, uniform variates only",
+      "alpha": 0.01,
+      "multiplicity": "Holm-Bonferroni across the whole family of validation tests; per-test p-values also retained in per_run_validation",
+      "by_kappa": {
+        "1.5": {
+          "n_seeds": 3,
+          "radial_pass_all_uncorrected": true,
+          "direction_pass_all_uncorrected": true,
+          "radial_pass_all": true,
+          "direction_pass_all": true,
+          "worst_radial_p": 0.7063671501488855,
+          "worst_cvm_p": 0.5759853161392641,
+          "worst_direction_p": 0.13589841031644,
+          "total_nonfinite": 0
+        },
+        "2": {
+          "n_seeds": 3,
+          "radial_pass_all_uncorrected": true,
+          "direction_pass_all_uncorrected": true,
+          "radial_pass_all": true,
+          "direction_pass_all": true,
+          "worst_radial_p": 0.06913279937499128,
+          "worst_cvm_p": 0.06672761425166729,
+          "worst_direction_p": 0.484346873223221,
+          "total_nonfinite": 0
+        },
+        "5": {
+          "n_seeds": 3,
+          "radial_pass_all_uncorrected": true,
+          "direction_pass_all_uncorrected": true,
+          "radial_pass_all": true,
+          "direction_pass_all": true,
+          "worst_radial_p": 0.2529529273513633,
+          "worst_cvm_p": 0.22386832750751895,
+          "worst_direction_p": 0.2916380153624427,
+          "total_nonfinite": 0
+        },
+        "10": {
+          "n_seeds": 3,
+          "radial_pass_all_uncorrected": true,
+          "direction_pass_all_uncorrected": true,
+          "radial_pass_all": true,
+          "direction_pass_all": true,
+          "worst_radial_p": 0.30543515483887873,
+          "worst_cvm_p": 0.21587909348777312,
+          "worst_direction_p": 0.7238424086856785,
+          "total_nonfinite": 0
+        }
+      },
+      "passes_everywhere_tested": true,
+      "passes_everywhere_uncorrected": true,
+      "kappa_tested": [
+        1.5,
+        2,
+        5,
+        10
+      ]
+    }
+  },
+  "timing": [
+    {
+      "method": "gamma_ratio_spherical",
+      "variant": "iso",
+      "kappa": 0.75,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 103.9086875,
+      "ns_per_sample_min": 102.759083,
+      "ns_per_sample_max": 106.668959,
+      "ns_per_sample_iqr": 0.5374789999999905,
+      "samples_per_sec_median": 9623834.388245929,
+      "acceptance": 1,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "scale_mixture_normals",
+      "variant": "iso",
+      "kappa": 0.75,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 62.856229,
+      "ns_per_sample_min": 62.411417,
+      "ns_per_sample_max": 63.584459,
+      "ns_per_sample_iqr": 0.29658324999999763,
+      "samples_per_sec_median": 15909322.208941298,
+      "acceptance": 1,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "pareto_rejection",
+      "variant": "iso",
+      "kappa": 0.75,
+      "applicable": false,
+      "reason": "n = kappa/2 violates 0 < n < kappa - 1/2"
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "variant": "aniso",
+      "kappa": 0.75,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 103.9656455,
+      "ns_per_sample_min": 103.467792,
+      "ns_per_sample_max": 105.375625,
+      "ns_per_sample_iqr": 0.23768725000000757,
+      "samples_per_sec_median": 9618561.93159499,
+      "acceptance": 1,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "variant": "rotated",
+      "kappa": 0.75,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 105.28814600000001,
+      "ns_per_sample_min": 104.322917,
+      "ns_per_sample_max": 106.234125,
+      "ns_per_sample_iqr": 0.6676564999999925,
+      "samples_per_sec_median": 9497745.358722528,
+      "acceptance": 1,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "variant": "capped20",
+      "kappa": 0.75,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 140.9367915,
+      "ns_per_sample_min": 139.067875,
+      "ns_per_sample_max": 141.935583,
+      "ns_per_sample_iqr": 1.5341359999999895,
+      "samples_per_sec_median": 7095379.349543373,
+      "acceptance": 1,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "variant": "iso",
+      "kappa": 1,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 110.711333,
+      "ns_per_sample_min": 108.197583,
+      "ns_per_sample_max": 111.761709,
+      "ns_per_sample_iqr": 0.7279685000000029,
+      "samples_per_sec_median": 9032498.95834964,
+      "acceptance": 1,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "scale_mixture_normals",
+      "variant": "iso",
+      "kappa": 1,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 67.635396,
+      "ns_per_sample_min": 66.584125,
+      "ns_per_sample_max": 68.341041,
+      "ns_per_sample_iqr": 0.5329160000000144,
+      "samples_per_sec_median": 14785157.759703219,
+      "acceptance": 1,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "pareto_rejection",
+      "variant": "iso",
+      "kappa": 1,
+      "applicable": false,
+      "reason": "n = kappa/2 violates 0 < n < kappa - 1/2"
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "variant": "aniso",
+      "kappa": 1,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 108.176125,
+      "ns_per_sample_min": 107.586208,
+      "ns_per_sample_max": 111.17225,
+      "ns_per_sample_iqr": 0.9351667499999934,
+      "samples_per_sec_median": 9244183.963882973,
+      "acceptance": 1,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "variant": "rotated",
+      "kappa": 1,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 110.450187,
+      "ns_per_sample_min": 108.342042,
+      "ns_per_sample_max": 113.109333,
+      "ns_per_sample_iqr": 2.700427750000003,
+      "samples_per_sec_median": 9053855.200806495,
+      "acceptance": 1,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "variant": "capped20",
+      "kappa": 1,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 116.19200000000001,
+      "ns_per_sample_min": 115.055291,
+      "ns_per_sample_max": 117.271291,
+      "ns_per_sample_iqr": 0.7507085000000018,
+      "samples_per_sec_median": 8606444.505645826,
+      "acceptance": 1,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "variant": "iso",
+      "kappa": 1.5,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 88.0910415,
+      "ns_per_sample_min": 87.498541,
+      "ns_per_sample_max": 89.352292,
+      "ns_per_sample_iqr": 0.8021257500000019,
+      "samples_per_sec_median": 11351892.121743163,
+      "acceptance": 1,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "scale_mixture_normals",
+      "variant": "iso",
+      "kappa": 1.5,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 46.591750000000005,
+      "ns_per_sample_min": 45.496417,
+      "ns_per_sample_max": 47.309667,
+      "ns_per_sample_iqr": 1.0063954999999964,
+      "samples_per_sec_median": 21463027.252678853,
+      "acceptance": 1,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "pareto_rejection",
+      "variant": "iso",
+      "kappa": 1.5,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 48.919729000000004,
+      "ns_per_sample_min": 47.986041,
+      "ns_per_sample_max": 51.093833,
+      "ns_per_sample_iqr": 0.6464895000000013,
+      "samples_per_sec_median": 20441650.44332114,
+      "acceptance": 0.805962028,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "variant": "aniso",
+      "kappa": 1.5,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 88.9003335,
+      "ns_per_sample_min": 88.177583,
+      "ns_per_sample_max": 93.510041,
+      "ns_per_sample_iqr": 1.3875102499999912,
+      "samples_per_sec_median": 11248551.727874001,
+      "acceptance": 1,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "variant": "rotated",
+      "kappa": 1.5,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 88.9258545,
+      "ns_per_sample_min": 88.103375,
+      "ns_per_sample_max": 89.633125,
+      "ns_per_sample_iqr": 0.6748230000000035,
+      "samples_per_sec_median": 11245323.484634044,
+      "acceptance": 1,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "variant": "capped20",
+      "kappa": 1.5,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 88.714521,
+      "ns_per_sample_min": 87.998,
+      "ns_per_sample_max": 90.627,
+      "ns_per_sample_iqr": 0.8900932499999925,
+      "samples_per_sec_median": 11272111.811323425,
+      "acceptance": 1,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "variant": "iso",
+      "kappa": 2,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 129.9398335,
+      "ns_per_sample_min": 129.282375,
+      "ns_per_sample_max": 131.538542,
+      "ns_per_sample_iqr": 0.9259377500000028,
+      "samples_per_sec_median": 7695869.488704556,
+      "acceptance": 1,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "scale_mixture_normals",
+      "variant": "iso",
+      "kappa": 2,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 88.3135415,
+      "ns_per_sample_min": 87.37975,
+      "ns_per_sample_max": 90.397333,
+      "ns_per_sample_iqr": 0.170771000000002,
+      "samples_per_sec_median": 11323291.796649328,
+      "acceptance": 1,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "pareto_rejection",
+      "variant": "iso",
+      "kappa": 2,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 49.9074795,
+      "ns_per_sample_min": 49.62725,
+      "ns_per_sample_max": 51.504458,
+      "ns_per_sample_iqr": 0.4491992499999995,
+      "samples_per_sec_median": 20037076.807294987,
+      "acceptance": 0.785625956,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "variant": "aniso",
+      "kappa": 2,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 129.4004585,
+      "ns_per_sample_min": 128.799958,
+      "ns_per_sample_max": 131.860542,
+      "ns_per_sample_iqr": 1.9273439999999766,
+      "samples_per_sec_median": 7727947.88822174,
+      "acceptance": 1,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "variant": "rotated",
+      "kappa": 2,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 130.461729,
+      "ns_per_sample_min": 129.490084,
+      "ns_per_sample_max": 132.401667,
+      "ns_per_sample_iqr": 1.0776355000000137,
+      "samples_per_sec_median": 7665083.144804865,
+      "acceptance": 1,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "variant": "capped20",
+      "kappa": 2,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 129.2272915,
+      "ns_per_sample_min": 128.512,
+      "ns_per_sample_max": 130.03525,
+      "ns_per_sample_iqr": 0.4809482499999831,
+      "samples_per_sec_median": 7738303.483672409,
+      "acceptance": 1,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "variant": "iso",
+      "kappa": 5,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 121.03295800000001,
+      "ns_per_sample_min": 120.69175,
+      "ns_per_sample_max": 121.652416,
+      "ns_per_sample_iqr": 0.5469789999999932,
+      "samples_per_sec_median": 8262212.347152582,
+      "acceptance": 1,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "scale_mixture_normals",
+      "variant": "iso",
+      "kappa": 5,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 80.5490835,
+      "ns_per_sample_min": 79.80575,
+      "ns_per_sample_max": 85.978792,
+      "ns_per_sample_iqr": 0.6153652499999964,
+      "samples_per_sec_median": 12414790.541968117,
+      "acceptance": 1,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "pareto_rejection",
+      "variant": "iso",
+      "kappa": 5,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 53.1473545,
+      "ns_per_sample_min": 52.558625,
+      "ns_per_sample_max": 54.2895,
+      "ns_per_sample_iqr": 0.650052500000001,
+      "samples_per_sec_median": 18815611.979331918,
+      "acceptance": 0.750525219,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "variant": "aniso",
+      "kappa": 5,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 121.5013955,
+      "ns_per_sample_min": 120.6325,
+      "ns_per_sample_max": 123.318375,
+      "ns_per_sample_iqr": 1.005229,
+      "samples_per_sec_median": 8230358.144322713,
+      "acceptance": 1,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "variant": "rotated",
+      "kappa": 5,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 122.718291,
+      "ns_per_sample_min": 121.1295,
+      "ns_per_sample_max": 125.410375,
+      "ns_per_sample_iqr": 1.7507494999999977,
+      "samples_per_sec_median": 8148744.509487995,
+      "acceptance": 1,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "variant": "capped20",
+      "kappa": 5,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 122.170479,
+      "ns_per_sample_min": 121.350875,
+      "ns_per_sample_max": 125.304834,
+      "ns_per_sample_iqr": 0.6847500000000082,
+      "samples_per_sec_median": 8185283.45133197,
+      "acceptance": 1,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "variant": "iso",
+      "kappa": 10,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 124.198042,
+      "ns_per_sample_min": 123.249458,
+      "ns_per_sample_max": 125.758334,
+      "ns_per_sample_iqr": 0.9238745000000108,
+      "samples_per_sec_median": 8051656.724185716,
+      "acceptance": 1,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "scale_mixture_normals",
+      "variant": "iso",
+      "kappa": 10,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 82.2882295,
+      "ns_per_sample_min": 81.128208,
+      "ns_per_sample_max": 83.451625,
+      "ns_per_sample_iqr": 1.0107387499999874,
+      "samples_per_sec_median": 12152406.317114891,
+      "acceptance": 1,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "pareto_rejection",
+      "variant": "iso",
+      "kappa": 10,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 53.695541500000004,
+      "ns_per_sample_min": 53.227875,
+      "ns_per_sample_max": 54.10825,
+      "ns_per_sample_iqr": 0.2820932500000026,
+      "samples_per_sec_median": 18623520.166939743,
+      "acceptance": 0.74032176,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "variant": "aniso",
+      "kappa": 10,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 124.5770415,
+      "ns_per_sample_min": 122.3155,
+      "ns_per_sample_max": 127.724042,
+      "ns_per_sample_iqr": 1.5867297500000035,
+      "samples_per_sec_median": 8027161.248647889,
+      "acceptance": 1,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "variant": "rotated",
+      "kappa": 10,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 126.0265,
+      "ns_per_sample_min": 124.374042,
+      "ns_per_sample_max": 127.296,
+      "ns_per_sample_iqr": 0.9192192500000118,
+      "samples_per_sec_median": 7934839.101300123,
+      "acceptance": 1,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "variant": "capped20",
+      "kappa": 10,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 124.64360400000001,
+      "ns_per_sample_min": 123.759625,
+      "ns_per_sample_max": 126.347208,
+      "ns_per_sample_iqr": 0.9871355000000079,
+      "samples_per_sec_median": 8022874.563222674,
+      "acceptance": 1,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "variant": "iso",
+      "kappa": 50,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 117.394792,
+      "ns_per_sample_min": 116.852583,
+      "ns_per_sample_max": 118.641,
+      "ns_per_sample_iqr": 1.2086667500000061,
+      "samples_per_sec_median": 8518265.444007091,
+      "acceptance": 1,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "scale_mixture_normals",
+      "variant": "iso",
+      "kappa": 50,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 74.772896,
+      "ns_per_sample_min": 74.454208,
+      "ns_per_sample_max": 75.79275,
+      "ns_per_sample_iqr": 0.6290945000000079,
+      "samples_per_sec_median": 13373830.003855942,
+      "acceptance": 1,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "pareto_rejection",
+      "variant": "iso",
+      "kappa": 50,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 54.091854,
+      "ns_per_sample_min": 53.869792,
+      "ns_per_sample_max": 54.670125,
+      "ns_per_sample_iqr": 0.32513525000000243,
+      "samples_per_sec_median": 18487072.009031158,
+      "acceptance": 0.732663674,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "variant": "aniso",
+      "kappa": 50,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 117.4359375,
+      "ns_per_sample_min": 116.965167,
+      "ns_per_sample_max": 121.110417,
+      "ns_per_sample_iqr": 0.7385100000000051,
+      "samples_per_sec_median": 8515280.937745314,
+      "acceptance": 1,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "variant": "rotated",
+      "kappa": 50,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 118.33306300000001,
+      "ns_per_sample_min": 117.237291,
+      "ns_per_sample_max": 121.8255,
+      "ns_per_sample_iqr": 1.1022089999999878,
+      "samples_per_sec_median": 8450723.531089531,
+      "acceptance": 1,
+      "correctness_gate_passed": true,
+      "usable": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "variant": "capped20",
+      "kappa": 50,
+      "applicable": true,
+      "n_per_batch": 1000000,
+      "repeats": 10,
+      "ns_per_sample_median": 120.055667,
+      "ns_per_sample_min": 118.834208,
+      "ns_per_sample_max": 121.497792,
+      "ns_per_sample_iqr": 1.8114160000000084,
+      "samples_per_sec_median": 8329469.361908589,
+      "acceptance": 1,
+      "correctness_gate_passed": true,
+      "usable": true
+    }
+  ],
+  "per_run_validation": [
+    {
+      "method": "gamma_ratio_spherical",
+      "kappa": 0.75,
+      "seed": 3001,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.0022110957911418705,
+      "radial_ks_sqrtn_d": 0.9888320987513799,
+      "radial_ks_p": 0.281751993932311,
+      "radial_cvm_stat": 0.20800597236608045,
+      "radial_cvm_p": 0.25248413944640413,
+      "direction_ks_p": 0.6202937929191128,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 1.484147923995764,
+          "log_r_theory": 1.485441211802689,
+          "abs_diff": 0.0012932878069249476
+        },
+        "p0.9": {
+          "log_r_empirical": 4.7167214199687955,
+          "log_r_theory": 4.73059420485724,
+          "abs_diff": 0.013872784888444123
+        },
+        "p0.99": {
+          "log_r_empirical": 9.378000448304293,
+          "log_r_theory": 9.335805237738532,
+          "abs_diff": 0.0421952105657617
+        },
+        "p0.999": {
+          "log_r_empirical": 13.859149952100992,
+          "log_r_theory": 13.94097542781112,
+          "abs_diff": 0.08182547571012755
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "scale_mixture_normals",
+      "kappa": 0.75,
+      "seed": 3001,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.002380307084773048,
+      "radial_ks_sqrtn_d": 1.064505689775378,
+      "radial_ks_p": 0.2068223886733751,
+      "radial_cvm_stat": 0.19242173494211584,
+      "radial_cvm_p": 0.2826446416674808,
+      "direction_ks_p": 0.8574190721990811,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 1.479931527649927,
+          "log_r_theory": 1.485441211802689,
+          "abs_diff": 0.005509684152761984
+        },
+        "p0.9": {
+          "log_r_empirical": 4.735093955155232,
+          "log_r_theory": 4.73059420485724,
+          "abs_diff": 0.004499750297992655
+        },
+        "p0.99": {
+          "log_r_empirical": 9.401122952849827,
+          "log_r_theory": 9.335805237738532,
+          "abs_diff": 0.06531771511129492
+        },
+        "p0.999": {
+          "log_r_empirical": 13.70676879085537,
+          "log_r_theory": 13.94097542781112,
+          "abs_diff": 0.23420663695574895
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "kappa": 0.75,
+      "seed": 3002,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.0019852939022177996,
+      "radial_ks_sqrtn_d": 0.8878504241349641,
+      "radial_ks_p": 0.40919536073649987,
+      "radial_cvm_stat": 0.08298457919597857,
+      "radial_cvm_p": 0.6747775533633056,
+      "direction_ks_p": 0.10301704545023482,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 1.4904553415622621,
+          "log_r_theory": 1.485441211802689,
+          "abs_diff": 0.00501412975957316
+        },
+        "p0.9": {
+          "log_r_empirical": 4.752297775566446,
+          "log_r_theory": 4.73059420485724,
+          "abs_diff": 0.021703570709206588
+        },
+        "p0.99": {
+          "log_r_empirical": 9.357183418466697,
+          "log_r_theory": 9.335805237738532,
+          "abs_diff": 0.02137818072816522
+        },
+        "p0.999": {
+          "log_r_empirical": 13.956821451189956,
+          "log_r_theory": 13.94097542781112,
+          "abs_diff": 0.01584602337883645
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "scale_mixture_normals",
+      "kappa": 0.75,
+      "seed": 3002,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.001527590970742343,
+      "radial_ks_sqrtn_d": 0.6831594504789542,
+      "radial_ks_p": 0.7384467426590585,
+      "radial_cvm_stat": 0.05872865258493523,
+      "radial_cvm_p": 0.8219894848082518,
+      "direction_ks_p": 0.6209329398978701,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 1.4836749828439892,
+          "log_r_theory": 1.485441211802689,
+          "abs_diff": 0.0017662289586997115
+        },
+        "p0.9": {
+          "log_r_empirical": 4.740916133265528,
+          "log_r_theory": 4.73059420485724,
+          "abs_diff": 0.010321928408288272
+        },
+        "p0.99": {
+          "log_r_empirical": 9.340894086087811,
+          "log_r_theory": 9.335805237738532,
+          "abs_diff": 0.005088848349279473
+        },
+        "p0.999": {
+          "log_r_empirical": 13.76780107384345,
+          "log_r_theory": 13.94097542781112,
+          "abs_diff": 0.1731743539676689
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "kappa": 0.75,
+      "seed": 3003,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.0016619554413418447,
+      "radial_ks_sqrtn_d": 0.7432490684832058,
+      "radial_ks_p": 0.6379132121402493,
+      "radial_cvm_stat": 0.13196733414365308,
+      "radial_cvm_p": 0.44951934522304515,
+      "direction_ks_p": 0.5463853489338657,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 1.4830927977883648,
+          "log_r_theory": 1.485441211802689,
+          "abs_diff": 0.002348414014324174
+        },
+        "p0.9": {
+          "log_r_empirical": 4.726280342877202,
+          "log_r_theory": 4.73059420485724,
+          "abs_diff": 0.004313861980037359
+        },
+        "p0.99": {
+          "log_r_empirical": 9.391568585933687,
+          "log_r_theory": 9.335805237738532,
+          "abs_diff": 0.05576334819515516
+        },
+        "p0.999": {
+          "log_r_empirical": 14.094091368180063,
+          "log_r_theory": 13.94097542781112,
+          "abs_diff": 0.15311594036894327
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "scale_mixture_normals",
+      "kappa": 0.75,
+      "seed": 3003,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.002191265532231035,
+      "radial_ks_sqrtn_d": 0.9799637373641701,
+      "radial_ks_p": 0.29167730302004125,
+      "radial_cvm_stat": 0.1797818460691252,
+      "radial_cvm_p": 0.3103183531292629,
+      "direction_ks_p": 0.6609231952844614,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 1.4862272419156923,
+          "log_r_theory": 1.485441211802689,
+          "abs_diff": 0.0007860301130033776
+        },
+        "p0.9": {
+          "log_r_empirical": 4.738414722980772,
+          "log_r_theory": 4.73059420485724,
+          "abs_diff": 0.007820518123532239
+        },
+        "p0.99": {
+          "log_r_empirical": 9.321860720559556,
+          "log_r_theory": 9.335805237738532,
+          "abs_diff": 0.013944517178975602
+        },
+        "p0.999": {
+          "log_r_empirical": 13.75082637873775,
+          "log_r_theory": 13.94097542781112,
+          "abs_diff": 0.19014904907336927
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "kappa": 1,
+      "seed": 3001,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.0024623735193615715,
+      "radial_ks_sqrtn_d": 1.1012069150575736,
+      "radial_ks_p": 0.17648893168324953,
+      "radial_cvm_stat": 0.22346587311136765,
+      "radial_cvm_p": 0.22627152851633858,
+      "direction_ks_p": 0.8561962265196408,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.8166452986039459,
+          "log_r_theory": 0.8173263465793322,
+          "abs_diff": 0.000681047975386373
+        },
+        "p0.9": {
+          "log_r_empirical": 2.535131428907925,
+          "log_r_theory": 2.5400176581573146,
+          "abs_diff": 0.00488622924938964
+        },
+        "p0.99": {
+          "log_r_empirical": 4.880922260215863,
+          "log_r_theory": 4.846693535961983,
+          "abs_diff": 0.03422872425387968
+        },
+        "p0.999": {
+          "log_r_empirical": 7.126287769938391,
+          "log_r_theory": 7.149319343018916,
+          "abs_diff": 0.023031573080524836
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "scale_mixture_normals",
+      "kappa": 1,
+      "seed": 3001,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.0031253454282102466,
+      "radial_ks_sqrtn_d": 1.39769696612926,
+      "radial_ks_p": 0.04011270293293545,
+      "radial_cvm_stat": 0.47157709446171275,
+      "radial_cvm_p": 0.04706930952563926,
+      "direction_ks_p": 0.10278517583456248,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.8103661416461784,
+          "log_r_theory": 0.8173263465793322,
+          "abs_diff": 0.006960204933153857
+        },
+        "p0.9": {
+          "log_r_empirical": 2.5337859683995276,
+          "log_r_theory": 2.5400176581573146,
+          "abs_diff": 0.0062316897577869845
+        },
+        "p0.99": {
+          "log_r_empirical": 4.872719342806773,
+          "log_r_theory": 4.846693535961983,
+          "abs_diff": 0.026025806844789834
+        },
+        "p0.999": {
+          "log_r_empirical": 7.089044420910347,
+          "log_r_theory": 7.149319343018916,
+          "abs_diff": 0.060274922108568774
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "kappa": 1,
+      "seed": 3002,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.0016332061984891122,
+      "radial_ks_sqrtn_d": 0.7303920162191339,
+      "radial_ks_p": 0.6595975015700765,
+      "radial_cvm_stat": 0.0933722367007124,
+      "radial_cvm_p": 0.6183520647749667,
+      "direction_ks_p": 0.4105492321847056,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.8201616672488272,
+          "log_r_theory": 0.8173263465793322,
+          "abs_diff": 0.0028353206694949895
+        },
+        "p0.9": {
+          "log_r_empirical": 2.5480063582603383,
+          "log_r_theory": 2.5400176581573146,
+          "abs_diff": 0.00798870010302366
+        },
+        "p0.99": {
+          "log_r_empirical": 4.8583430854341385,
+          "log_r_theory": 4.846693535961983,
+          "abs_diff": 0.01164954947215513
+        },
+        "p0.999": {
+          "log_r_empirical": 7.144670548759936,
+          "log_r_theory": 7.149319343018916,
+          "abs_diff": 0.004648794258979905
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "scale_mixture_normals",
+      "kappa": 1,
+      "seed": 3002,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.0015199408866305442,
+      "radial_ks_sqrtn_d": 0.6797382288574396,
+      "radial_ks_p": 0.7440395388209478,
+      "radial_cvm_stat": 0.15758306123144766,
+      "radial_cvm_p": 0.367275068050127,
+      "direction_ks_p": 0.2980733542924504,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.8147953082340863,
+          "log_r_theory": 0.8173263465793322,
+          "abs_diff": 0.0025310383452459284
+        },
+        "p0.9": {
+          "log_r_empirical": 2.544147412943826,
+          "log_r_theory": 2.5400176581573146,
+          "abs_diff": 0.0041297547865113415
+        },
+        "p0.99": {
+          "log_r_empirical": 4.874620963431471,
+          "log_r_theory": 4.846693535961983,
+          "abs_diff": 0.027927427469487398
+        },
+        "p0.999": {
+          "log_r_empirical": 7.160745561728065,
+          "log_r_theory": 7.149319343018916,
+          "abs_diff": 0.011426218709149616
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "kappa": 1,
+      "seed": 3003,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.0026188695135311857,
+      "radial_ks_sqrtn_d": 1.1711940512915073,
+      "radial_ks_p": 0.12844480502854871,
+      "radial_cvm_stat": 0.2247841751355361,
+      "radial_cvm_p": 0.22418894580051296,
+      "direction_ks_p": 0.8006124613910566,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.8142690738176865,
+          "log_r_theory": 0.8173263465793322,
+          "abs_diff": 0.0030572727616456907
+        },
+        "p0.9": {
+          "log_r_empirical": 2.53476706659939,
+          "log_r_theory": 2.5400176581573146,
+          "abs_diff": 0.005250591557924622
+        },
+        "p0.99": {
+          "log_r_empirical": 4.875979265747774,
+          "log_r_theory": 4.846693535961983,
+          "abs_diff": 0.029285729785790693
+        },
+        "p0.999": {
+          "log_r_empirical": 7.235508283859643,
+          "log_r_theory": 7.149319343018916,
+          "abs_diff": 0.08618894084072704
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "scale_mixture_normals",
+      "kappa": 1,
+      "seed": 3003,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.001587069407427033,
+      "radial_ks_sqrtn_d": 0.709759016003431,
+      "radial_ks_p": 0.6943101305722608,
+      "radial_cvm_stat": 0.09756485375382545,
+      "radial_cvm_p": 0.5969451489122362,
+      "direction_ks_p": 0.8528829564184902,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.8187597255417329,
+          "log_r_theory": 0.8173263465793322,
+          "abs_diff": 0.0014333789624006998
+        },
+        "p0.9": {
+          "log_r_empirical": 2.5419024238695624,
+          "log_r_theory": 2.5400176581573146,
+          "abs_diff": 0.0018847657122478267
+        },
+        "p0.99": {
+          "log_r_empirical": 4.831256733483056,
+          "log_r_theory": 4.846693535961983,
+          "abs_diff": 0.015436802478927092
+        },
+        "p0.999": {
+          "log_r_empirical": 7.0042444337560905,
+          "log_r_theory": 7.149319343018916,
+          "abs_diff": 0.14507490926282518
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "kappa": 1.5,
+      "seed": 3001,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.0012975636288346803,
+      "radial_ks_sqrtn_d": 0.5802880958411303,
+      "radial_ks_p": 0.8888082280591936,
+      "radial_cvm_stat": 0.035528824318668384,
+      "radial_cvm_p": 0.9546843772489102,
+      "direction_ks_p": 0.7943946991840609,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.4678353994250566,
+          "log_r_theory": 0.46875628871919195,
+          "abs_diff": 0.000920889294135363
+        },
+        "p0.9": {
+          "log_r_empirical": 1.514003801399262,
+          "log_r_theory": 1.5129859045075902,
+          "abs_diff": 0.0010178968916718656
+        },
+        "p0.99": {
+          "log_r_empirical": 2.7145278340159305,
+          "log_r_theory": 2.70386373025038,
+          "abs_diff": 0.010664103765550603
+        },
+        "p0.999": {
+          "log_r_empirical": 3.8702560737177945,
+          "log_r_theory": 3.858925884045898,
+          "abs_diff": 0.011330189671896473
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "scale_mixture_normals",
+      "kappa": 1.5,
+      "seed": 3001,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.001231807540767904,
+      "radial_ks_sqrtn_d": 0.5508810792707755,
+      "radial_ks_p": 0.921552657766075,
+      "radial_cvm_stat": 0.05409635859860673,
+      "radial_cvm_p": 0.8510466977463206,
+      "direction_ks_p": 0.858224240111982,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.46835056413760506,
+          "log_r_theory": 0.46875628871919195,
+          "abs_diff": 0.00040572458158688596
+        },
+        "p0.9": {
+          "log_r_empirical": 1.5082280941702169,
+          "log_r_theory": 1.5129859045075902,
+          "abs_diff": 0.004757810337373325
+        },
+        "p0.99": {
+          "log_r_empirical": 2.7061006264867133,
+          "log_r_theory": 2.70386373025038,
+          "abs_diff": 0.0022368962363334965
+        },
+        "p0.999": {
+          "log_r_empirical": 3.825536486611047,
+          "log_r_theory": 3.858925884045898,
+          "abs_diff": 0.03338939743485092
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "pareto_rejection",
+      "kappa": 1.5,
+      "seed": 3001,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.0010479545770317733,
+      "radial_ks_sqrtn_d": 0.46865953431501695,
+      "radial_ks_p": 0.9803945325938411,
+      "radial_cvm_stat": 0.03586066540871129,
+      "radial_cvm_p": 0.9532005201456534,
+      "direction_ks_p": 0.920516435483251,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.4683196683511627,
+          "log_r_theory": 0.46875628871919195,
+          "abs_diff": 0.0004366203680292724
+        },
+        "p0.9": {
+          "log_r_empirical": 1.5117811589968182,
+          "log_r_theory": 1.5129859045075902,
+          "abs_diff": 0.0012047455107719873
+        },
+        "p0.99": {
+          "log_r_empirical": 2.6954331179997495,
+          "log_r_theory": 2.70386373025038,
+          "abs_diff": 0.008430612250630354
+        },
+        "p0.999": {
+          "log_r_empirical": 3.862591853837622,
+          "log_r_theory": 3.858925884045898,
+          "abs_diff": 0.0036659697917240663
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "measured_acceptance": 0.805451294,
+      "envelope_index_n": 0.75,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "kappa": 1.5,
+      "seed": 3002,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.001199298571891938,
+      "radial_ks_sqrtn_d": 0.5363426264137584,
+      "radial_ks_p": 0.9355279478209787,
+      "radial_cvm_stat": 0.047169089929465634,
+      "radial_cvm_p": 0.8932407885664321,
+      "direction_ks_p": 0.42041867080950757,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.46830315768511965,
+          "log_r_theory": 0.46875628871919195,
+          "abs_diff": 0.00045313103407229605
+        },
+        "p0.9": {
+          "log_r_empirical": 1.5165524458408666,
+          "log_r_theory": 1.5129859045075902,
+          "abs_diff": 0.003566541333276385
+        },
+        "p0.99": {
+          "log_r_empirical": 2.7274660144073746,
+          "log_r_theory": 2.70386373025038,
+          "abs_diff": 0.023602284156994724
+        },
+        "p0.999": {
+          "log_r_empirical": 3.865101354991163,
+          "log_r_theory": 3.858925884045898,
+          "abs_diff": 0.006175470945264827
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "scale_mixture_normals",
+      "kappa": 1.5,
+      "seed": 3002,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.0011388715612155043,
+      "radial_ks_sqrtn_d": 0.5093188457038361,
+      "radial_ks_p": 0.9574060716460547,
+      "radial_cvm_stat": 0.054209587881558496,
+      "radial_cvm_p": 0.8503410800993871,
+      "direction_ks_p": 0.7534117237773243,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.4697477547013238,
+          "log_r_theory": 0.46875628871919195,
+          "abs_diff": 0.000991465982131845
+        },
+        "p0.9": {
+          "log_r_empirical": 1.5154430205154859,
+          "log_r_theory": 1.5129859045075902,
+          "abs_diff": 0.0024571160078956655
+        },
+        "p0.99": {
+          "log_r_empirical": 2.7041833690330206,
+          "log_r_theory": 2.70386373025038,
+          "abs_diff": 0.00031963878264074097
+        },
+        "p0.999": {
+          "log_r_empirical": 3.9129812297126025,
+          "log_r_theory": 3.858925884045898,
+          "abs_diff": 0.05405534566670456
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "pareto_rejection",
+      "kappa": 1.5,
+      "seed": 3002,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.0013113291093026502,
+      "radial_ks_sqrtn_d": 0.5864442058549956,
+      "radial_ks_p": 0.8812430318109835,
+      "radial_cvm_stat": 0.04654238030927254,
+      "radial_cvm_p": 0.8969229827155767,
+      "direction_ks_p": 0.13589841031644,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.46846627760877363,
+          "log_r_theory": 0.46875628871919195,
+          "abs_diff": 0.00029001111041832006
+        },
+        "p0.9": {
+          "log_r_empirical": 1.5122360693343284,
+          "log_r_theory": 1.5129859045075902,
+          "abs_diff": 0.0007498351732617703
+        },
+        "p0.99": {
+          "log_r_empirical": 2.696094199113169,
+          "log_r_theory": 2.70386373025038,
+          "abs_diff": 0.0077695311372107945
+        },
+        "p0.999": {
+          "log_r_empirical": 3.797832314262724,
+          "log_r_theory": 3.858925884045898,
+          "abs_diff": 0.06109356978317404
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "measured_acceptance": 0.806155806,
+      "envelope_index_n": 0.75,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "kappa": 1.5,
+      "seed": 3003,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.0019375575162762226,
+      "radial_ks_sqrtn_d": 0.8665020633418578,
+      "radial_ks_p": 0.44005217771582117,
+      "radial_cvm_stat": 0.14407914557980916,
+      "radial_cvm_p": 0.40813276509397634,
+      "direction_ks_p": 0.9126982434792082,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.4663907070196643,
+          "log_r_theory": 0.46875628871919195,
+          "abs_diff": 0.0023655816995276635
+        },
+        "p0.9": {
+          "log_r_empirical": 1.5127550580896694,
+          "log_r_theory": 1.5129859045075902,
+          "abs_diff": 0.00023084641792081584
+        },
+        "p0.99": {
+          "log_r_empirical": 2.7120070136880168,
+          "log_r_theory": 2.70386373025038,
+          "abs_diff": 0.008143283437636928
+        },
+        "p0.999": {
+          "log_r_empirical": 3.886431080346951,
+          "log_r_theory": 3.858925884045898,
+          "abs_diff": 0.02750519630105286
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "scale_mixture_normals",
+      "kappa": 1.5,
+      "seed": 3003,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.002049082339729391,
+      "radial_ks_sqrtn_d": 0.9163774806258473,
+      "radial_ks_p": 0.3700229040031896,
+      "radial_cvm_stat": 0.2472871304821887,
+      "radial_cvm_p": 0.19188469948687814,
+      "direction_ks_p": 0.9638909624990324,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.47057886587775327,
+          "log_r_theory": 0.46875628871919195,
+          "abs_diff": 0.0018225771585613226
+        },
+        "p0.9": {
+          "log_r_empirical": 1.5167181434069912,
+          "log_r_theory": 1.5129859045075902,
+          "abs_diff": 0.003732238899400997
+        },
+        "p0.99": {
+          "log_r_empirical": 2.7191193223540853,
+          "log_r_theory": 2.70386373025038,
+          "abs_diff": 0.015255592103705418
+        },
+        "p0.999": {
+          "log_r_empirical": 3.930122057467957,
+          "log_r_theory": 3.858925884045898,
+          "abs_diff": 0.07119617342205897
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "pareto_rejection",
+      "kappa": 1.5,
+      "seed": 3003,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.0015709467867922045,
+      "radial_ks_sqrtn_d": 0.7025487608604476,
+      "radial_ks_p": 0.7063671501488855,
+      "radial_cvm_stat": 0.10182814514551991,
+      "radial_cvm_p": 0.5759853161392641,
+      "direction_ks_p": 0.776248051285755,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.4669405405004568,
+          "log_r_theory": 0.46875628871919195,
+          "abs_diff": 0.001815748218735147
+        },
+        "p0.9": {
+          "log_r_empirical": 1.511989124373595,
+          "log_r_theory": 1.5129859045075902,
+          "abs_diff": 0.0009967801339951787
+        },
+        "p0.99": {
+          "log_r_empirical": 2.7117443508229906,
+          "log_r_theory": 2.70386373025038,
+          "abs_diff": 0.007880620572610741
+        },
+        "p0.999": {
+          "log_r_empirical": 3.8027501003412962,
+          "log_r_theory": 3.858925884045898,
+          "abs_diff": 0.056175783704601745
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "measured_acceptance": 0.804595852,
+      "envelope_index_n": 0.75,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "kappa": 2,
+      "seed": 3001,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.0016336966214123838,
+      "radial_ks_sqrtn_d": 0.7306113400179657,
+      "radial_ks_p": 0.6592276140887177,
+      "radial_cvm_stat": 0.06375020948341359,
+      "radial_cvm_p": 0.7903917751661638,
+      "direction_ks_p": 0.6092394716496659,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.34744279499346864,
+          "log_r_theory": 0.3465735902799442,
+          "abs_diff": 0.0008692047135244185
+        },
+        "p0.9": {
+          "log_r_empirical": 1.186028131533671,
+          "log_r_theory": 1.188918010464495,
+          "abs_diff": 0.0028898789308240413
+        },
+        "p0.99": {
+          "log_r_empirical": 2.030799136047286,
+          "log_r_theory": 2.0380342017946282,
+          "abs_diff": 0.00723506574734234
+        },
+        "p0.999": {
+          "log_r_empirical": 2.7989462770147457,
+          "log_r_theory": 2.821338001817283,
+          "abs_diff": 0.02239172480253737
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "scale_mixture_normals",
+      "kappa": 2,
+      "seed": 3001,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.0017400933963586662,
+      "radial_ks_sqrtn_d": 0.7781934242912926,
+      "radial_ks_p": 0.5793760478251273,
+      "radial_cvm_stat": 0.07479134198390788,
+      "radial_cvm_p": 0.7225126767497625,
+      "direction_ks_p": 0.6122328146036324,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.3460285571339744,
+          "log_r_theory": 0.3465735902799442,
+          "abs_diff": 0.0005450331459698199
+        },
+        "p0.9": {
+          "log_r_empirical": 1.1897852474382282,
+          "log_r_theory": 1.188918010464495,
+          "abs_diff": 0.0008672369737332541
+        },
+        "p0.99": {
+          "log_r_empirical": 2.0406326806185966,
+          "log_r_theory": 2.0380342017946282,
+          "abs_diff": 0.002598478823968353
+        },
+        "p0.999": {
+          "log_r_empirical": 2.812218483032536,
+          "log_r_theory": 2.821338001817283,
+          "abs_diff": 0.00911951878474726
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "pareto_rejection",
+      "kappa": 2,
+      "seed": 3001,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.0016130977052312145,
+      "radial_ks_sqrtn_d": 0.7213992246491827,
+      "radial_ks_p": 0.6747531031331757,
+      "radial_cvm_stat": 0.058959062809311055,
+      "radial_cvm_p": 0.8205382308728995,
+      "direction_ks_p": 0.8934308012093114,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.34583132419909557,
+          "log_r_theory": 0.3465735902799442,
+          "abs_diff": 0.0007422660808486525
+        },
+        "p0.9": {
+          "log_r_empirical": 1.1883899982209905,
+          "log_r_theory": 1.188918010464495,
+          "abs_diff": 0.0005280122435045165
+        },
+        "p0.99": {
+          "log_r_empirical": 2.0295573896131702,
+          "log_r_theory": 2.0380342017946282,
+          "abs_diff": 0.008476812181458016
+        },
+        "p0.999": {
+          "log_r_empirical": 2.838077658791326,
+          "log_r_theory": 2.821338001817283,
+          "abs_diff": 0.016739656974043005
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "measured_acceptance": 0.785249867,
+      "envelope_index_n": 1,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "kappa": 2,
+      "seed": 3002,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.0016700778790128545,
+      "radial_ks_sqrtn_d": 0.7468815330382824,
+      "radial_ks_p": 0.6317917129703365,
+      "radial_cvm_stat": 0.10999847348743583,
+      "radial_cvm_p": 0.5380485593050992,
+      "direction_ks_p": 0.07371583125832648,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.3468720445255537,
+          "log_r_theory": 0.3465735902799442,
+          "abs_diff": 0.00029845424560948075
+        },
+        "p0.9": {
+          "log_r_empirical": 1.1893572438386466,
+          "log_r_theory": 1.188918010464495,
+          "abs_diff": 0.00043923337415163743
+        },
+        "p0.99": {
+          "log_r_empirical": 2.025528120281916,
+          "log_r_theory": 2.0380342017946282,
+          "abs_diff": 0.012506081512712264
+        },
+        "p0.999": {
+          "log_r_empirical": 2.802918439568686,
+          "log_r_theory": 2.821338001817283,
+          "abs_diff": 0.0184195622485972
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "scale_mixture_normals",
+      "kappa": 2,
+      "seed": 3002,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.003079375861132272,
+      "radial_ks_sqrtn_d": 1.3771387507527424,
+      "radial_ks_p": 0.04496174963957322,
+      "radial_cvm_stat": 0.4506246444816258,
+      "radial_cvm_p": 0.05328999066269591,
+      "direction_ks_p": 0.8786234099577758,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.34420285525197053,
+          "log_r_theory": 0.3465735902799442,
+          "abs_diff": 0.0023707350279736916
+        },
+        "p0.9": {
+          "log_r_empirical": 1.1865498473464247,
+          "log_r_theory": 1.188918010464495,
+          "abs_diff": 0.00236816311807031
+        },
+        "p0.99": {
+          "log_r_empirical": 2.037908920887875,
+          "log_r_theory": 2.0380342017946282,
+          "abs_diff": 0.00012528090675312242
+        },
+        "p0.999": {
+          "log_r_empirical": 2.819847393861359,
+          "log_r_theory": 2.821338001817283,
+          "abs_diff": 0.0014906079559242613
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "pareto_rejection",
+      "kappa": 2,
+      "seed": 3002,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.0011528790699739666,
+      "radial_ks_sqrtn_d": 0.5155831940597052,
+      "radial_ks_p": 0.9528132872358975,
+      "radial_cvm_stat": 0.03985007442977419,
+      "radial_cvm_p": 0.9339209810610102,
+      "direction_ks_p": 0.5664524999685979,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.34692184870833553,
+          "log_r_theory": 0.3465735902799442,
+          "abs_diff": 0.0003482584283913126
+        },
+        "p0.9": {
+          "log_r_empirical": 1.1901649782191406,
+          "log_r_theory": 1.188918010464495,
+          "abs_diff": 0.0012469677546456115
+        },
+        "p0.99": {
+          "log_r_empirical": 2.0214841758532733,
+          "log_r_theory": 2.0380342017946282,
+          "abs_diff": 0.016550025941354907
+        },
+        "p0.999": {
+          "log_r_empirical": 2.776424115096821,
+          "log_r_theory": 2.821338001817283,
+          "abs_diff": 0.04491388672046215
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "measured_acceptance": 0.785126562,
+      "envelope_index_n": 1,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "kappa": 2,
+      "seed": 3003,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.001311230416606718,
+      "radial_ks_sqrtn_d": 0.5864000691395981,
+      "radial_ks_p": 0.8812980956376267,
+      "radial_cvm_stat": 0.04762851438759114,
+      "radial_cvm_p": 0.8905233193772135,
+      "direction_ks_p": 0.3509419958248545,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.34624148035820024,
+          "log_r_theory": 0.3465735902799442,
+          "abs_diff": 0.0003321099217439838
+        },
+        "p0.9": {
+          "log_r_empirical": 1.1918444094610088,
+          "log_r_theory": 1.188918010464495,
+          "abs_diff": 0.0029263989965138126
+        },
+        "p0.99": {
+          "log_r_empirical": 2.0337675920356286,
+          "log_r_theory": 2.0380342017946282,
+          "abs_diff": 0.004266609758999618
+        },
+        "p0.999": {
+          "log_r_empirical": 2.8282079041036132,
+          "log_r_theory": 2.821338001817283,
+          "abs_diff": 0.00686990228633011
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "scale_mixture_normals",
+      "kappa": 2,
+      "seed": 3003,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.0024230548797106177,
+      "radial_ks_sqrtn_d": 1.0836230848491035,
+      "radial_ks_p": 0.19055505339866274,
+      "radial_cvm_stat": 0.30193116790045654,
+      "radial_cvm_p": 0.13348981213620503,
+      "direction_ks_p": 0.7208591363120678,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.3494325473595126,
+          "log_r_theory": 0.3465735902799442,
+          "abs_diff": 0.0028589570795684027
+        },
+        "p0.9": {
+          "log_r_empirical": 1.1880126814990868,
+          "log_r_theory": 1.188918010464495,
+          "abs_diff": 0.0009053289654081809
+        },
+        "p0.99": {
+          "log_r_empirical": 2.037564289558243,
+          "log_r_theory": 2.0380342017946282,
+          "abs_diff": 0.0004699122363853725
+        },
+        "p0.999": {
+          "log_r_empirical": 2.8272800404189926,
+          "log_r_theory": 2.821338001817283,
+          "abs_diff": 0.005942038601709498
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "pareto_rejection",
+      "kappa": 2,
+      "seed": 3003,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.002899524230506767,
+      "radial_ks_sqrtn_d": 1.29670665636418,
+      "radial_ks_p": 0.06913279937499128,
+      "radial_cvm_stat": 0.4131096585253991,
+      "radial_cvm_p": 0.06672761425166729,
+      "direction_ks_p": 0.484346873223221,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.3438313634052315,
+          "log_r_theory": 0.3465735902799442,
+          "abs_diff": 0.0027422268747127054
+        },
+        "p0.9": {
+          "log_r_empirical": 1.1852704502927178,
+          "log_r_theory": 1.188918010464495,
+          "abs_diff": 0.003647560171777142
+        },
+        "p0.99": {
+          "log_r_empirical": 2.032801587948058,
+          "log_r_theory": 2.0380342017946282,
+          "abs_diff": 0.0052326138465703664
+        },
+        "p0.999": {
+          "log_r_empirical": 2.812930739388719,
+          "log_r_theory": 2.821338001817283,
+          "abs_diff": 0.008407262428564266
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "measured_acceptance": 0.783917156,
+      "envelope_index_n": 1,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "kappa": 5,
+      "seed": 3001,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.0021085678591450385,
+      "radial_ks_sqrtn_d": 0.9429802136439015,
+      "radial_ks_p": 0.3357156300081826,
+      "radial_cvm_stat": 0.1879045326423214,
+      "radial_cvm_p": 0.29218030331907807,
+      "direction_ks_p": 0.5923985992114793,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.1767455963798347,
+          "log_r_theory": 0.17514292627064243,
+          "abs_diff": 0.0016026701091922668
+        },
+        "p0.9": {
+          "log_r_empirical": 0.7723337695289244,
+          "log_r_theory": 0.7725142243165609,
+          "abs_diff": 0.00018045478763650813
+        },
+        "p0.99": {
+          "log_r_empirical": 1.2315258754139278,
+          "log_r_theory": 1.2277902115618624,
+          "abs_diff": 0.003735663852065363
+        },
+        "p0.999": {
+          "log_r_empirical": 1.5492352210131766,
+          "log_r_theory": 1.5714220907312786,
+          "abs_diff": 0.02218686971810202
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "scale_mixture_normals",
+      "kappa": 5,
+      "seed": 3001,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.002321534469835962,
+      "radial_ks_sqrtn_d": 1.0382217773324292,
+      "radial_ks_p": 0.2309031873260058,
+      "radial_cvm_stat": 0.1579636565682014,
+      "radial_cvm_p": 0.36619702875547755,
+      "direction_ks_p": 0.7271404560545528,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.17429157358335806,
+          "log_r_theory": 0.17514292627064243,
+          "abs_diff": 0.000851352687284368
+        },
+        "p0.9": {
+          "log_r_empirical": 0.7699173728270294,
+          "log_r_theory": 0.7725142243165609,
+          "abs_diff": 0.002596851489531482
+        },
+        "p0.99": {
+          "log_r_empirical": 1.2259982249871786,
+          "log_r_theory": 1.2277902115618624,
+          "abs_diff": 0.0017919865746838237
+        },
+        "p0.999": {
+          "log_r_empirical": 1.570313282683907,
+          "log_r_theory": 1.5714220907312786,
+          "abs_diff": 0.0011088080473715678
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "pareto_rejection",
+      "kappa": 5,
+      "seed": 3001,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.001936768167114522,
+      "radial_ks_sqrtn_d": 0.8661490556651488,
+      "radial_ks_p": 0.44057302876846005,
+      "radial_cvm_stat": 0.11457637428476083,
+      "radial_cvm_p": 0.5180337055989424,
+      "direction_ks_p": 0.2916380153624427,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.17375829936340245,
+          "log_r_theory": 0.17514292627064243,
+          "abs_diff": 0.0013846269072399775
+        },
+        "p0.9": {
+          "log_r_empirical": 0.7741032380769625,
+          "log_r_theory": 0.7725142243165609,
+          "abs_diff": 0.0015890137604015475
+        },
+        "p0.99": {
+          "log_r_empirical": 1.2290634541578094,
+          "log_r_theory": 1.2277902115618624,
+          "abs_diff": 0.0012732425959469662
+        },
+        "p0.999": {
+          "log_r_empirical": 1.5801179709167186,
+          "log_r_theory": 1.5714220907312786,
+          "abs_diff": 0.008695880185439986
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "measured_acceptance": 0.750052504,
+      "envelope_index_n": 2.5,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "kappa": 5,
+      "seed": 3002,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.0021012443258393576,
+      "radial_ks_sqrtn_d": 0.9397050299825043,
+      "radial_ks_p": 0.3398213015429057,
+      "radial_cvm_stat": 0.17782374865821832,
+      "radial_cvm_p": 0.31489165073770486,
+      "direction_ks_p": 0.8513613835748687,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.17522499666856567,
+          "log_r_theory": 0.17514292627064243,
+          "abs_diff": 8.207039792323956e-05
+        },
+        "p0.9": {
+          "log_r_empirical": 0.7714649801462071,
+          "log_r_theory": 0.7725142243165609,
+          "abs_diff": 0.0010492441703537914
+        },
+        "p0.99": {
+          "log_r_empirical": 1.2279790943593119,
+          "log_r_theory": 1.2277902115618624,
+          "abs_diff": 0.00018888279744944114
+        },
+        "p0.999": {
+          "log_r_empirical": 1.5840363275101044,
+          "log_r_theory": 1.5714220907312786,
+          "abs_diff": 0.012614236778825783
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "scale_mixture_normals",
+      "kappa": 5,
+      "seed": 3002,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.0014176810994859235,
+      "radial_ks_sqrtn_d": 0.6340062617734334,
+      "radial_ks_p": 0.8157632610596728,
+      "radial_cvm_stat": 0.08961278595000086,
+      "radial_cvm_p": 0.6382198813817253,
+      "direction_ks_p": 0.7196273447538954,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.17349214664477208,
+          "log_r_theory": 0.17514292627064243,
+          "abs_diff": 0.0016507796258703467
+        },
+        "p0.9": {
+          "log_r_empirical": 0.7716464230288586,
+          "log_r_theory": 0.7725142243165609,
+          "abs_diff": 0.0008678012877023633
+        },
+        "p0.99": {
+          "log_r_empirical": 1.225551901329829,
+          "log_r_theory": 1.2277902115618624,
+          "abs_diff": 0.002238310232033358
+        },
+        "p0.999": {
+          "log_r_empirical": 1.5714140067808609,
+          "log_r_theory": 1.5714220907312786,
+          "abs_diff": 8.083950417736574e-06
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "pareto_rejection",
+      "kappa": 5,
+      "seed": 3002,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.0022716442420641914,
+      "radial_ks_sqrtn_d": 1.0159101891903037,
+      "radial_ks_p": 0.2529529273513633,
+      "radial_cvm_stat": 0.19103041018189848,
+      "radial_cvm_p": 0.2855413608176388,
+      "direction_ks_p": 0.8023217036327477,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.17713628505200185,
+          "log_r_theory": 0.17514292627064243,
+          "abs_diff": 0.0019933587813594222
+        },
+        "p0.9": {
+          "log_r_empirical": 0.775304639291313,
+          "log_r_theory": 0.7725142243165609,
+          "abs_diff": 0.0027904149747520757
+        },
+        "p0.99": {
+          "log_r_empirical": 1.22702955295046,
+          "log_r_theory": 1.2277902115618624,
+          "abs_diff": 0.0007606586114023983
+        },
+        "p0.999": {
+          "log_r_empirical": 1.5704506893786288,
+          "log_r_theory": 1.5714220907312786,
+          "abs_diff": 0.0009714013526498366
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "measured_acceptance": 0.75097063,
+      "envelope_index_n": 2.5,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "kappa": 5,
+      "seed": 3003,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.0026773524171846974,
+      "radial_ks_sqrtn_d": 1.197348400909672,
+      "radial_ks_p": 0.11348231364464934,
+      "radial_cvm_stat": 0.2886080344416429,
+      "radial_cvm_p": 0.1455906993351439,
+      "direction_ks_p": 0.004387363662322236,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.17298844890286358,
+          "log_r_theory": 0.17514292627064243,
+          "abs_diff": 0.002154477367778851
+        },
+        "p0.9": {
+          "log_r_empirical": 0.7726068967513019,
+          "log_r_theory": 0.7725142243165609,
+          "abs_diff": 9.26724347409813e-05
+        },
+        "p0.99": {
+          "log_r_empirical": 1.2216735729755075,
+          "log_r_theory": 1.2277902115618624,
+          "abs_diff": 0.006116638586354917
+        },
+        "p0.999": {
+          "log_r_empirical": 1.5516671498338792,
+          "log_r_theory": 1.5714220907312786,
+          "abs_diff": 0.019754940897399376
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": false,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "scale_mixture_normals",
+      "kappa": 5,
+      "seed": 3003,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.0012951403179979337,
+      "radial_ks_sqrtn_d": 0.5792043582888148,
+      "radial_ks_p": 0.8901157170424938,
+      "radial_cvm_stat": 0.06497923618324881,
+      "radial_cvm_p": 0.7826944719515162,
+      "direction_ks_p": 0.4741082716089996,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.17571268279869828,
+          "log_r_theory": 0.17514292627064243,
+          "abs_diff": 0.0005697565280558536
+        },
+        "p0.9": {
+          "log_r_empirical": 0.7732817030889877,
+          "log_r_theory": 0.7725142243165609,
+          "abs_diff": 0.0007674787724267773
+        },
+        "p0.99": {
+          "log_r_empirical": 1.2248665864959238,
+          "log_r_theory": 1.2277902115618624,
+          "abs_diff": 0.002923625065938573
+        },
+        "p0.999": {
+          "log_r_empirical": 1.5619830037255862,
+          "log_r_theory": 1.5714220907312786,
+          "abs_diff": 0.009439087005692404
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "pareto_rejection",
+      "kappa": 5,
+      "seed": 3003,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.0019867931627491064,
+      "radial_ks_sqrtn_d": 0.888520913827761,
+      "radial_ks_p": 0.4082471527881747,
+      "radial_cvm_stat": 0.22498841202079356,
+      "radial_cvm_p": 0.22386832750751895,
+      "direction_ks_p": 0.7399228889459285,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.17304641259196216,
+          "log_r_theory": 0.17514292627064243,
+          "abs_diff": 0.002096513678680273
+        },
+        "p0.9": {
+          "log_r_empirical": 0.7718879690637388,
+          "log_r_theory": 0.7725142243165609,
+          "abs_diff": 0.0006262552528221166
+        },
+        "p0.99": {
+          "log_r_empirical": 1.2266066800425253,
+          "log_r_theory": 1.2277902115618624,
+          "abs_diff": 0.0011835315193371443
+        },
+        "p0.999": {
+          "log_r_empirical": 1.5731706633585163,
+          "log_r_theory": 1.5714220907312786,
+          "abs_diff": 0.00174857262723771
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "measured_acceptance": 0.750246644,
+      "envelope_index_n": 2.5,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "kappa": 10,
+      "seed": 3001,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.001841755731670447,
+      "radial_ks_sqrtn_d": 0.8236582027929963,
+      "radial_ks_p": 0.5055850579737469,
+      "radial_cvm_stat": 0.1306267441413997,
+      "radial_cvm_p": 0.45440279743169343,
+      "direction_ks_p": 0.7125582365736105,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.1289460331915,
+          "log_r_theory": 0.12774837722624843,
+          "abs_diff": 0.001197655965251565
+        },
+        "p0.9": {
+          "log_r_empirical": 0.666209302720307,
+          "log_r_theory": 0.6654926644461341,
+          "abs_diff": 0.0007166382741728983
+        },
+        "p0.99": {
+          "log_r_empirical": 1.0334273628123174,
+          "log_r_theory": 1.0341257850845091,
+          "abs_diff": 0.0006984222721917455
+        },
+        "p0.999": {
+          "log_r_empirical": 1.2847059379054935,
+          "log_r_theory": 1.2852965855610579,
+          "abs_diff": 0.0005906476555643803
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "scale_mixture_normals",
+      "kappa": 10,
+      "seed": 3001,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.002013078689393738,
+      "radial_ks_sqrtn_d": 0.9002761587081166,
+      "radial_ks_p": 0.39183574715538216,
+      "radial_cvm_stat": 0.25286215715968224,
+      "radial_cvm_p": 0.18474216820826972,
+      "direction_ks_p": 0.6589148210979241,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.1263375239317998,
+          "log_r_theory": 0.12774837722624843,
+          "abs_diff": 0.0014108532944486218
+        },
+        "p0.9": {
+          "log_r_empirical": 0.6623403416486855,
+          "log_r_theory": 0.6654926644461341,
+          "abs_diff": 0.0031523227974485923
+        },
+        "p0.99": {
+          "log_r_empirical": 1.0375682334248901,
+          "log_r_theory": 1.0341257850845091,
+          "abs_diff": 0.003442448340380988
+        },
+        "p0.999": {
+          "log_r_empirical": 1.294426233060822,
+          "log_r_theory": 1.2852965855610579,
+          "abs_diff": 0.009129647499764193
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "pareto_rejection",
+      "kappa": 10,
+      "seed": 3001,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.0017344953407700814,
+      "radial_ks_sqrtn_d": 0.7756898977237129,
+      "radial_ks_p": 0.5835328687984074,
+      "radial_cvm_stat": 0.08074360528530794,
+      "radial_cvm_p": 0.6875660003403901,
+      "direction_ks_p": 0.7238424086856785,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.12621102690620076,
+          "log_r_theory": 0.12774837722624843,
+          "abs_diff": 0.0015373503200476757
+        },
+        "p0.9": {
+          "log_r_empirical": 0.6666213946502497,
+          "log_r_theory": 0.6654926644461341,
+          "abs_diff": 0.0011287302041156355
+        },
+        "p0.99": {
+          "log_r_empirical": 1.033208148795999,
+          "log_r_theory": 1.0341257850845091,
+          "abs_diff": 0.0009176362885101597
+        },
+        "p0.999": {
+          "log_r_empirical": 1.28798597650685,
+          "log_r_theory": 1.2852965855610579,
+          "abs_diff": 0.002689390945792125
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "measured_acceptance": 0.73928681,
+      "envelope_index_n": 5,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "kappa": 10,
+      "seed": 3002,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.0020613730183332013,
+      "radial_ks_sqrtn_d": 0.9218740391953917,
+      "radial_ks_p": 0.3627561088149116,
+      "radial_cvm_stat": 0.14954870038604393,
+      "radial_cvm_p": 0.39095399667543773,
+      "direction_ks_p": 0.6831704525493544,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.12873654250495414,
+          "log_r_theory": 0.12774837722624843,
+          "abs_diff": 0.0009881652787057105
+        },
+        "p0.9": {
+          "log_r_empirical": 0.6651050649865952,
+          "log_r_theory": 0.6654926644461341,
+          "abs_diff": 0.00038759945953892316
+        },
+        "p0.99": {
+          "log_r_empirical": 1.0347419771290438,
+          "log_r_theory": 1.0341257850845091,
+          "abs_diff": 0.0006161920445346691
+        },
+        "p0.999": {
+          "log_r_empirical": 1.2804937035008097,
+          "log_r_theory": 1.2852965855610579,
+          "abs_diff": 0.004802882060248148
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "scale_mixture_normals",
+      "kappa": 10,
+      "seed": 3002,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.0015761892304591019,
+      "radial_ks_sqrtn_d": 0.7048932529419267,
+      "radial_ks_p": 0.7024526550696057,
+      "radial_cvm_stat": 0.1196229221703568,
+      "radial_cvm_p": 0.4969597568730364,
+      "direction_ks_p": 0.22499953128908712,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.12626123624752142,
+          "log_r_theory": 0.12774837722624843,
+          "abs_diff": 0.001487140978727014
+        },
+        "p0.9": {
+          "log_r_empirical": 0.6658703177252043,
+          "log_r_theory": 0.6654926644461341,
+          "abs_diff": 0.0003776532790702447
+        },
+        "p0.99": {
+          "log_r_empirical": 1.0342078132053734,
+          "log_r_theory": 1.0341257850845091,
+          "abs_diff": 8.202812086421929e-05
+        },
+        "p0.999": {
+          "log_r_empirical": 1.2862922407483963,
+          "log_r_theory": 1.2852965855610579,
+          "abs_diff": 0.0009956551873384623
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "pareto_rejection",
+      "kappa": 10,
+      "seed": 3002,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.0021645527318773505,
+      "radial_ks_sqrtn_d": 0.9680174098721264,
+      "radial_ks_p": 0.30543515483887873,
+      "radial_cvm_stat": 0.23019170813310685,
+      "radial_cvm_p": 0.21587909348777312,
+      "direction_ks_p": 0.9122303537859928,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.13001491530312062,
+          "log_r_theory": 0.12774837722624843,
+          "abs_diff": 0.0022665380768721877
+        },
+        "p0.9": {
+          "log_r_empirical": 0.6682465782348521,
+          "log_r_theory": 0.6654926644461341,
+          "abs_diff": 0.002753913788718032
+        },
+        "p0.99": {
+          "log_r_empirical": 1.034317632750191,
+          "log_r_theory": 1.0341257850845091,
+          "abs_diff": 0.00019184766568192124
+        },
+        "p0.999": {
+          "log_r_empirical": 1.2836233557669414,
+          "log_r_theory": 1.2852965855610579,
+          "abs_diff": 0.0016732297941164376
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "measured_acceptance": 0.740337668,
+      "envelope_index_n": 5,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "gamma_ratio_spherical",
+      "kappa": 10,
+      "seed": 3003,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.002432518217482027,
+      "radial_ks_sqrtn_d": 1.087855218159286,
+      "radial_ks_p": 0.18709217558579716,
+      "radial_cvm_stat": 0.2447981376432904,
+      "radial_cvm_p": 0.19517676880169232,
+      "direction_ks_p": 0.050323822741502156,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.12636569084104107,
+          "log_r_theory": 0.12774837722624843,
+          "abs_diff": 0.00138268638520736
+        },
+        "p0.9": {
+          "log_r_empirical": 0.6650092708290392,
+          "log_r_theory": 0.6654926644461341,
+          "abs_diff": 0.00048339361709492934
+        },
+        "p0.99": {
+          "log_r_empirical": 1.0354577101346218,
+          "log_r_theory": 1.0341257850845091,
+          "abs_diff": 0.0013319250501127033
+        },
+        "p0.999": {
+          "log_r_empirical": 1.2862845681325223,
+          "log_r_theory": 1.2852965855610579,
+          "abs_diff": 0.0009879825714644852
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "scale_mixture_normals",
+      "kappa": 10,
+      "seed": 3003,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.001941912328377704,
+      "radial_ks_sqrtn_d": 0.868449594519488,
+      "radial_ks_p": 0.43718473925642676,
+      "radial_cvm_stat": 0.1699274928523789,
+      "radial_cvm_p": 0.3341789606636202,
+      "direction_ks_p": 0.348901657598776,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.12604102501171027,
+          "log_r_theory": 0.12774837722624843,
+          "abs_diff": 0.0017073522145381603
+        },
+        "p0.9": {
+          "log_r_empirical": 0.6648085115917435,
+          "log_r_theory": 0.6654926644461341,
+          "abs_diff": 0.0006841528543906072
+        },
+        "p0.99": {
+          "log_r_empirical": 1.0325372722561805,
+          "log_r_theory": 1.0341257850845091,
+          "abs_diff": 0.0015885128283286143
+        },
+        "p0.999": {
+          "log_r_empirical": 1.2758878353866485,
+          "log_r_theory": 1.2852965855610579,
+          "abs_diff": 0.009408750174409342
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    },
+    {
+      "method": "pareto_rejection",
+      "kappa": 10,
+      "seed": 3003,
+      "n": 200000,
+      "n_nonfinite": 0,
+      "radial_ks_stat": 0.0019738945410977815,
+      "radial_ks_sqrtn_d": 0.8827524748620783,
+      "radial_ks_p": 0.4164471706816685,
+      "radial_cvm_stat": 0.20451904564977677,
+      "radial_cvm_p": 0.25888499732839076,
+      "direction_ks_p": 0.9419995958062449,
+      "log_r_quantiles": {
+        "p0.5": {
+          "log_r_empirical": 0.12666714656699368,
+          "log_r_theory": 0.12774837722624843,
+          "abs_diff": 0.0010812306592547505
+        },
+        "p0.9": {
+          "log_r_empirical": 0.6639995926928008,
+          "log_r_theory": 0.6654926644461341,
+          "abs_diff": 0.0014930717533332416
+        },
+        "p0.99": {
+          "log_r_empirical": 1.030891561440285,
+          "log_r_theory": 1.0341257850845091,
+          "abs_diff": 0.00323422364422421
+        },
+        "p0.999": {
+          "log_r_empirical": 1.2853631997882056,
+          "log_r_theory": 1.2852965855610579,
+          "abs_diff": 6.661422714770993e-05
+        }
+      },
+      "radial_pass": true,
+      "direction_pass": true,
+      "measured_acceptance": 0.739820076,
+      "envelope_index_n": 5,
+      "radial_pass_holm": true,
+      "direction_pass_holm": true
+    }
+  ]
+}

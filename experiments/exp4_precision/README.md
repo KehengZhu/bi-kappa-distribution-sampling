@@ -15,12 +15,16 @@ used as a reference implementation anywhere in this experiment.
 ## Reproducing
 
 ```bash
-make run                                              # build both toolchains + all raw output
+make run                                              # build both toolchains + all raw output + checksums
 uv run --project ../../python python exp4_analyze.py  # -> results/
 ```
 
 `make run` regenerates everything from scratch. Nothing in `results/` depends on state that is
-not in the committed source or the command line above.
+not in the committed source or the command line above. `make verify` re-checks a regenerated
+`raw/` against `raw/checksums.sha256` — needed because the `logr_*.bin` bulk draws are
+gitignored, so the checksums are the only way to confirm a regenerated set matches the one the
+committed results were computed from. The environment block in `results/exp4_results.json`
+pins the released header under test by content via `sampler_header_sha256`.
 
 ## Environment
 
@@ -163,6 +167,7 @@ it must not be reported as failure solved. It also compounds the acceptance-rate
 |---|---|
 | `exp4_probe.cpp`, `exp4_analyze.py`, `GNUmakefile`, `README.md` | **canonical** (committed source) |
 | `results/exp4_results.json`, `results/exp4_table.md` | **canonical** (compact summaries, committed) |
-| `raw/*.jsonl` | regenerable — per-configuration counters |
-| `raw/logr_*.bin` | regenerable — 18 MB of bulk log-R draws, gitignored |
+| `raw/*.jsonl` | **canonical**, tracked — per-configuration counters; small, and the direct input to every reported number |
+| `raw/checksums.sha256` | **canonical**, tracked — makes a regenerated `raw/` verifiable |
+| `raw/logr_*.bin` | regenerable (`make run`) — 18 MB of bulk log-R draws, gitignored |
 | `*.exe` | build output, gitignored |

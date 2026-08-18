@@ -10,7 +10,8 @@ These are internal working documents, not manuscript text and not a rebuttal dra
 
 | Path | Contents |
 |---|---|
-| `planning/reviewer_response_matrix.md` | The authoritative record. Reviewer-by-reviewer analysis (R1.1–R1.7, R2.A1–R2.C3), the experiment programme, the contribution ledger, and the **alignment protocol + log** (§9). |
+| `planning/reviewer_response_matrix.md` | The authoritative record. Reviewer-by-reviewer analysis (R1.1–R1.7, R2.A1–R2.C3), the experiment programme, the contribution ledger (§9.3, **frozen**), the cap/default decision (§9.6), and the **alignment protocol + log** (§9). |
+| `planning/manuscript_revision_plan.md` | Section-by-section keep / rewrite / delete / add plan for `main.tex`, with the reviewer comment each change answers. Written after the evidence froze; **the rewrite itself has not been done.** |
 | `planning/introduction_rewrite_proposal.md` | Draft Introduction and contribution statement, plus the low-κ risk audit that preceded Experiment 4. |
 | `literature/step1_claim_audit.md` | Every planned literature claim against its primary source, with a PASS / MODIFY / DROP / BLOCKED verdict. §7 is the second round. |
 | `experiments/` | Cross-experiment notes. The experiments themselves live in `experiments/` at the repository root, each with its own `README.md` and `results/`. |
@@ -21,9 +22,13 @@ These are internal working documents, not manuscript text and not a rebuttal dra
 |---|---|---|
 | Experiment 1 — radial / directional / anisotropic / frame validation | `experiments/exp1_radial_directional/` | **complete** |
 | Experiment 2 — capped vs uncapped characterization | `experiments/exp2_cap_characterization/` | **complete** |
-| Experiment 3 — performance benchmark | — | not started; prerequisite in matrix §9.5 |
+| Experiment 3 — performance benchmark | `experiments/exp3_benchmark/` | **complete** — and the result is *unfavourable*: ours is the slowest of three |
 | Experiment 4 — finite-precision / low-κ audit | `experiments/exp4_precision/` | **complete** |
 | Primary sources read | `paper/reference/README.md` | 20 sources |
+
+All four experiments verify by the same two commands — `make verify` against committed
+checksums, then re-running the analysis — and all four pin the sampler under test by content
+via `sampler_header_sha256` in their `results/*.json`.
 
 ## Reading order
 

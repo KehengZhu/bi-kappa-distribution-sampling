@@ -30,7 +30,7 @@ make run                                                   # build + generate ra
 uv run --project ../../python python exp2_analyze.py       # analyze -> results/
 ```
 
-`make run` regenerates all 240 sample files from scratch; nothing in `results/` depends
+`make run` regenerates all 280 sample files from scratch; nothing in `results/` depends
 on state that is not recorded in `raw/manifest.csv` and the two committed sources.
 `make verify` re-checks a regenerated `raw/` against `raw/checksums.sha256`.
 
