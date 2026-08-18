@@ -1364,6 +1364,103 @@ static int test_no_cap_semantics()
                   << " violations): " << (ok ? "PASS" : "FAIL") << std::endl;
     }
 
+    // ---- B5: the DEFAULT is uncapped, on every construction path ----------
+    // This is the regression guard for the default flip.  A silently capped
+    // default means a caller who omits the argument samples the conditional
+    // box law while believing they sampled bi-Kappa -- which at kappa <= 3/2
+    // is neither a good approximation nor even axisymmetric about B
+    // (Experiment 2), and which hides non-finite draws (Experiment 4).
+    {
+        bi_kappa_distribution<double> dflt;                          // default ctor
+        bi_kappa_distribution<double> ctor(2.0, 1.0, 2.0);           // value ctor
+        bi_kappa_distribution<double> defined;
+        defined.define(2.0, 1.0, 2.0);                               // define(...)
+        bi_kappa_distribution<double> seeded;
+        seeded.define(bi_kappa_distribution<double>::param_type(2.0, 1.0, 2.0), 7);
+        bi_kappa_distribution<double>::param_type p;                 // param_type default
+
+        const bool ok= !dflt.param().capped() && !ctor.param().capped() &&
+                       !defined.param().capped() && !seeded.param().capped() &&
+                       !p.capped();
+        all_ok= all_ok && ok;
+        std::cout << "  B5 default is uncapped on every construction path: "
+                  << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    // ---- B6: a defaulted sampler really produces untruncated draws --------
+    // B5 checks the reported flag; this checks the behaviour behind it.
+    {
+        const int n= 200000;
+        bi_kappa_distribution<double> dist(1.0, 1.0, 1.0);   // cap omitted
+        dist.seed(4002);
+        int beyond= 0;
+        for (int i= 0; i < n; ++i)
+        {
+            const auto v= dist();
+            if (std::abs(v[0]) > 5.0 || std::abs(v[1]) > 5.0 || std::abs(v[2]) > 5.0)
+                ++beyond;
+        }
+        const bool ok= (beyond > 0);
+        all_ok= all_ok && ok;
+        std::cout << "  B6 defaulted sampler draws exceed the box (" << beyond << "/" << n
+                  << " beyond 5): " << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    // ---- B7: omitting the cap is identical to naming no_cap() -------------
+    // Same seed, so the two must agree draw for draw, not just in law.
+    {
+        const int n= 20000;
+        bi_kappa_distribution<double> omitted(1.5, 1.0, 2.0);
+        bi_kappa_distribution<double> named(1.5, 1.0, 2.0, {0.0, 0.0, 1.0},
+                                            bi_kappa_distribution<double>::no_cap());
+        omitted.seed(4004);
+        named.seed(4004);
+        int mismatches= 0;
+        for (int i= 0; i < n; ++i)
+        {
+            const auto a= omitted();
+            const auto b= named();
+            if (a[0] != b[0] || a[1] != b[1] || a[2] != b[2])
+                ++mismatches;
+        }
+        const bool ok= (mismatches == 0);
+        all_ok= all_ok && ok;
+        std::cout << "  B7 omitted cap == explicit no_cap() bitwise (" << mismatches
+                  << " mismatches): " << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    // ---- B8: the two target laws are measurably different ------------------
+    // Guards against a future "simplification" that quietly makes the cap a
+    // no-op.  At kappa = 0.75, lambda = 3 the cap rejects ~55% of attempts
+    // (Experiment 2), so the capped sample's spread must be visibly smaller.
+    {
+        const int n= 50000;
+        const double kappa= 0.75, lambda= 3.0;
+        bi_kappa_distribution<double> uncapped(kappa, 1.0, 1.0);
+        bi_kappa_distribution<double> capped(kappa, 1.0, 1.0, {0.0, 0.0, 1.0}, lambda);
+        uncapped.seed(4005);
+        capped.seed(4005);
+        double max_uncapped= 0.0, max_capped= 0.0;
+        for (int i= 0; i < n; ++i)
+        {
+            const auto a= uncapped();
+            const auto b= capped();
+            const double ra= std::max(std::abs(a[0]), std::max(std::abs(a[1]),
+                                                               std::abs(a[2])));
+            const double rb= std::max(std::abs(b[0]), std::max(std::abs(b[1]),
+                                                               std::abs(b[2])));
+            if (std::isfinite(ra) && ra > max_uncapped) max_uncapped= ra;
+            if (rb > max_capped) max_capped= rb;
+        }
+        // The capped run is bounded by lambda by construction; the uncapped run
+        // at kappa = 0.75 must reach far past it.
+        const bool ok= (max_capped <= lambda) && (max_uncapped > 10.0 * lambda);
+        all_ok= all_ok && ok;
+        std::cout << "  B8 capped and uncapped are different laws (max |v_i|/theta: "
+                  << max_capped << " vs " << max_uncapped << "): "
+                  << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
     std::cout << "test_no_cap_semantics: " << (all_ok ? "PASS" : "FAIL") << std::endl;
     return all_ok ? 0 : 1;
 }

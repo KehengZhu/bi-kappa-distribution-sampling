@@ -24,9 +24,17 @@ To use a sampler in your own code, every generator follows the same three steps 
 
 bi_kappa_distribution<double> dist;
 dist.define(/*kappa*/ 2.0, /*theta_perp*/ 1.0, /*theta_par*/ 2.0,
-            /*ub*/ {0, 0, 1}, /*cap*/ 20.0, /*seed*/ 12345);
+            /*ub*/ {0, 0, 1});
 
 auto v = dist();     // v = {vx, vy, vz}, sampled in the global frame
+```
+
+The cap is **off by default**, so these samples follow the bi-Kappa distribution itself. To pass
+a seed as well, give the cap explicitly — it is the fifth argument, and the seed the sixth:
+
+```cpp
+dist.define(2.0, 1.0, 2.0, {0, 0, 1},
+            bi_kappa_distribution<double>::no_cap(), /*seed*/ 12345);
 ```
 
 *Prerequisite: any C++11 compiler. Set `CXX` in `cpp/GNUmakefile` if not `g++`.*
@@ -48,17 +56,28 @@ They all share the same behavior:
 - **No-arg call** `dist()` uses the sampler's own RNG. **Bring-your-own** `dist(gen)` accepts an external `std::mt19937`.
 - **`ub`** is the magnetic-field direction (need not be unit length). Output is rotated into the global frame; the default `{0,0,1}` returns field-aligned components directly.
 - **`cap`** selects which of **two distinct target distributions** you sample.
-  - A **finite** `cap` (default `20`) rejects any component with `|v_i| / theta_i > cap` and
+  - **Omitted, or `bi_kappa_distribution<double>::no_cap()` — the default.** Samples follow the
+    full bi-Kappa law, and the draw uses a fixed sequence of high-level variates with no outer
+    acceptance–rejection loop. Second moments diverge for `kappa <= 3/2`; that is a property of
+    the distribution, not a defect.
+  - A **finite** `cap` is **opt-in**. It rejects any component with `|v_i| / theta_i > cap` and
     resamples, throwing after 10⁶ failed tries. The resulting samples follow the bi-Kappa
     distribution **conditioned on** all normalized components lying inside that box — a different,
     bounded law with its own normalization, not the bi-Kappa distribution itself. Its moments are
     finite for every `kappa`, because it is a different distribution, not because truncation
     regularizes the original one.
-  - **`bi_kappa_distribution<double>::no_cap()`** disables the cap. Samples then follow the full
-    bi-Kappa law, and the draw uses a fixed sequence of high-level variates with no outer
-    acceptance–rejection loop. Second moments diverge for `kappa <= 3/2`; that is a property of
-    the distribution, not a defect.
   - `dist.param().capped()` reports which mode is active.
+
+  > **Why the cap is not the default.** `experiments/exp2_cap_characterization` measures the gap
+  > between the two laws. The rejected fraction *is* the total-variation distance to the bi-Kappa
+  > law, and it decays only as `cap^-(2*kappa-1)` — so at `kappa = 0.75` even `cap = 100` still
+  > discards 9.7% of attempts. A small discarded fraction does **not** imply a faithful tail:
+  > at `kappa = 1.5, cap = 50` the TV distance is 6.3e-4 while the 99.9th-percentile speed is
+  > still 24% too small. The conditioned law is also **not axisymmetric about `ub`**, because the
+  > box is a cube in normalized components — a four-fold azimuthal modulation that matters for
+  > PIC initialization. Separately, `experiments/exp4_precision` shows the rejection loop
+  > silently **hides** non-finite draws at very low `kappa` instead of reporting them. Use a
+  > finite cap when you need bounded support and have accepted those consequences.
 - **Change one parameter** without re-specifying the rest: `dist.kappa(3.0)`, `dist.ub({0,1,0})`, etc.
 
 For the full API — every overload, parameter constraint, and the Python classes — see the [API reference](https://kehengzhu.github.io/bi-kappa-distribution-sampling/). A worked example using all five samplers lives in [`cpp/main.cpp`](cpp/main.cpp).

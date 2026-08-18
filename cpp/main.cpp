@@ -27,8 +27,14 @@ int main()
     std::cout << std::endl;
 
     std::cout << "=== Example 1: BiKappaDistribution ===" << std::endl;
+    // Uncapped, so these samples follow the bi-Kappa distribution itself.  no_cap() is
+    // the default; it is named explicitly here because a seed has to be passed as the
+    // sixth argument, and because the target law is the point of the example.  A finite
+    // cap would instead sample the bi-Kappa law conditioned on a component-wise box --
+    // a different distribution, and not axisymmetric about B.
     bi_kappa_distribution<Real> biKappa;
-    biKappa.define(kappa, theta_perp, theta_par, {0,0,1}, 100.0, 20030410);
+    biKappa.define(kappa, theta_perp, theta_par, {0,0,1},
+                   bi_kappa_distribution<Real>::no_cap(), 20030410);
     {
         std::ofstream out("samples_bikappa.txt");
         for (int i = 0; i < n_particle; ++i) {

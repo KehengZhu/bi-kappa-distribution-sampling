@@ -29,8 +29,8 @@ direction `ub`, and stream the samples to a file.
 using Real = double;
 
 bi_kappa_distribution<Real> biKappa;
-//             kappa  theta_perp  theta_par  ub          cap     seed
-biKappa.define(2.0,   1.0,        2.0,       {0, 0, 1},  100.0,  20030410);
+//             kappa  theta_perp  theta_par  ub          cap                    seed
+biKappa.define(2.0,   1.0,        2.0,       {0, 0, 1},  Real(INFINITY),        20030410);
 
 std::ofstream out("samples_bikappa.txt");
 for (int i = 0; i < 100000; ++i) {
@@ -38,6 +38,18 @@ for (int i = 0; i < 100000; ++i) {
     out << v[0] << ' ' << v[1] << ' ' << v[2] << '\n';
 }
 \endcode
+
+Write the cap as `bi_kappa_distribution<Real>::no_cap()` rather than `INFINITY` in real
+code; it is spelled out above only to keep the column alignment readable. **The cap is off
+by default**, so `biKappa.define(2.0, 1.0, 2.0, {0, 0, 1})` samples the same law — the cap is
+named here only because the seed has to follow it as the sixth argument.
+
+\warning The cap selects which of **two different distributions** you sample. Omitting it, or
+passing `no_cap()`, gives the bi-kappa distribution. Passing a finite value gives the bi-kappa
+distribution *conditioned on* a component-wise box — a bounded law with its own normalization,
+whose tails and moments differ, and which is **not axisymmetric about** `ub` because the box is
+a cube in normalized components. For `kappa <= 3/2` no practical cap value is a good
+approximation to the unconditioned law. Use `dist.param().capped()` to check which is active.
 
 \section usage_bimaxwell Bi-Maxwellian velocity samples
 
@@ -62,8 +74,10 @@ reproducible sequences; re-seeding with the same value restarts the stream.
 \code{.cpp}
 bi_kappa_distribution<Real> dist;
 
-// (a) seed as the last define() argument (bi_kappa only):
-dist.define(2.0, 1.0, 2.0, {0, 0, 1}, 20.0, /*seed*/ 55555);
+// (a) seed as the last define() argument (bi_kappa only).  The cap cannot be
+//     omitted here, because the seed is the argument after it:
+dist.define(2.0, 1.0, 2.0, {0, 0, 1},
+            bi_kappa_distribution<Real>::no_cap(), /*seed*/ 55555);
 
 // (b) or seed any time after define() (all samplers):
 dist.define(2.0, 1.0, 2.0);
@@ -101,8 +115,11 @@ dist.kappa(5.0);                // change one field...
 dist.theta_par(2.5);            // ...each rebuilds + re-validates
 dist.ub({1, 2, 3});
 
-dist.define(3.0, 1.5, 2.5, {0, 0, 1}, 20.0);   // or replace the whole config at once
+dist.define(3.0, 1.5, 2.5, {0, 0, 1});         // or replace the whole config at once
 \endcode
+
+\note `max_normalized_velocity(...)` is the one setter that changes *which distribution* is
+sampled, not merely its parameters.
 
 \section usage_velocity Custom speed-squared distribution
 

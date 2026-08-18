@@ -26,9 +26,9 @@
     "cxxflags": "-Wall -Wextra -std=c++11 -O2",
     "stdlib": "libc++ (Apple clang)",
     "rng": "std::mt19937, seeded explicitly per run",
-    "git_commit": "12378d6f67af82aef2befb7b77e7e24de99cff0b",
+    "git_commit": "8b038a5344c12f686a6668cddfde8a9c985048e8",
     "git_dirty": true,
-    "sampler_header_sha256": "42170fe4d2982d95f1cb718b381d3d215b852edf8662164e403ebc535c20e1d7"
+    "sampler_header_sha256": "6b138af5e1b4fbfcb0d48d2f512ceb488a72576970f29f855f4c9bc91644460d"
   },
   "direction_density_validation": {
     "n_monte_carlo": 2000000,

@@ -11,12 +11,18 @@
   "mode": "uncapped (no_cap()); the sampled law is the full bi-Kappa distribution",
   "environment": {
     "platform": "macOS-26.6.1-arm64-arm-64bit",
+    "machine": "arm64",
     "python": "3.12.11",
     "numpy": "2.4.3",
     "scipy": "1.17.1",
     "cxx": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+    "cxx_target": "Target: arm64-apple-darwin25.6.0",
+    "cxxflags": "-Wall -Wextra -std=c++11 -O2",
     "stdlib": "libc++ (Apple clang)",
-    "rng": "std::mt19937, seeded explicitly per run"
+    "rng": "std::mt19937, seeded explicitly per run",
+    "git_commit": "8b038a5344c12f686a6668cddfde8a9c985048e8",
+    "git_dirty": true,
+    "sampler_header_sha256": "6b138af5e1b4fbfcb0d48d2f512ceb488a72576970f29f855f4c9bc91644460d"
   },
   "summary": [
     {

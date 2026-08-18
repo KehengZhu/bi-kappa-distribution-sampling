@@ -11,13 +11,16 @@ variance-based validation cannot reach.
 ## Reproducing
 
 ```bash
-make run                                                   # build + generate raw samples
+make run                                                   # build + generate raw samples + checksums
 uv run --project ../../python python exp1_analyze.py       # analyze -> results/
 uv run --project ../../python python exp1_figure.py        # figure -> results/
 ```
 
 `make run` regenerates every sample from scratch; nothing in `results/` depends on state
-that is not recorded in `raw/manifest.csv`.
+that is not recorded in `raw/manifest.csv`. `make verify` re-checks a regenerated `raw/`
+against `raw/checksums.sha256`. The environment block in `results/exp1_results.json`
+additionally pins the sampler under test by content via `sampler_header_sha256`, so the
+result stays traceable when the working tree is dirty.
 
 ## What is run
 
@@ -66,5 +69,6 @@ round to exactly 1.0. A KS test on `Y` then measures rounding rather than the sa
 reports a spurious `√n·D = 51.8`. The same data tested on `W` gives 0.751 — a clean pass.
 `W` is the correct bounded diagnostic; see `results/exp1_table.md`.
 
-This supersedes the recommendation in `docs/reviewer_response_matrix.md` R1.3 item 2 and in
-`docs/introduction_rewrite_proposal.md` §3a, both of which name `Y`.
+This supersedes the recommendation in `docs/revision/planning/reviewer_response_matrix.md`
+R1.3 item 2 and in `docs/revision/planning/introduction_rewrite_proposal.md` §3a, both of
+which name `Y`.

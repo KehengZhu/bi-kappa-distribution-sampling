@@ -43,6 +43,14 @@ run: all
 	    ./exp4_probe_libcxx.exe logdump $$k $$s 200000 $(RAWDIR)/logr_k$${k}_s$${s}_double.bin double; \
 	  done; \
 	done
+	cd $(RAWDIR) && shasum -a 256 *.jsonl logr_*.bin > checksums.sha256
+
+# Verify a regenerated raw/ against the committed checksums.  The .jsonl counters are
+# themselves tracked; the logr_*.bin bulk draws are not, so this is the only way to
+# confirm a regenerated set matches the one the committed results were computed from.
+verify:
+	cd $(RAWDIR) && shasum -a 256 --check checksums.sha256 | grep -v ': OK$$' || \
+	  echo "all files match checksums.sha256"
 
 clean:
 	rm -f $(TARGETS)
@@ -50,4 +58,4 @@ clean:
 distclean: clean
 	rm -rf $(RAWDIR)
 
-.PHONY: all run clean distclean
+.PHONY: all run verify clean distclean

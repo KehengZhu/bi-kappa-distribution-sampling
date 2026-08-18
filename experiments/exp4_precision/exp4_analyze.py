@@ -58,6 +58,22 @@ def git_state() -> dict:
     }
 
 
+def sampler_header_sha256() -> str:
+    """SHA-256 of the released header as compiled.
+
+    Pins the exact sampler under test by content rather than by commit, so the
+    result stays traceable even when the working tree is dirty for reasons
+    outside this experiment.
+    """
+    try:
+        return subprocess.check_output(
+            ["shasum", "-a", "256", str(HERE / ".." / ".." / "cpp" /
+                                        "bi_kappa_distribution.H")],
+            text=True).split()[0]
+    except Exception:
+        return "unknown"
+
+
 def environment() -> dict:
     return {
         "python": sys.version.split()[0],
@@ -65,7 +81,10 @@ def environment() -> dict:
         "scipy": scipy.__version__,
         "platform": platform.platform(),
         "machine": platform.machine(),
+        "cxxflags": "-Wall -Wextra -std=c++11 -O2",
+        "rng": "std::mt19937, seeded explicitly per run",
         "git": git_state(),
+        "sampler_header_sha256": sampler_header_sha256(),
     }
 
 

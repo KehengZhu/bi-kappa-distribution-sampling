@@ -19,6 +19,7 @@ import csv
 import json
 import os
 import platform
+import subprocess
 import sys
 
 import numpy as np
@@ -337,12 +338,26 @@ def main() -> int:
         "mode": "uncapped (no_cap()); the sampled law is the full bi-Kappa distribution",
         "environment": {
             "platform": platform.platform(),
+            "machine": platform.machine(),
             "python": platform.python_version(),
             "numpy": np.__version__,
             "scipy": scipy.__version__,
             "cxx": os.popen("g++ --version").read().splitlines()[0],
+            "cxx_target": next((ln for ln in os.popen("g++ --version").read().splitlines()
+                                if ln.startswith("Target:")), ""),
+            "cxxflags": "-Wall -Wextra -std=c++11 -O2",
             "stdlib": "libc++ (Apple clang)",
             "rng": "std::mt19937, seeded explicitly per run",
+            "git_commit": subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True,
+                                         text=True).stdout.strip(),
+            "git_dirty": bool(subprocess.run(["git", "status", "--porcelain"],
+                                             capture_output=True, text=True).stdout.strip()),
+            # Pin the exact sampler that produced raw/ by content rather than by commit,
+            # so the result stays traceable even when the working tree is dirty for
+            # reasons outside this experiment.
+            "sampler_header_sha256": subprocess.run(
+                ["shasum", "-a", "256", "../../cpp/bi_kappa_distribution.H"],
+                capture_output=True, text=True).stdout.split()[0],
         },
         "summary": summary,
         "frame_invariance": frame_checks,

@@ -16,9 +16,14 @@
  *
  * @code{.cpp}
  * bi_kappa_distribution<double> dist;
- * dist.define(2.0, 1.0, 2.0, {0, 0, 1}, 20.0, 12345); // kappa, theta_perp, theta_par, ub, cap, seed
- * auto v = dist();                                     // {vx, vy, vz}, global frame
+ * dist.define(2.0, 1.0, 2.0, {0, 0, 1});   // kappa, theta_perp, theta_par, ub
+ * auto v = dist();                          // {vx, vy, vz}, global frame
  * @endcode
+ *
+ * @note **The cap is off by default**, so the default target law is the bi-Kappa
+ * distribution itself.  Passing a finite `max_normalized_velocity` opts in to a
+ * *different*, bounded target: the bi-Kappa law conditioned on the component-wise
+ * box.  See no_cap() and param_type::capped().
  *
  * @see \ref usage for more recipes (seeding, external RNG, reconfiguration).
  *
@@ -38,10 +43,14 @@ template <typename RealType= double> class bi_kappa_distribution
       public:
         using distribution_type= bi_kappa_distribution<RealType>;
 
+        // The cap defaults to +infinity, i.e. off -- the same value no_cap() returns.
+        // It is spelled out here rather than as no_cap() because the enclosing class is
+        // still incomplete while this nested default argument is parsed.
         param_type(RealType kappa= RealType(2.0), RealType theta_perp= RealType(1.0),
                    RealType theta_par= RealType(1.0),
                    point_type ub= point_type({RealType(0.0), RealType(0.0), RealType(1.0)}),
-                   RealType max_normalized_velocity= RealType(20.0))
+                   RealType max_normalized_velocity=
+                       std::numeric_limits<RealType>::infinity())
             : m_kappa(kappa), m_theta_perp(theta_perp), m_theta_par(theta_par), m_ub(ub),
               m_maxNormalizedVelocity(max_normalized_velocity)
         {
@@ -92,16 +101,23 @@ template <typename RealType= double> class bi_kappa_distribution
         RealType m_maxNormalizedVelocity;
     };
 
-    /// Sentinel selecting the untruncated sampler.  Pass as
-    /// max_normalized_velocity to disable the component-wise cap entirely:
+    /// Sentinel selecting the untruncated sampler, and **the default**.  In this
+    /// mode the draw uses a fixed sequence of high-level variates with no outer
+    /// acceptance-rejection loop, and the sampled law is the full bi-Kappa
+    /// distribution.
+    ///
+    /// Naming it explicitly is equivalent to omitting the argument, and is worth
+    /// doing where the target law matters to a reader:
     ///
     ///     bi_kappa_distribution<double> d(2.0, 1.0, 2.0, {0,0,1},
     ///                                     bi_kappa_distribution<double>::no_cap());
     ///
-    /// In this mode the draw uses a fixed sequence of high-level variates with no
-    /// outer acceptance-rejection loop, and the sampled law is the full bi-Kappa
-    /// distribution.  With a finite cap the sampled law is instead that
-    /// distribution conditioned on all normalized components lying inside the box.
+    /// With a finite cap the sampled law is instead that distribution conditioned
+    /// on all normalized components lying inside the component-wise box -- a
+    /// different, bounded law with its own normalization.  That is opt-in: it is
+    /// never selected by default, because at kappa <= 3/2 no practical cap value
+    /// is a good approximation to the bi-Kappa law and the conditioned law is not
+    /// even axisymmetric about B.
     static constexpr RealType no_cap()
     {
         return std::numeric_limits<RealType>::infinity();
@@ -121,7 +137,7 @@ template <typename RealType= double> class bi_kappa_distribution
                                    RealType theta_par= RealType(1.0),
                                    point_type ub= point_type({RealType(0.0), RealType(0.0),
                                                               RealType(1.0)}),
-                                   RealType max_normalized_velocity= RealType(20.0))
+                                   RealType max_normalized_velocity= no_cap())
         : m_params(kappa, theta_perp, theta_par, ub, max_normalized_velocity),
           m_gen(std::random_device{}()),
           m_distX1(RealType(1.5), RealType(1.0)), m_distX2(RealType(1.0), RealType(1.0)),
@@ -154,7 +170,7 @@ template <typename RealType= double> class bi_kappa_distribution
     void define(RealType kappa, RealType theta_perp= RealType(1.0),
                 RealType theta_par= RealType(1.0),
                 point_type ub= point_type({RealType(0.0), RealType(0.0), RealType(1.0)}),
-                RealType max_normalized_velocity= RealType(20.0))
+                RealType max_normalized_velocity= no_cap())
     {
         define(param_type(kappa, theta_perp, theta_par, ub, max_normalized_velocity));
     }
