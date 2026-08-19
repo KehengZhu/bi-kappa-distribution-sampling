@@ -1,5 +1,9 @@
 var searchData=
 [
-  ['kappa_0',['kappa',['../index.html',1,'bi-kappa'],['../classbi__kappa__distribution_1_1param__type.html#ab5d95aef81a06747c2103800d8618c50',1,'bi_kappa_distribution::param_type::kappa()'],['../classbi__kappa__distribution.html#a758a03458aaab59b2577811af7a095cd',1,'bi_kappa_distribution::kappa(RealType value)'],['../classbi__kappa__distribution.html#ae05ada851d5fe4c9b36a59e3a428cc30',1,'bi_kappa_distribution::kappa() const']]],
-  ['kappa_20velocity_20samples_1',['Bi-kappa velocity samples',['../usage.html#usage_bikappa',1,'']]]
+  ['in_0',['Which frame the cap is applied in',['../usage.html#usage_cap_frame',1,'']]],
+  ['is_1',['What the capped law is',['../usage.html#usage_cap_law',1,'']]],
+  ['is_20applied_20in_2',['Which frame the cap is applied in',['../usage.html#usage_cap_frame',1,'']]],
+  ['is_20the_20default_3',['Uncapped is the default',['../usage.html#usage_cap_which',1,'']]],
+  ['it_4',['The velocity cap: what it does and how to select it',['../usage.html#usage_bikappa_cap',1,'']]],
+  ['it_20does_20and_20how_20to_20select_20it_5',['The velocity cap: what it does and how to select it',['../usage.html#usage_bikappa_cap',1,'']]]
 ];

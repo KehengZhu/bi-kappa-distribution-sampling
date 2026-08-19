@@ -44,14 +44,105 @@ code; it is spelled out above only to keep the column alignment readable. **The 
 by default**, so `biKappa.define(2.0, 1.0, 2.0, {0, 0, 1})` samples the same law — the cap is
 named here only because the seed has to follow it as the sixth argument.
 
-\warning The cap selects which of **two different distributions** you sample. Omitting it, or
-passing `no_cap()`, gives the bi-kappa distribution. Passing a finite value gives the bi-kappa
-distribution *conditioned on* a component-wise box — a bounded law with its own normalization,
-whose tails and moments differ, and which is **not axisymmetric about** `ub` because the box is
-a cube in normalized components. For `kappa <= 3/2` no practical cap value is a good
-approximation to the unconditioned law. Use `dist.param().capped()` to check which is active.
+\warning The cap selects which of **two different distributions** you sample — it is not a
+safety limit on an otherwise unchanged sampler. Omitting it, or passing `no_cap()`, gives the
+bi-kappa distribution. Passing a finite value gives a *different, bounded* law. Read
+\ref usage_bikappa_cap before using one. `dist.param().capped()` reports which is active.
 
-\subsection usage_bikappa_cap Selecting the target law: uncapped or capped
+\subsection usage_bikappa_cap The velocity cap: what it does and how to select it
+
+Everything you need in order to use the cap correctly is on this page; the accompanying
+manuscript carries the derivations and the measurements behind the numbers quoted here.
+
+\subsubsection usage_cap_which Uncapped is the default
+
+Omitting the argument is enough. These three are identical:
+
+\code{.cpp}
+using BK = bi_kappa_distribution<Real>;
+BK dist;
+
+dist.define(2.0, 1.0, 2.0, {0, 0, 1});                                  // omit it
+dist.define(2.0, 1.0, 2.0, {0, 0, 1}, BK::no_cap());                    // name it
+dist.define(2.0, 1.0, 2.0, {0, 0, 1}, std::numeric_limits<Real>::infinity());
+\endcode
+
+`no_cap()` *is* `+infinity`; naming it is worth the keystrokes wherever a reader of the calling
+code needs to know which of the two laws is being sampled.
+
+Uncapped is not merely a cap large enough to never bind: `param_type::capped()` is
+`std::isfinite(...)`, so the sampler skips the acceptance-rejection loop entirely and the core
+mapping runs exactly once per draw. No rejection, no retry limit, no discarded variates.
+
+To sample the **capped** law instead, pass a finite positive value. The arguments are
+positional, so enabling a cap means passing `ub` as well:
+
+\code{.cpp}
+dist.define(2.0, 1.0, 2.0, {0, 0, 1}, 50.0);   // bi-kappa conditioned on a 50-theta box
+bool c = dist.param().capped();                // true
+\endcode
+
+To go back to the unconditioned law afterwards, assign the sentinel — **do not pass `0`**, which
+`param_type` rejects along with every other non-positive value:
+
+\code{.cpp}
+dist.max_normalized_velocity(BK::no_cap());    // capped -> uncapped
+dist.max_normalized_velocity(0.0);             // throws std::invalid_argument
+\endcode
+
+\subsubsection usage_cap_law What the capped law is
+
+With a finite cap `lam`, a draw is accepted only if all three components lie inside the box
+
+    |v_x| / theta_perp <= lam,  |v_y| / theta_perp <= lam,  |v_par| / theta_par <= lam
+
+and is otherwise discarded and redrawn. The result is the bi-kappa density restricted to that
+box and renormalized — a distribution with bounded support, its own normalization constant, and
+finite moments of every order even for `kappa <= 3/2`, where the bi-kappa distribution itself
+has no finite variance. Those moments are finite because you are sampling a **different
+distribution**, not because the cap has repaired the original one. A temperature computed from
+capped samples is a property of the box as much as of `kappa`.
+
+\subsubsection usage_cap_frame Which frame the cap is applied in
+
+The test is performed in the **field-aligned frame, before the rotation into the global frame**.
+The box is therefore aligned with `ub` and rotates with it.
+
+Consequence for calling code: the returned `{vx, vy, vz}` are **not** individually bounded by
+`lam * theta` unless `ub` is `{0,0,1}`. What is bounded, in every frame, is the speed:
+
+    |v| <= lam * sqrt(2*theta_perp^2 + theta_par^2)
+
+which is the corner of the box. Size velocity-grid extents, array bounds, and CFL estimates on
+that, not on the per-component value.
+
+Normalizing each component by its own thermal speed makes `theta_perp` and `theta_par` cancel
+out of the test entirely. Two practical consequences: the rejected fraction depends on `kappa`
+and `lam` alone, so retuning temperatures never changes your sampling throughput; and the capped
+law in the local frame is the same law whatever `ub` you point it at.
+
+\subsubsection usage_cap_cost What a cap costs you
+
+**The rejected fraction is not just a cost — it is the error.** The total-variation distance
+between the capped law and the bi-kappa distribution equals the fraction of draws you throw away,
+exactly. There is no trade-off to tune between the two: they are one number.
+
+**A small rejected fraction does not mean the tails are right.** At `kappa = 1.5` with
+`lam = 50`, only `6.3e-4` of draws are rejected, yet the 99.9th-percentile speed of what you keep
+is **24% too low**. If suprathermal particles matter to your problem — and they are usually why
+a kappa distribution was chosen — judge the cap by the quantiles you care about, not by the
+acceptance rate.
+
+**The box is a cube, so the capped law is not axisymmetric about `ub`.** A direction pointing at
+a cube corner has `sqrt(3)` times more radial room than one along an axis, which imprints a
+four-fold azimuthal modulation on the distribution function that no choice of `theta` can absorb.
+The modulation is easy to miss: the cube's symmetries make the capped pressure tensor *exactly*
+gyrotropic and reproduce `(theta_par/theta_perp)^2` exactly, so every standard second-order
+diagnostic returns a clean result while the distribution function itself is not gyrotropic.
+
+For `kappa <= 3/2` no practical cap value is a good approximation to the bi-kappa law. If you
+need bounded velocities there, treat the capped law as the physical model you have chosen and
+report it as such.
 
 **Uncapped is the default, so omitting the argument is enough.** These three are identical:
 

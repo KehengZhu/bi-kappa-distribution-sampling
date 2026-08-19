@@ -118,6 +118,14 @@ template <typename RealType= double> class bi_kappa_distribution
     /// never selected by default, because at kappa <= 3/2 no practical cap value
     /// is a good approximation to the bi-Kappa law and the conditioned law is not
     /// even axisymmetric about B.
+    ///
+    /// The cap is tested in the field-aligned frame, before the rotation into the
+    /// global frame, so the returned components are *not* individually bounded by
+    /// cap*theta unless ub is {0,0,1}; the box rotates with ub.  The speed is
+    /// bounded in every frame, by cap*sqrt(2*theta_perp^2 + theta_par^2).
+    ///
+    /// \see \ref usage_bikappa_cap for what the capped law is, what it costs, and
+    /// why a small rejected fraction does not imply faithful tails.
     static constexpr RealType no_cap()
     {
         return std::numeric_limits<RealType>::infinity();

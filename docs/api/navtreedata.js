@@ -36,7 +36,12 @@ var NAVTREE =
     [ "Usage Examples", "usage.html", [
       [ "Building and running the demo", "usage.html#usage_build", null ],
       [ "Bi-kappa velocity samples", "usage.html#usage_bikappa", [
-        [ "Selecting the target law: uncapped or capped", "usage.html#usage_bikappa_cap", null ]
+        [ "The velocity cap: what it does and how to select it", "usage.html#usage_bikappa_cap", [
+          [ "Uncapped is the default", "usage.html#usage_cap_which", null ],
+          [ "What the capped law is", "usage.html#usage_cap_law", null ],
+          [ "Which frame the cap is applied in", "usage.html#usage_cap_frame", null ],
+          [ "What a cap costs you", "usage.html#usage_cap_cost", null ]
+        ] ]
       ] ],
       [ "Bi-Maxwellian velocity samples", "usage.html#usage_bimaxwell", null ],
       [ "Reproducible runs (seeding)", "usage.html#usage_reproducible", null ],
