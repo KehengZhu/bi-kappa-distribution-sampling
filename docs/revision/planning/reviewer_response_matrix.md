@@ -120,10 +120,15 @@ the capped mode is a different target law, and it is not rejection-free.
 
 Two results strengthen the referee's position beyond what was asked:
 
-- **The cap breaks axisymmetry about B.** The box is a cube in normalized coordinates, so the
-  conditioned law carries a four-fold azimuthal modulation, detected at up to −11.6σ. For PIC
-  initialization a non-gyrotropic initial condition is a physics defect, not merely a
-  statistical one.
+- **The cap breaks axisymmetry about B — at fourth order only.** The box is a cube in normalized
+  coordinates, so the conditioned law carries an m = 4 azimuthal modulation, detected at up to
+  −11.6σ. **Do not state this without the second half**: the cube's permutation and sign
+  symmetries make the capped pressure tensor exactly gyrotropic and reproduce the scale-implied
+  (θ∥/θ⊥)² exactly, so every standard pressure-tensor agyrotropy measure returns zero. The
+  defensible statement — and the more interesting one — is that the initial condition is not
+  gyrotropic as a *distribution function* while being indistinguishable from gyrotropic to any
+  *second-order* diagnostic. *(Corrected 2026-08-18; see `../literature/cap_geometry_novelty_audit.md`
+  §0, §4.2.)*
 - **The θ's cancel exactly** from the accept/reject decision, so the capped law in the local
   frame depends on `(κ, λ)` only. This is an algebraic identity, confirmed by 0 disagreements
   in 6×10⁶ attempts — the empirical control is redundant confirmation, not an independent
@@ -972,13 +977,16 @@ the uncapped draws restricted to the box in **240/240** (case, λ, seed) pairs
    prediction to ~0.5%: −0.4996 vs −0.5 at κ=0.75, −18.80 vs −19 at κ=10. **The cap is not
    exponentially cheap in λ, and it is weakest exactly where Kappa distributions are physically
    interesting.** At κ = 0.75, λ = 50 still rejects 13.7%.
-4. **⚠ The cap breaks axisymmetry about B.** The box is a *cube* in the isotropic
-   u-coordinates, so a direction pointing at a cube corner has `√3` times more radial room than
-   one along an axis. The conditioned law acquires a four-fold azimuthal modulation that the
-   physical bi-Kappa does not have and **that no choice of θ can absorb**: `a₄ = 2⟨cos 4φ⟩`
-   reaches −0.052 at κ=0.75, λ=3, i.e. **11.6 sampling standard deviations**. For a PIC
-   initialization this is the most consequential finding in the experiment — a non-gyrotropic
-   initial condition is a physics defect, not just a statistical one.
+4. **⚠ The cap breaks axisymmetry about B, at fourth order.** The box is a *cube* in the
+   isotropic u-coordinates, so a direction pointing at a cube corner has `√3` times more radial
+   room than one along an axis. The conditioned law acquires an m = 4 azimuthal modulation that
+   the physical bi-Kappa does not have and **that no choice of θ can absorb**: `a₄ = 2⟨cos 4φ⟩`
+   reaches −0.052 at κ=0.75, λ=3, i.e. **11.6 sampling standard deviations**. **Required
+   qualification:** the same cube symmetries force P_xx = P_yy with vanishing off-diagonals and
+   E[v_∥²]/E[v_x²] = (θ∥/θ⊥)² exactly, for every λ and every κ > 1/2 — so the pressure tensor is
+   exactly gyrotropic and the artifact is invisible to second-order diagnostics. State both
+   halves; the unqualified claim invites a referee to check the pressure tensor and conclude we
+   overstated.
 
 **Moments:** comparisons for κ ≤ 3/2 were **refused and labelled as refused**, not silently
 omitted — the untruncated second moment `θ²κ/(2κ−3)` does not exist there, so a capped-vs-uncapped
@@ -1303,6 +1311,8 @@ parameter range or they do not travel.
 | 2026-08-17 | **Provenance freeze across all three experiments** | exp1/exp4 `GNUmakefile` + `*_analyze.py` + `README.md`, exp2 `README.md`, this matrix §5 | exp1 had committed `checksums.sha256` but **no committed command to generate or verify it**; exp1 and exp4 recorded no git revision or sampler hash. All three now emit checksums, expose `make verify`, and pin the sampler by content. Re-running the (deterministic) analyses changed **only** the `environment` block. Two wrong numbers corrected in §5 against `exp2_results.json`: 200/200 → **240/240** pairs, 5×10⁶ → **6×10⁶** attempts. |
 | 2026-08-17 | **Cap default flipped to uncapped** | `cpp/bi_kappa_distribution.H`, `cpp/test_suite.H`, `cpp/main.cpp`, `README.md`, `usage.dox`, this matrix R1.1 + §9.6 | The default target law is now the bi-Kappa distribution; a finite cap is opt-in. Verified behaviour-neutral for every reported number: all three experiments set the cap explicitly and **regenerate bit-for-bit identically** against the modified header. Tests B5–B8 added. |
 | 2026-08-17 | **Experiment 3 complete** | exp3 `README.md` + `results/`, this matrix §5 + R1.4 + §9.3, §9.5 blocker 2 cleared | R1.4 answerable. **Unfavourable headline: our implementation is the slowest of three tested.** Zenitani (2025) Pareto rejection 1.8×–2.6× faster where κ > 1; A&M 2015 normal-triple variant 1.4×–1.6× faster; per-sample cost **not constant in κ** (88–130 ns). Every speed/superiority claim retired by measurement. Anisotropy + **B**-rotation shown free. Transcription faithfulness evidenced by reproducing Zenitani's published acceptance to 3 digits. |
+| 2026-08-17 | **Post-rewrite novelty audit** | `../literature/step1_claim_audit.md` §8, `paper/overleaf/main.tex` §II C + §X, `refs.bib` | Audited the five *replacement* claims, not just the retired ones. **One defect found and fixed:** the log-domain small-shape Gamma mitigation in §X cited nobody, but it is an established remedy (Liu, Martin & Syring 2017) — now cited as an adaptation, not an invention. Two accuracy fixes: regularized-Kappa samplers *do* exist (ZUM 2026), and Scherer et al. 2020 (κ-cookbook) added for the conventions/target-law discussion. The gyrotropy-breaking result survives as the strongest genuinely new finding. |
+| 2026-08-18 | **Claim-scoped novelty audit + Introduction hygiene pass** | `../literature/step1_claim_audit.md` §9, `paper/overleaf/main.tex` §I + §`sec:precision` | Two blanket claims deleted from §I: *"the implementation-level validation and characterization that the construction has not previously received"* (a global-literature exhaustiveness claim) and *"which the published Gamma-ratio loaders do not address"*. Prior-art paragraph condensed; per-paper acceptance rates and particle counts left to §II. **One prior-art understatement corrected:** ZUM 2026 do not merely "advise caution" below κ = 3/2 — they recommend a rejection-based alternative to the Beta-prime route there. Verdicts: class B (box-cap characterization) is the only place a scoped "to our knowledge" is defensible, and it is optional; classes A, C, D, E are characterization only. **Novelty scope frozen.** |
 | 2026-08-17 | **§9.4 differentiator corrected** | this matrix §9.4 + §9.3 | The claim that the anisotropic bi-Kappa loader is "never written down" in prior literature is **withdrawn** — ZUM2026 Algorithms 3.1/3.2 write it out with distinct θ∥, θ⊥, as this repository's own audit (P4-g, §3) already recorded. Tier-2 candidate retired. Surviving differentiators restated around arbitrary-**B**-frame loading, implementation, validation and target-law semantics. |
 
 ## 9.3 Contribution ledger, by evidence
@@ -1420,7 +1430,7 @@ core mapping, the RNG consumption order, and the capped-mode predicate are untou
 |---|---|
 | Exp 2: TV distance to bi-Kappa is *exactly* the rejected fraction, decaying only as `λ^−(2κ−1)` | At λ=20 the default was non-negligible **everywhere in κ ≤ 3/2** on the pre-registered criterion |
 | Exp 2: small TV does not bound tail quantiles (κ=1.5, λ=50 → TV 6.3×10⁻⁴, p99.9 24% low) | The old default could not be defended as "close enough" even where TV looked tiny |
-| Exp 2: the box is a cube in normalized coordinates → four-fold azimuthal modulation at 11.6σ | A defaulted PIC initialization was **not gyrotropic** — a physics defect, silently |
+| Exp 2: the box is a cube in normalized coordinates → m = 4 azimuthal modulation at 11.6σ | A defaulted PIC initialization was **not gyrotropic as a distribution function** — silently, and undetectably to any second-order diagnostic, since the capped pressure tensor stays exactly gyrotropic |
 | Exp 4: a non-finite draw can never satisfy the box predicate, so the loop redraws it | Capped mode **hid** generation failure; at κ=0.51 float, 36% of internal attempts were non-finite and 0 were reported |
 
 The manuscript claims the sampler targets Eq. (20). The default now does.

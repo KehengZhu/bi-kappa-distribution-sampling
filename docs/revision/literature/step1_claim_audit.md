@@ -411,14 +411,32 @@ species**, explicitly using the 2015 loader (§III). Tail quality validated to `
 
 ### The differentiator this leaves
 
-**The anisotropic bi-Kappa scale mixture is used but never written down.** A&M 2015 §III B
-carries a general covariance matrix **R** in Eq. (17) and then sets **R** = σ²**I**; the 2018
-thesis §2.3 is isotropic only; the 2021 paper cites 2015 without extension; ZUM2026 says
-*"We can easily extend it for θ∥ ≠ θ⊥."* Everyone treats it as trivial; nobody documents it.
+> ⚠ **WITHDRAWN 2026-08-17, in place.** This subsection previously claimed that *"the
+> anisotropic bi-Kappa scale mixture is used but never written down"*, resting on the ZUM2026
+> sentence *"We can easily extend it for θ∥ ≠ θ⊥."* **That claim is not supportable and must
+> never be written.** It also contradicted §3 P4-g of this same document, which had the correct
+> reading: ZUM2026 **Algorithms 3.1 and 3.2 write the anisotropic loader out explicitly**, in
+> executable form with distinct θ∥ and θ⊥:
+>
+> ```
+> v∥   ← θ∥ R x (2U₃ − 1)
+> v⊥1  ← 2 θ⊥ R x √(U₃(1−U₃)) cos(2πU₄)
+> v⊥2  ← 2 θ⊥ R x √(U₃(1−U₃)) sin(2πU₄)
+> ```
+>
+> A returning referee holding ZUM2026 would open the algorithm box and find it. See
+> `../planning/reviewer_response_matrix.md` §9.4 for the full withdrawal notice.
 
-A documented, validated, field-aligned bi-Kappa implementation is defensible on this basis. A
-novel *construction* is not, and the ZUM2026 "easily extend" sentence must be acknowledged in
-the text rather than hidden.
+**What the prior art does contain.** A&M 2015 §III B carries a general covariance matrix **R**
+in Eq. (17) and then sets **R** = σ²**I**; the 2018 thesis §2.3 is isotropic only; the 2021
+paper cites 2015 without extension. But ZUM2026 does write the anisotropic case down.
+
+**What survives as the differentiator**, none of it depending on the retracted claim:
+arbitrary-**B**-frame loading into a global simulation frame (ZUM2026 returns field-aligned
+components and does not rotate); the tested, simulation-oriented C++ implementation; explicit
+uncapped/capped target-law semantics with the cap quantified; direct 3-D validation including
+`1/2 < κ ≤ 3/2`; and the finite-precision characterization. **A novel construction is not
+claimed, and neither is a novel anisotropic extension.**
 
 ## 7.2 Foundational solar-wind anisotropy — P2-a resolved, with two caveats
 
@@ -486,3 +504,208 @@ increasing κ"*. This is the single best citation for why an anisotropic Kappa w
    containable by narrowing the wording rather than by dropping the paragraph.
 </content>
 </invoke>
+
+---
+
+# 8. Post-rewrite novelty audit — 2026-08-17
+
+The rounds above audited the claims the manuscript was *retiring*. This round audits the five
+claims that **replaced** them (`../planning/manuscript_revision_plan.md` §0a), because a
+returning referee will check those with the same energy. Method: Consensus searches on each
+claim's subject area; hits assessed against what the manuscript actually asserts.
+
+| # | Replacement claim | Verdict |
+|---|---|---|
+| 1 | Direct 3-D validation incl. `1/2 < κ ≤ 3/2` | **CLEAR** |
+| 2a | `TV = rejected mass`, `λ^−(2κ−1)` decay | **CLEAR** (presented as characterization, not discovery) |
+| 2b | Component-wise cap breaks gyrotropy | **CLEAR — strongest surviving new result** |
+| 3 | Arbitrary-**B**-frame loading as a shipped capability | **CLEAR as scoped** |
+| 4 | Finite-precision characterization | ⚠ **ONE DEFECT — FIXED** |
+| 5 | Performance characterization | **CLEAR** |
+
+## 8.1 The defect, and the fix
+
+**Claim 4 contained a novelty overclaim by omission.** §X stated that a log-domain small-shape
+Gamma construction removes the residual spurious loss and that "we implemented and
+distributionally validated it" — citing nobody. Small-shape Gamma sampling is a recognized
+problem with published solutions, and **Liu, Martin & Syring (2017),
+doi:10.1007/s00180-016-0692-0**, work on the log scale for exactly this underflow reason. As
+drafted, the sentence read as though the log-domain idea were ours.
+
+**Fixed:** the paragraph now opens by naming the difficulty as recognized and cites
+`devroye1986nonuniform` + `liu2017gamma`, describing our step as *adapting* an established
+remedy. This is the same failure mode as the retired Gamma-ratio claim, one level down, and it
+is exactly what this audit existed to catch.
+
+## 8.2 Two accuracy corrections (not novelty defects)
+
+- **Regularized-Kappa samplers exist.** §X previously said the regularized Kappa "would need its
+  own sampler, which we do not provide" — true, but implying a gap. ZUM 2026 (already cited)
+  presents **two rejection methods** for it. Reworded to say samplers have been published and we
+  do not provide one.
+- **The κ-cookbook.** Scherer et al. (2020) MNRAS, doi:10.1093/mnras/staa1969, systematically
+  unifies the κ-variants and gives their moments on a common footing — the natural authority for
+  §II.C's three-target-law separation and §X's conventions paragraph. Added at both points.
+
+## 8.3 Why the surviving claims survive
+
+- **Gyrotropy (2b).** The PIC-initialization literature covers finite-grid instabilities, particle
+  noise, and quiet-start schemes — not the angular structure induced by velocity-space truncation
+  geometry. No prior statement that a component-wise box induces a four-fold azimuthal modulation
+  was found. This is the strongest genuinely new empirical result in the paper.
+- **Validation (1).** Nearby work (Nicolaou et al. 2018, 2020) concerns *instrument* uncertainty
+  and fitting κ to observations — a different problem from verifying a sampler against its target
+  law. No competing sampler-validation study found.
+- **Frame loading (3).** Rotating field-aligned components into a global frame is routine physics,
+  and the manuscript already concedes this in §V ("an integration feature, not a sampling
+  contribution... elementary linear algebra"). The claim is only that prior *Kappa loader
+  implementations* do not ship it, which remains accurate.
+
+## 8.4 Related work noted, no action required
+
+- **López et al. (2023)**, *ApJ*, doi:10.3847/1538-4357/aceb5b — 2D hybrid simulation with
+  bi-Kappa **protons**. Further confirmation that multidimensional bi-Kappa simulation is
+  established; reinforces the §7.3 finding. It is simulation/theory, so **blocker 4 (a primary
+  ion *observation* fitted with an anisotropic bi-Kappa) still stands.**
+- **Han Thanh et al. (2022)**, relativistic regularized κ — notes the κ bound is tighter still in
+  the relativistic case. Adjacent; not needed.
+
+## 8.5 Outstanding
+
+`liu2017gamma` and `scherer2020cookbook` carry verified authors/title/journal/year/DOI but
+**unverified volume and page numbers**. Complete both against the publisher record before
+submission.
+
+---
+
+# 9. Claim-scoped novelty audit — 2026-08-18
+
+**Scope, fixed before the audit ran and not widened during it.** §8 audited the five replacement
+claims of `../planning/manuscript_revision_plan.md` §0a. This round asks a narrower question of
+five specific findings: **which may carry a "to our knowledge" statement, and which may only be
+stated as this paper's characterization?** It is deliberately *not* another literature
+excavation — "who has sampled a bi-Kappa" is settled (§1–§8, §9.4 of the matrix) and is not
+reopened here.
+
+**Method.** Primary PDFs in `paper/reference/` read directly (ZUM 2026, Zenitani & Nakano 2022,
+Zenitani 2025 RNAAS, Zenitani & Umeda 2026, Abdul & Mace 2015, Scherer et al. 2019b), plus two
+targeted Consensus searches (Kappa-loader goodness-of-fit validation; velocity-cutoff artifacts
+in particle initialization). Both searches returned the already-known corpus and nothing new.
+**Literature scope is frozen after this round.**
+
+| Class | Finding | Verdict |
+|---|---|---|
+| A | 3-D validation incl. `1/2 < κ ≤ 3/2`, moment-free diagnostics | **CHARACTERIZATION.** A narrow *reporting-record* sentence is defensible in the Discussion; nothing in §I. |
+| B | Component-wise hard box as a conditional target: TV ≡ rejected fraction, tail quantiles, `m = 4` vs pressure tensor | **ONLY DEFENSIBLE "to our knowledge" of the five** — and optional. Narrow scoping mandatory. |
+| C | float/double envelope as `κ → 1/2⁺` | **CHARACTERIZATION ONLY. No novelty claim is available.** |
+| D | Arbitrary-**B**-frame loading | **SOFTWARE CAPABILITY.** Never a novelty claim. Unchanged from §8.3. |
+| E | Performance | **MEASUREMENT.** Not a novelty claim in any form. |
+
+## 9.1 Class A — what the loading literature actually reports
+
+Established by reading the primary sources, so the statement below is about the *published
+record*, which is checkable, rather than about what anyone has ever done:
+
+| Source | Validation reported | κ tested |
+|---|---|---|
+| Abdul & Mace (2015) | none of the sampler; Figs. 1–2 are contour surfaces of the analytic law. The trivariate loader is a tool inside a Bernstein-wave study | — |
+| Zenitani & Nakano (2022) | 1-D histograms of `f(v)` and `f(E)` vs analytic curves, 10⁶ particles | κ = 3.5 (isotropic) |
+| Zenitani (2025, RNAAS) | 1-D histogram + measured acceptance | κ = 1.5, 2, 5; acceptance quoted for κ ≥ 3/2 |
+| Zenitani & Umeda (2026) | phase-space-density comparison and relative entropy — of an **approximation**, so it measures approximation error, not sampler fidelity | quoted accurate for κ < 4 |
+| ZUM (2026) | 1-D histograms / 2-D colormaps per section, plus a binned **KL-divergence** test in §9 (following Zenitani & Nakano 2023) | see below |
+
+**Two ZUM specifics that matter and were verified in the primary PDF.**
+
+1. The §3 numerical demonstration of the Beta-prime method (Algorithm 3.1 — the algorithm box
+   that carries the anisotropic scaling) is run at **(r, q) = (2, 2)**, which is *off* the Kappa
+   line r = 0. Their only κ < 3/2 numerical example is the **regularized** Kappa at κ = 1. No
+   numerical test of the *standard anisotropic* bi-Kappa appears.
+2. ZUM **recommend against** the Beta-prime route below `q ≤ 1 + 3/(2(1+r))` — for Kappa,
+   `κ ≤ 3/2` — and steer users to the piecewise rejection method there, on account of the
+   zero-division hazard.
+
+**Why this still does not license a bare novelty claim.** The object being sampled is a
+multivariate Student-*t* with `ν = 2κ − 1` degrees of freedom. The moment-divergent regime
+`1/2 < κ ≤ 3/2` is `ν ≤ 2`, which includes the Cauchy case — entirely routine territory in
+statistics, where heavy-tailed *t* generation and its testing are standard. Any sentence of the
+form "no one has validated a sampler at these tail indices" is false outside plasma physics and
+would be read as such.
+
+**Permitted form, Discussion only, at most once:**
+
+> Published presentations of Kappa loaders report agreement of one-dimensional histograms or
+> binned divergences; we are not aware of a reported goodness-of-fit test of the radial law
+> together with directional uniformity and radial–direction independence, and none below
+> κ = 3/2.
+
+Note what it claims: a gap in *what is reported*, not in what is possible or known. **Nothing in
+the Introduction.** Preferred default is to state positively what was tested and let the reader
+compare.
+
+## 9.2 Class B — the one place a scoped "to our knowledge" is defensible
+
+Confirmed against `cap_geometry_novelty_audit.md` §6–§7 and re-checked by search: **no hard
+velocity cap of any geometry appears in the Kappa-loading literature.** The anisotropic
+regularized Kappa uses a *smooth* cutoff in normalized components (Scherer et al. 2019b Eq. 3);
+ZUM 2026 gives two samplers for the smooth regularized Kappa. The box is a local implementation
+choice with no published precedent and therefore no published analysis.
+
+**What may not be claimed.** The mathematics is textbook: elliptical families factor as
+`X = μ + A R D` with `D ~ Unif(S²)` independent of `R` (Cambanis, Huang & Simons 1981; Fang,
+Kotz & Ng 1990), conditioning on a radial event touches only the radial factor, and
+`TV = 1 − P(accept)` for a conditional law is elementary. Claim the *characterization of this
+box*, never the derivations.
+
+**Permitted form, in `sec:cap-geometry` or the Discussion, at most once:**
+
+> We are not aware of a published characterization of the component-wise velocity box as a
+> distinct conditional target for Kappa loading, or of the order of angular structure it
+> disturbs.
+
+**Standing caution, carried forward from `cap_geometry_novelty_audit.md` §0 and §7.** This
+result is *weaker* than `step1_claim_audit.md` §8.3 called it: the angular damage is bounded by
+the rejected fraction (`O(ε)`), and the capped pressure tensor is exactly gyrotropic, so every
+standard agyrotropy measure returns zero. Do not restore "the strongest genuinely new empirical
+result". The manuscript's current framing — the distortion is real *and* invisible to the
+diagnostic a reader would reach for — is both accurate and stronger than a priority claim.
+
+## 9.3 Class C — no novelty claim is available, and one manuscript defect was fixed
+
+Both halves are prior art: ZUM 2026 §4 identifies the small-shape Gamma zero-division hazard for
+`1/2 < κ ≤ 3/2`, and working on the log scale to dodge the underflow is an established remedy
+(Liu, Martin & Syring 2017; Devroye 1986 — already cited per §8.1). What is ours is the measured
+envelope for this construction, protocol and toolchains, and the split of avoidable
+implementation loss from representational overflow. That is characterization. **No "to our
+knowledge" of any form.**
+
+**Defect found and fixed 2026-08-18.** `main.tex` §`sec:precision` said ZUM "note this hazard
+qualitatively and advise caution for κ ≤ 3/2". Verified against the primary PDF: they go
+further, **recommending a rejection-based alternative in place of the Beta-prime route** in that
+regime. Understating a prior source's position is the mirror image of overclaiming and is
+exactly what a returning referee holding that paper would catch. Corrected in place; the fix
+also sharpens our own result, since the measurement shows the Beta-prime route remains usable in
+double precision below the boundary at which the alternative is recommended.
+
+## 9.4 Classes D and E — unchanged
+
+**D.** Rotating field-aligned components into a global frame is elementary linear algebra, and
+§`sec:transform` says so. The only claim is that prior Kappa *loader implementations* do not
+ship it (ZUM 2026 returns `v∥, v⊥1, v⊥2`), which remains accurate as scoped. Not a novelty
+claim; do not make it one.
+
+**E.** Performance is a measurement that reports against us (Exp 3). No novelty claim exists to
+audit.
+
+## 9.5 Net effect
+
+- Two blanket claims removed from §I **before** this audit ran, on the principle that a claim
+  needing an exhaustiveness defense is not worth the risk even if the audit would have supported
+  a narrower version: *"the implementation-level validation and characterization that the
+  construction has not previously received"* and *"which the published Gamma-ratio loaders do not
+  address"*.
+- One prior-art understatement corrected (§9.3).
+- The manuscript currently contains **zero positive novelty claims**; the only occurrences of
+  "novel" are the three disclaimers in §I, §`sec:direction`, §`sec:discussion` and §`sec:summary`.
+  That is the intended end state.
+- At most **one** "to our knowledge" sentence may be added, from §9.2, and it is optional.
+  **Novelty scope is frozen. Do not extend the literature tree further.**
