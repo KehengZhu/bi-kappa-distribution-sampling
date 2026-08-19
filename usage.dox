@@ -51,6 +51,42 @@ whose tails and moments differ, and which is **not axisymmetric about** `ub` bec
 a cube in normalized components. For `kappa <= 3/2` no practical cap value is a good
 approximation to the unconditioned law. Use `dist.param().capped()` to check which is active.
 
+\subsection usage_bikappa_cap Selecting the target law: uncapped or capped
+
+**Uncapped is the default, so omitting the argument is enough.** These three are identical:
+
+\code{.cpp}
+using BK = bi_kappa_distribution<Real>;
+BK dist;
+
+dist.define(2.0, 1.0, 2.0, {0, 0, 1});                                  // omit it
+dist.define(2.0, 1.0, 2.0, {0, 0, 1}, BK::no_cap());                    // name it
+dist.define(2.0, 1.0, 2.0, {0, 0, 1}, std::numeric_limits<Real>::infinity());
+\endcode
+
+`no_cap()` *is* `+infinity`; naming it is worth the keystrokes wherever a reader of the calling
+code needs to know which of the two laws is being sampled.
+
+Uncapped is not merely a cap large enough to never bind: `param_type::capped()` is
+`std::isfinite(...)`, so the sampler skips the acceptance-rejection loop entirely and the core
+mapping runs exactly once per draw. No rejection, no retry limit, no discarded variates.
+
+To sample the **capped** law instead, pass a finite positive value. The arguments are
+positional, so enabling a cap means passing `ub` as well:
+
+\code{.cpp}
+dist.define(2.0, 1.0, 2.0, {0, 0, 1}, 50.0);   // bi-kappa conditioned on a 50-theta box
+bool c = dist.param().capped();                // true
+\endcode
+
+To go back to the unconditioned law afterwards, assign the sentinel — **do not pass `0`**, which
+`param_type` rejects along with every other non-positive value:
+
+\code{.cpp}
+dist.max_normalized_velocity(BK::no_cap());    // capped -> uncapped
+dist.max_normalized_velocity(0.0);             // throws std::invalid_argument
+\endcode
+
 \section usage_bimaxwell Bi-Maxwellian velocity samples
 
 Same pattern, without the `kappa` parameter.

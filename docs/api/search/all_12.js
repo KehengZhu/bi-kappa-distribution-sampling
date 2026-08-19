@@ -1,8 +1,25 @@
 var searchData=
 [
-  ['ub_0',['ub',['../classbi__kappa__distribution_1_1param__type.html#ae8f64dd78847c50089b4a32551b0120d',1,'bi_kappa_distribution::param_type::ub()'],['../classbi__kappa__distribution.html#a56338c3cce56c2de00ac02aaa8c56fd5',1,'bi_kappa_distribution::ub(const point_type &amp;value)'],['../classbi__kappa__distribution.html#ab19cec13f364417d856fc366e8658ede',1,'bi_kappa_distribution::ub() const'],['../classbi__maxwellian__distribution_1_1param__type.html#a3ba11a7563972783a1b5c547de638494',1,'bi_maxwellian_distribution::param_type::ub()'],['../classbi__maxwellian__distribution.html#ae1668e8b92004e45acfc2f767bc0c21a',1,'bi_maxwellian_distribution::ub(const point_type &amp;value)'],['../classbi__maxwellian__distribution.html#aa048faf4eebf929f3907daaf337d88d1',1,'bi_maxwellian_distribution::ub() const'],['../classfield__aligned__velocity__generator.html#a96898ae3e16bbee186c3f54f0c37c4ed',1,'field_aligned_velocity_generator::ub()']]],
-  ['upper_5fbounds_1',['upper_bounds',['../classgeneral__generators_1_1_general_position_generator.html#a42b21f0a360a9101001579483d7f63da',1,'general_generators::GeneralPositionGenerator']]],
-  ['upperbounds_2',['upperBounds',['../classgeneral__position__generator.html#ae639e8c51ae41bc0ad084fa4f62200fc',1,'general_position_generator']]],
-  ['usage_20examples_3',['Usage Examples',['../usage.html',1,'']]],
-  ['usage_2edox_4',['usage.dox',['../usage_8dox.html',1,'']]]
+  ['target_20law_3a_20uncapped_20or_20capped_0',['Selecting the target law: uncapped or capped',['../usage.html#usage_bikappa_cap',1,'']]],
+  ['test_5fdefine_5fbikappa_1',['test_define_bikappa',['../test__suite_8_h.html#a46df522fbf077c86bc66ebcbaef2e4d6',1,'test_suite.H']]],
+  ['test_5fdefine_5fbimaxwellian_2',['test_define_bimaxwellian',['../test__suite_8_h.html#a4228003d9b8dbb6330996dc06045a30f',1,'test_suite.H']]],
+  ['test_5fdefine_5ffield_5faligned_3',['test_define_field_aligned',['../test__suite_8_h.html#a860ae372c81a42c475e28138259ab867',1,'test_suite.H']]],
+  ['test_5fdefine_5fgeneral_5fposition_4',['test_define_general_position',['../test__suite_8_h.html#a11204538085a4e01ecf578f7378e832e',1,'test_suite.H']]],
+  ['test_5fdefine_5fgeneral_5fvelocity_5',['test_define_general_velocity',['../test__suite_8_h.html#a49425f4af3c406fc231df39318728180',1,'test_suite.H']]],
+  ['test_5fmax_5fnormalized_5fvelocity_5fbikappa_6',['test_max_normalized_velocity_bikappa',['../test__suite_8_h.html#ab3564cecae2053a9fef7dcb109367de4',1,'test_suite.H']]],
+  ['test_5fmax_5fnormalized_5fvelocity_5fbimaxwellian_7',['test_max_normalized_velocity_bimaxwellian',['../test__suite_8_h.html#a0796d4fd4193a1c743aa97df9e8d3adb',1,'test_suite.H']]],
+  ['test_5fno_5fcap_5fsemantics_8',['test_no_cap_semantics',['../test__suite_8_h.html#a5f64c641deed02cbccb0f3e96c672366',1,'test_suite.H']]],
+  ['test_5fradius_5fformation_9',['test_radius_formation',['../test__suite_8_h.html#a006f190e802d2546e990cc96f503bf1f',1,'test_suite.H']]],
+  ['test_5fseed_5fapi_10',['test_seed_api',['../test__suite_8_h.html#a7894413556c13f99c59a535f63272aa2',1,'test_suite.H']]],
+  ['test_5fsuite_2eh_11',['test_suite.H',['../test__suite_8_h.html',1,'']]],
+  ['test_5ftransform_12',['test_transform',['../test__suite_8_h.html#a1e0fb244a50f1c3e8fd048f809ed816e',1,'test_suite.H']]],
+  ['testreal_13',['TestReal',['../test__suite_8_h.html#a0bbb694e3515353d2a22f098eccad628',1,'test_suite.H']]],
+  ['tests_14',['Tests',['../index.html#autotoc_md6',1,'']]],
+  ['the_20demo_15',['Building and running the demo',['../usage.html#usage_build',1,'']]],
+  ['the_20five_20samplers_16',['The five samplers',['../index.html#autotoc_md3',1,'']]],
+  ['the_20target_20law_3a_20uncapped_20or_20capped_17',['Selecting the target law: uncapped or capped',['../usage.html#usage_bikappa_cap',1,'']]],
+  ['theta_5fpar_18',['theta_par',['../classbi__kappa__distribution_1_1param__type.html#a3042417fe47ef29891a013acd5f66f63',1,'bi_kappa_distribution::param_type::theta_par()'],['../classbi__kappa__distribution.html#a971b78635ab0856bc35c9c9493ffa128',1,'bi_kappa_distribution::theta_par(RealType value)'],['../classbi__kappa__distribution.html#a3bfc76c0214f09eceef88469ae3a7277',1,'bi_kappa_distribution::theta_par() const'],['../classbi__maxwellian__distribution_1_1param__type.html#a831a7a7dd1bc7fa62056b7c6b06454a4',1,'bi_maxwellian_distribution::param_type::theta_par()'],['../classbi__maxwellian__distribution.html#af34264ec5592312b6b21429055d5eb8a',1,'bi_maxwellian_distribution::theta_par(RealType value)'],['../classbi__maxwellian__distribution.html#a75e231f0b56f4f4d9075580f4d823ab9',1,'bi_maxwellian_distribution::theta_par() const']]],
+  ['theta_5fperp_19',['theta_perp',['../classgeneral__generators_1_1_field_aligned_velocity_generator.html#a9833112b48fc1659ab4762bbbd553c77',1,'general_generators.FieldAlignedVelocityGenerator.theta_perp'],['../classbi__kappa__distribution_1_1param__type.html#aa8277f36dd7b8729d6d530fdb71165d6',1,'bi_kappa_distribution::param_type::theta_perp()'],['../classbi__kappa__distribution.html#aa3adfef659bf1c10d191926903cd69df',1,'bi_kappa_distribution::theta_perp(RealType value)'],['../classbi__kappa__distribution.html#ac9127046147c88fbfe6b382d233043b0',1,'bi_kappa_distribution::theta_perp() const'],['../classbi__maxwellian__distribution_1_1param__type.html#a6d2b8921dda616403ceeb4df89415e0f',1,'bi_maxwellian_distribution::param_type::theta_perp()'],['../classbi__maxwellian__distribution.html#ab254252bace3eb7465b74f5a8aa5fc82',1,'bi_maxwellian_distribution::theta_perp(RealType value)'],['../classbi__maxwellian__distribution.html#a3fb8333a4fb95552715b39fb5405ed5c',1,'bi_maxwellian_distribution::theta_perp() const']]],
+  ['thetaperp_20',['thetaPerp',['../classfield__aligned__velocity__generator.html#af09f242381a7c249a7d6e7380923dfbe',1,'field_aligned_velocity_generator']]],
+  ['tiny_21',['TINY',['../namespacelowkappa__risk__audit.html#aac93e977108ef7a3541dc501383a9335',1,'lowkappa_risk_audit']]]
 ];

@@ -209,6 +209,12 @@ template <typename RealType= double> class bi_kappa_distribution
                m_params.max_normalized_velocity());
     }
 
+    /// Unlike the other setters, this one changes *which distribution* is sampled,
+    /// not merely its parameters.  Pass no_cap() to return to the bi-Kappa law
+    /// itself; passing 0 to mean "no cap" throws, as every non-positive value does.
+    ///
+    ///     dist.max_normalized_velocity(50.0);                  // capped law
+    ///     dist.max_normalized_velocity(decltype(dist)::no_cap());  // bi-Kappa law
     void max_normalized_velocity(RealType value)
     {
         define(m_params.kappa(), m_params.theta_perp(), m_params.theta_par(), m_params.ub(),

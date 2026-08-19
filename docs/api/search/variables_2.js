@@ -2,5 +2,6 @@ var searchData=
 [
   ['e1_0',['e1',['../classgeneral__generators_1_1_field_aligned_velocity_generator.html#a9d873c0e5b37c9a5d0c71251f7e6b25a',1,'general_generators::FieldAlignedVelocityGenerator']]],
   ['e2_1',['e2',['../classgeneral__generators_1_1_field_aligned_velocity_generator.html#afa3d1932cf8bd74739b0d6504838d4ca',1,'general_generators::FieldAlignedVelocityGenerator']]],
-  ['e3_2',['e3',['../classgeneral__generators_1_1_field_aligned_velocity_generator.html#a5bf672c263aca9ff56bc19b0e9d33297',1,'general_generators::FieldAlignedVelocityGenerator']]]
+  ['e3_2',['e3',['../classgeneral__generators_1_1_field_aligned_velocity_generator.html#a5bf672c263aca9ff56bc19b0e9d33297',1,'general_generators::FieldAlignedVelocityGenerator']]],
+  ['eps_3',['EPS',['../namespacelowkappa__risk__audit.html#aa916aaf6d0995e27cb469aa6330e14aa',1,'lowkappa_risk_audit']]]
 ];

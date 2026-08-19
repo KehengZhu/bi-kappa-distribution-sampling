@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['sphere_5fsampling_5fbias_0',['sphere_sampling_bias',['../namespacesphere__sampling__bias.html',1,'']]]
+  ['lowkappa_5frisk_5faudit_0',['lowkappa_risk_audit',['../namespacelowkappa__risk__audit.html',1,'']]]
 ];

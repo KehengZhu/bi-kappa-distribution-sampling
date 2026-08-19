@@ -137,12 +137,16 @@ Quick start — C++</h1>
 <div class="line"> </div>
 <div class="line"><a class="code hl_class" href="classbi__kappa__distribution.html">bi_kappa_distribution&lt;double&gt;</a> dist;</div>
 <div class="line">dist.<a class="code hl_function" href="classbi__kappa__distribution.html#a138df5909e003c80dc061b63da6d1e76">define</a>(<span class="comment">/*kappa*/</span> 2.0, <span class="comment">/*theta_perp*/</span> 1.0, <span class="comment">/*theta_par*/</span> 2.0,</div>
-<div class="line">            <span class="comment">/*ub*/</span> {0, 0, 1}, <span class="comment">/*cap*/</span> 20.0, <span class="comment">/*seed*/</span> 12345);</div>
+<div class="line">            <span class="comment">/*ub*/</span> {0, 0, 1});</div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">auto</span> v = dist();     <span class="comment">// v = {vx, vy, vz}, sampled in the global frame</span></div>
 <div class="ttc" id="abi__kappa__distribution_8_h_html"><div class="ttname"><a href="bi__kappa__distribution_8_h.html">bi_kappa_distribution.H</a></div></div>
-<div class="ttc" id="aclassbi__kappa__distribution_html"><div class="ttname"><a href="classbi__kappa__distribution.html">bi_kappa_distribution</a></div><div class="ttdoc">Bi-Kappa distribution class for sampling 3D velocity vectors.</div><div class="ttdef"><b>Definition</b> <a href="bi__kappa__distribution_8_h_source.html#l00027">bi_kappa_distribution.H:28</a></div></div>
-<div class="ttc" id="aclassbi__kappa__distribution_html_a138df5909e003c80dc061b63da6d1e76"><div class="ttname"><a href="classbi__kappa__distribution.html#a138df5909e003c80dc061b63da6d1e76">bi_kappa_distribution::define</a></div><div class="ttdeci">void define(const param_type &amp;params)</div><div class="ttdef"><b>Definition</b> <a href="bi__kappa__distribution_8_h_source.html#l00123">bi_kappa_distribution.H:123</a></div></div>
+<div class="ttc" id="aclassbi__kappa__distribution_html"><div class="ttname"><a href="classbi__kappa__distribution.html">bi_kappa_distribution</a></div><div class="ttdoc">Bi-Kappa distribution class for sampling 3D velocity vectors.</div><div class="ttdef"><b>Definition</b> <a href="bi__kappa__distribution_8_h_source.html#l00032">bi_kappa_distribution.H:33</a></div></div>
+<div class="ttc" id="aclassbi__kappa__distribution_html_a138df5909e003c80dc061b63da6d1e76"><div class="ttname"><a href="classbi__kappa__distribution.html#a138df5909e003c80dc061b63da6d1e76">bi_kappa_distribution::define</a></div><div class="ttdeci">void define(const param_type &amp;params)</div><div class="ttdef"><b>Definition</b> <a href="bi__kappa__distribution_8_h_source.html#l00164">bi_kappa_distribution.H:164</a></div></div>
+</div><!-- fragment --><p>The cap is <b>off by default</b>, so these samples follow the bi-Kappa distribution itself. To pass a seed as well, give the cap explicitly — it is the fifth argument, and the seed the sixth:</p>
+<div class="fragment"><div class="line">dist.<a class="code hl_function" href="classbi__kappa__distribution.html#a138df5909e003c80dc061b63da6d1e76">define</a>(2.0, 1.0, 2.0, {0, 0, 1},</div>
+<div class="line">            <a class="code hl_function" href="classbi__kappa__distribution.html#ae297e0e424247abd355b55109bdb9dde">bi_kappa_distribution&lt;double&gt;::no_cap</a>(), <span class="comment">/*seed*/</span> 12345);</div>
+<div class="ttc" id="aclassbi__kappa__distribution_html_ae297e0e424247abd355b55109bdb9dde"><div class="ttname"><a href="classbi__kappa__distribution.html#ae297e0e424247abd355b55109bdb9dde">bi_kappa_distribution::no_cap</a></div><div class="ttdeci">static constexpr RealType no_cap()</div><div class="ttdoc">Sentinel selecting the untruncated sampler, and the default.</div><div class="ttdef"><b>Definition</b> <a href="bi__kappa__distribution_8_h_source.html#l00121">bi_kappa_distribution.H:121</a></div></div>
 </div><!-- fragment --><p><em>Prerequisite: any C++11 compiler. Set <span class="tt">CXX</span> in <span class="tt">cpp/GNUmakefile</span> if not <span class="tt">g++</span>.</em></p>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md3"></a>
 The five samplers</h1>
@@ -166,7 +170,17 @@ The five samplers</h1>
 <li><b>Seeding:</b> call <span class="tt">dist.seed(s)</span> any time. <span class="tt"><a class="el" href="classbi__kappa__distribution.html" title="Bi-Kappa distribution class for sampling 3D velocity vectors.">bi_kappa_distribution</a></span> also accepts the seed as the last <span class="tt">define(...)</span> argument. A <b>negative</b> <span class="tt">s</span> draws an unpredictable seed from <span class="tt">std::random_device</span>.</li>
 <li><b>No-arg call</b> <span class="tt">dist()</span> uses the sampler's own RNG. <b>Bring-your-own</b> <span class="tt">dist(gen)</span> accepts an external <span class="tt">std::mt19937</span>.</li>
 <li><b><span class="tt">ub</span></b> is the magnetic-field direction (need not be unit length). Output is rotated into the global frame; the default <span class="tt">{0,0,1}</span> returns field-aligned components directly.</li>
-<li><b><span class="tt">cap</span></b> (default <span class="tt">20</span>) rejects any component with <span class="tt">|v_i| / theta_i &gt; cap</span> and resamples; throws after 10⁶ failed tries.</li>
+<li><b><span class="tt">cap</span></b> selects which of <b>two distinct target distributions</b> you sample.<ul>
+<li><b>Omitted, or <span class="tt"><a class="el" href="classbi__kappa__distribution.html" title="Bi-Kappa distribution class for sampling 3D velocity vectors.">bi_kappa_distribution</a>&lt;double&gt;::no_cap()</span> — the default.</b> Samples follow the full bi-Kappa law, and the draw uses a fixed sequence of high-level variates with no outer acceptance–rejection loop. Second moments diverge for <span class="tt">kappa &lt;= 3/2</span>; that is a property of the distribution, not a defect.</li>
+<li>A <b>finite</b> <span class="tt">cap</span> is <b>opt-in</b>. It rejects any component with <span class="tt">|v_i| / theta_i &gt; cap</span> and resamples, throwing after 10⁶ failed tries. The resulting samples follow the bi-Kappa distribution <b>conditioned on</b> all normalized components lying inside that box — a different, bounded law with its own normalization, not the bi-Kappa distribution itself. Its moments are finite for every <span class="tt">kappa</span>, because it is a different distribution, not because truncation regularizes the original one.</li>
+<li><span class="tt">dist.param().capped()</span> reports which mode is active.</li>
+</ul>
+</li>
+</ul>
+<blockquote class="doxtable">
+<p><b>Why the cap is not the default.</b> <span class="tt">experiments/exp2_cap_characterization</span> measures the gap between the two laws. The rejected fraction <em>is</em> the total-variation distance to the bi-Kappa law, and it decays only as <span class="tt">cap^-(2*kappa-1)</span> — so at <span class="tt">kappa = 0.75</span> even <span class="tt">cap = 100</span> still discards 9.7% of attempts. A small discarded fraction does <b>not</b> imply a faithful tail: at <span class="tt">kappa = 1.5, cap = 50</span> the TV distance is 6.3e-4 while the 99.9th-percentile speed is still 24% too small. The conditioned law is also <b>not axisymmetric about <span class="tt">ub</span></b>, because the box is a cube in normalized components — a four-fold azimuthal modulation that matters for PIC initialization. Separately, <span class="tt">experiments/exp4_precision</span> shows the rejection loop silently <b>hides</b> non-finite draws at very low <span class="tt">kappa</span> instead of reporting them. Use a finite cap when you need bounded support and have accepted those consequences. </p>
+</blockquote>
+<ul>
 <li><b>Change one parameter</b> without re-specifying the rest: <span class="tt">dist.kappa(3.0)</span>, <span class="tt">dist.ub({0,1,0})</span>, etc.</li>
 </ul>
 <p>For the full API — every overload, parameter constraint, and the Python classes — see the <a href="https://kehengzhu.github.io/bi-kappa-distribution-sampling/">API reference</a>. A worked example using all five samplers lives in <a href="cpp/main.cpp"><span class="tt">cpp/main.cpp</span></a>.</p>
@@ -185,14 +199,39 @@ Visualize</h1>
 </ul>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md6"></a>
 Tests</h1>
-<p><span class="tt">./main.exe</span> runs <span class="tt"><a class="el" href="test__suite_8_h.html#af13f216ba3cfa17d37698394e4a39826">run_all_tests()</a></span> before sampling and <b>exits non-zero on any failure</b>. Coverage: frame-transform correctness, <span class="tt">define(...)</span>/getter behavior, the velocity cap, and seed reproducibility.</p>
+<p><span class="tt">./main.exe</span> runs <span class="tt"><a class="el" href="test__suite_8_h.html#af13f216ba3cfa17d37698394e4a39826">run_all_tests()</a></span> before sampling and <b>exits non-zero on any failure</b>. Coverage: frame-transform correctness, <span class="tt">define(...)</span>/getter behavior, the velocity cap, seed reproducibility, the radial formation (<span class="tt"><a class="el" href="test__suite_8_h.html#a006f190e802d2546e990cc96f503bf1f">test_radius_formation</a></span>), and uncapped/capped target-law semantics (<span class="tt"><a class="el" href="test__suite_8_h.html#a5f64c641deed02cbccb0f3e96c672366">test_no_cap_semantics</a></span>).</p>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md7"></a>
-Documentation</h1>
-<p>The full API reference is generated from the in-source comments with <a href="https://www.doxygen.nl/">Doxygen</a> and lives in <a href="docs/"><span class="tt">docs/</span></a>.</p>
-<p><b>Read it locally</b> — open <a href="docs/index.html"><span class="tt">docs/index.html</span></a> in a browser. (Note: clicking that file on github.com shows the HTML <em>source</em>, not the rendered page — use GitHub Pages below for a live site.)</p>
-<p><b>Regenerate after changing code or comments:</b> </p><div class="fragment"><div class="line">doxygen Doxyfile      # run from the repo root; rewrites docs/</div>
-</div><!-- fragment --><p> Install Doxygen first if needed: <span class="tt">brew install doxygen</span>.</p>
+Validation experiments</h1>
+<p><span class="tt">experiments/</span> holds the standalone validation studies behind the manuscript. Each is self-contained and reproducible from one documented command, with committed scripts, fixed seeds, a manifest, and an environment record.</p>
+<table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadNone">Directory  </th><th class="markdownTableHeadNone">What it establishes  </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><span class="tt">exp1_radial_directional/</span>  </td><td class="markdownTableBodyNone">The central radial law <span class="tt">T = R² ~ β'(3/2, κ−1/2)</span>, directional uniformity, radial–direction independence, anisotropy, and arbitrary <b>B</b>-frame invariance. 1.35×10⁷ draws, κ = 0.51…10.  </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><span class="tt">exp2_cap_characterization/</span>  </td><td class="markdownTableBodyNone">How the optional component-wise cap changes the sampled law: it is the bi-Kappa <b>conditioned on the box</b>, not the same distribution. The rejected fraction equals the total-variation distortion, decays only as <span class="tt">λ^−(2κ−1)</span>, and the box breaks axisymmetry about <b>B</b>.  </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><span class="tt">exp4_precision/</span>  </td><td class="markdownTableBodyNone">Supported numerical range as a function of κ, precision and standard library. <span class="tt">double</span> is clean for κ ≥ 0.55, <span class="tt">float</span> for κ ≥ 0.75.  </td></tr>
+</table>
+<p>Bulk per-draw output (<span class="tt">raw/*.bin</span>) is regenerable and deliberately not tracked; manifests, compact summaries and manuscript-quality figures are.</p>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md8"></a>
+Documentation</h1>
+<p>The full API reference is generated from the in-source comments with <a href="https://www.doxygen.nl/">Doxygen</a> and lives in <a href="docs/api/"><span class="tt">docs/api/</span></a>.</p>
+<p><b>Read it locally</b> — open <a href="docs/api/index.html"><span class="tt">docs/api/index.html</span></a> in a browser. (Note: clicking that file on github.com shows the HTML <em>source</em>, not the rendered page — use GitHub Pages below for a live site.)</p>
+<p><b>Regenerate after changing code or comments:</b> </p><div class="fragment"><div class="line">doxygen Doxyfile      # run from the repo root; rewrites docs/api/ only</div>
+</div><!-- fragment --><p> Install Doxygen first if needed: <span class="tt">brew install doxygen</span>.</p>
+<p><span class="tt">docs/</span> is laid out as:</p>
+<table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadNone">Path  </th><th class="markdownTableHeadNone">Contents  </th><th class="markdownTableHeadNone">Generated?  </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><span class="tt">docs/index.html</span>  </td><td class="markdownTableBodyNone">redirect that keeps the Pages root URL working  </td><td class="markdownTableBodyNone">hand-written  </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><span class="tt">docs/api/</span>  </td><td class="markdownTableBodyNone">Doxygen API reference  </td><td class="markdownTableBodyNone"><b>yes — overwritten by <span class="tt">doxygen Doxyfile</span></b>  </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><span class="tt">docs/revision/</span>  </td><td class="markdownTableBodyNone">manuscript-revision working documents (see its <span class="tt"><a class="el" href="_r_e_a_d_m_e_8md.html">README.md</a></span>)  </td><td class="markdownTableBodyNone">hand-written  </td></tr>
+</table>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md9"></a>
 License</h1>
 <p>Released under the MIT License. See [<span class="tt">LICENSE</span>](LICENSE) for the full text. </p>
 </div></div><!-- PageDoc -->
