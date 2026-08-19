@@ -30,11 +30,14 @@ var NAVTREE =
     [ "Quick start — Python", "index.html#autotoc_md4", null ],
     [ "Visualize", "index.html#autotoc_md5", null ],
     [ "Tests", "index.html#autotoc_md6", null ],
-    [ "Documentation", "index.html#autotoc_md7", null ],
-    [ "License", "index.html#autotoc_md8", null ],
+    [ "Validation experiments", "index.html#autotoc_md7", null ],
+    [ "Documentation", "index.html#autotoc_md8", null ],
+    [ "License", "index.html#autotoc_md9", null ],
     [ "Usage Examples", "usage.html", [
       [ "Building and running the demo", "usage.html#usage_build", null ],
-      [ "Bi-kappa velocity samples", "usage.html#usage_bikappa", null ],
+      [ "Bi-kappa velocity samples", "usage.html#usage_bikappa", [
+        [ "Selecting the target law: uncapped or capped", "usage.html#usage_bikappa_cap", null ]
+      ] ],
       [ "Bi-Maxwellian velocity samples", "usage.html#usage_bimaxwell", null ],
       [ "Reproducible runs (seeding)", "usage.html#usage_reproducible", null ],
       [ "Sharing one RNG across samplers", "usage.html#usage_external_rng", null ],
@@ -77,7 +80,7 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "annotated.html",
-"test__suite_8_h.html#a0796d4fd4193a1c743aa97df9e8d3adb"
+"namespacesphere__sampling__bias.html"
 ];
 
 const SYNCONMSG = 'click to disable panel synchronization';

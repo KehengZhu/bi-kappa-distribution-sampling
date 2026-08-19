@@ -1,7 +1,8 @@
 var classbi__kappa__distribution_1_1param__type =
 [
     [ "distribution_type", "classbi__kappa__distribution_1_1param__type.html#abb07c81aabdf4e0fde2bab115cf83c58", null ],
-    [ "param_type", "classbi__kappa__distribution_1_1param__type.html#aea13dce631cb2046616e412b58c9786b", null ],
+    [ "param_type", "classbi__kappa__distribution_1_1param__type.html#a053920e48d32509a94f184fa9ab7463a", null ],
+    [ "capped", "classbi__kappa__distribution_1_1param__type.html#a729ff204e81afd39cce8cbf3e7d8eab4", null ],
     [ "kappa", "classbi__kappa__distribution_1_1param__type.html#ab5d95aef81a06747c2103800d8618c50", null ],
     [ "max_normalized_velocity", "classbi__kappa__distribution_1_1param__type.html#abe88dec57bd0769d09dcd3a2a34aa04b", null ],
     [ "operator!=", "classbi__kappa__distribution_1_1param__type.html#ac76a53761e1445466e7e36dac28bb2fa", null ],

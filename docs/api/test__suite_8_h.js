@@ -9,6 +9,8 @@ var test__suite_8_h =
     [ "test_define_general_velocity", "test__suite_8_h.html#a49425f4af3c406fc231df39318728180", null ],
     [ "test_max_normalized_velocity_bikappa", "test__suite_8_h.html#ab3564cecae2053a9fef7dcb109367de4", null ],
     [ "test_max_normalized_velocity_bimaxwellian", "test__suite_8_h.html#a0796d4fd4193a1c743aa97df9e8d3adb", null ],
+    [ "test_no_cap_semantics", "test__suite_8_h.html#a5f64c641deed02cbccb0f3e96c672366", null ],
+    [ "test_radius_formation", "test__suite_8_h.html#a006f190e802d2546e990cc96f503bf1f", null ],
     [ "test_seed_api", "test__suite_8_h.html#a7894413556c13f99c59a535f63272aa2", null ],
     [ "test_transform", "test__suite_8_h.html#a1e0fb244a50f1c3e8fd048f809ed816e", null ]
 ];
