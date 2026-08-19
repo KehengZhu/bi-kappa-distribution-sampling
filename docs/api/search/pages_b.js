@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['python_0',['Quick start — Python',['../index.html#autotoc_md4',1,'']]]
+  ['one_20rng_20across_20samplers_0',['Sharing one RNG across samplers',['../usage.html#usage_external_rng',1,'']]]
 ];

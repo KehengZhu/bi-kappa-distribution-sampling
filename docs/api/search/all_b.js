@@ -1,8 +1,11 @@
 var searchData=
 [
-  ['main_0',['main',['../main_8cpp.html#ae66f6b31b5ad750f1fe042a706a4e3d4',1,'main():&#160;main.cpp'],['../namespacegeneral__generators.html#a51af30a60f9f02777c6396b8247e356f',1,'general_generators.main()'],['../namespacelowkappa__risk__audit.html#a51af30a60f9f02777c6396b8247e356f',1,'lowkappa_risk_audit.main()'],['../namespacesphere__sampling__bias.html#a51af30a60f9f02777c6396b8247e356f',1,'sphere_sampling_bias.main()']]],
-  ['main_2ecpp_1',['main.cpp',['../main_8cpp.html',1,'']]],
-  ['max_5fnormalized_5fvelocity_2',['max_normalized_velocity',['../classbi__kappa__distribution_1_1param__type.html#abe88dec57bd0769d09dcd3a2a34aa04b',1,'bi_kappa_distribution::param_type::max_normalized_velocity()'],['../classbi__kappa__distribution.html#a79cd6a1b637d1afaab66874691c2de88',1,'bi_kappa_distribution::max_normalized_velocity(RealType value)'],['../classbi__kappa__distribution.html#ab8f1e8f652ea4b002ec20fe5137cfeee',1,'bi_kappa_distribution::max_normalized_velocity() const'],['../classbi__maxwellian__distribution_1_1param__type.html#a605f32484ba6068f0d1c12088733ab90',1,'bi_maxwellian_distribution::param_type::max_normalized_velocity()'],['../classbi__maxwellian__distribution.html#a1f5f2d5547d9b53d8707d7350806e2b7',1,'bi_maxwellian_distribution::max_normalized_velocity(RealType value)'],['../classbi__maxwellian__distribution.html#a83a31ee69173a0493d86a878a657ef11',1,'bi_maxwellian_distribution::max_normalized_velocity() const']]],
-  ['max_5freject_5ftries_3',['max_reject_tries',['../classgeneral__generators_1_1_general_velocity_generator.html#a018eda951a34d6a0426d971210806f1a',1,'general_generators.GeneralVelocityGenerator.max_reject_tries'],['../classgeneral__generators_1_1_general_position_generator.html#aed38d322bec10f93bac15988c0d7dfb4',1,'general_generators.GeneralPositionGenerator.max_reject_tries'],['../classgeneral__generators_1_1_field_aligned_velocity_generator.html#adfdc33ebeb06b5a64f36a890fa9b9887',1,'general_generators.FieldAlignedVelocityGenerator.max_reject_tries']]],
-  ['maxwellian_20velocity_20samples_4',['Bi-Maxwellian velocity samples',['../usage.html#usage_bimaxwell',1,'']]]
+  ['law_20is_0',['What the capped law is',['../usage.html#usage_cap_law',1,'']]],
+  ['license_1',['License',['../index.html#autotoc_md9',1,'']]],
+  ['log_5fgamma_5fsmall_5fshape_2',['log_gamma_small_shape',['../namespacelowkappa__risk__audit.html#aa16854af8b5b0fd990ab3447e55d2206',1,'lowkappa_risk_audit']]],
+  ['log_5fmax_3',['LOG_MAX',['../namespacelowkappa__risk__audit.html#a595d7ee29a3d07437e3d5a75273752ff',1,'lowkappa_risk_audit']]],
+  ['lower_5fbounds_4',['lower_bounds',['../classgeneral__generators_1_1_general_position_generator.html#a7e15c91a159b4561c943372fad575d28',1,'general_generators::GeneralPositionGenerator']]],
+  ['lowerbounds_5',['lowerBounds',['../classgeneral__position__generator.html#a1196d062467db52717e78638bc806ee8',1,'general_position_generator']]],
+  ['lowkappa_5frisk_5faudit_6',['lowkappa_risk_audit',['../namespacelowkappa__risk__audit.html',1,'']]],
+  ['lowkappa_5frisk_5faudit_2epy_7',['lowkappa_risk_audit.py',['../lowkappa__risk__audit_8py.html',1,'']]]
 ];
