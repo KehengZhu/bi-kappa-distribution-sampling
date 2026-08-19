@@ -175,6 +175,38 @@ template <typename RealType= double> class bi_kappa_distribution
         reset(); // just to clear cache
     }
 
+    /**
+     * @brief Configure the sampler.  Validates everything; throws rather than
+     * deferring a bad parameter to sampling time.
+     *
+     * @param kappa   Spectral index.  Smaller means heavier suprathermal tails;
+     *                kappa -> infinity recovers the bi-Maxwellian.  Must be > 0.5.
+     *                Note that moments of order l exist only for kappa > (l+1)/2,
+     *                so for kappa <= 1.5 the loaded population has no finite
+     *                variance and no convergent temperature.
+     * @param theta_perp  Thermal speed transverse to @p ub, > 0.  A speed, not a
+     *                temperature: theta = sqrt(2*k_B*T/m).
+     * @param theta_par   Thermal speed along @p ub, > 0.
+     * @param ub      Magnetic-field direction {bx,by,bz} in the global frame.
+     *                Need not be normalized; must be non-zero.  Samples are drawn
+     *                in the field-aligned frame and rotated into the global frame
+     *                before return.
+     * @param max_normalized_velocity  Velocity cap in thermal speeds, or no_cap()
+     *                (the default) for the untruncated bi-Kappa law.  A finite
+     *                value selects a *different*, bounded target law -- see
+     *                \ref usage_bikappa_cap.  Must be > 0; passing 0 to mean
+     *                "no cap" throws.
+     *
+     * @note To seed reproducibly, either call seed() afterwards or use the
+     * overload taking a trailing int: >= 0 is reproducible, < 0 reseeds from
+     * std::random_device.  Without either, the stream stays as seeded at
+     * construction, which is *not* reproducible.
+     *
+     * @throws std::invalid_argument if kappa <= 0.5, either theta is non-positive,
+     *         @p max_normalized_velocity is non-positive, or @p ub is the zero vector.
+     *
+     * @see \ref parameters for the full table, \ref choosing to compare samplers.
+     */
     void define(RealType kappa, RealType theta_perp= RealType(1.0),
                 RealType theta_par= RealType(1.0),
                 point_type ub= point_type({RealType(0.0), RealType(0.0), RealType(1.0)}),

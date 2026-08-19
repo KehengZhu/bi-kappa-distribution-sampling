@@ -1,0 +1,206 @@
+/**
+\page parameters Parameter reference
+
+Every argument accepted by every sampler, in one place. Defaults are the values you get by
+omitting the argument; violating a stated range throws `std::invalid_argument` from
+`define(...)` rather than failing later.
+
+\tableofcontents
+
+\section params_shared Conventions shared by all samplers
+
+\subsection params_theta Thermal speeds: `theta_perp`, `theta_par`
+
+`theta` is a **thermal speed**, not a temperature, and the convention is fixed by
+
+    Vx ~ N(0, theta_perp^2 / 2)
+
+for the bi-Maxwellian, and by `v = sqrt(kappa) * theta * u` for the bi-kappa (see
+\ref params_bikappa). If you are converting from a temperature, the factor of `1/2` matters:
+`theta = sqrt(2*k_B*T/m)`, not `sqrt(k_B*T/m)`.
+
+`theta_perp` sets both directions transverse to `ub`; `theta_par` sets the direction along it.
+Isotropic is `theta_perp == theta_par`. Both must be **strictly positive**; zero throws rather
+than degenerating to a delta function.
+
+\subsection params_ub Field direction: `ub`
+
+A 3-vector giving the local magnetic-field direction, as `{bx, by, bz}`.
+
+- **It does not need to be normalized.** It is normalized internally, so `{0,0,2}` and `{0,0,1}`
+  behave identically, and `{1,1,1}` is a legal 45-degree field.
+- **It must be non-zero.** A zero vector throws `std::invalid_argument`.
+- **`{0,0,1}` is a fast path**, not a special meaning: the sampler recognizes it and skips the
+  rotation entirely. The result is the same as any other unit vector along z.
+
+Samples are generated in the field-aligned frame and rotated into your global frame before being
+returned, so the returned `{vx, vy, vz}` are always in the simulation frame.
+
+\note The perpendicular axes are chosen internally and are not part of the interface. For an
+axisymmetric distribution this is unobservable. It becomes observable only under a velocity cap,
+whose box is tied to those axes — see \ref usage_cap_frame.
+
+\subsection params_seed Seeding: `seed`
+
+An `int`, accepted as the last argument of `define(...)` or passed to `seed(...)` at any time.
+
+| Value | Effect |
+| ----- | ------ |
+| `>= 0` | Deterministic. The same seed reproduces the same sequence byte for byte. |
+| `< 0`  | Reseeds from `std::random_device`, i.e. unpredictable. |
+
+Omitting it leaves the generator seeded from `std::random_device` at construction, so **runs are
+not reproducible unless you seed them**. Re-seeding restarts the stream; it does not continue it.
+
+To drive several samplers from one stream instead, pass your own generator to `operator()` —
+see \ref usage_external_rng.
+
+\subsection params_rejection Rejection-sampler knobs: `probe_points`, `max_reject_tries`
+
+These apply to the three samplers that take a user-supplied function
+(`general_velocity_generator`, `field_aligned_velocity_generator`,
+`general_position_generator`). You can usually ignore them; this section is what to read when a
+sampler throws or when the output looks wrong.
+
+| Parameter | Meaning | Defaults |
+| --------- | ------- | -------- |
+| `probe_points` | Number of grid points used once, at `define(...)` time, to estimate the maximum of your function. That maximum (times a 5% margin) becomes the rejection envelope. | `1024` for the velocity generators, `4096` for the position generator |
+| `max_reject_tries` | How many candidate draws a single sample may consume before the sampler gives up and throws `std::runtime_error`. | `100000` for the velocity generators, `200000` for the position generator |
+
+\warning **`probe_points` can silently bias your output.** The envelope is estimated on a uniform
+grid. If your function has a peak narrow enough to fall between two probe points, the estimated
+maximum is too low, and every candidate in that peak is accepted unconditionally — the sampled
+distribution is then wrong, with no exception thrown and no warning printed. If your `g(w)` or
+`rho(x)` has a narrow spike, raise `probe_points` until `pdfUpperBound()` stops increasing.
+
+Raising `max_reject_tries` treats the symptom of a badly matched envelope, not the cause: a
+sampler that exhausts it is usually one whose function is tiny over most of its domain. Narrowing
+the domain (`w_min`, `w_max`, or the position bounds) is the effective fix, and it is faster too.
+
+\section params_bikappa bi_kappa_distribution
+
+    define(kappa, theta_perp, theta_par, ub, max_normalized_velocity, seed)
+
+| Parameter | Meaning | Default | Valid range |
+| --------- | ------- | ------- | ----------- |
+| `kappa` | Spectral index. Small `kappa` means heavy suprathermal tails; `kappa -> infinity` recovers the bi-Maxwellian. | `2.0` | `> 0.5` (strictly; `0.5` throws) |
+| `theta_perp` | Thermal speed transverse to `ub`. See \ref params_theta. | `1.0` | `> 0` |
+| `theta_par` | Thermal speed along `ub`. | `1.0` | `> 0` |
+| `ub` | Field direction. See \ref params_ub. | `{0,0,1}` | non-zero |
+| `max_normalized_velocity` | Velocity cap in thermal speeds, or `no_cap()`. See \ref params_cap. | `no_cap()` (**off**) | `> 0`, or `no_cap()` |
+| `seed` | See \ref params_seed. | from `std::random_device` | any `int` |
+
+**What `kappa` means for moments.** Moments of order `l` exist only for `kappa > (l+1)/2`. The
+distribution is perfectly samplable for any `kappa > 0.5`, but for `0.5 < kappa <= 1.5` it has
+**no finite variance**, so a temperature computed from your loaded particles will not converge as
+you add more of them — it will wander. That is a property of the distribution you asked for, not
+a bug in the sampler. Below `kappa = 1.5`, use quantiles rather than moments to characterize what
+you loaded.
+
+**Operating range.** Sampling remains accurate down to about `kappa = 0.55` in `double` and
+`kappa = 0.75` in `float`. Closer to `0.5` the internal Gamma variate has a shape parameter
+approaching zero and finite precision starts to bite.
+
+\section params_cap The velocity cap
+
+`max_normalized_velocity` (call it `lam`) accepts a finite positive value or the sentinel
+`no_cap()`. It is the one parameter that changes **which distribution you sample**, not merely
+its shape, so it has its own section: \ref usage_bikappa_cap. It works identically on
+`bi_kappa_distribution` and `bi_maxwellian_distribution`.
+
+In brief:
+
+- `no_cap()` (`= +infinity`, and the default on both samplers) samples the named distribution,
+  with no rejection loop at all.
+- A finite `lam` samples the bi-kappa distribution *conditioned on* the box
+  `|v_x|/theta_perp <= lam`, `|v_y|/theta_perp <= lam`, `|v_par|/theta_par <= lam` — a different,
+  bounded law whose tails and moments differ from the one you named.
+- `param().capped()` tells you which is in force. Passing `0` to mean "off" throws; pass
+  `no_cap()`.
+
+\section params_bimaxwellian bi_maxwellian_distribution
+
+    define(theta_perp, theta_par, ub, max_normalized_velocity, seed)
+
+| Parameter | Meaning | Default | Valid range |
+| --------- | ------- | ------- | ----------- |
+| `theta_perp` | Thermal speed transverse to `ub`. See \ref params_theta. | *required* | `> 0` |
+| `theta_par` | Thermal speed along `ub`. | `1.0` | `> 0` |
+| `ub` | Field direction. See \ref params_ub. | `{0,0,1}` | non-zero |
+| `max_normalized_velocity` | Velocity cap in thermal speeds, or `no_cap()`. See \ref params_cap. | `no_cap()` (**off**) | `> 0`, or `no_cap()` |
+| `seed` | See \ref params_seed. | from `std::random_device` | any `int` |
+
+The cap behaves exactly as it does on `bi_kappa_distribution`: off by default, `no_cap()` as the
+sentinel, `param().capped()` as the query, and no rejection loop at all when uncapped. Gaussian
+tails are thin enough that a realistic cap is never exercised by a finite sample, so on this
+sampler the choice rarely changes what you load — but it still changes which law you asked for,
+and the two classes now answer that question the same way.
+
+\section params_generalvelocity general_velocity_generator
+
+    define(speed_sq_pdf, speed_sq_min, speed_sq_max, probe_points, max_reject_tries)
+
+| Parameter | Meaning | Default | Valid range |
+| --------- | ------- | ------- | ----------- |
+| `speed_sq_pdf` | Your function `g(w)`, whose argument is the **speed squared**, not the speed. Need not be normalized — any non-negative function proportional to the density will do. | *required* | callable, non-negative, finite, positive somewhere in range |
+| `speed_sq_min` | Lower end of the sampled `w` range. | *required* | `>= 0` |
+| `speed_sq_max` | Upper end. | *required* | `> speed_sq_min` |
+| `probe_points` | See \ref params_rejection. | `1024` | `> 1` |
+| `max_reject_tries` | See \ref params_rejection. | `100000` | `> 0` |
+
+The direction is isotropic on the sphere and the speed is `sqrt(w)`. Because the argument is
+`|v|^2`, a Maxwellian in speed is `g(w) = exp(-w/theta^2)` — writing `exp(-v^2/theta^2)` with `v`
+meaning speed gives the same thing, but writing a function of speed *linearly* will not.
+
+`speed_sq_min` and `speed_sq_max` are a **hard support**, not a hint: nothing outside them is
+ever produced. Choose `speed_sq_max` to cover the tail you care about, since anything past it is
+silently absent rather than rejected.
+
+\section params_fieldaligned field_aligned_velocity_generator
+
+    define(speed_sq_pdf, speed_sq_min, speed_sq_max, theta_perp, ub, parallel_sign,
+           probe_points, max_reject_tries)
+
+| Parameter | Meaning | Default | Valid range |
+| --------- | ------- | ------- | ----------- |
+| `speed_sq_pdf` | Your `g(w)` for the **parallel** component, where `w = v_par^2`. | *required* | as above |
+| `speed_sq_min` | Lower end of the sampled `v_par^2`. | *required* | `>= 0` |
+| `speed_sq_max` | Upper end. | *required* | `> speed_sq_min` |
+| `theta_perp` | Thermal speed of the two perpendicular components, which are Maxwellian: each `~ N(0, theta_perp^2/2)`. | *required* | `> 0` |
+| `ub` | Field direction. See \ref params_ub. | *required* | non-zero |
+| `parallel_sign` | `+1` sends the parallel component along `ub`, `-1` sends it opposite. | *required* | exactly `+1` or `-1` |
+| `probe_points` | See \ref params_rejection. | `1024` | `> 1` |
+| `max_reject_tries` | See \ref params_rejection. | `100000` | `> 0` |
+
+`parallel_sign` makes this a **one-sided** distribution: every sample streams the same way along
+the field. It is meant for beams and drifting populations. For a symmetric parallel distribution,
+draw the sign yourself, or use `bi_kappa_distribution` / `bi_maxwellian_distribution`.
+
+\section params_generalposition general_position_generator
+
+    define(dimension, lower_bounds, upper_bounds, density_function, probe_points,
+           max_reject_tries)
+
+| Parameter | Meaning | Default | Valid range |
+| --------- | ------- | ------- | ----------- |
+| `dimension` | How many spatial dimensions to sample. | *required* | `1`, `2`, or `3` |
+| `lower_bounds` | Lower corner of the sampling box, as a `std::vector<Real>`. | *required* | size must equal `dimension` |
+| `upper_bounds` | Upper corner. | *required* | size must equal `dimension`, each above its lower |
+| `density_function` | Your `rho(x)`, taking a `std::vector<Real>` of length `dimension`. Need not be normalized. | *required* | callable, non-negative, finite, positive somewhere |
+| `probe_points` | See \ref params_rejection. | `4096` | `> 0` |
+| `max_reject_tries` | See \ref params_rejection. | `200000` | `> 0` |
+
+The returned point is a `std::vector<Real>` of length `dimension`, not a fixed-size array — this
+is the one sampler whose `point_type` is not `std::array<Real,3>`.
+
+\section params_errors What throws, and when
+
+| Exception | Thrown by | Cause |
+| --------- | --------- | ----- |
+| `std::invalid_argument` | `define(...)` | Any range violation in the tables above: `kappa <= 0.5`, non-positive `theta` or cap, `speed_sq_min >= speed_sq_max`, negative `speed_sq_min`, zero `ub`, `parallel_sign` other than ±1, `dimension` outside 1–3, mismatched bounds sizes, a null callable. |
+| `std::runtime_error` | `operator()` | A `general_*` or `field_aligned_*` generator called before `define(...)`; or a rejection loop that exhausted `max_reject_tries`; or your function returned a negative or non-finite value. |
+
+Validation happens entirely in `define(...)`, so a sampler that constructed cleanly will not throw
+on a parameter later — the individual setters (`kappa(...)`, `theta_par(...)`, …) re-run the full
+validation, so they can throw at the point of the change instead.
+*/

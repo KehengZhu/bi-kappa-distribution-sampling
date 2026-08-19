@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['quick_20start_20—_20c_0',['Quick start — C++',['../index.html#autotoc_md2',1,'']]],
-  ['quick_20start_20—_20python_1',['Quick start — Python',['../index.html#autotoc_md4',1,'']]]
+  ['one_20do_20i_20want_0',['Which one do I want?',['../choosing.html#choosing_table',1,'']]],
+  ['one_20rng_20across_20samplers_1',['Sharing one RNG across samplers',['../usage.html#usage_external_rng',1,'']]]
 ];

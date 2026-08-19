@@ -1466,6 +1466,153 @@ static int test_no_cap_semantics()
 }
 
 // ================================================================
+// test_no_cap_semantics_bimaxwellian
+//
+// The bi-Maxwellian sampler must expose the same cap contract as the bi-Kappa
+// one: uncapped by default, no_cap() as the sentinel, capped() as the query,
+// and no rejection loop when uncapped.  A caller who omits the argument must
+// get the distribution the class is named after, on either sampler.
+//
+// The box here is deliberately tight (1 thermal speed).  Gaussian tails are so
+// thin that a realistic cap is never exercised by a finite sample, which is
+// exactly why the old truncating default went unnoticed.
+// ================================================================
+static int test_no_cap_semantics_bimaxwellian()
+{
+    bool all_ok= true;
+    std::cout << "\n--- test_no_cap_semantics_bimaxwellian ---" << std::endl;
+
+    typedef bi_maxwellian_distribution<double> BM;
+
+    // ---- M1: no_cap() is accepted and reports itself as uncapped ----------
+    {
+        bool ok= false;
+        try
+        {
+            BM dist(1.0, 2.0, {0.0, 0.0, 1.0}, BM::no_cap());
+            ok= !dist.param().capped() && !std::isfinite(dist.max_normalized_velocity());
+        }
+        catch (...)
+        {
+            ok= false;
+        }
+        all_ok= all_ok && ok;
+        std::cout << "  M1 no_cap() constructs and reports capped()==false: "
+                  << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    // ---- M2: a finite cap reports itself as capped ------------------------
+    {
+        BM dist(1.0, 2.0, {0.0, 0.0, 1.0}, 5.0);
+        const bool ok= dist.param().capped();
+        all_ok= all_ok && ok;
+        std::cout << "  M2 finite cap reports capped()==true: " << (ok ? "PASS" : "FAIL")
+                  << std::endl;
+    }
+
+    // ---- M3: the DEFAULT is uncapped, on every construction path ----------
+    {
+        BM dflt;                              // default ctor
+        BM ctor(1.0, 2.0);                    // value ctor
+        BM defined;
+        defined.define(1.0, 2.0);             // define(...)
+        BM seeded;
+        seeded.define(BM::param_type(1.0, 2.0), 7);
+        BM::param_type p;                     // param_type default
+
+        const bool ok= !dflt.param().capped() && !ctor.param().capped() &&
+                       !defined.param().capped() && !seeded.param().capped() &&
+                       !p.capped();
+        all_ok= all_ok && ok;
+        std::cout << "  M3 default is uncapped on every construction path: "
+                  << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    // ---- M4: a defaulted sampler really produces untruncated draws --------
+    // M3 checks the reported flag; this checks the behaviour behind it.
+    {
+        const int n= 20000;
+        BM dist(1.0, 1.0);                    // cap omitted
+        dist.seed(4102);
+        int beyond= 0;
+        for (int i= 0; i < n; ++i)
+        {
+            const auto v= dist();
+            if (std::abs(v[0]) > 1.0 || std::abs(v[1]) > 1.0 || std::abs(v[2]) > 1.0)
+                ++beyond;
+        }
+        const bool ok= (beyond > 0);
+        all_ok= all_ok && ok;
+        std::cout << "  M4 defaulted sampler draws exceed the box (" << beyond << "/" << n
+                  << " beyond 1): " << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    // ---- M5: capped mode still respects the box exactly --------------------
+    {
+        const int n= 20000;
+        const double lambda= 1.0;
+        const double theta_perp= 2.0, theta_par= 1.0;
+        BM dist(theta_perp, theta_par, {0.0, 0.0, 1.0}, lambda);
+        dist.seed(4103);
+        int violations= 0;
+        for (int i= 0; i < n; ++i)
+        {
+            const auto v= dist();
+            if (std::abs(v[0]) / theta_perp > lambda ||
+                std::abs(v[1]) / theta_perp > lambda ||
+                std::abs(v[2]) / theta_par > lambda)
+                ++violations;
+        }
+        const bool ok= (violations == 0);
+        all_ok= all_ok && ok;
+        std::cout << "  M5 capped draws never leave the box (" << violations
+                  << " violations): " << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    // ---- M6: omitting the cap is identical to naming no_cap() -------------
+    {
+        const int n= 20000;
+        BM omitted(1.0, 2.0);
+        BM named(1.0, 2.0, {0.0, 0.0, 1.0}, BM::no_cap());
+        omitted.seed(4104);
+        named.seed(4104);
+        int mismatches= 0;
+        for (int i= 0; i < n; ++i)
+        {
+            const auto a= omitted();
+            const auto b= named();
+            if (a[0] != b[0] || a[1] != b[1] || a[2] != b[2])
+                ++mismatches;
+        }
+        const bool ok= (mismatches == 0);
+        all_ok= all_ok && ok;
+        std::cout << "  M6 omitted cap == explicit no_cap() bitwise (" << mismatches
+                  << " mismatches): " << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    // ---- M7: 0 is rejected rather than read as "no cap" -------------------
+    {
+        bool threw= false;
+        try
+        {
+            BM dist(1.0, 2.0, {0.0, 0.0, 1.0}, 0.0);
+            (void)dist;
+        }
+        catch (const std::invalid_argument &)
+        {
+            threw= true;
+        }
+        all_ok= all_ok && threw;
+        std::cout << "  M7 cap of 0 throws instead of disabling: "
+                  << (threw ? "PASS" : "FAIL") << std::endl;
+    }
+
+    std::cout << "test_no_cap_semantics_bimaxwellian: " << (all_ok ? "PASS" : "FAIL")
+              << std::endl;
+    return all_ok ? 0 : 1;
+}
+
+// ================================================================
 // run_all_tests – call this from main()
 // Returns 0 if all tests pass, 1 if any test fails.
 // ================================================================
@@ -1483,6 +1630,7 @@ static int run_all_tests()
     result|= test_seed_api();
     result|= test_radius_formation();
     result|= test_no_cap_semantics();
+    result|= test_no_cap_semantics_bimaxwellian();
     std::cout << "\n=== Test suite: " << (result == 0 ? "ALL PASS" : "SOME FAILED") << " ==="
               << std::endl;
     return result;

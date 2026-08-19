@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['handling_0',['Error handling',['../usage.html#usage_errors',1,'']]],
-  ['how_20to_20select_20it_1',['The velocity cap: what it does and how to select it',['../usage.html#usage_bikappa_cap',1,'']]]
+  ['general_5fposition_5fgenerator_0',['general_position_generator',['../parameters.html#params_generalposition',1,'']]],
+  ['general_5fvelocity_5fgenerator_1',['general_velocity_generator',['../parameters.html#params_generalvelocity',1,'']]],
+  ['glance_2',['Velocity samplers at a glance',['../choosing.html#choosing_velocity',1,'']]]
 ];

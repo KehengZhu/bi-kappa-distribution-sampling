@@ -1,8 +1,16 @@
 var searchData=
 [
-  ['validation_20experiments_0',['Validation experiments',['../index.html#autotoc_md7',1,'']]],
-  ['velocity_20anisotropic_1',['Field-aligned velocity (anisotropic)',['../usage.html#usage_field_aligned',1,'']]],
-  ['velocity_20cap_3a_20what_20it_20does_20and_20how_20to_20select_20it_2',['The velocity cap: what it does and how to select it',['../usage.html#usage_bikappa_cap',1,'']]],
-  ['velocity_20samples_3',['velocity samples',['../usage.html#usage_bikappa',1,'Bi-kappa velocity samples'],['../usage.html#usage_bimaxwell',1,'Bi-Maxwellian velocity samples']]],
-  ['visualize_4',['Visualize',['../index.html#autotoc_md5',1,'']]]
+  ['tests_0',['Tests',['../index.html#autotoc_md6',1,'']]],
+  ['the_20cap_20is_20applied_20in_1',['Which frame the cap is applied in',['../usage.html#usage_cap_frame',1,'']]],
+  ['the_20capped_20law_20is_2',['What the capped law is',['../usage.html#usage_cap_law',1,'']]],
+  ['the_20default_3',['Uncapped is the default',['../usage.html#usage_cap_which',1,'']]],
+  ['the_20demo_4',['Building and running the demo',['../usage.html#usage_build',1,'']]],
+  ['the_20five_20samplers_5',['The five samplers',['../index.html#autotoc_md3',1,'']]],
+  ['the_20velocity_20cap_6',['The velocity cap',['../parameters.html#params_cap',1,'']]],
+  ['the_20velocity_20cap_3a_20what_20it_20does_20and_20how_20to_20select_20it_7',['The velocity cap: what it does and how to select it',['../usage.html#usage_bikappa_cap',1,'']]],
+  ['thermal_20speeds_3a_20theta_5fperp_20theta_5fpar_8',['Thermal speeds: &lt;span class=&quot;tt&quot;&gt;theta_perp&lt;/span&gt;, &lt;span class=&quot;tt&quot;&gt;theta_par&lt;/span&gt;',['../parameters.html#params_theta',1,'']]],
+  ['theta_5fpar_9',['Thermal speeds: &lt;span class=&quot;tt&quot;&gt;theta_perp&lt;/span&gt;, &lt;span class=&quot;tt&quot;&gt;theta_par&lt;/span&gt;',['../parameters.html#params_theta',1,'']]],
+  ['theta_5fperp_20theta_5fpar_10',['Thermal speeds: &lt;span class=&quot;tt&quot;&gt;theta_perp&lt;/span&gt;, &lt;span class=&quot;tt&quot;&gt;theta_par&lt;/span&gt;',['../parameters.html#params_theta',1,'']]],
+  ['throws_20and_20when_11',['What throws, and when',['../parameters.html#params_errors',1,'']]],
+  ['to_20select_20it_12',['The velocity cap: what it does and how to select it',['../usage.html#usage_bikappa_cap',1,'']]]
 ];

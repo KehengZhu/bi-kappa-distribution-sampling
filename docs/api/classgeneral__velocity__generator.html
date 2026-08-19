@@ -137,6 +137,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a714201f04f75172c778bd85e40fa1c3d" id="r_a714201f04f75172c778bd85e40fa1c3d"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a714201f04f75172c778bd85e40fa1c3d">general_velocity_generator</a> ()</td></tr>
 <tr class="memitem:a5d06f7a00baedc9cf36ce329da97708e" id="r_a5d06f7a00baedc9cf36ce329da97708e"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a5d06f7a00baedc9cf36ce329da97708e">general_velocity_generator</a> (<a class="el" href="#a89e76e21c394094b6d83c1db1c96c2b0">speed_sq_pdf_function</a> speed_sq_pdf, RealType speed_sq_min, RealType speed_sq_max, int probe_points=1024, int max_reject_tries=100000)</td></tr>
 <tr class="memitem:af5fe31734db1a1197f95aecb99451aa1" id="r_af5fe31734db1a1197f95aecb99451aa1"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#af5fe31734db1a1197f95aecb99451aa1">define</a> (<a class="el" href="#a89e76e21c394094b6d83c1db1c96c2b0">speed_sq_pdf_function</a> speed_sq_pdf, RealType speed_sq_min, RealType speed_sq_max, int probe_points=1024, int max_reject_tries=100000)</td></tr>
+<tr class="memdesc:af5fe31734db1a1197f95aecb99451aa1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Configure the sampler.  <br /></td></tr>
 <tr class="memitem:a2e42f5bd2170a5adc0a2382071574935" id="r_a2e42f5bd2170a5adc0a2382071574935"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#a2e42f5bd2170a5adc0a2382071574935">seed</a> (int s)</td></tr>
 <tr class="memitem:a6eb5239cc6bbfbe61815f4750914d4b0" id="r_a6eb5239cc6bbfbe61815f4750914d4b0"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#a6eb5239cc6bbfbe61815f4750914d4b0">reset</a> ()</td></tr>
 <tr class="memitem:a01a94b96080774171fe4465f21052aa2" id="r_a01a94b96080774171fe4465f21052aa2"><td class="memTemplParams" colspan="2">template&lt;typename GeneratorType&gt; </td></tr>
@@ -156,8 +157,8 @@ class general_velocity_generator&lt; RealType &gt;</div><p>Samples velocities fr
 <div class="line">gen.<a class="code hl_function" href="#a2e42f5bd2170a5adc0a2382071574935">seed</a>(12345);</div>
 <div class="line"><span class="keyword">auto</span> v = gen();</div>
 <div class="ttc" id="aclassgeneral__velocity__generator_html"><div class="ttname"><a href="classgeneral__velocity__generator.html">general_velocity_generator</a></div><div class="ttdoc">Samples velocities from a user-defined speed-squared distribution g(w).</div><div class="ttdef"><b>Definition</b> <a href="general__velocity__generator_8_h_source.html#l00029">general_velocity_generator.H:30</a></div></div>
-<div class="ttc" id="aclassgeneral__velocity__generator_html_a2e42f5bd2170a5adc0a2382071574935"><div class="ttname"><a href="#a2e42f5bd2170a5adc0a2382071574935">general_velocity_generator::seed</a></div><div class="ttdeci">void seed(int s)</div><div class="ttdef"><b>Definition</b> <a href="general__velocity__generator_8_h_source.html#l00110">general_velocity_generator.H:110</a></div></div>
-<div class="ttc" id="aclassgeneral__velocity__generator_html_af5fe31734db1a1197f95aecb99451aa1"><div class="ttname"><a href="#af5fe31734db1a1197f95aecb99451aa1">general_velocity_generator::define</a></div><div class="ttdeci">void define(speed_sq_pdf_function speed_sq_pdf, RealType speed_sq_min, RealType speed_sq_max, int probe_points=1024, int max_reject_tries=100000)</div><div class="ttdef"><b>Definition</b> <a href="general__velocity__generator_8_h_source.html#l00054">general_velocity_generator.H:54</a></div></div>
+<div class="ttc" id="aclassgeneral__velocity__generator_html_a2e42f5bd2170a5adc0a2382071574935"><div class="ttname"><a href="#a2e42f5bd2170a5adc0a2382071574935">general_velocity_generator::seed</a></div><div class="ttdeci">void seed(int s)</div><div class="ttdef"><b>Definition</b> <a href="general__velocity__generator_8_h_source.html#l00140">general_velocity_generator.H:140</a></div></div>
+<div class="ttc" id="aclassgeneral__velocity__generator_html_af5fe31734db1a1197f95aecb99451aa1"><div class="ttname"><a href="#af5fe31734db1a1197f95aecb99451aa1">general_velocity_generator::define</a></div><div class="ttdeci">void define(speed_sq_pdf_function speed_sq_pdf, RealType speed_sq_min, RealType speed_sq_max, int probe_points=1024, int max_reject_tries=100000)</div><div class="ttdoc">Configure the sampler.</div><div class="ttdef"><b>Definition</b> <a href="general__velocity__generator_8_h_source.html#l00084">general_velocity_generator.H:84</a></div></div>
 </div><!-- fragment --><dl class="section see"><dt>See also</dt><dd><a class="el" href="usage.html" title="Usage Examples">Usage Examples</a> for more recipes. </dd></dl>
 
 <p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00029">29</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
@@ -294,7 +295,7 @@ template&lt;typename RealType = double&gt; </div>
 
 <p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00046">46</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
 
-<p class="reference">References <a class="el" href="general__velocity__generator_8_h_source.html#l00036">general_velocity_generator()</a>, and <a class="el" href="general__velocity__generator_8_h_source.html#l00054">define()</a>.</p>
+<p class="reference">References <a class="el" href="general__velocity__generator_8_h_source.html#l00036">general_velocity_generator()</a>, and <a class="el" href="general__velocity__generator_8_h_source.html#l00084">define()</a>.</p>
 
 </div>
 </div>
@@ -343,9 +344,29 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00054">54</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
+<p>Configure the sampler. </p>
+<p>Estimates the rejection envelope here, once, so a badly chosen <code class="param">probe_points</code> is a configuration-time decision.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">speed_sq_pdf</td><td>Your g(w), whose argument is the <b>speed squared</b>, not the speed. Need not be normalized &ndash; any non-negative function proportional to the density works. Must be finite and non-negative wherever it is evaluated, and positive somewhere in range. </td></tr>
+    <tr><td class="paramname">speed_sq_min</td><td>Lower end of the sampled w range, &gt;= 0. </td></tr>
+    <tr><td class="paramname">speed_sq_max</td><td>Upper end, &gt; <code class="param">speed_sq_min</code>. This is a <b>hard support</b>: speeds beyond sqrt(speed_sq_max) are never produced, so choose it to cover the tail you care about. </td></tr>
+    <tr><td class="paramname">probe_points</td><td>Grid points used once to estimate max g(w), which becomes the rejection envelope (plus a 5% margin). If g has a peak narrow enough to fall between probes, the envelope is too low and the sampled distribution is <b>silently wrong</b>; raise this until <a class="el" href="#a671b80796425e855d0ce23479b35d64d">pdfUpperBound()</a> stops increasing. Must be &gt; 1. </td></tr>
+    <tr><td class="paramname">max_reject_tries</td><td>Candidate draws one sample may consume before operator() throws. Must be &gt; 0. Exhausting it usually means g is tiny over most of [min,max]; narrowing the range fixes it better than raising this.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::invalid_argument</td><td>on a null callable, a negative <code class="param">speed_sq_min</code>, <code class="param">speed_sq_min</code> &gt;= <code class="param">speed_sq_max</code>, a non-positive knob, or a g that is nowhere positive in range.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="parameters.html#params_rejection" title="Rejection-sampler knobs: &lt;tt&gt;probe_points&lt;/tt&gt;, &lt;tt&gt;max_reject_tries&lt;/tt&gt;">Rejection-sampler knobs: <span class="tt">probe_points</span>, <span class="tt">max_reject_tries</span></a> for how the envelope works, <a class="el" href="choosing.html" title="Choosing a sampler">Choosing a sampler</a> to compare samplers. </dd></dl>
 
-<p class="reference">References <a class="el" href="general__velocity__generator_8_h_source.html#l00112">reset()</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00084">84</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
+
+<p class="reference">References <a class="el" href="general__velocity__generator_8_h_source.html#l00142">reset()</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="general__velocity__generator_8_h_source.html#l00046">general_velocity_generator()</a>, <a class="el" href="main_8cpp_source.html#l00016">main()</a>, <a class="el" href="test__suite_8_h_source.html#l00328">test_define_general_velocity()</a>, and <a class="el" href="test__suite_8_h_source.html#l00721">test_seed_api()</a>.</p>
 
@@ -376,7 +397,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00147">147</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00177">177</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
 
 </div>
 </div>
@@ -407,7 +428,7 @@ template&lt;typename GeneratorType&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00120">120</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00150">150</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
 
 </div>
 </div>
@@ -436,7 +457,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00154">154</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00184">184</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
 
 </div>
 </div>
@@ -465,9 +486,9 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00112">112</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00142">142</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="general__velocity__generator_8_h_source.html#l00054">define()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="general__velocity__generator_8_h_source.html#l00084">define()</a>.</p>
 
 </div>
 </div>
@@ -496,7 +517,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00110">110</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00140">140</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="main_8cpp_source.html#l00016">main()</a>, and <a class="el" href="test__suite_8_h_source.html#l00721">test_seed_api()</a>.</p>
 
@@ -527,7 +548,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00153">153</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00183">183</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
 
 </div>
 </div>
@@ -556,7 +577,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00152">152</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__velocity__generator_8_h_source.html#l00182">182</a> of file <a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>.</p>
 
 </div>
 </div>

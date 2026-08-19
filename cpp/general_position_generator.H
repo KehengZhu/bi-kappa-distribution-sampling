@@ -47,6 +47,32 @@ template <typename RealType= double> class general_position_generator
                max_reject_tries);
     }
 
+    /**
+     * @brief Configure the sampler.
+     *
+     * @param dimension  1, 2, or 3.  Fixes the length of the bounds vectors and of
+     *                every returned point.
+     * @param lower_bounds  Lower corner of the sampling box, size @p dimension.
+     * @param upper_bounds  Upper corner, size @p dimension, each entry above its
+     *                counterpart in @p lower_bounds.  The box is a hard support:
+     *                nothing outside it is ever produced.
+     * @param density_function  Your rho(x), taking a std::vector<RealType> of
+     *                length @p dimension.  Need not be normalized; must be finite,
+     *                non-negative, and positive somewhere in the box.
+     * @param probe_points  Grid points used once to estimate max rho, which becomes
+     *                the rejection envelope.  A density with a spike narrow enough
+     *                to fall between probes yields a **silently wrong** sample --
+     *                see \ref params_rejection.  Must be > 0.
+     * @param max_reject_tries  Candidate draws per sample before operator() throws.
+     *                Must be > 0.  A density concentrated in a small corner of a
+     *                large box exhausts this; shrink the box instead.
+     *
+     * @throws std::invalid_argument if @p dimension is outside 1-3, the bounds sizes
+     *         do not match it, a bound is inverted, the callable is null, a knob is
+     *         non-positive, or rho is nowhere positive in the box.
+     *
+     * @see \ref parameters for the full table, \ref usage_position for a recipe.
+     */
     void define(int dimension, const point_type &lower_bounds, const point_type &upper_bounds,
                 density_function density_function, int probe_points= 4096,
                 int max_reject_tries= 200000)

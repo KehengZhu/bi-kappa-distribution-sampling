@@ -61,6 +61,37 @@ template <typename RealType= double> class field_aligned_velocity_generator
                probe_points, max_reject_tries);
     }
 
+    /**
+     * @brief Configure the sampler: user-supplied law along the field, Maxwellian
+     * across it.
+     *
+     * @param speed_sq_pdf  Your g(w) for the **parallel** component, whose argument
+     *                is v_par squared, not v_par.  Need not be normalized; must be
+     *                finite, non-negative, and positive somewhere in range.
+     * @param speed_sq_min  Lower end of the sampled v_par^2, >= 0.
+     * @param speed_sq_max  Upper end, > @p speed_sq_min.  A hard support.
+     * @param theta_perp  Thermal speed of the two perpendicular components, > 0.
+     *                Each is N(0, theta_perp^2/2), the same convention as
+     *                bi_maxwellian_distribution.
+     * @param ub      Magnetic-field direction {bx,by,bz}.  Need not be normalized;
+     *                must be non-zero.
+     * @param parallel_sign  Exactly +1 (parallel component along @p ub) or -1
+     *                (opposite).  This makes the result **one-sided**: every sample
+     *                streams the same way along the field, which is what you want
+     *                for a beam and not what you want for a symmetric population.
+     *                For the symmetric case draw the sign yourself, or use
+     *                bi_maxwellian_distribution / bi_kappa_distribution.
+     * @param probe_points  Envelope-estimation grid; see \ref params_rejection for
+     *                the silent-bias failure mode.  Must be > 1.
+     * @param max_reject_tries  Candidate draws per sample before operator() throws.
+     *                Must be > 0.
+     *
+     * @throws std::invalid_argument on a null callable, a bad range, a non-positive
+     *         @p theta_perp, a zero @p ub, a @p parallel_sign other than ±1, or a
+     *         non-positive knob.
+     *
+     * @see \ref parameters for the full table, \ref usage_field_aligned for a recipe.
+     */
     void define(speed_sq_pdf_function speed_sq_pdf, RealType speed_sq_min, RealType speed_sq_max,
                 RealType theta_perp, point_type ub, int parallel_sign,
                 int probe_points= 1024, int max_reject_tries= 100000)

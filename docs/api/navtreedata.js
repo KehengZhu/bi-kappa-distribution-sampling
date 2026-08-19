@@ -25,59 +25,28 @@
 var NAVTREE =
 [
   [ "bi-kappa", "index.html", [
-    [ "Quick start — C++", "index.html#autotoc_md2", null ],
-    [ "The five samplers", "index.html#autotoc_md3", null ],
-    [ "Quick start — Python", "index.html#autotoc_md4", null ],
-    [ "Visualize", "index.html#autotoc_md5", null ],
-    [ "Tests", "index.html#autotoc_md6", null ],
-    [ "Validation experiments", "index.html#autotoc_md7", null ],
-    [ "Documentation", "index.html#autotoc_md8", null ],
-    [ "License", "index.html#autotoc_md9", null ],
-    [ "Usage Examples", "usage.html", [
-      [ "Building and running the demo", "usage.html#usage_build", null ],
-      [ "Bi-kappa velocity samples", "usage.html#usage_bikappa", [
-        [ "The velocity cap: what it does and how to select it", "usage.html#usage_bikappa_cap", [
-          [ "Uncapped is the default", "usage.html#usage_cap_which", null ],
-          [ "What the capped law is", "usage.html#usage_cap_law", null ],
-          [ "Which frame the cap is applied in", "usage.html#usage_cap_frame", null ],
-          [ "What a cap costs you", "usage.html#usage_cap_cost", null ]
-        ] ]
-      ] ],
-      [ "Bi-Maxwellian velocity samples", "usage.html#usage_bimaxwell", null ],
-      [ "Reproducible runs (seeding)", "usage.html#usage_reproducible", null ],
-      [ "Sharing one RNG across samplers", "usage.html#usage_external_rng", null ],
-      [ "Reconfiguring a sampler", "usage.html#usage_redefine", null ],
-      [ "Custom speed-squared distribution", "usage.html#usage_velocity", null ],
-      [ "Field-aligned velocity (anisotropic)", "usage.html#usage_field_aligned", null ],
-      [ "Custom spatial density", "usage.html#usage_position", null ],
-      [ "Error handling", "usage.html#usage_errors", null ],
-      [ "Complete worked example", "usage.html#usage_full", null ]
-    ] ],
-    [ "Namespaces", "namespaces.html", [
-      [ "Namespace List", "namespaces.html", "namespaces_dup" ],
-      [ "Namespace Members", "namespacemembers.html", [
-        [ "All", "namespacemembers.html", null ],
-        [ "Functions", "namespacemembers_func.html", null ],
-        [ "Variables", "namespacemembers_vars.html", null ]
-      ] ]
-    ] ],
-    [ "Classes", "annotated.html", [
-      [ "Class List", "annotated.html", "annotated_dup" ],
-      [ "Class Index", "classes.html", null ],
-      [ "Class Members", "functions.html", [
+    [ "Choosing a sampler", "choosing.html", null ],
+    [ "Parameter reference", "parameters.html", null ],
+    [ "Usage examples", "usage.html", null ],
+    [ "C++ API", "annotated.html", [
+      [ "Samplers", "annotated.html", "annotated_dup" ],
+      [ "All functions", "functions.html", [
         [ "All", "functions.html", null ],
         [ "Functions", "functions_func.html", null ],
         [ "Variables", "functions_vars.html", null ],
         [ "Typedefs", "functions_type.html", null ]
       ] ]
     ] ],
-    [ "Files", "files.html", [
-      [ "File List", "files.html", "files_dup" ],
-      [ "File Members", "globals.html", [
-        [ "All", "globals.html", null ],
-        [ "Functions", "globals_func.html", null ],
-        [ "Typedefs", "globals_type.html", null ]
+    [ "Python API", "namespaces.html", [
+      [ "Modules", "namespaces.html", "namespaces_dup" ],
+      [ "All functions", "namespacemembers.html", [
+        [ "All", "namespacemembers.html", null ],
+        [ "Functions", "namespacemembers_func.html", null ],
+        [ "Variables", "namespacemembers_vars.html", null ]
       ] ]
+    ] ],
+    [ "Headers", "files.html", [
+      [ "File List", "files.html", "files_dup" ]
     ] ]
   ] ]
 ];
@@ -85,7 +54,7 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "annotated.html",
-"namespacesphere__sampling__bias.html"
+"namespacesphere__sampling__bias.html#af88030dbef0b37db5a1eba26632c730d"
 ];
 
 const SYNCONMSG = 'click to disable panel synchronization';

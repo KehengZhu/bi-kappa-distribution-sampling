@@ -51,6 +51,36 @@ template <typename RealType= double> class general_velocity_generator
         define(speed_sq_pdf, speed_sq_min, speed_sq_max, probe_points, max_reject_tries);
     }
 
+    /**
+     * @brief Configure the sampler.  Estimates the rejection envelope here, once,
+     * so a badly chosen @p probe_points is a configuration-time decision.
+     *
+     * @param speed_sq_pdf  Your g(w), whose argument is the **speed squared**, not
+     *                the speed.  Need not be normalized -- any non-negative
+     *                function proportional to the density works.  Must be finite
+     *                and non-negative wherever it is evaluated, and positive
+     *                somewhere in range.
+     * @param speed_sq_min  Lower end of the sampled w range, >= 0.
+     * @param speed_sq_max  Upper end, > @p speed_sq_min.  This is a **hard
+     *                support**: speeds beyond sqrt(speed_sq_max) are never
+     *                produced, so choose it to cover the tail you care about.
+     * @param probe_points  Grid points used once to estimate max g(w), which
+     *                becomes the rejection envelope (plus a 5% margin).  If g has
+     *                a peak narrow enough to fall between probes, the envelope is
+     *                too low and the sampled distribution is **silently wrong**;
+     *                raise this until pdfUpperBound() stops increasing.  Must be > 1.
+     * @param max_reject_tries  Candidate draws one sample may consume before
+     *                operator() throws.  Must be > 0.  Exhausting it usually means
+     *                g is tiny over most of [min,max]; narrowing the range fixes it
+     *                better than raising this.
+     *
+     * @throws std::invalid_argument on a null callable, a negative @p speed_sq_min,
+     *         @p speed_sq_min >= @p speed_sq_max, a non-positive knob, or a g that
+     *         is nowhere positive in range.
+     *
+     * @see \ref params_rejection for how the envelope works, \ref choosing to
+     *      compare samplers.
+     */
     void define(speed_sq_pdf_function speed_sq_pdf, RealType speed_sq_min, RealType speed_sq_max,
                 int probe_points= 1024, int max_reject_tries= 100000)
     {

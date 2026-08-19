@@ -45,8 +45,11 @@ int main()
     }
 
     std::cout << "\n=== Example 2: BiMaxwellianDistribution ===" << std::endl;
+    // Uncapped, as above: no_cap() is the default here too, and is named because the
+    // seed follows it as the fifth argument.
     bi_maxwellian_distribution<Real> biMaxwell;
-    biMaxwell.define(theta_perp, theta_par, {0,0,1}, 20.0, 20030410);
+    biMaxwell.define(theta_perp, theta_par, {0,0,1},
+                     bi_maxwellian_distribution<Real>::no_cap(), 20030410);
     {
         std::ofstream out("samples_bimaxwellian.txt");
         for (int i = 0; i < n_particle; ++i) {

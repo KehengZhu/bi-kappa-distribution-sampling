@@ -43,8 +43,8 @@ dist.define(2.0, 1.0, 2.0, {0, 0, 1},
 
 | Header | Samples | define(...) takes |
 |---|---|---|
-| `bi_kappa_distribution` | 3D bi-kappa velocity | `kappa, theta_perp, theta_par, ub, cap[, seed]` |
-| `bi_maxwellian_distribution` | 3D bi-Maxwellian velocity | `theta_perp, theta_par, ub, cap` |
+| `bi_kappa_distribution` | 3D bi-kappa velocity | `kappa, theta_perp, theta_par, ub[, cap][, seed]` |
+| `bi_maxwellian_distribution` | 3D bi-Maxwellian velocity | `theta_perp, theta_par, ub[, cap][, seed]` |
 | `general_velocity_generator` | speed from your `g(w)`, `w = \|v\|²`, isotropic direction | `g, v²_min, v²_max` |
 | `field_aligned_velocity_generator` | parallel speed from your `g(w)`, `w = v_par²`, along `ub`; Maxwellian perpendicular | `g, v²_min, v²_max, theta_perp, ub, sign` |
 | `general_position_generator` | position from your density `rho(x)` | `dimension, lower, upper, rho` |
@@ -52,14 +52,16 @@ dist.define(2.0, 1.0, 2.0, {0, 0, 1},
 They all share the same behavior:
 
 - **Construct → `define(...)` → call.** Calling before `define(...)` throws.
-- **Seeding:** call `dist.seed(s)` any time. `bi_kappa_distribution` also accepts the seed as the last `define(...)` argument. A **negative** `s` draws an unpredictable seed from `std::random_device`.
+- **Seeding:** call `dist.seed(s)` any time. `bi_kappa_distribution` and `bi_maxwellian_distribution` also accept the seed as the last `define(...)` argument. A **negative** `s` draws an unpredictable seed from `std::random_device`.
 - **No-arg call** `dist()` uses the sampler's own RNG. **Bring-your-own** `dist(gen)` accepts an external `std::mt19937`.
 - **`ub`** is the magnetic-field direction (need not be unit length). Output is rotated into the global frame; the default `{0,0,1}` returns field-aligned components directly.
-- **`cap`** selects which of **two distinct target distributions** you sample.
-  - **Omitted, or `bi_kappa_distribution<double>::no_cap()` — the default.** Samples follow the
-    full bi-Kappa law, and the draw uses a fixed sequence of high-level variates with no outer
-    acceptance–rejection loop. Second moments diverge for `kappa <= 3/2`; that is a property of
-    the distribution, not a defect.
+- **`cap`** selects which of **two distinct target distributions** you sample. It behaves the same
+  way on `bi_kappa_distribution` and `bi_maxwellian_distribution`; the bi-kappa case is described
+  here because that is where the choice has teeth.
+  - **Omitted, or `no_cap()` — the default on both.** Samples follow the full bi-Kappa law, and
+    the draw uses a fixed sequence of high-level variates with no outer acceptance–rejection
+    loop. Second moments diverge for `kappa <= 3/2`; that is a property of the distribution, not
+    a defect.
   - A **finite** `cap` is **opt-in**. It rejects any component with `|v_i| / theta_i > cap` and
     resamples, throwing after 10⁶ failed tries. The resulting samples follow the bi-Kappa
     distribution **conditioned on** all normalized components lying inside that box — a different,

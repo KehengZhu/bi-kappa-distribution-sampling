@@ -25,7 +25,7 @@ GENERATE_LATEX         = NO
 #---------------------------------------------------------------------------
 # Inputs
 #---------------------------------------------------------------------------
-INPUT                  = cpp python README.md usage.dox
+INPUT                  = cpp python README.md choosing.dox parameters.dox usage.dox
 FILE_PATTERNS          = *.H *.cpp *.py *.md
 RECURSIVE              = YES
 USE_MDFILE_AS_MAINPAGE = README.md
@@ -83,3 +83,5 @@ CLASS_GRAPH            = YES
 QUIET                  = YES
 WARNINGS               = YES
 WARN_IF_UNDOCUMENTED   = NO
+
+LAYOUT_FILE            = DoxygenLayout.xml

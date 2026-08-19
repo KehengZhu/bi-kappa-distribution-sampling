@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['python_0',['Quick start — Python',['../index.html#autotoc_md4',1,'']]]
+  ['next_0',['Next',['../choosing.html#choosing_next',1,'']]]
 ];

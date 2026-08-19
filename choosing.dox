@@ -1,0 +1,51 @@
+/**
+\page choosing Choosing a sampler
+
+Five samplers, one lifecycle: **construct → `define(...)` → call**. Every one returns a fresh
+sample each time you call `operator()`, and every one owns a seedable `std::mt19937` you can
+replace with your own generator.
+
+\section choosing_table Which one do I want?
+
+| I want to load…                                            | Use                                | Minimal call |
+| ---------------------------------------------------------- | ---------------------------------- | ------------ |
+| An anisotropic suprathermal population (power-law tails)    | `bi_kappa_distribution`            | `d.define(kappa, theta_perp, theta_par, ub)` |
+| An anisotropic thermal population (no tails)               | `bi_maxwellian_distribution`       | `d.define(theta_perp, theta_par, ub)` |
+| Speeds from a distribution I write myself, isotropic        | `general_velocity_generator`       | `g.define(gW, w_min, w_max)` |
+| Speeds from a distribution I write myself, along **B**      | `field_aligned_velocity_generator` | `g.define(gW, w_min, w_max, theta_perp, ub, +1)` |
+| Positions from a spatial density I write myself             | `general_position_generator`       | `g.define(dim, lower, upper, rho)` |
+
+The two named distributions sample by direct transformation and are exact. The three `general_*`
+/ `field_aligned_*` generators use rejection sampling against an estimated envelope, which makes
+them general but gives them two extra knobs and one failure mode — see
+\ref params_rejection.
+
+\section choosing_velocity Velocity samplers at a glance
+
+| | `bi_kappa` | `bi_maxwellian` | `general_velocity` | `field_aligned_velocity` |
+| --- | --- | --- | --- | --- |
+| Tails            | power law, set by `kappa`   | Gaussian            | whatever `g(w)` says | whatever `g(w)` says (parallel only) |
+| Anisotropy       | `theta_perp`, `theta_par`   | `theta_perp`, `theta_par` | isotropic      | `g(w)` parallel, Maxwellian perpendicular |
+| Aligned with `ub`| yes                         | yes                 | n/a (isotropic)      | yes |
+| Method           | exact transformation        | exact transformation | rejection           | rejection (parallel part) |
+| Velocity cap     | optional, **off** by default | optional, **off** by default | none        | none |
+| Returns          | `std::array<Real,3>`        | `std::array<Real,3>` | `std::array<Real,3>` | `std::array<Real,3>` |
+
+Both named distributions default to sampling the law they are named after: omit
+`max_normalized_velocity` and you get the bi-kappa or bi-Maxwellian distribution, with no
+rejection loop. Passing a finite value opts in to a bounded conditional law instead — the same
+contract, and the same `no_cap()` / `capped()` spelling, on either class. See \ref params_cap.
+
+\section choosing_units Units
+
+Every sampler is unit-agnostic: velocities come back in whatever units you expressed
+`theta_perp`, `theta_par`, or `g(w)`'s domain in, and positions in whatever units you gave the
+bounds in. Nothing is normalized to `c`, and no mass appears anywhere — for a distribution posed
+in energy, `w = |v|^2 = 2E/m`, so the mass cancels before it reaches the generator.
+
+\section choosing_next Next
+
+- \ref parameters — every argument of every `define(...)`, with defaults and valid ranges.
+- \ref usage — copy-pasteable recipes, including seeding and sharing one RNG.
+- \ref usage_bikappa_cap — what the velocity cap does to the distribution you sample.
+*/

@@ -187,10 +187,21 @@ Same pattern, without the `kappa` parameter.
 using Real = double;
 
 bi_maxwellian_distribution<Real> biMaxwell;
-//               theta_perp  theta_par  ub          cap    seed
-biMaxwell.define(1.0,        2.0,       {0, 0, 1},  20.0,  20030410);
+biMaxwell.define(1.0, 2.0, {0, 0, 1});         // theta_perp, theta_par, ub
 
 bi_maxwellian_distribution<Real>::point_type v = biMaxwell();
+\endcode
+
+The cap works exactly as it does on `bi_kappa_distribution` — off by default, `no_cap()` to name
+that explicitly, `param().capped()` to query it — so everything in \ref usage_bikappa_cap applies
+here too. Gaussian tails are thin enough that a realistic cap is never exercised by a finite
+sample, so the choice rarely changes what you load on this sampler; it still changes which law
+you asked for.
+
+\code{.cpp}
+//               theta_perp  theta_par  ub          cap                                seed
+biMaxwell.define(1.0,        2.0,       {0, 0, 1},  bi_maxwellian_distribution<Real>::no_cap(),
+                 20030410);
 \endcode
 
 \section usage_reproducible Reproducible runs (seeding)
