@@ -1,0 +1,47 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite both the software release and the paper below."
+title: "bi-kappa-distribution-sampling: a bi-Kappa velocity loader for kinetic plasma simulations"
+abstract: >-
+  Header-only C++11 samplers for bi-Kappa and bi-Maxwellian velocity
+  distributions, loading particles relative to an arbitrary magnetic-field
+  direction for particle-in-cell and hybrid simulation initialization. The
+  uncapped bi-Kappa distribution is the default target; a finite velocity bound
+  is opt-in and selects a distinct conditional law, which the interface reports
+  at run time. Includes a validation battery that tests an N x 3 velocity sample
+  from any bi-Kappa loader.
+type: software
+authors:
+  - family-names: Zhu
+    given-names: Keheng
+    email: zkeheng@umich.edu
+    affiliation: "University of Michigan, Ann Arbor, MI, USA"
+  - family-names: Omelchenko
+    given-names: Yuri A.
+    email: omelche@gmail.com
+    affiliation: "Space Science Institute, Boulder, CO, USA"
+license: MIT
+repository-code: "https://github.com/KehengZhu/bi-kappa-distribution-sampling"
+url: "https://kehengzhu.github.io/bi-kappa-distribution-sampling/"
+doi: 10.5281/zenodo.20617011
+version: 1.0.0
+keywords:
+  - plasma physics
+  - kappa distribution
+  - bi-Kappa distribution
+  - particle-in-cell
+  - hybrid simulation
+  - velocity distribution function
+  - random variate generation
+  - Monte Carlo sampling
+# preferred-citation is the paper; add its DOI once the journal assigns one.
+preferred-citation:
+  type: article
+  title: "Reliable Bi-Kappa Loading for Kinetic Plasma Simulations: Validation, Velocity Bounds, and Numerical Limits"
+  authors:
+    - family-names: Zhu
+      given-names: Keheng
+      affiliation: "University of Michigan, Ann Arbor, MI, USA"
+    - family-names: Omelchenko
+      given-names: Yuri A.
+      affiliation: "Space Science Institute, Boulder, CO, USA"
+  year: 2026

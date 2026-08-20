@@ -2,12 +2,23 @@
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20617011.svg)](https://doi.org/10.5281/zenodo.20617011)
 
-Monte Carlo particle samplers for plasma **velocity** and **position** distributions, in C++ and Python.
+A **bi-Kappa / bi-Maxwellian velocity loader for kinetic plasma simulations** — header-only
+C++11, for PIC and hybrid initialization, loading particles relative to an **arbitrary magnetic
+field direction**. The cap is off by default, so what you load is the bi-Kappa distribution
+itself and not a bounded law that resembles it.
 
 - **C++** (`cpp/`) — header-only samplers: bi-kappa & bi-Maxwellian velocities, plus rejection samplers for any speed-squared (|v|²) or spatial density you define.
-- **Python** (`python/`) — equivalent general samplers + Jupyter notebooks to visualize the output.
+- **Python** (`python/`) — [`bikappa_validate.py`](python/bikappa_validate.py), which validates an
+  `N × 3` velocity sample from *any* bi-Kappa loader; equivalent general samplers; and Jupyter
+  notebooks to visualize the output.
 
 📖 **API reference:** [kehengzhu.github.io/bi-kappa-distribution-sampling](https://kehengzhu.github.io/bi-kappa-distribution-sampling/). Locally, open [`docs/index.html`](docs/index.html) in a browser.
+
+## How to cite
+
+If you use this software, please cite both the paper and the archived release; GitHub's
+**Cite this repository** button reads [`CITATION.cff`](CITATION.cff), and the concept DOI
+above always resolves to the latest version.
 
 ---
 
