@@ -193,7 +193,7 @@ upper bound on how much any *probability* can move, and the sup ECDF gap is a lo
 bound on it -- but neither bounds a *quantile* ratio. A cap can amputate the entire
 far tail while moving no probability by more than 1e-3, because the amputated region
 carries almost no probability and enormous velocity. At `kappa = 1.5, lambda = 50`
-the total-variation distance is 6.6e-4 -- by any probability-based measure the two
+the total-variation distance is 6.304e-04 -- by any probability-based measure the two
 laws are indistinguishable -- and the p99.9 speed is still 24% too small.
 
 | kappa | lambda | |v| p50 | |v| p90 | |v| p99 | |v| p99.9 | |v_z| p99.9 | sup ECDF gap on |v| | TV (analytic) |

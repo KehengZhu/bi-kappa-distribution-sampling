@@ -39,7 +39,7 @@ from scipy import stats
 from scipy.special import gammaln
 
 import verify_cap_geometry
-from verify_cap_geometry import speed_cap_anisotropy_limit
+from verify_cap_geometry import cap_for_tv_target, speed_cap_anisotropy_limit
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
@@ -71,6 +71,20 @@ C_MAXW = "#c1272d"
 # case already carried through Secs. IV and VI, and 2 is the anisotropy of every
 # capped experiment, so the example costs the reader no new parameters.
 SPEED_CAP_EXAMPLE = (0.75, 2.0)
+
+# (kappa, lambda) pairs whose 99.9th-percentile deficit is quoted against the
+# rejected fraction in Sec. IV C.  Both cases are carried so the section can
+# lead with either without a pipeline change.
+TAIL_AMPLIFICATION_CASES = {"LowKappa": (1.5, 50.0), "FiniteVar": (2.0, 20.0)}
+
+# The (kappa, TV target) pair Sec. IV F uses to state how wide a component-wise
+# cap would have to be before the capped conditional law is within a negligible
+# total-variation distance of the intended one.  kappa = 0.75 is the same
+# low-kappa case; 10^-3 is the negligibility threshold Experiment 2 fixed before
+# any result was looked at.  ``verify_cap_geometry.py`` solves for the width and
+# checks it two independent ways, so the number below cannot drift from the
+# evidence.
+TV_TARGET_EXAMPLE = verify_cap_geometry.TV_TARGET_EXAMPLE
 
 
 # --------------------------------------------------------------------------
@@ -345,6 +359,19 @@ def fmt(x, nd=3):
     return f"{x:.{nd}f}"
 
 
+def _math_sci(x, nd=1):
+    """Scientific notation as a bare math-mode fragment, e.g. ``9.4\\times 10^{5}``.
+
+    Unlike ``sci`` this emits no ``$``, so the manuscript can drop it inside an
+    existing math environment; and a unit mantissa is suppressed, so a threshold
+    of 10^-3 reads as a power of ten rather than as ``1.0 x 10^-3``.
+    """
+    mant, exp = f"{x:.{nd}e}".split("e")
+    if float(mant) == 1.0:
+        return rf"10^{{{int(exp)}}}"
+    return rf"{mant}\times 10^{{{int(exp)}}}"
+
+
 def sci(x, nd=1):
     """LaTeX scientific notation, e.g. 6.3\\times 10^{-4}."""
     if x == 0:
@@ -438,7 +465,7 @@ def table_moments(exp1_dir):
 def table_cap(exp2_dir):
     """Table V -- the cap's cost and distortion, quoted as one number (R1.1, R1.2)."""
     _, table, kappas, _, i999 = capped_summary(exp2_dir)
-    lams = [3.0, 10.0, 20.0, 50.0, 100.0]
+    lams = [3.0, 5.0, 10.0, 20.0, 50.0, 100.0]
     lines = []
     for k in kappas:
         cells = [f"${k:g}$"]
@@ -459,8 +486,8 @@ def table_cap(exp2_dir):
     print(f"  wrote {path}")
 
 
-def macro_speed_cap_limit():
-    """The one physical-speed-cap number Sec. IV F quotes, as a LaTeX macro.
+def macro_speed_cap_limit(exp2_dir):
+    """Sec. IV F's two bounding-region numbers, as LaTeX macros.
 
     Sec. IV F states the wide-cap limit as an equation and illustrates it with a
     single value; it deliberately does not tabulate the (kappa, anisotropy) grid,
@@ -472,6 +499,15 @@ def macro_speed_cap_limit():
     ``verify_cap_geometry.py`` checks this same function against an independent
     finite-cap quadrature carried out in velocity space; that check runs from
     ``main()`` below, so a drift in either one fails asset generation.
+
+    The same fragment carries the component-wise cap's counterpart: the half-width
+    at which the capped conditional law comes within a negligible total-variation
+    distance of the intended one.  It is solved for, not tabulated, because the
+    answer falls between the entries of any practical lambda ladder, and it is the
+    number that makes the cost of the heavy-tailed cases concrete -- at
+    kappa = 3/4 the required width is five orders of magnitude beyond the widest
+    cap anyone would set.  ``verify_cap_geometry.py``'s check 8 pins it from both
+    directions, so it has the same provenance guarantee as every table entry.
     """
     kappa, ratio = SPEED_CAP_EXAMPLE
     value = speed_cap_anisotropy_limit(kappa, ratio)
@@ -482,8 +518,25 @@ def macro_speed_cap_limit():
         fh.write(f"\\newcommand{{\\SpeedCapLimit}}{{{value:.3f}}}\n")
         fh.write(f"\\newcommand{{\\SpeedCapLimitKappa}}{{{kappa:g}}}\n")
         fh.write(f"\\newcommand{{\\SpeedCapLimitRatio}}{{{ratio:g}}}\n")
+
+        tv_kappa, tv_target = TV_TARGET_EXAMPLE
+        lam = cap_for_tv_target(tv_kappa, tv_target)
+        fh.write(f"\\newcommand{{\\TVThreshLambda}}{{{_math_sci(lam)}}}\n")
+        fh.write(f"\\newcommand{{\\TVThreshKappa}}{{{tv_kappa:g}}}\n")
+        fh.write(f"\\newcommand{{\\TVThreshTarget}}{{{_math_sci(tv_target)}}}\n")
+
+        # Sec. IV C contrasts the quantile deficit a cap induces against the
+        # mass it removes.  Both inputs are measured, so the ratio is emitted
+        # here rather than typed into the prose -- the rule that the corrected
+        # \TVThreshLambda exists to enforce.
+        _, table, _, _, i999 = capped_summary(exp2_dir)
+        for name, (k, lam_amp) in TAIL_AMPLIFICATION_CASES.items():
+            rec = table[(k, lam_amp)]
+            deficit = 1.0 - rec["q_speed_ratio"]["mean"][i999]
+            amp = deficit / rec["reject_fraction_analytic"]
+            fh.write(f"\\newcommand{{\\TailAmp{name}}}{{{amp:.0f}}}\n")
     print(f"  wrote {path}")
-    return value
+    return value, lam
 
 
 def table_performance(exp3_dir):
@@ -577,7 +630,7 @@ def main() -> int:
     table_validation(exp1)
     audit = table_moments(exp1)
     table_cap(exp2)
-    geom = macro_speed_cap_limit()
+    geom, tv_lam = macro_speed_cap_limit(exp2)
     table_performance(exp3)
     table_precision(exp4)
 
@@ -588,6 +641,8 @@ def main() -> int:
         print(f"  qq kappa={k:g}: N={v['n']}, seed={v['seed']}")
     print(f"\nspeed-cap anisotropy limit at kappa={SPEED_CAP_EXAMPLE[0]:g}, "
           f"theta_par/theta_perp={SPEED_CAP_EXAMPLE[1]:g}: {geom:.6f}")
+    print(f"cap width reaching TV = {TV_TARGET_EXAMPLE[1]:g} at "
+          f"kappa={TV_TARGET_EXAMPLE[0]:g}: lambda = {tv_lam:.6e}")
     print("\nmoment audit (theory, mean, sd, rel%):")
     for k in sorted(audit):
         for key, d in audit[k].items():

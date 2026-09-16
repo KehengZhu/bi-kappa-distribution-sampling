@@ -36,7 +36,7 @@ keywords:
 # preferred-citation is the paper; add its DOI once the journal assigns one.
 preferred-citation:
   type: article
-  title: "Reliable Bi-Kappa Loading for Kinetic Plasma Simulations: Validation, Velocity Bounds, and Numerical Limits"
+  title: "Bi-Kappa Loading for Kinetic Plasma Simulations: Validation, Velocity Bounds, and Numerical Limits"
   authors:
     - family-names: Zhu
       given-names: Keheng

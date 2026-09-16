@@ -26,6 +26,11 @@ the quantities from a different direction:
   about an anisotropic integral rather than a restatement of a symmetry.
 * ``ellipsoid_acceptance_quad`` integrates the Beta-prime radial density to
   check the incomplete-beta closed form of Eq. (25).
+* ``box_reject_fraction_vspace`` integrates the bi-Kappa density over the
+  literal cube in Cartesian normalized coordinates, so the one-dimensional
+  ``E_M`` closed form for the component-wise box is checked against a
+  three-dimensional integral that never forms the law of
+  ``M = max_i |n_i|`` at all.
 
 Checks
 ------
@@ -42,16 +47,30 @@ Checks
    finite cap and every ``kappa > 1/2``.
 6. The normalized-radial ellipsoid's acceptance probability equals
    ``I_z(3/2, kappa - 1/2)`` with ``z = lambda^2 / (kappa + lambda^2)``.
+7. The component-wise box's rejected fraction -- which *is* the total-variation
+   distance between the capped conditional law and the untruncated target, since
+   conditioning on an event of probability ``p`` gives density ratio
+   ``1_box / p`` -- agrees with a direct three-dimensional quadrature over the
+   cube.
+8. The inverse problem is well posed and its solution is consistent two ways: the
+   cap half-width that brings the total-variation distance down to a prescribed
+   target reproduces that target when substituted back into the forward closed
+   form, and it sits on the ``lambda^-(2 kappa - 1)`` power law that governs the
+   rejected fraction at wide caps.  Check 8 is what gives the cap width quoted in
+   the text a generated source; ``make_manuscript_assets.py`` emits it as a LaTeX
+   macro from ``cap_for_tv_target`` below.
 
-``speed_cap_anisotropy_limit`` lives here rather than in
-``make_manuscript_assets.py`` so that the function the manuscript's number is
-printed from is the same one these checks exercise; the asset script imports it.
+``speed_cap_anisotropy_limit`` and ``cap_for_tv_target`` live here rather than in
+``make_manuscript_assets.py`` so that the functions the manuscript's numbers are
+printed from are the same ones these checks exercise; the asset script imports
+them.
 """
 
 import math
 import sys
 
 from scipy.integrate import quad
+from scipy.optimize import brentq
 from scipy.special import betainc, beta as beta_fn
 
 
@@ -194,8 +213,148 @@ def ellipsoid_acceptance_quad(kappa, lam):
 
 
 # --------------------------------------------------------------------------
+# component-wise box: rejected fraction, and the inverse problem
+# --------------------------------------------------------------------------
+#
+# The released predicate tests |v_x|/theta_perp <= lambda, |v_y|/theta_perp <=
+# lambda, |v_z|/theta_par <= lambda on v = sqrt(kappa) (theta_perp U_x,
+# theta_perp U_y, theta_par U_z), so both theta's cancel identically and the
+# accepted set is the CUBE of half-side c = lambda / sqrt(kappa) in the
+# isotropic normalized coordinates U.  The acceptance therefore depends on
+# (kappa, lambda) alone.
+#
+# Writing U = R n with n uniform on the sphere and independent of R, and
+# M = max_i |n_i|, the cube is the event R <= c / M, so with
+# F_R(r) = I_{r^2/(1+r^2)}(3/2, kappa - 1/2),
+#
+#     P(accept) = E_M[ F_R(c / M) ] = E_M[ I_z(3/2, kappa - 1/2) ],
+#     z = c^2 / (M^2 + c^2).
+#
+# Conditioning on an event of probability p gives density ratio 1_box / p
+# against the untruncated target, so the total-variation distance between the
+# capped law and the target is exactly the rejected fraction 1 - P(accept).
+# Cost and error are the same number, which is what makes the inverse problem
+# below meaningful: "how wide must the cap be for the capped law to sit within
+# TV distance eps of the target" is the same question as "how wide must the cap
+# be before it throws away less than a fraction eps of attempts".
+
+_M_LO = 1.0 / math.sqrt(3.0)   # M >= 1/sqrt(3): some component always this large
+_M_MID = 1.0 / math.sqrt(2.0)  # above this only one component can exceed M
+_M_HI = 1.0
+
+
+def max_component_density(m):
+    """Density of M = max_i |n_i| for n uniform on the unit sphere.
+
+    P(|n_i| > m) = 1 - m for each axis.  For m >= 1/sqrt(2) at most one axis can
+    exceed m, so P(M > m) = 3 (1 - m) and the density is the constant 3; below
+    that two axes can exceed m simultaneously and inclusion-exclusion contributes
+    the arcsine term.  Supported on [1/sqrt(3), 1].
+    """
+    if m < _M_MID:
+        x = (1.0 - 2.0 * m ** 2) / (1.0 - m ** 2)
+        x = min(max(x, 0.0), 1.0)
+        return 3.0 - (12.0 / math.pi) * math.asin(math.sqrt(x))
+    return 3.0
+
+
+def box_reject_fraction(kappa, lam):
+    """TV distance between the capped law and the target = 1 - P(accept).
+
+    The rejected fraction is integrated *directly* rather than as 1 - P(accept):
+    at large kappa or large lambda the acceptance is 1 - O(10^-24) and the
+    subtraction would return exactly zero.  The complement is taken inside the
+    incomplete beta via 1 - I_z(a, b) = I_{1-z}(b, a), where
+    1 - z = m^2 / (m^2 + c^2) is formed exactly.
+    """
+    b = kappa - 0.5
+    c = lam / math.sqrt(kappa)
+
+    def integrand(m):
+        one_minus_z = m ** 2 / (m ** 2 + c ** 2)
+        return betainc(b, 1.5, one_minus_z) * max_component_density(m)
+
+    lower = quad(integrand, _M_LO, _M_MID, limit=200)[0]
+    upper = quad(integrand, _M_MID, _M_HI, limit=200)[0]
+    return min(max(lower + upper, 0.0), 1.0)
+
+
+def box_reject_fraction_vspace(kappa, lam):
+    """The same rejected fraction, by direct three-dimensional quadrature.
+
+    Integrates the isotropic normalized density (1 + |u|^2)^{-(kappa+1)} over the
+    literal cube |u_i| <= lambda / sqrt(kappa) and divides by its integral over
+    all of space, taken in spherical coordinates.  Nothing here knows about the
+    law of M, so agreement with ``box_reject_fraction`` checks that reduction
+    rather than the arithmetic of the incomplete beta.
+
+    Only usable where the rejected fraction is not so small that forming it as a
+    difference of two O(1) quantities destroys it; it is used in check 7 at the
+    heavy-tailed kappa where the rejected fraction is of order 10^-1 to 10^-2.
+    """
+    c = lam / math.sqrt(kappa)
+
+    def shape(q_sq):
+        return (1.0 + q_sq) ** (-(kappa + 1.0))
+
+    def outer(uz):
+        def mid(uy):
+            return quad(lambda ux: shape(ux ** 2 + uy ** 2 + uz ** 2),
+                        0.0, c, limit=200)[0]
+        return quad(mid, 0.0, c, limit=200)[0]
+
+    octant = quad(outer, 0.0, c, limit=200)[0]
+    # Whole space, same octant convention: (4 pi / 8) int r^2 (1 + r^2)^-(k+1) dr.
+    whole = 0.5 * math.pi * _decade_quad(
+        lambda r: r ** 2 * shape(r ** 2), 1.0e12)
+    return 1.0 - octant / whole
+
+
+def cap_for_tv_target(kappa, tv_target, lam_hi=1.0e14):
+    """The cap half-width lambda at which the capped law reaches a TV target.
+
+    Inverse of ``box_reject_fraction`` in lambda at fixed kappa.  The rejected
+    fraction is strictly decreasing in lambda, so the root is unique; it is
+    bracketed on [1, lam_hi] and solved in log-log coordinates, because for
+    1/2 < kappa the rejected fraction decays only as the power law
+    lambda^-(2 kappa - 1) and a linear solve on a root near 10^6 would be
+    ill-conditioned.
+
+    Raises ValueError if the target is not reachable within the bracket, which is
+    the honest outcome for a target so small that no practical cap attains it.
+    """
+    if not 0.0 < tv_target < 1.0:
+        raise ValueError(f"TV target must lie in (0, 1); got {tv_target}")
+
+    def residual(log_lam):
+        return math.log(box_reject_fraction(kappa, math.exp(log_lam))
+                        / tv_target)
+
+    lo, hi = math.log(1.0), math.log(lam_hi)
+    if residual(hi) > 0.0:
+        raise ValueError(
+            f"TV target {tv_target:g} not reached by lambda = {lam_hi:g} "
+            f"at kappa = {kappa:g}")
+    return math.exp(brentq(residual, lo, hi, xtol=1.0e-12, rtol=8.9e-16))
+
+
+# --------------------------------------------------------------------------
 # checks
 # --------------------------------------------------------------------------
+
+# The (kappa, TV target) pair the manuscript's cap-width statement is made at.
+# Sec. IV F's point is that at the heavy-tailed end the cap needed to bring the
+# capped law within a negligible total-variation distance of the target is
+# impractically wide; 10^-3 is the negligibility threshold fixed in Experiment 2
+# before any result was looked at.  ``make_manuscript_assets.py`` imports this
+# and emits the solved width, so check 8 below guards the published number.
+TV_TARGET_EXAMPLE = (0.75, 1.0e-3)
+
+# Reference width from which check 8's power-law cross-check reads its prefactor.
+# It is the widest cap in Experiment 2's ladder, and it is far enough out that
+# the rejected fraction is already in its lambda^-(2 kappa - 1) regime.
+LAM_REFERENCE = 100.0
+
 
 FAILURES = []
 
@@ -304,6 +463,62 @@ def main():
         b = ellipsoid_acceptance_quad(kappa, lam)
         check(f"kappa={kappa:g}, lambda={lam:g}", close(a, b, 1.0e-9),
               f"closed={a:.9f} quad={b:.9f}")
+
+    print("\n7. component-wise box: rejected fraction (= TV distance to the target)")
+    print("   one-dimensional E_M closed form vs direct three-dimensional "
+          "quadrature over the cube")
+    for kappa, lam in [(0.75, 3.0), (0.75, 10.0), (0.75, 50.0), (0.75, 100.0),
+                       (1.0, 10.0), (1.5, 3.0), (2.0, 3.0)]:
+        a = box_reject_fraction(kappa, lam)
+        b = box_reject_fraction_vspace(kappa, lam)
+        check(f"kappa={kappa:g}, lambda={lam:g}", close(a, b, 5.0e-5 * a),
+              f"closed={a:.9e} quad3d={b:.9e} rel={abs(a - b) / a:.2e}")
+
+    print("\n8. inverse solve: the cap half-width that reaches a TV target")
+    print("   the rejected fraction decays only as lambda^-(2 kappa - 1), so the "
+          "solved width is")
+    print("   cross-checked against that power law extrapolated from lambda = "
+          "100, and the")
+    print("   heavy-tailed case is pinned to the value the text quotes.")
+    for kappa, tv_target, expect in [(TV_TARGET_EXAMPLE[0], TV_TARGET_EXAMPLE[1],
+                                      9.388279e5),
+                                     (1.0, 1.0e-3, None),
+                                     (2.0, 1.0e-9, None),
+                                     (0.75, 1.0e-2, None)]:
+        lam = cap_for_tv_target(kappa, tv_target)
+        tag = f"kappa={kappa:g}, TV target={tv_target:g}"
+
+        forward = box_reject_fraction(kappa, lam)
+        check(f"{tag}: the solved width reproduces the target",
+              close(forward, tv_target, 1.0e-9 * tv_target),
+              f"lambda={lam:.6e} gives TV={forward:.9e}")
+
+        # Second, structurally independent route: the wide-cap power law.  The
+        # prefactor is read off a single reference width and the exponent is the
+        # analytic 2 kappa - 1, so this route never solves anything -- it only
+        # asks whether the root lies where the asymptotics says it must.  The
+        # power law is a wide-cap asymptote, so it is only applied when the
+        # solved width is at least the reference width; below that, extrapolating
+        # the prefactor inward is not a check of the root but a misuse of the
+        # asymptotics, and at kappa = 2, TV = 10^-3 (lambda near 14) it would miss
+        # by half a percent for that reason alone.
+        expo = 2.0 * kappa - 1.0
+        prefactor = box_reject_fraction(kappa, LAM_REFERENCE) * LAM_REFERENCE ** expo
+        if lam >= LAM_REFERENCE:
+            lam_power = (prefactor / tv_target) ** (1.0 / expo)
+            check(f"{tag}: agrees with the lambda^-{expo:g} power law",
+                  close(lam, lam_power, 2.0e-3 * lam),
+                  f"exact={lam:.6e} power law={lam_power:.6e} "
+                  f"(prefactor {prefactor:.4f}), rel diff "
+                  f"{abs(lam - lam_power) / lam:.2e}")
+        else:
+            print(f"     {tag}: lambda={lam:.4g} sits inside the reference width "
+                  f"{LAM_REFERENCE:g}, so the wide-cap power law is not applied")
+
+        if expect is not None:
+            check(f"{tag}: equals the width quoted in the text",
+                  close(lam, expect, 1.0e-5 * expect),
+                  f"{lam:.6e} vs {expect:.6e}")
 
     print()
     if FAILURES:

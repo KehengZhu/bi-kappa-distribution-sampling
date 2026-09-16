@@ -10,7 +10,8 @@ Zenitani (2025)'s Pareto-envelope rejection sampler costs **0.38×–0.56×** wh
 Gamma-ratio implementation costs, over κ ∈ [1.5, 50] — i.e. it is **1.8×–2.6× faster**,
 despite being a rejection method with ~0.73–0.81 acceptance. Abdul & Mace (2015)'s
 normal-triple scale mixture — which is the *same construction as ours*, differing only in
-how the direction is bought — is also faster, by ≈1.4×–1.6×.
+how the direction is bought — is also faster, by 1.47×–1.89× across every κ tested
+(widest at κ = 1.5, narrowest at κ = 2).
 
 This is reported because it is what the measurement says. Every "fast", "resolves
 computational bottlenecks", and "outperforms" claim in the manuscript must go, and R1.4
@@ -53,7 +54,8 @@ with their Eqs. (19)–(20) reduces to `v_i = θ√κ · Z_i / √(χ²_ν)`, `�
 `|Z|² ~ χ²₃ = 2·Ga(3/2,1)` and `χ²_ν = 2·Ga(κ−1/2,1)`, the radius is *exactly* the
 baseline's Gamma ratio. Inflating it into a competing algorithm is precisely what R2.A2
 warns against, so the benchmark reports it as what it is: the same construction buying its
-direction from three normals instead of two uniforms — and that choice is worth ≈1.5×.
+direction from three normals instead of two uniforms — and that choice is worth
+1.47×–1.89×.
 
 > **Disclosure.** A&M 2015 never states how the non-integer-ν χ² deviate is generated.
 > `χ²_ν = 2·Ga(ν/2,1)` via `std::gamma_distribution` is **our** choice, not theirs. Any cost
