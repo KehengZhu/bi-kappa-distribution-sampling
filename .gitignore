@@ -15,6 +15,9 @@ wheels/
 .mypy_cache/
 
 # Generic result/output files
+# In-flight writes: every experiment job writes to <name>.part and renames atomically,
+# so a .part file is by definition an incomplete artifact and must never be committed.
+*.part
 *.out
 *.log
 *.tmp
@@ -104,6 +107,19 @@ CLAUDE.md
 !experiments/*/raw/checksums.sha256
 !experiments/*/results/*.pdf
 !experiments/*/*.env.json
+
+# Experiment 6 additionally commits its source data and its figures.  Its figure
+# script reads only these CSVs -- never the bulk binaries -- so a reviewer who has
+# the repository can regenerate every figure and check every plotted point without
+# rerunning a single draw.  The 600-dpi PNG previews stay untracked: they are
+# regenerable from the tracked PDF/SVG pair.  Same rule as above -- file-specific
+# patterns only.
+!experiments/*/results/*.csv
+!experiments/*/results/*.tex
+!experiments/*/figures/*.pdf
+!experiments/*/figures/*.svg
+!experiments/*/raw/raw_checksums.sha256
+!experiments/*/checksums.sha256
 
 uv.lock
 .DS_Store

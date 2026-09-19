@@ -1,0 +1,32 @@
+{
+  "log_primitive": "LOG-PUB",
+  "frozen": true,
+  "source_file": "src/log_gamma_published.H",
+  "source_sha256": "daac3166d2d585ee508fd97c72aaaa93b219f4b25270314fb12a60cf9357f37f",
+  "frozen_utc": "2026-09-19T16:36:41+00:00",
+  "selection_summary": {
+    "LOG-ID": {
+      "configurations": 84,
+      "in_domain_configurations": 84,
+      "log_primitive_failures": 0,
+      "configurations_with_a_rejection": 0,
+      "quantile_intervals_covering_target": 419,
+      "quantile_intervals_resolved": 420,
+      "median_seconds_per_log_gamma_attempt": 9.662975e-08,
+      "defined_at_kappa_0.5001": true,
+      "passes": true
+    },
+    "LOG-PUB": {
+      "configurations": 84,
+      "in_domain_configurations": 72,
+      "log_primitive_failures": 0,
+      "configurations_with_a_rejection": 0,
+      "quantile_intervals_covering_target": 417,
+      "quantile_intervals_resolved": 420,
+      "median_seconds_per_log_gamma_attempt": 6.59593954479306e-08,
+      "defined_at_kappa_0.5001": true,
+      "passes": true
+    }
+  },
+  "evaluator_validation_passed": true
+}
