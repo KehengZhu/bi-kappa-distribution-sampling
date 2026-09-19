@@ -1,25 +1,40 @@
-# Experiment 6 - low-kappa finite-precision validity and log-domain stabilization.
+# Experiment 7 - pre-registered confirmatory test of the log-domain bi-Kappa loader.
 #
-# The same source is built once per standard library, because the whole question is
-# whether the answer depends on the library's Gamma generator.  Every simulation target
-# accepts SMOKE=1, which shrinks the run to 1000 attempts x 1 seed and diverts its output
-# to raw/smoke/ so that it can never be mistaken for production data.
+# The same source is built once per standard library, because one of the claims under test
+# is that it no longer matters which one ran it: within version 2.0.0 the stream is a
+# function of the engine alone, so the two builds must agree byte for byte.
 #
-#   make selftest     accounting identities, replica-vs-class equality, error-path fixtures
-#   make preflight    environment + provenance manifest; refuses a dirty production run
-#   make pilot        E1  select the LOG primitive
-#   make baseline     E0  clean rerun of the QF/SPLIT envelope
-#   make mechanism    E2  paired diagnostic layer + native layer
-#   make oracle       audit the E2/E3 audit streams at 100 decimal digits
-#   make conditioning E3  per-attempt intended state vs success
-#   make loader       E4  complete anisotropic, rotated, capped 3-D loader
-#   make portability  E5  native scalar envelope, one tagged environment
-#   make performance  E6  timed blocks
-#   make analyze      results/*.csv, results/exp6_results.json, validation matrix
-#   make figures      figures/*.{pdf,svg,png}
-#   make verify       re-check every checksum manifest
+#   make cxx11-check    the sampling sources compile as strict C++11 under both compilers
+#   make selftest       accounting identity, replica-vs-class equality, error paths, digests
+#   make check-legacy   the vendored comparator is still the released 1.0.0 header
+#   make protocol-check config/protocol.json is what config/make_protocol.py produces
+#   make preflight      environment + provenance; refuses a dirty production run
+#   make p1             scalar radial law, both methods, full ladder
+#   make p2             mechanism: paired diagnostic layer + native layer
+#   make p3             conditioning: per-attempt intended state vs success
+#   make p4             complete anisotropic, rotated, capped 3-D loader, C0-C6
+#   make p5             portability: CANDIDATE, full ladder, one tagged environment
+#   make p6             performance: timed blocks, B0-B4, seeds 7006-7010
+#   make  why two builds of the candidate can still differ (see below)
+#   make oracle         adjudicate every audit stream at 100 decimal digits
+#   make analyze        results/*.csv, results/analysis_report.md, the gate table
+#   make figures        figures/*.{pdf,svg,png}
+#   make checksums      write both checksum manifests
+#   make verify         re-check every checksum manifest
+#   make reverify       regenerate the derived artifacts and check they are byte-identical
 #
-# A production run is:  make preflight && make selftest && make pilot && ... && make verify
+# A production run is:
+#   make preflight && make selftest && make p1 p2 p3 p4 p5 p6 && make oracle && \
+#   make analyze figures && make checksums && make verify
+#
+# Every simulation target depends on `preflight`.  In Experiment 6 preflight was a
+# prerequisite of nothing, so a dirty tree ran to completion and only the manifest said so.
+#
+# Every simulation target accepts SMOKE=1, which shrinks the run and diverts *everything* it
+# writes -- data, manifest and all -- under raw/smoke/.  SMOKE is forwarded to analyze and
+# figures.  In Experiment 6 smoke output leaked into `make oracle`, `make checksums` and the
+# production manifest; here nothing outside raw/smoke/ is touched by a smoke run, and the
+# production targets never look inside it.
 
 CXX_LIBCXX    := clang++
 CXX_LIBSTDCXX := $(shell command -v g++-15 || command -v g++-14 || command -v g++-13)
@@ -28,169 +43,219 @@ BOOST_INC     ?= /opt/homebrew/include
 # -ffp-contract=off: fused multiply-add changes the rounding of the very products whose
 # overflow is under study, and it is applied inconsistently across inlining contexts.  With
 # contraction on, the instrumented replica stops reproducing the released class bit for bit.
-CXXFLAGS      := -Wall -Wextra -std=c++11 -O2 -ffp-contract=off -I src
+BASE_FLAGS    := -Wall -Wextra -std=c++11 -O2 -ffp-contract=off -I src
 ORACLE_FLAGS  := -Wall -Wextra -std=c++14 -O2 -ffp-contract=off -I src -I $(BOOST_INC)
 
-PROBE_SRC := src/exp6_probe.cpp
-PROBE_HDR := src/exp6_common.H src/exp6_loaders.H src/log_gamma_identity.H \
-             src/log_gamma_published.H ../../cpp/bi_kappa_distribution.H
+# The flags are compiled into the binary, so the manifest records what the build actually
+# used rather than what the analysis later guesses it used.
+CXXFLAGS      := $(BASE_FLAGS) -DEXP7_CXXFLAGS='"$(BASE_FLAGS)"'
 
-# analyze.py and make_figures.py import these; preflight tracks them as dependencies.
-PY_MODULES := exp6_stats.py exp6_io.py
+# Note on build settings.  `-ffp-contract=off` is on purpose: a fused multiply-add rounds
+# once instead of twice, and the sampler has several expressions a compiler may contract, so
+# a contracting build differs from a non-contracting one by an ulp or two on a fraction of
+# the components.  Pinning it keeps the stream a property of the source text.
+#
+# An earlier revision of this experiment carried a third, diagnostic build to locate a
+# cross-compiler difference: clang fused the `sin(phi)`/`cos(phi)` pair in the released
+# sampler into Darwin's `__sincos_stret`, whose sine differs from the standalone `sin` by an
+# ulp on about one argument in a thousand, while GCC called the two separately.  The released
+# header now draws its direction by a rejection method that uses no trigonometry at all, so
+# the difference no longer exists and the diagnostic has been removed rather than kept as a
+# permanently passing control.
 
-PY        := uv run --project ../../python python
+PY            := uv run --project ../../python python
 
-TARGETS   := exp6_probe_libcxx.exe
-TAGS      := libcxx
+PROBE_SRC     := src/exp7_probe.cpp
+GENERATED     := src/exp7_protocol.H
+PROBE_HDR     := src/exp7_common.H src/exp7_loaders.H src/exp7_digest.H $(GENERATED) \
+                 src/legacy/bi_kappa_distribution_v1.H ../../cpp/bi_kappa_distribution.H
+
+TARGETS       := exp7_probe_libcxx.exe
+TAGS          := libcxx
 ifneq ($(CXX_LIBSTDCXX),)
-TARGETS   += exp6_probe_libstdcxx.exe
-TAGS      += libstdcxx
+TARGETS       += exp7_probe_libstdcxx.exe
+TAGS          += libstdcxx
 endif
 
-# Frozen production sizes (plan Sec. 7).  Overriding these makes a run exploratory.
-N_BASELINE     ?= 1000000
-N_PILOT        ?= 200000
-N_MECHANISM    ?= 1000000
-N_CONDITIONING ?= 1000000
-N_LOADER       ?= 100000
-N_PORTABILITY  ?= 1000000
+# Frozen production sizes (PROTOCOL.md Sec. 4).  Overriding them makes a run exploratory,
+# and the probe records the size it was given in every row.
+N_P1          ?= 1000000
+N_P2          ?= 1000000
+N_P3          ?= 1000000
+N_P4          ?= 100000
+N_P5          ?= 1000000
+SEEDS_PROD    ?= 5
 
-SEEDS_PROD  ?= 5
-SEEDS_PILOT ?= 3
+# The environment this build is executing on.  `translated` marks a Rosetta or emulated run,
+# which PROTOCOL.md Sec. 5.3 records but excludes from the F7 decision.
+EXECUTION     ?= native
 
 ifdef SMOKE
 SMOKEFLAG := --smoke
+SMOKEARG  := --smoke
 STAMP     := (smoke)
+RAWROOT   := raw/smoke
 else
 SMOKEFLAG :=
+SMOKEARG  :=
 STAMP     :=
+RAWROOT   := raw
 endif
 
-LOG_PRIMITIVE ?= $(shell test -f config/frozen.json && \
-                   sed -n 's/.*"log_primitive"[ ]*:[ ]*"\([^"]*\)".*/\1/p' config/frozen.json)
-ifeq ($(strip $(LOG_PRIMITIVE)),)
-LOG_PRIMITIVE := LOG-ID
-endif
+.PHONY: all cxx11-check selftest preflight protocol-check check-legacy \
+        p1 p2 p3 p4 p5 p6 oracle analyze figures checksums verify \
+        reverify clean distclean
 
-.PHONY: all selftest preflight pilot baseline mechanism oracle conditioning loader \
-        portability performance analyze figures verify checksums clean distclean cxx11-check \
-        check-frozen baseline-contract-check
+all: $(TARGETS) exp7_oracle.exe
 
-all: $(TARGETS) exp6_oracle.exe
+# ---------------------------------------------------------------------------
+# Build
+# ---------------------------------------------------------------------------
+$(GENERATED): src/gen_protocol_header.py config/protocol.json
+	$(PY) src/gen_protocol_header.py
 
-exp6_probe_libcxx.exe: $(PROBE_SRC) $(PROBE_HDR)
+exp7_probe_libcxx.exe: $(PROBE_SRC) $(PROBE_HDR)
 	$(CXX_LIBCXX) $(CXXFLAGS) -stdlib=libc++ -o $@ $(PROBE_SRC)
 
-exp6_probe_libstdcxx.exe: $(PROBE_SRC) $(PROBE_HDR)
+exp7_probe_libstdcxx.exe: $(PROBE_SRC) $(PROBE_HDR)
 	$(CXX_LIBSTDCXX) $(CXXFLAGS) -o $@ $(PROBE_SRC)
 
-exp6_oracle.exe: src/exp6_oracle.cpp src/exp6_common.H
+exp7_oracle.exe: src/exp7_oracle.cpp src/exp7_common.H src/exp7_loaders.H src/exp7_digest.H \
+                 $(GENERATED)
 	$(CXX_LIBCXX) $(ORACLE_FLAGS) -stdlib=libc++ -o $@ $<
 
 # The sampling sources must keep compiling as strict C++11 with no extensions, because the
 # released loader is a header-only C++11 reference implementation.  The oracle is exempt by
 # construction: it is a separate program.
-cxx11-check:
+cxx11-check: $(GENERATED)
 	$(CXX_LIBCXX) -std=c++11 -pedantic-errors -Wall -Wextra -fsyntax-only -I src $(PROBE_SRC)
 	@test -z "$(CXX_LIBSTDCXX)" || \
 	  $(CXX_LIBSTDCXX) -std=c++11 -pedantic-errors -Wall -Wextra -fsyntax-only -I src $(PROBE_SRC)
 	@echo "  strict C++11: ok"
 
+# ---------------------------------------------------------------------------
+# Gates that run before any data exists
+# ---------------------------------------------------------------------------
 selftest: $(TARGETS) cxx11-check
 	@for b in $(TARGETS); do echo "== $$b"; ./$$b selftest || exit 1; done
 
-preflight: $(TARGETS) exp6_oracle.exe
+# The comparator must still be the released 1.0.0 header, modulo the guard rename and the
+# namespace wrap that letting both versions coexist in one translation unit requires.
+check-legacy:
+	@$(PY) src/check_legacy.py
+
+# config/protocol.json must be exactly what config/make_protocol.py produces.  Regenerating
+# into a scratch copy and diffing is what makes "the analysis reads the protocol" mean
+# something: a hand-edited JSON would otherwise pass every hash check in the run.
+protocol-check:
+	@cp config/protocol.json config/.protocol.json.committed
+	@if $(PY) config/make_protocol.py > /dev/null; then :; else \
+	   cp config/.protocol.json.committed config/protocol.json; \
+	   rm -f config/.protocol.json.committed; \
+	   echo "  protocol-check: config/make_protocol.py failed to run"; \
+	   exit 1; \
+	 fi
+	@if cmp -s config/protocol.json config/.protocol.json.committed; then \
+	   rm -f config/.protocol.json.committed; \
+	   echo "  protocol-check: config/protocol.json matches config/make_protocol.py"; \
+	 else \
+	   echo "  protocol-check: config/protocol.json is NOT what config/make_protocol.py produces"; \
+	   diff config/.protocol.json.committed config/protocol.json | head -40; \
+	   cp config/.protocol.json.committed config/protocol.json; \
+	   rm -f config/.protocol.json.committed; \
+	   exit 1; \
+	 fi
+
+preflight: $(TARGETS) exp7_oracle.exe protocol-check check-legacy
 	$(PY) preflight.py $(if $(ALLOW_DIRTY_DEV),--allow-dirty,)
 
-# Once the pilot has frozen a primitive, every later phase refuses to run against a
-# modified source for it.  The hash is what is checked, not the name: renaming the file or
-# editing it after the selection would otherwise pass silently.
-check-frozen:
-	@python3 -c "import json,hashlib,sys; \
-	  c=json.load(open('config/frozen.json')); \
-	  sys.exit(0) if not c.get('frozen') else None; \
-	  h=hashlib.sha256(open(c['source_file'],'rb').read()).hexdigest(); \
-	  sys.exit(0) if h==c['source_sha256'] else (sys.stderr.write( \
-	    'exp6: %s has changed since the pilot froze it\n  frozen  %s\n  current %s\n' \
-	    % (c['source_file'], c['source_sha256'], h)) or sys.exit(1))"
-
+# ---------------------------------------------------------------------------
+# Simulation phases.  Each depends on preflight, so a dirty dependency set stops the run
+# before it produces data rather than after.
+# ---------------------------------------------------------------------------
 define RUN_PHASE
-	@mkdir -p raw/$(1) raw/smoke
+	@mkdir -p $(RAWROOT)/$(1)
 	@for b in $(TARGETS); do \
-	  tag=$${b%.exe}; tag=$${tag#exp6_probe_}; \
+	  tag=$${b%.exe}; tag=$${tag#exp7_probe_}; \
 	  echo "  $(1) [$$tag] $(STAMP)"; \
-	  ./$$b $(1) --n $(2) --seeds $(3) --tag $$tag --log-primitive $(LOG_PRIMITIVE) \
+	  ./$$b $(1) --n $(2) --seeds $(3) --tag $$tag --execution $(EXECUTION) \
 	     --out raw $(SMOKEFLAG) || exit 1; \
 	done
 endef
 
-pilot: $(TARGETS)
-	$(call RUN_PHASE,pilot,$(N_PILOT),$(SEEDS_PILOT))
+p1: $(TARGETS) preflight
+	$(call RUN_PHASE,p1,$(N_P1),$(SEEDS_PROD))
 
-baseline: $(TARGETS)
-	$(call RUN_PHASE,baseline,$(N_BASELINE),$(SEEDS_PROD))
+p2: $(TARGETS) preflight
+	$(call RUN_PHASE,p2,$(N_P2),$(SEEDS_PROD))
 
-# Experiment 4 was built without an explicit -ffp-contract setting, so it inherited the
-# compiler default: fused multiply-add enabled.  This target rebuilds the libstdc++ probe
-# the same way and reruns the single-precision baseline, so that any residual difference
-# between the clean rerun and the historical numbers can be attributed to that setting
-# rather than left unexplained.  It is a provenance control, not a production row.
-exp6_probe_contractfast.exe: $(PROBE_SRC) $(PROBE_HDR)
-	$(CXX_LIBSTDCXX) -Wall -Wextra -std=c++11 -O2 -I src -o $@ $(PROBE_SRC)
+p3: $(TARGETS) preflight
+	$(call RUN_PHASE,p3,$(N_P3),$(SEEDS_PROD))
 
-baseline-contract-check: exp6_probe_contractfast.exe
-	@mkdir -p raw/baseline
-	./exp6_probe_contractfast.exe baseline --n $(N_BASELINE) --seeds $(SEEDS_PROD) \
-	   --precision float --tag libstdcxx-contractfast --out raw
+p4: $(TARGETS) preflight
+	$(call RUN_PHASE,p4,$(N_P4),$(SEEDS_PROD))
 
-mechanism: $(TARGETS) check-frozen
-	$(call RUN_PHASE,mechanism,$(N_MECHANISM),$(SEEDS_PROD))
+p5: $(TARGETS) preflight
+	$(call RUN_PHASE,p5,$(N_P5),$(SEEDS_PROD))
 
-conditioning: $(TARGETS) check-frozen
-	$(call RUN_PHASE,conditioning,$(N_CONDITIONING),$(SEEDS_PROD))
+p6: $(TARGETS) preflight
+	$(call RUN_PHASE,p6,0,$(SEEDS_PROD))
 
-loader: $(TARGETS) check-frozen
-	$(call RUN_PHASE,loader,$(N_LOADER),$(SEEDS_PROD))
-
-portability: $(TARGETS) check-frozen
-	$(call RUN_PHASE,portability,$(N_PORTABILITY),$(SEEDS_PROD))
-
-performance: $(TARGETS) check-frozen
-	$(call RUN_PHASE,performance,0,$(SEEDS_PROD))
-
-# Every audit stream the probe produced, re-derived at 100 decimal digits by a program
-# that shares no arithmetic with it.  A single disagreement fails the target.
-oracle: exp6_oracle.exe
-	@mkdir -p results
-	@rm -f results/oracle_audit.jsonl results/oracle_disagreements.jsonl
-	@found=0; \
-	for f in raw/mechanism/audit_*.bin raw/conditioning/audit_*.bin raw/smoke/audit_*.bin; do \
+# ---------------------------------------------------------------------------
+# Adjudication
+#
+# Every audit stream the probe produced, re-derived at 100 decimal digits by a program that
+# shares no arithmetic with it.  A single disagreement fails the target -- Experiment 6's
+# equivalent ended in `|| echo`, so a disagreement printed a line and the target still
+# succeeded.  Smoke streams are adjudicated only under SMOKE=1 and never alongside
+# production ones.
+# ---------------------------------------------------------------------------
+oracle: exp7_oracle.exe
+	@mkdir -p results $(RAWROOT)
+	@rm -f $(RAWROOT)/oracle_audit.jsonl $(RAWROOT)/oracle_disagreements.jsonl
+	@found=0; rc=0; \
+	for f in $(RAWROOT)/p2/audit_*.bin $(RAWROOT)/p3/audit_*.bin; do \
 	  test -f "$$f" || continue; found=1; \
 	  echo "  oracle $$f"; \
-	  ./exp6_oracle.exe "$$f" --disagreements results/oracle_disagreements_tmp.jsonl \
-	      >> results/oracle_audit.jsonl || echo "    DISAGREEMENTS FOUND in $$f"; \
-	  test -f results/oracle_disagreements_tmp.jsonl && \
-	      cat results/oracle_disagreements_tmp.jsonl >> results/oracle_disagreements.jsonl; \
-	  rm -f results/oracle_disagreements_tmp.jsonl; \
+	  if ./exp7_oracle.exe "$$f" \
+	        --disagreements $(RAWROOT)/oracle_disagreements_tmp.jsonl --progress \
+	        >> $(RAWROOT)/oracle_audit.jsonl; then \
+	    :; \
+	  else \
+	    rc=1; echo "    DISAGREEMENTS OR CONVERSION FAILURES in $$f"; \
+	  fi; \
+	  if [ -f $(RAWROOT)/oracle_disagreements_tmp.jsonl ]; then \
+	    cat $(RAWROOT)/oracle_disagreements_tmp.jsonl >> $(RAWROOT)/oracle_disagreements.jsonl; \
+	    rm -f $(RAWROOT)/oracle_disagreements_tmp.jsonl; \
+	  fi; \
 	done; \
-	rm -f results/oracle_disagreements_tmp.jsonl; \
-	test $$found -eq 1 || { echo "  no audit streams found - run mechanism/conditioning first"; exit 1; }
-	@touch results/oracle_disagreements.jsonl
-	@echo "  oracle: $$(wc -l < results/oracle_disagreements.jsonl) disagreement(s)"
+	rm -f $(RAWROOT)/oracle_disagreements_tmp.jsonl; \
+	if [ $$found -ne 1 ]; then \
+	  echo "  no audit streams under $(RAWROOT) - run p2 and p3 first"; exit 1; fi; \
+	echo "  oracle: $$(grep -c '\"kind\":\"disagreement\"' $(RAWROOT)/oracle_disagreements.jsonl || true) disagreement record(s)"; \
+	exit $$rc
 
+# ---------------------------------------------------------------------------
+# Analysis.  Written by a separate agent against results/schema.md; the targets below only
+# invoke it, and forward SMOKE so that a smoke run can be taken end to end.
+# ---------------------------------------------------------------------------
 analyze:
-	$(PY) analyze.py
+	$(PY) analyze.py $(SMOKEARG)
 
 figures:
-	$(PY) make_figures.py
+	$(PY) make_figures.py $(SMOKEARG)
 
+# ---------------------------------------------------------------------------
+# Provenance.  The production checksum bundle never descends into raw/smoke/.
+# ---------------------------------------------------------------------------
 checksums:
-	@cd raw && find . -type f \( -name '*.bin' -o -name '*.jsonl' \) | sort | \
+	@cd raw && find . -path ./smoke -prune -o -type f \
+	   \( -name '*.bin' -o -name '*.jsonl' -o -name 'manifest.csv' \) -print | sort | \
 	   xargs shasum -a 256 > raw_checksums.sha256 && \
 	   echo "  wrote raw/raw_checksums.sha256 ($$(wc -l < raw_checksums.sha256) files)"
-	@find config results figures src GNUmakefile analyze.py make_figures.py preflight.py \
-	   exp6_stats.py exp6_io.py README.md raw/environment.json raw/manifest.csv \
-	   raw/raw_checksums.sha256 -type f ! -name 'checksums.sha256' 2>/dev/null | sort | \
+	@find config results figures src PROTOCOL.md GNUmakefile README.md preflight.py \
+	   raw/environment.json raw/manifest.csv raw/raw_checksums.sha256 \
+	   -type f ! -name 'checksums.sha256' ! -name '*.pyc' 2>/dev/null | sort | \
 	   xargs shasum -a 256 > checksums.sha256
 	@echo "  wrote checksums.sha256 ($$(wc -l < checksums.sha256) files)"
 
@@ -206,9 +271,26 @@ verify:
 	else echo "  checksums.sha256 missing"; fail=1; fi; \
 	exit $$fail
 
+# Gate G6 requires that every derived artifact regenerate byte for byte from the same raw
+# data.  This target does exactly that: it re-runs the analysis and the figures into a
+# scratch tree and diffs.  It never touches raw/.
+reverify:
+	@rm -rf .reverify && mkdir -p .reverify
+	@cp -R results .reverify/results_before
+	@$(PY) analyze.py $(SMOKEARG)
+	@$(PY) make_figures.py $(SMOKEARG)
+	@if diff -r --brief .reverify/results_before results; then \
+	   echo "  reverify: every derived artifact regenerated byte for byte"; \
+	   rm -rf .reverify; \
+	 else \
+	   echo "  reverify: a derived artifact did not reproduce"; exit 1; \
+	 fi
+
 clean:
-	rm -f $(TARGETS) exp6_oracle.exe
+	rm -f $(TARGETS) exp7_oracle.exe $(GENERATED)
+	rm -rf .reverify
 
 distclean: clean
-	rm -rf raw/smoke raw/pilot raw/baseline raw/mechanism raw/conditioning raw/loader \
-	       raw/portability raw/performance raw/raw_checksums.sha256 checksums.sha256
+	rm -rf raw/smoke raw/p1 raw/p2 raw/p3 raw/p4 raw/p5 raw/p6 \
+	       raw/manifest.csv raw/oracle_audit.jsonl raw/oracle_disagreements.jsonl \
+	       raw/raw_checksums.sha256 checksums.sha256

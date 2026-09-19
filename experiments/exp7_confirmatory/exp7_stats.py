@@ -359,9 +359,21 @@ def seed_stratified_bootstrap(values_by_seed, statistic, resamples: int = BOOTST
                               conf: float = TAIL_INTERVAL_CONF, rng_seed: int = 60001) -> dict:
     """Percentile interval from a seed-stratified bootstrap.
 
-    ``values_by_seed`` is a sequence of per-seed arrays; each resample draws, within every
-    seed, a sample of that seed's own size.  Preserving the seed strata is what keeps the
-    interval honest when the seeds differ systematically.
+    .. warning::
+
+       **Not to be used for an Experiment 7 interval.** It resamples *within* each seed at
+       that seed's own fixed size, so its bootstrap variance carries no between-seed
+       component: under seed heterogeneity -- which is exactly the signature of an
+       RNG-stream or portability defect -- the interval does not widen, and nothing built on
+       it can detect the effect it would exist to detect. The docstring this replaces
+       asserted the opposite ("preserving the seed strata is what keeps the interval honest
+       when the seeds differ systematically"), and that assertion carried through
+       Experiment 6's whole analysis.
+
+       Use :func:`exp7_families.cluster_bootstrap`, which resamples the *seeds themselves*
+       with replacement before resampling within them. This function is retained only
+       because Experiment 6's committed numbers were produced with it and must stay
+       reproducible.
     """
     rng = np.random.default_rng(rng_seed)
     arrays = [np.asarray(v, dtype=float) for v in values_by_seed]

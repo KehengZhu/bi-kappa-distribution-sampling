@@ -93,10 +93,16 @@ corrections rather than preferences:
 - The random stream changes for every seed. No seed-for-seed continuity with 1.x is claimed
   or possible; the stream change is the point, not a side effect.
 - Within version 2.0.0 the stream is a function of the engine and the parameters alone, so
-  libc++ and libstdc++ builds agree bit for bit. Across architectures they do not: `log`,
-  `exp` and `pow` are not correctly rounded and the arm64 and x86_64 libm implementations
-  differ, so cross-architecture agreement is statistical, not bitwise. G4 tests each of these
-  two claims with the rule appropriate to it.
+  libc++ and libstdc++ builds agree bit for bit at a fixed multiply-add contraction setting.
+  Reaching that took two changes, not one: moving the Gamma, normal and uniform primitives
+  into the header, and then replacing the `cos θ, φ` direction with a rejection method that
+  uses no trigonometry. The second was necessary because clang fuses a `sin`/`cos` pair on
+  one argument into `__sincos_stret`, whose sine differs from the standalone `sin` by an ulp
+  on about one argument in a thousand, while GCC does not — so the first change alone left
+  the two builds disagreeing, on the compiler's account rather than the library's.
+- Across architectures nothing is bitwise: `log` and `exp` are not correctly rounded and the
+  arm64 and x86_64 implementations differ, so cross-architecture agreement is statistical.
+  G4 tests each of the two claims with the rule appropriate to it.
 - `seed(int)` now calls `reset()`. Before 2.0.0 it did not, and under libstdc++ the cached
   second normal variate of `std::gamma_distribution` survived a reseed, so `seed(s)` followed
   by an odd number of draws did not reproduce. This is a defect fix; it changes behaviour.

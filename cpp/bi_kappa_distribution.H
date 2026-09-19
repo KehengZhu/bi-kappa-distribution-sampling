@@ -200,9 +200,15 @@ RealType logGamma(RealType a, GeneratorType &gen, RealType &ncache, bool &ncache
  *
  *  - **The random stream differs from releases before 2.0.0.**  The Gamma, normal and
  *    uniform primitives are implemented in @ref bikappa_detail rather than taken from
- *    `<random>`, so a given seed produces a different sequence than it used to.  In exchange
- *    the sequence no longer depends on which standard library is in use: the same seed gives
- *    bit-identical output under libc++ and libstdc++.
+ *    `<random>`, and the direction is drawn by a rejection method that uses no trigonometry,
+ *    so a given seed produces a different sequence than it used to.  In exchange the sequence
+ *    no longer depends on which standard library is in use: the same seed gives bit-identical
+ *    output under libc++ and libstdc++, which it did not before -- `std::gamma_distribution`
+ *    uses a different algorithm in each, and a `sin`/`cos` pair on one argument is fused by
+ *    one compiler and not the other.  What the sequence does still depend on is whether the
+ *    compiler contracts a multiply and an add; pass `-ffp-contract=off` to pin it to what the
+ *    source text says.  Across architectures nothing is bitwise: `log` and `exp` are not
+ *    correctly rounded and their implementations differ.
  *  - **Non-finite output is still possible, and is now countable.**  Sufficiently near
  *    `kappa = 1/2` the bi-Kappa law puts non-zero probability outside every finite
  *    floating-point range; those draws exist as mathematics and cannot be returned as
@@ -575,17 +581,38 @@ template <typename RealType= double> class bi_kappa_distribution
                                                                   m_normalCached);
             const RealType logR= kHalf * (std::log(x1) - logX2);
 
-            // Step 2: a direction uniform on S^2, from two open-interval uniforms.
-            const RealType cosTheta=
-                RealType(2.0) * bikappa_detail::openCanonical<RealType, GeneratorType>(gen) - kOne;
-            const RealType sinTheta=
-                std::sqrt(std::max(RealType(0.0), kOne - cosTheta * cosTheta));
-            const RealType phi= RealType(2.0) * piValue() *
-                                bikappa_detail::openCanonical<RealType, GeneratorType>(gen);
+            // Step 2: a direction uniform on S^2, by the rejection method of Marsaglia
+            // (1972), Ann. Math. Statist. 43(2), 645-646.  Draw a point uniformly in the
+            // unit disc and lift it; the lift is area-preserving, so the result is exactly
+            // uniform on the sphere.
+            //
+            // The textbook alternative -- cos(theta) uniform on (-1,1) and phi uniform on
+            // (0, 2pi) -- is equally correct as mathematics, and is what this loader used
+            // before 2.0.0.  It needs sin(phi) and cos(phi) of the same argument, and a
+            // compiler is free to fuse that pair into one combined routine.  Clang does, on
+            // Darwin, into __sincos_stret, whose sine differs from the standalone sin by one
+            // unit in the last place for roughly one argument in a thousand; GCC calls the
+            // two separately.  Two builds of this header then return different numbers for
+            // the same seed, and the difference belongs to the compiler rather than to the
+            // sampler.  The rejection method uses only sqrt, which IEEE-754 requires to be
+            // correctly rounded, so the direction is identical under every compiler.  It is
+            // also faster here, despite averaging 4/pi = 1.273 attempts per direction.
+            RealType d1, d2, dsq;
+            do
+            {
+                d1= RealType(2.0) *
+                    bikappa_detail::openCanonical<RealType, GeneratorType>(gen) - kOne;
+                d2= RealType(2.0) *
+                    bikappa_detail::openCanonical<RealType, GeneratorType>(gen) - kOne;
+                dsq= d1 * d1 + d2 * d2;
+            } while (dsq >= kOne);
+            // dsq == 0 is unreachable: openCanonical never returns exactly 1/2, so neither
+            // d1 nor d2 is ever exactly zero.
+            const RealType dscale= RealType(2.0) * std::sqrt(kOne - dsq);
 
-            const RealType nx= sinTheta * std::cos(phi);
-            const RealType ny= sinTheta * std::sin(phi);
-            const RealType nz= cosTheta;
+            const RealType nx= d1 * dscale;
+            const RealType ny= d2 * dscale;
+            const RealType nz= kOne - RealType(2.0) * dsq;
 
             // Step 3: the cap, tested in the field-aligned frame before anything is
             // exponentiated.  This is the same predicate the linear form applies --
@@ -769,8 +796,6 @@ template <typename RealType= double> class bi_kappa_distribution
         else
             gen.seed(static_cast<unsigned int>(s));
     }
-
-    static RealType piValue() { return RealType(3.14159265358979323846264338327950288L); }
 
     static bool approximatelyEqual(RealType a, RealType b)
     {

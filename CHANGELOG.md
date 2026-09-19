@@ -53,9 +53,29 @@ two builds were running different discrete samplers.
 
 `bi_kappa_distribution` now draws from primitives defined in its own header — a documented
 mapping from engine bits to the open interval `(0,1)`, a Marsaglia–Tsang Gamma, and a polar
-normal — so its output is a function of the engine alone. libc++ and libstdc++ builds agree
-bit for bit. Across architectures they do not, and cannot: `log`, `exp` and `pow` are not
-correctly rounded and their implementations differ.
+normal.
+
+That was not by itself enough. The direction was drawn as `cos θ` uniform on `(−1,1)` and
+`φ` uniform on `(0, 2π)`, which needs `sin(φ)` and `cos(φ)` of the same argument — and a
+compiler is free to fuse that pair into one routine. Clang does, on Darwin, into
+`__sincos_stret`, whose sine differs from the standalone `sin` by one unit in the last place
+for roughly one argument in a thousand; GCC calls the two separately. Two builds of the same
+header therefore returned different numbers for the same seed, and the difference belonged to
+the compiler rather than to the sampler.
+
+The direction is now drawn by the rejection method of Marsaglia (1972): a point uniform in
+the unit disc, lifted to the sphere. It uses only `sqrt`, which IEEE-754 requires to be
+correctly rounded, so it calls no library transcendental at all. It is also faster here —
+12.1 ns against 16.3 under clang, 10.2 against 18.9 under gcc — despite averaging `4/π`
+attempts.
+
+With that, the sampled sequence is a function of the engine alone: full-loader digests over
+six `kappa` values, capped and uncapped, rotated and anisotropic, agree bit for bit between
+libc++ and libstdc++ in both precisions. Two things it still depends on, both stated rather
+than assumed: whether the compiler contracts a multiply and an add (pass `-ffp-contract=off`
+to pin the stream to what the source text says), and the architecture — `log` and `exp` are
+not correctly rounded and their implementations differ, so cross-architecture agreement is
+statistical, not bitwise.
 
 The other samplers in this repository still call `<random>` distributions directly and do not
 have this property.

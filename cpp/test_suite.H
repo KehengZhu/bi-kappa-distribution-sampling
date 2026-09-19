@@ -3,6 +3,7 @@
 
 #include <array>
 #include <cmath>
+#include <cstring>
 #include <functional>
 #include <iostream>
 #include <limits>
@@ -20,6 +21,311 @@
 // included from more than one translation unit.
 
 typedef double TestReal;
+
+// ================================================================
+// Analytic support for the log-domain radius tests
+//
+// Every stochastic check below states its criterion either as an exact
+// deterministic identity or as an interval derived from the analytic null at the
+// sample size the test actually uses.  Nothing here is a tuned constant, so these
+// helpers exist to make that possible without adding a dependency.
+// ================================================================
+
+/// Engine-independent value of pi, spelled exactly as the sampler spells it, so a
+/// replayed draw reproduces the sampler bit for bit.
+static double test_pi() { return double(3.14159265358979323846264338327950288L); }
+
+// ---- polygamma -------------------------------------------------------------
+// psi^(m)(z) by upward recurrence to z >= 20 followed by the Stirling-type
+// asymptotic series.  Only m = 0, 1, 3 are needed: E[log X] = psi(a),
+// Var[log X] = psi'(a), and the standard error of a sample variance needs the
+// fourth central moment mu4 = psi'''(a) + 3 psi'(a)^2.
+
+static double test_digamma(double z)
+{
+    double r= 0.0;
+    while (z < 20.0)
+    {
+        r-= 1.0 / z;
+        z+= 1.0;
+    }
+    const double w= 1.0 / (z * z);
+    return r + std::log(z) - 0.5 / z -
+           w * (1.0 / 12.0 -
+                w * (1.0 / 120.0 - w * (1.0 / 252.0 - w * (1.0 / 240.0 - w * (1.0 / 132.0)))));
+}
+
+static double test_trigamma(double z)
+{
+    double r= 0.0;
+    while (z < 20.0)
+    {
+        r+= 1.0 / (z * z);
+        z+= 1.0;
+    }
+    const double w= 1.0 / (z * z);
+    return r + (1.0 / z) * (1.0 + 0.5 / z +
+                            w * (1.0 / 6.0 -
+                                 w * (1.0 / 30.0 - w * (1.0 / 42.0 - w * (1.0 / 30.0)))));
+}
+
+static double test_tetragamma(double z) // psi'''
+{
+    double r= 0.0;
+    while (z < 20.0)
+    {
+        r+= 6.0 / (z * z * z * z);
+        z+= 1.0;
+    }
+    const double w= 1.0 / (z * z);
+    return r + (1.0 / (z * z * z)) *
+                   (2.0 + 3.0 / z + w * (2.0 - w * (1.0 - w * (4.0 / 3.0 - w * 3.0))));
+}
+
+/// z such that P(Z > z) = alpha for a standard normal, by bisection on erfc.
+static double test_normal_upper_quantile(double alpha)
+{
+    double lo= 0.0, hi= 40.0;
+    for (int i= 0; i < 200; ++i)
+    {
+        const double mid= 0.5 * (lo + hi);
+        if (0.5 * std::erfc(mid / std::sqrt(2.0)) > alpha)
+            lo= mid;
+        else
+            hi= mid;
+    }
+    return 0.5 * (lo + hi);
+}
+
+// ---- exact binomial tails --------------------------------------------------
+static double test_binom_log_pmf(long long k, long long n, double p)
+{
+    if (k < 0 || k > n)
+        return -std::numeric_limits<double>::infinity();
+    const double dk= static_cast<double>(k), dn= static_cast<double>(n);
+    double t= std::lgamma(dn + 1.0) - std::lgamma(dk + 1.0) - std::lgamma(dn - dk + 1.0);
+    if (k > 0)
+        t+= dk * std::log(p);
+    if (k < n)
+        t+= (dn - dk) * std::log1p(-p);
+    return t;
+}
+
+/// P(X <= k) and P(X >= k) for X ~ Binomial(n, p), by summing the probability mass
+/// function over a window that carries all but a negligible part of the mass.  The
+/// window is 40 standard deviations plus 80 counts wide on each side, so the
+/// neglected tail is below 1e-300 for every (n, p) used here.
+static void test_binom_tails(long long k, long long n, double p, double *at_most,
+                             double *at_least)
+{
+    const double mean= static_cast<double>(n) * p;
+    const double sd= std::sqrt(static_cast<double>(n) * p * (1.0 - p));
+    long long lo= static_cast<long long>(std::floor(mean - 40.0 * sd - 80.0));
+    long long hi= static_cast<long long>(std::ceil(mean + 40.0 * sd + 80.0));
+    if (lo < 0)
+        lo= 0;
+    if (hi > n)
+        hi= n;
+    double below= 0.0, above= 0.0, at= 0.0;
+    for (long long i= lo; i <= hi; ++i)
+    {
+        const double w= std::exp(test_binom_log_pmf(i, n, p));
+        if (i < k)
+            below+= w;
+        else if (i > k)
+            above+= w;
+        else
+            at= w;
+    }
+    const double total= below + at + above;
+    *at_most= (total > 0.0) ? (below + at) / total : 0.0;
+    *at_least= (total > 0.0) ? (above + at) / total : 0.0;
+}
+
+/// True when @p k lies inside the exact two-sided (1 - alpha) binomial acceptance
+/// region for n trials at probability p.
+static bool test_binom_consistent(long long k, long long n, double p, double alpha)
+{
+    double at_most= 0.0, at_least= 0.0;
+    test_binom_tails(k, n, p, &at_most, &at_least);
+    const double worse= (at_most < at_least) ? at_most : at_least;
+    return worse > 0.5 * alpha;
+}
+
+// ---- the analytic representability floor -----------------------------------
+//
+// With a = kappa - 1/2, X1 ~ Gamma(3/2,1), Y ~ Gamma(a+1,1), U ~ Uniform(0,1) and
+// E = -log U ~ Exp(1), the shape-boosting identity gives log X2 = log Y - E/a, so
+//
+//     log R = (log X1 - log Y + E/a) / 2
+//
+// and therefore, for any threshold L,
+//
+//     P(log R > L) = P(E > 2aL - a log(X1/Y)) = E[(X1/Y)^a] exp(-2aL),
+//
+// because E is exponential and independent of X1 and Y.  The prefactor is exact:
+// E[X1^a] = Gamma(3/2+a)/Gamma(3/2) and E[Y^-a] = 1/Gamma(a+1).
+//
+// A returned component is V_j = R g_j with g = Q(ub) diag(sqrt(kappa) theta) n and
+// n uniform on the sphere, so the draw has no representation exactly when
+// R max_j |g_j| exceeds the largest finite value MAX of the type:
+//
+//     P(overflow) = [Gamma(3/2+a) / (Gamma(3/2) Gamma(a+1))] MAX^(-2a) E[(max_j |g_j|)^(2a)]
+//
+// The last factor depends only on the direction and is evaluated here by product
+// midpoint quadrature over (cos theta, phi); it converges to six digits well below
+// the grid used.
+
+static double test_radius_tail_prefactor(double a)
+{
+    return std::exp(std::lgamma(1.5 + a) - std::lgamma(1.5) - std::lgamma(1.0 + a));
+}
+
+/// @param p_overflow  P(the returned, rotated vector has no representation)
+/// @param p_rescued   P(the unrotated field-aligned vector has no representation
+///                    while the rotated one does) -- the rotation-recoverable set
+static void test_overflow_floor(double kappa, double theta_perp, double theta_par,
+                                const std::array<double, 3> &ub, double log_max,
+                                double *p_overflow, double *p_rescued)
+{
+    const int n_mu= 512, n_phi= 1024;
+    const double a= kappa - 0.5;
+    const double sqrt_kappa= std::sqrt(kappa);
+    const bool axis_aligned= (ub[0] == 0.0 && ub[1] == 0.0 && ub[2] == 1.0);
+    bi_kappa_distribution<double> rot(2.0, 1.0, 1.0);
+
+    double acc_overflow= 0.0, acc_rescued= 0.0;
+    for (int i= 0; i < n_mu; ++i)
+    {
+        const double mu= -1.0 + (static_cast<double>(i) + 0.5) * 2.0 / n_mu;
+        const double sin_theta= std::sqrt(std::max(0.0, 1.0 - mu * mu));
+        for (int k= 0; k < n_phi; ++k)
+        {
+            const double phi= (static_cast<double>(k) + 0.5) * 2.0 * test_pi() / n_phi;
+            std::array<double, 3> local;
+            local[0]= sqrt_kappa * theta_perp * (sin_theta * std::cos(phi));
+            local[1]= sqrt_kappa * theta_perp * (sin_theta * std::sin(phi));
+            local[2]= sqrt_kappa * theta_par * mu;
+            const std::array<double, 3> g=
+                axis_aligned ? local : rot.rotate_from_fieldAligned_frame(local, ub);
+            const double m_local=
+                std::max(std::abs(local[0]), std::max(std::abs(local[1]), std::abs(local[2])));
+            const double m_rot= std::max(std::abs(g[0]), std::max(std::abs(g[1]), std::abs(g[2])));
+            const double e_rot= std::exp(2.0 * a * (std::log(m_rot) - log_max));
+            acc_overflow+= e_rot;
+            const double gap= std::exp(2.0 * a * (std::log(m_local) - log_max)) - e_rot;
+            if (gap > 0.0)
+                acc_rescued+= gap;
+        }
+    }
+    const double cells= static_cast<double>(n_mu) * static_cast<double>(n_phi);
+    const double c= test_radius_tail_prefactor(a);
+    *p_overflow= c * acc_overflow / cells;
+    *p_rescued= c * acc_rescued / cells;
+}
+
+// ---- ulp accounting --------------------------------------------------------
+static double test_ulp_at(double x)
+{
+    const double ax= std::abs(x);
+    if (!(ax > 0.0))
+        return std::numeric_limits<double>::denorm_min();
+    return std::nextafter(ax, std::numeric_limits<double>::infinity()) - ax;
+}
+
+/// Distance between @p a and @p b in units in the last place of @p scale.
+static double test_ulp_distance(double a, double b, double scale)
+{
+    if (a == b)
+        return 0.0;
+    if (!std::isfinite(a) || !std::isfinite(b))
+        return std::numeric_limits<double>::infinity();
+    return std::abs(a - b) / test_ulp_at(scale);
+}
+
+/// True when this build fuses a multiply and an add into a single rounding.  A
+/// fused a*b + c rounds once, so x*x - (1 + 2^-51) with x = 1 + 2^-52 comes out as
+/// 2^-104 rather than exactly zero.  The operands are read through volatile so the
+/// expression cannot be folded at compile time.  This is a diagnostic, not an
+/// assertion: it explains a golden-stream mismatch rather than causing one.
+static bool test_fp_contraction_enabled()
+{
+    volatile double vx= 1.0 + std::ldexp(1.0, -52);
+    volatile double vc= -(1.0 + std::ldexp(1.0, -51));
+    const double x= vx;
+    const double c= vc;
+    const double r= x * x + c;
+    return r != 0.0;
+}
+
+// ---- replay of the sampler's primitive sequence ----------------------------
+//
+// The sampler draws, in this order: X1 ~ Gamma(3/2,1); log X2 by the boosting
+// identity at shape a; then a direction by Marsaglia's rejection method, two
+// open-interval uniforms per attempt, averaging 4/pi attempts.  The second
+// polar-normal variate is cached across calls, so a replay has to carry the same
+// cache or it desynchronizes after the first draw; the direction's rejection loop
+// makes the per-draw variate count variable, so a replay assuming a fixed count
+// would desynchronize too.  Replaying lets a test see the quantities the sampler
+// decides on -- log R, the direction, the pre-rotation vector -- which are
+// otherwise private.
+
+struct test_replay_state
+{
+    double cache;
+    bool cached;
+    test_replay_state() : cache(0.0), cached(false) {}
+};
+
+struct test_replay_draw
+{
+    double log_r;
+    double nx, ny, nz;
+};
+
+template <typename GeneratorType>
+static test_replay_draw test_replay(double a, GeneratorType &gen, test_replay_state &st)
+{
+    const double x1= bikappa_detail::marsagliaTsangGamma<double, GeneratorType>(
+        1.5, gen, st.cache, st.cached);
+    const double log_x2=
+        bikappa_detail::logGamma<double, GeneratorType>(a, gen, st.cache, st.cached);
+    test_replay_draw d;
+    d.log_r= 0.5 * (std::log(x1) - log_x2);
+    double d1, d2, dsq;
+    do
+    {
+        d1= 2.0 * bikappa_detail::openCanonical<double, GeneratorType>(gen) - 1.0;
+        d2= 2.0 * bikappa_detail::openCanonical<double, GeneratorType>(gen) - 1.0;
+        dsq= d1 * d1 + d2 * d2;
+    } while (dsq >= 1.0);
+    const double dscale= 2.0 * std::sqrt(1.0 - dsq);
+    d.nx= d1 * dscale;
+    d.ny= d2 * dscale;
+    d.nz= 1.0 - 2.0 * dsq;
+    return d;
+}
+
+/// Engines that drive openCanonical() to the two ends of its range.  The mapping
+/// from engine bits to the open interval is deterministic, so the smallest and the
+/// largest value it can return are reachable exactly, which a finite random sample
+/// never is: k = 0 has probability 2^-52 per draw in double.
+struct test_all_zero_engine
+{
+    typedef unsigned int result_type;
+    static result_type min() { return 0u; }
+    static result_type max() { return 4294967295u; }
+    result_type operator()() { return 0u; }
+};
+
+struct test_all_ones_engine
+{
+    typedef unsigned int result_type;
+    static result_type min() { return 0u; }
+    static result_type max() { return 4294967295u; }
+    result_type operator()() { return 4294967295u; }
+};
+
 
 // ================================================================
 // test_transform
@@ -1169,6 +1475,12 @@ static int test_define_field_aligned()
 //
 // A1 is a direct, deterministic check of the overflow mechanism itself; A2 and A3
 // guard the released sampler at the two ends of the range.
+//
+// Since 2.0.0 the sampler does not form X2 at all -- it carries log X2 and log R --
+// so A1 and A4 now describe a formation the released class no longer uses, and what
+// A2 and A3 measure is the representability floor of the type rather than the
+// avoidable loss of an intermediate.  test_log_radius_finiteness below covers the
+// log-domain sampler against that floor directly.
 // ================================================================
 static int test_radius_formation()
 {
@@ -1215,29 +1527,40 @@ static int test_radius_formation()
                   << " (expect 0): " << (ok ? "PASS" : "FAIL") << std::endl;
     }
 
-    // ---- A3: float at kappa = 0.6 stays under the measured bound ---------
-    // Measured non-finite fraction with the split formation is 2.9e-5 (libc++)
-    // and 3.1e-5 (libstdc++); with the ratio formation it is 1.5e-4.  The bound
-    // below sits between the two, so it fails if the formation regresses and
-    // passes with ordinary seed-to-seed variation.
+    // ---- A3: float at kappa = 0.6 sits on the representability floor -----
+    // This check used to compare the measured fraction against a constant chosen
+    // to sit between two measured values.  That constant carried no information
+    // about what the fraction should be, and it stopped describing the sampler
+    // once the radius moved into the log domain: the loss is now set by the
+    // largest finite float rather than by an intermediate that underflows, and
+    // the two formations no longer differ by the factor the constant encoded.
+    // The criterion is now the analytic floor at this configuration, tested with
+    // an exact two-sided binomial interval at a stated level.
     {
-        const int n= 500000;
-        int nonfinite= 0;
+        const long long n= 500000;
+        const double alpha= 1.0e-3;
+        const std::array<double, 3> z_hat= {0.0, 0.0, 1.0};
+        double p_floor= 0.0, p_rescued= 0.0;
+        test_overflow_floor(0.6, 1.0, 1.0, z_hat,
+                            std::log(static_cast<double>(std::numeric_limits<float>::max())),
+                            &p_floor, &p_rescued);
+        long long nonfinite= 0;
         bi_kappa_distribution<float> dist(0.6f, 1.0f, 1.0f, {0.0f, 0.0f, 1.0f},
                                           bi_kappa_distribution<float>::no_cap());
         dist.seed(4001);
-        for (int i= 0; i < n; ++i)
+        for (long long i= 0; i < n; ++i)
         {
-            const auto v= dist();
+            const bi_kappa_distribution<float>::result_type v= dist();
             if (!std::isfinite(v[0]) || !std::isfinite(v[1]) || !std::isfinite(v[2]))
                 ++nonfinite;
         }
-        const double frac= static_cast<double>(nonfinite) / n;
-        const bool ok= (frac < 8.0e-5);
+        const bool ok= test_binom_consistent(nonfinite, n, p_floor, alpha);
         all_ok= all_ok && ok;
-        std::cout << "  A3 float, kappa=0.6, non-finite fraction=" << frac
-                  << " (bound 8e-5, ratio-formation value 1.5e-4): "
-                  << (ok ? "PASS" : "FAIL") << std::endl;
+        std::cout << "  A3 float, kappa=0.6, non-finite " << nonfinite << "/" << n
+                  << ", analytic floor " << p_floor << " (expected "
+                  << p_floor * static_cast<double>(n)
+                  << "), inside the exact two-sided binomial interval at alpha=" << alpha
+                  << ": " << (ok ? "PASS" : "FAIL") << std::endl;
     }
 
     // ---- A4: the fix does not perturb the law at ordinary kappa ----------
@@ -1613,6 +1936,1066 @@ static int test_no_cap_semantics_bimaxwellian()
 }
 
 // ================================================================
+// test_log_radius_primitive
+//
+// The sampling primitives the log-domain radius is built from, checked on their
+// own: the open-interval uniform, the log-domain Gamma, its law, and the
+// underflow the log domain exists to avoid.
+// ================================================================
+static int test_log_radius_primitive()
+{
+    bool all_ok= true;
+    std::cout << "\n--- test_log_radius_primitive ---" << std::endl;
+
+    // ---- L0: the polygamma functions L3 depends on are right ----------------
+    // E[log X] = psi(a) and Var[log X] = psi'(a); the standard error of the sample
+    // variance needs psi'''(a) as well.  Checking them against closed forms at z = 1
+    // and against the recurrence keeps a wrong z-score from being read as a wrong
+    // sampler.
+    {
+        const double euler= 0.57721566490153286061;
+        const double pi= test_pi();
+        const double want_psi= -euler;
+        const double want_psi1= pi * pi / 6.0;
+        const double want_psi3= pi * pi * pi * pi / 15.0;
+        bool ok= std::abs(test_digamma(1.0) - want_psi) <= 1e-12 * std::abs(want_psi) &&
+                 std::abs(test_trigamma(1.0) - want_psi1) <= 1e-12 * want_psi1 &&
+                 std::abs(test_tetragamma(1.0) - want_psi3) <= 1e-12 * want_psi3;
+        const double zs[4]= {0.001, 0.37, 3.0, 11.5};
+        for (int i= 0; i < 4; ++i)
+        {
+            const double z= zs[i];
+            if (std::abs(test_digamma(z + 1.0) - test_digamma(z) - 1.0 / z) >
+                1e-11 * (1.0 / z))
+                ok= false;
+            if (std::abs(test_trigamma(z) - test_trigamma(z + 1.0) - 1.0 / (z * z)) >
+                1e-11 / (z * z))
+                ok= false;
+            if (std::abs(test_tetragamma(z) - test_tetragamma(z + 1.0) -
+                         6.0 / (z * z * z * z)) > 1e-11 * 6.0 / (z * z * z * z))
+                ok= false;
+        }
+        all_ok= all_ok && ok;
+        std::cout << "  L0 digamma/trigamma/tetragamma match psi(1)=-gamma, psi'(1)=pi^2/6,"
+                     " psi'''(1)=pi^4/15 and their recurrences: "
+                  << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    // ---- L1: the uniform never touches an endpoint, and its two endpoints are exact ----
+    // A logarithm is taken of this value, so 0 would give -inf and 1 would give 0,
+    // silently turning a Gamma(a) draw into a Gamma(a+1) one.  The sampled scan shows
+    // no endpoint occurs; the two stub engines show what the mapping returns at the
+    // ends of the engine's range, which a random sample of any practical size never
+    // reaches (k = 0 has probability 2^-52 per draw in double).
+    {
+        const long long n= 10000000;
+        bool open_double= true, open_float= true;
+        double min_d= 2.0, max_d= -1.0;
+        float min_f= 2.0f, max_f= -1.0f;
+
+        std::mt19937 gen_d(90001u);
+        for (long long i= 0; i < n; ++i)
+        {
+            const double u= bikappa_detail::openCanonical<double, std::mt19937>(gen_d);
+            if (!(u > 0.0) || !(u < 1.0))
+                open_double= false;
+            if (u < min_d)
+                min_d= u;
+            if (u > max_d)
+                max_d= u;
+        }
+        std::mt19937 gen_f(90002u);
+        for (long long i= 0; i < n; ++i)
+        {
+            const float u= bikappa_detail::openCanonical<float, std::mt19937>(gen_f);
+            if (!(u > 0.0f) || !(u < 1.0f))
+                open_float= false;
+            if (u < min_f)
+                min_f= u;
+            if (u > max_f)
+                max_f= u;
+        }
+
+        test_all_zero_engine zero_d, zero_f;
+        test_all_ones_engine ones_d, ones_f;
+        const double lo_d= bikappa_detail::openCanonical<double, test_all_zero_engine>(zero_d);
+        const double hi_d= bikappa_detail::openCanonical<double, test_all_ones_engine>(ones_d);
+        const float lo_f= bikappa_detail::openCanonical<float, test_all_zero_engine>(zero_f);
+        const float hi_f= bikappa_detail::openCanonical<float, test_all_ones_engine>(ones_f);
+
+        const double lo_d_exact= std::ldexp(1.0, -53);
+        const double hi_d_exact= 1.0 - std::ldexp(1.0, -53);
+        const float lo_f_exact= std::ldexp(1.0f, -24);
+        const float hi_f_exact= 1.0f - std::ldexp(1.0f, -24);
+
+        const bool ends_ok= (lo_d == lo_d_exact) && (hi_d == hi_d_exact) &&
+                            (lo_f == lo_f_exact) && (hi_f == hi_f_exact);
+        const bool range_ok= (min_d >= lo_d_exact) && (max_d <= hi_d_exact) &&
+                             (min_f >= lo_f_exact) && (max_f <= hi_f_exact);
+        const bool ok= open_double && open_float && ends_ok && range_ok;
+        all_ok= all_ok && ok;
+        std::cout << "  L1 openCanonical strictly inside (0,1) over " << n
+                  << " draws each in double and float, and its two endpoints equal 2^-(b+1)"
+                     " and 1-2^-(b+1) exactly: "
+                  << (ok ? "PASS" : "FAIL") << std::endl;
+        if (!ok)
+        {
+            std::cout << "    double: open=" << open_double << " lo=" << lo_d << " (want "
+                      << lo_d_exact << ") hi=" << hi_d << " (want " << hi_d_exact << ")\n";
+            std::cout << "    float : open=" << open_float << " lo=" << lo_f << " (want "
+                      << lo_f_exact << ") hi=" << hi_f << " (want " << hi_f_exact << ")\n";
+        }
+    }
+
+    // ---- L2 and L3: logGamma is finite everywhere, and samples the right law ----
+    // log X = log Y + log(U)/a with Y ~ Gamma(a+1,1) and U ~ Uniform(0,1) gives
+    // E[log X] = psi(a+1) - 1/a = psi(a) and Var[log X] = psi'(a+1) + 1/a^2 = psi'(a),
+    // both exactly and independently of how Y is generated.  The criterion is a
+    // z-score against the analytic standard error at the n each cell uses, with the
+    // critical value derived from a nominal family false-alarm rate of 1e-4 spread
+    // over the 24 statistics by Bonferroni -- no tuned bound.
+    {
+        const double shapes[12]= {1e-6, 1e-4, 1e-3, 1e-2, 0.1,   0.5,
+                                  0.9,  0.99, 1.0,  1.001, 2.0,  4.5};
+        const long long n_per= 100000;
+        const double family_alpha= 1.0e-4;
+        const double z_crit= test_normal_upper_quantile(0.5 * family_alpha / 24.0);
+
+        long long nonfinite_total= 0;
+        double worst_z= 0.0;
+        double worst_shape= 0.0;
+        bool law_ok= true;
+        for (int s= 0; s < 12; ++s)
+        {
+            const double a= shapes[s];
+            std::mt19937 gen(static_cast<unsigned int>(90010 + s));
+            test_replay_state st;
+            long long cnt= 0;
+            double mean= 0.0, m2= 0.0;
+            for (long long i= 0; i < n_per; ++i)
+            {
+                const double lx= bikappa_detail::logGamma<double, std::mt19937>(
+                    a, gen, st.cache, st.cached);
+                if (!std::isfinite(lx))
+                {
+                    ++nonfinite_total;
+                    continue;
+                }
+                ++cnt;
+                const double d= lx - mean;
+                mean+= d / static_cast<double>(cnt);
+                m2+= d * (lx - mean);
+            }
+            if (cnt < 2)
+            {
+                law_ok= false;
+                continue;
+            }
+            const double var= m2 / static_cast<double>(cnt - 1);
+            const double psi1= test_trigamma(a);
+            const double psi3= test_tetragamma(a);
+            const double z_mean= (mean - test_digamma(a)) /
+                                 std::sqrt(psi1 / static_cast<double>(cnt));
+            const double z_var= (var - psi1) / std::sqrt((psi3 + 2.0 * psi1 * psi1) /
+                                                         static_cast<double>(cnt));
+            if (std::abs(z_mean) > z_crit || std::abs(z_var) > z_crit)
+                law_ok= false;
+            if (std::abs(z_mean) > worst_z)
+            {
+                worst_z= std::abs(z_mean);
+                worst_shape= a;
+            }
+            if (std::abs(z_var) > worst_z)
+            {
+                worst_z= std::abs(z_var);
+                worst_shape= a;
+            }
+        }
+        const bool l2_ok= (nonfinite_total == 0);
+        all_ok= all_ok && l2_ok && law_ok;
+        std::cout << "  L2 logGamma finite over 12 shapes x " << n_per << " draws ("
+                  << nonfinite_total << " non-finite): " << (l2_ok ? "PASS" : "FAIL")
+                  << std::endl;
+        std::cout << "  L3 E[log X]=psi(a) and Var[log X]=psi'(a), worst |z|=" << worst_z
+                  << " at a=" << worst_shape << " against critical " << z_crit
+                  << " (family alpha 1e-4 over 24 statistics): " << (law_ok ? "PASS" : "FAIL")
+                  << std::endl;
+    }
+
+    // ---- L4: the mechanism, deterministically and with no RNG ---------------
+    // At a = 0.01 the product form of the boosting identity, Y U^(1/a), underflows to
+    // exactly zero and the draw is lost; the additive form log Y + log(U)/a is an
+    // ordinary negative number.  The expected value is written a second way,
+    // log 2 - 400 log 10, so the check is against algebra rather than against a
+    // repetition of the same expression.
+    {
+        const double a= 0.01;
+        const double y= 2.0;
+        const double u= 1.0e-4;
+        const double product= y * std::pow(u, 1.0 / a);
+        const double log_form= std::log(y) + std::log(u) / a;
+        const double expected= std::log(2.0) - 400.0 * std::log(10.0);
+        const double tol= 8.0 * test_ulp_at(expected);
+        const bool underflowed= (product == 0.0);
+        const bool finite= std::isfinite(log_form);
+        const bool matches= std::abs(log_form - expected) <= tol;
+        const bool ok= underflowed && finite && matches;
+        all_ok= all_ok && ok;
+        std::cout << "  L4 y*pow(u,1/a) underflows to exactly 0 while log y + log(u)/a = "
+                  << log_form << " (expected " << expected << ", within 8 ulp): "
+                  << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    std::cout << "test_log_radius_primitive: " << (all_ok ? "PASS" : "FAIL") << std::endl;
+    return all_ok ? 0 : 1;
+}
+
+// ================================================================
+// test_log_radius_no_regression
+//
+// The log domain must not change the radius where nothing forced it to, and the
+// stream it produces must not drift.
+// ================================================================
+
+/// 16 draws at kappa = 2, theta_perp = 1, theta_par = 2, ub = {0,0,1}, seed 20030410,
+/// as exact bit patterns.  ONE array serves both standard libraries: since 2.0.0 the
+/// Gamma, normal and uniform primitives live in the header, so the sampled sequence
+/// is a function of the engine alone.  That equality is not background to this test,
+/// it is the assertion -- a libstdc++ build that disagreed with the array its build
+/// selects would mean the stream had become a property of the standard library
+/// again.  Each array below was produced identically by libc++ and by libstdc++.
+///
+/// There are two arrays because the stream depends on one thing the standard library
+/// is not responsible for: whether the compiler fuses a multiply and an add.  A
+/// fused multiply-add rounds once instead of twice, and the sampler has several
+/// expressions it applies to -- `1 - cosTheta*cosTheta` and `1 + c*x` among them --
+/// so a contracting build differs from a non-contracting one by one or two units in
+/// the last place on about a tenth of the components.  The two toolchains do not
+/// default alike: clang contracts at every optimization level, GCC only from -O2.
+/// Both settings are frozen here, and a stream matching neither is drift.
+///
+/// Off is what the source text specifies; a project that needs the stream to be a
+/// property of the source alone should pass -ffp-contract=off, and that belongs in
+/// the library's build documentation rather than in this test.
+static const unsigned long long k_golden_stream_no_fma[16][3]= {
+    {0xbfd15ba81cfd18ddULL, 0xbff7e0f2cd8faeddULL, 0x3fda9924c54e1574ULL},
+    {0xbfdea5acf93ac620ULL, 0xbfda2dc0d512deccULL, 0xbfbf0a70e5bc1734ULL},
+    {0xbfddb887e0c8ce9fULL, 0x40080571d77bd3ebULL, 0xc0038109652c3ca4ULL},
+    {0x3fe698cd0e52adcdULL, 0x40026fd65169f08fULL, 0x3ffea0be023e0cf4ULL},
+    {0x3ff16471e77dedd5ULL, 0xbff17910ce76ee65ULL, 0xbfea8567aa7fde0fULL},
+    {0xbff3b6c788b6df6aULL, 0xbf8d3eef1117229eULL, 0xbff3fd8b4e31160fULL},
+    {0xbff24018d0a8cbdbULL, 0xbfd124d1dc511927ULL, 0xbfe962c1208342d5ULL},
+    {0xc007882129566ec9ULL, 0xbfcb3b5d2ab5adf0ULL, 0xbffaecc134f280f4ULL},
+    {0xbfe3ee2b53da3ec7ULL, 0xbfcf4c5a89d81b95ULL, 0xbfe20cb5c9f2a311ULL},
+    {0x3fe8a89dacd86329ULL, 0x3ff89f8ce2af2c4cULL, 0xbfeffe21eaad910cULL},
+    {0xbfd158b279b811c4ULL, 0xbfd3cbc1d046b426ULL, 0x40011c8dcb02c2a2ULL},
+    {0xbfc43078ce64f93cULL, 0xbfd628128e7f6e70ULL, 0x3fe06a0b502aa269ULL},
+    {0x3feee1664b806335ULL, 0x3fcc2cc34ec3b107ULL, 0x400a462fc5d5b51bULL},
+    {0x3ff040ff5ccae55dULL, 0x3fe85f8198bf9596ULL, 0xc00ecb4f11c9afe3ULL},
+    {0xbfe97d2723ac9d35ULL, 0xbff1331e78d62310ULL, 0xbfd011092bdec4ebULL},
+    {0x3fa09ad0b0a37a31ULL, 0x3fd241313bfa4a21ULL, 0x3ff701cef7135568ULL}};
+
+/// The same 16 draws from a build that contracts multiply-add.
+static const unsigned long long k_golden_stream_fma[16][3]= {
+    {0xbfd15ba81cfd18ddULL, 0xbff7e0f2cd8faeddULL, 0x3fda9924c54e1574ULL},
+    {0xbfdea5acf93ac61dULL, 0xbfda2dc0d512dec9ULL, 0xbfbf0a70e5bc1731ULL},
+    {0xbfddb887e0c8ce9fULL, 0x40080571d77bd3ebULL, 0xc0038109652c3ca4ULL},
+    {0x3fe698cd0e52adcdULL, 0x40026fd65169f08fULL, 0x3ffea0be023e0cf4ULL},
+    {0x3ff16471e77dedd5ULL, 0xbff17910ce76ee65ULL, 0xbfea8567aa7fde0fULL},
+    {0xbff3b6c788b6df6aULL, 0xbf8d3eef1117229eULL, 0xbff3fd8b4e31160fULL},
+    {0xbff24018d0a8cbdbULL, 0xbfd124d1dc511927ULL, 0xbfe962c1208342d5ULL},
+    {0xc007882129566ec9ULL, 0xbfcb3b5d2ab5adf0ULL, 0xbffaecc134f280f4ULL},
+    {0xbfe3ee2b53da3ec7ULL, 0xbfcf4c5a89d81b95ULL, 0xbfe20cb5c9f2a311ULL},
+    {0x3fe8a89dacd8632bULL, 0x3ff89f8ce2af2c4eULL, 0xbfeffe21eaad910dULL},
+    {0xbfd158b279b811c5ULL, 0xbfd3cbc1d046b428ULL, 0x40011c8dcb02c2a4ULL},
+    {0xbfc43078ce64f93cULL, 0xbfd628128e7f6e70ULL, 0x3fe06a0b502aa269ULL},
+    {0x3feee1664b806335ULL, 0x3fcc2cc34ec3b107ULL, 0x400a462fc5d5b51bULL},
+    {0x3ff040ff5ccae55dULL, 0x3fe85f8198bf9596ULL, 0xc00ecb4f11c9afe3ULL},
+    {0xbfe97d2723ac9d35ULL, 0xbff1331e78d62310ULL, 0xbfd011092bdec4ebULL},
+    {0x3fa09ad0b0a37a31ULL, 0x3fd241313bfa4a21ULL, 0x3ff701cef7135568ULL}};
+
+static int test_log_radius_no_regression()
+{
+    bool all_ok= true;
+    std::cout << "\n--- test_log_radius_no_regression ---" << std::endl;
+
+    // ---- M1: at kappa = 2 the two formations describe the same number --------
+    // Given the same X1 and X2, exp((log X1 - log X2)/2) and sqrt(X1)/sqrt(X2) differ
+    // only by the rounding of the round trip through log and exp.  That error is
+    // bounded, not guessed.  Writing u = 2^-53 for the unit roundoff: each logarithm
+    // carries about u |log x| of absolute error, the halved difference inherits both,
+    // the exponential turns that into the same relative error, and the reference
+    // itself rounds twice in the square roots and once in the division.  So the
+    // relative difference is at most about u (|log x1| + |log x2| + 2.5), and since
+    // one ulp is at least u times the value, that is at most
+    // |log x1| + |log x2| + 3 ulp.  The criterion is that bound, evaluated from the
+    // draw itself; at kappa = 2 it sits near 4 ulp because both logarithms are of
+    // order one.
+    {
+        const long long n= 200000;
+        std::mt19937 gen(90003u);
+        test_replay_state st;
+        long long violations= 0;
+        double worst= 0.0, worst_bound= 0.0;
+        for (long long i= 0; i < n; ++i)
+        {
+            const double x1= bikappa_detail::marsagliaTsangGamma<double, std::mt19937>(
+                1.5, gen, st.cache, st.cached);
+            const double x2= bikappa_detail::marsagliaTsangGamma<double, std::mt19937>(
+                1.5, gen, st.cache, st.cached); // shape a = kappa - 1/2 = 3/2
+            const double r_log= std::exp(0.5 * (std::log(x1) - std::log(x2)));
+            const double r_lin= std::sqrt(x1) / std::sqrt(x2);
+            const double ulp= test_ulp_distance(r_log, r_lin, r_lin);
+            const double bound= 3.0 + std::abs(std::log(x1)) + std::abs(std::log(x2));
+            if (!(ulp <= bound))
+                ++violations;
+            if (ulp > worst)
+                worst= ulp;
+            if (ulp / bound > worst_bound)
+                worst_bound= ulp / bound;
+        }
+        const bool ok= (violations == 0);
+        all_ok= all_ok && ok;
+        std::cout << "  M1 kappa=2, log-domain radius == sqrt(x1)/sqrt(x2) within the"
+                     " round-trip bound over " << n << " draws (worst " << worst
+                  << " ulp, worst fraction of the bound " << worst_bound << ", "
+                  << violations << " violations): " << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    // ---- M2: the stream has not drifted -------------------------------------
+    {
+        const bool fma= test_fp_contraction_enabled();
+        bi_kappa_distribution<double> dist(2.0, 1.0, 2.0, {0.0, 0.0, 1.0});
+        dist.seed(20030410);
+        int mismatch_no_fma= 0, mismatch_fma= 0;
+        unsigned long long got[16][3];
+        for (int i= 0; i < 16; ++i)
+        {
+            const bi_kappa_distribution<double>::result_type v= dist();
+            for (int j= 0; j < 3; ++j)
+            {
+                std::memcpy(&got[i][j], &v[j], sizeof(got[i][j]));
+                if (got[i][j] != k_golden_stream_no_fma[i][j])
+                    ++mismatch_no_fma;
+                if (got[i][j] != k_golden_stream_fma[i][j])
+                    ++mismatch_fma;
+            }
+        }
+        const bool matched_no_fma= (mismatch_no_fma == 0);
+        const bool matched_fma= (mismatch_fma == 0);
+        const bool ok= matched_no_fma || matched_fma;
+        // The build's own multiply-add behaviour predicts which array should match,
+        // so a mismatch between prediction and outcome is worth printing even though
+        // the assertion is that one of the two matches.
+        const bool as_predicted= (fma ? matched_fma : matched_no_fma);
+        all_ok= all_ok && ok;
+        if (!ok)
+        {
+            const int shown= (mismatch_no_fma <= mismatch_fma) ? 0 : 1;
+            std::cout << "    closest frozen array is the "
+                      << (shown == 0 ? "non-contracting" : "contracting") << " one, with "
+                      << (shown == 0 ? mismatch_no_fma : mismatch_fma) << " of 48 words"
+                      << " different; this build "
+                      << (fma ? "does" : "does not") << " fuse multiply-add\n";
+            int printed= 0;
+            for (int i= 0; i < 16 && printed < 6; ++i)
+                for (int j= 0; j < 3 && printed < 6; ++j)
+                {
+                    const unsigned long long want= (shown == 0) ? k_golden_stream_no_fma[i][j]
+                                                                : k_golden_stream_fma[i][j];
+                    if (got[i][j] != want)
+                    {
+                        std::cout << "    draw " << i << " component " << j << ": got 0x"
+                                  << std::hex << got[i][j] << " want 0x" << want << std::dec
+                                  << "\n";
+                        ++printed;
+                    }
+                }
+        }
+        std::cout << "  M2 16 draws at (2,1,2,{0,0,1},20030410) reproduce the frozen golden"
+                     " array bitwise -- one array per multiply-add setting, each of them"
+                     " shared by libc++ and libstdc++ (matched the "
+                  << (matched_no_fma ? "non-contracting" : (matched_fma ? "contracting"
+                                                                        : "neither"))
+                  << " array; this build " << (fma ? "does" : "does not")
+                  << " fuse multiply-add" << (as_predicted ? "" : ", which disagrees")
+                  << "): " << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    // ---- M3: the same, through the boosting identity the sampler actually uses ----
+    // Here X2 is never formed by the log path: it carries log X2 = log Y + log(U)/a,
+    // while the linear path forms Y U^(1/a).  The bound gains the term the boosting
+    // step contributes, eps |log U| / a, which is why it is wider than M1's.
+    {
+        const long long n= 200000;
+        const double a= 1.5;
+        std::mt19937 gen(90004u);
+        test_replay_state st;
+        long long violations= 0;
+        double worst= 0.0, worst_bound= 0.0;
+        for (long long i= 0; i < n; ++i)
+        {
+            const double y= bikappa_detail::marsagliaTsangGamma<double, std::mt19937>(
+                a + 1.0, gen, st.cache, st.cached);
+            const double u= bikappa_detail::openCanonical<double, std::mt19937>(gen);
+            const double x1= bikappa_detail::marsagliaTsangGamma<double, std::mt19937>(
+                1.5, gen, st.cache, st.cached);
+            const double log_x2= std::log(y) + std::log(u) / a;
+            const double x2= y * std::pow(u, 1.0 / a);
+            const double r_log= std::exp(0.5 * (std::log(x1) - log_x2));
+            const double r_lin= std::sqrt(x1) / std::sqrt(x2);
+            const double ulp= test_ulp_distance(r_log, r_lin, r_lin);
+            // Same accounting as M1, plus what the boosting step costs on each side:
+            // the log path carries u |log u| / a from dividing the uniform's logarithm
+            // by the shape, and pow(u, 1/a) carries the same amount on the linear side.
+            const double bound= 4.0 + std::abs(std::log(x1)) + std::abs(std::log(y)) +
+                                2.0 * std::abs(std::log(u)) / a;
+            if (!(ulp <= bound))
+                ++violations;
+            if (ulp > worst)
+                worst= ulp;
+            if (ulp / bound > worst_bound)
+                worst_bound= ulp / bound;
+        }
+        const bool ok= (violations == 0);
+        all_ok= all_ok && ok;
+        std::cout << "  M3 kappa=2, boosted log X2 vs y*pow(u,1/a) within the round-trip"
+                     " bound (worst " << worst << " ulp, worst fraction of the bound "
+                  << worst_bound << ", " << violations << " violations): "
+                  << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    std::cout << "test_log_radius_no_regression: " << (all_ok ? "PASS" : "FAIL") << std::endl;
+    return all_ok ? 0 : 1;
+}
+// ================================================================
+// test_log_radius_finiteness
+//
+// Near kappa = 1/2 the bi-Kappa law puts non-zero probability outside every finite
+// floating-point range, so a correct sampler does not return only finite vectors --
+// it returns exactly as many non-finite ones as the type forces and no more.  The
+// criterion for each cell is therefore the analytic representability floor derived
+// above, tested with an exact binomial interval, not a bound on "small".
+// ================================================================
+
+/// Non-finite count over @p n uncapped draws of the released sampler, isotropic and
+/// unrotated so that the analytic floor applies directly.
+template <typename RealType>
+static long long test_count_nonfinite(double kappa, double theta, int seed, long long n)
+{
+    bi_kappa_distribution<RealType> dist(
+        static_cast<RealType>(kappa), static_cast<RealType>(theta),
+        static_cast<RealType>(theta));
+    dist.seed(seed);
+    long long bad= 0;
+    for (long long i= 0; i < n; ++i)
+    {
+        const typename bi_kappa_distribution<RealType>::result_type v= dist();
+        if (!std::isfinite(v[0]) || !std::isfinite(v[1]) || !std::isfinite(v[2]))
+            ++bad;
+    }
+    return bad;
+}
+
+template <typename RealType>
+static bool test_report_floor(const char *tag, const char *label, double kappa, double theta,
+                              int seed, long long n, double alpha, bool &all_ok)
+{
+    const std::array<double, 3> z_hat= {0.0, 0.0, 1.0};
+    const double log_max= std::log(static_cast<double>(std::numeric_limits<RealType>::max()));
+    double p_overflow= 0.0, p_rescued= 0.0;
+    test_overflow_floor(kappa, theta, theta, z_hat, log_max, &p_overflow, &p_rescued);
+    const long long observed= test_count_nonfinite<RealType>(kappa, theta, seed, n);
+    const bool ok= test_binom_consistent(observed, n, p_overflow, alpha);
+    all_ok= all_ok && ok;
+    std::cout << "  " << tag << " " << label << ": non-finite " << observed << "/" << n
+              << " = " << (static_cast<double>(observed) / static_cast<double>(n))
+              << ", analytic floor " << p_overflow << " (expected "
+              << p_overflow * static_cast<double>(n)
+              << "), inside the exact two-sided binomial interval at alpha=" << alpha
+              << ": " << (ok ? "PASS" : "FAIL") << std::endl;
+    return ok;
+}
+
+static int test_log_radius_finiteness()
+{
+    bool all_ok= true;
+    std::cout << "\n--- test_log_radius_finiteness ---" << std::endl;
+    const double alpha= 1.0e-3;
+
+    // ---- N1: the rate is the floor, not zero -------------------------------
+    test_report_floor<double>("N1", "double kappa=0.505", 0.505, 1.0, 90030, 1000000, alpha,
+                              all_ok);
+
+    // ---- N2: two more cells on the same rule -------------------------------
+    test_report_floor<float>("N2", "float  kappa=0.55 ", 0.55, 1.0, 90031, 1000000, alpha,
+                             all_ok);
+    test_report_floor<double>("N2", "double kappa=0.51 ", 0.51, 1.0, 90032, 1000000, alpha,
+                              all_ok);
+
+    // ---- N3: where the floor is negligible, zero is a prediction -----------
+    // The analytic floor here is below 1e-19, so P(at least one non-finite draw in
+    // 1e6) is below 1e-13: exactly zero is not an assumption about "large enough
+    // kappa", it is what the floor predicts at this n.
+    {
+        const long long n= 1000000;
+        const std::array<double, 3> z_hat= {0.0, 0.0, 1.0};
+        double pf= 0.0, pd= 0.0, dummy= 0.0;
+        test_overflow_floor(0.75, 1.0, 1.0, z_hat,
+                            std::log(static_cast<double>(std::numeric_limits<float>::max())),
+                            &pf, &dummy);
+        test_overflow_floor(0.55, 1.0, 1.0, z_hat,
+                            std::log(std::numeric_limits<double>::max()), &pd, &dummy);
+        const long long got_f= test_count_nonfinite<float>(0.75, 1.0, 90033, n);
+        const long long got_d= test_count_nonfinite<double>(0.55, 1.0, 90034, n);
+        const double p_any= 1.0 - std::exp(static_cast<double>(n) * std::log1p(-pf)) +
+                            1.0 - std::exp(static_cast<double>(n) * std::log1p(-pd));
+        const bool ok= (got_f == 0) && (got_d == 0);
+        all_ok= all_ok && ok;
+        std::cout << "  N3 float kappa=0.75 (" << got_f << ") and double kappa=0.55 ("
+                  << got_d << ") give exactly zero non-finite in " << n
+                  << "; floors " << pf << " and " << pd
+                  << ", so P(any non-finite) = " << p_any << ": " << (ok ? "PASS" : "FAIL")
+                  << std::endl;
+    }
+
+    // ---- N4: the previous formation loses strictly more ---------------------
+    // Reproduced inline rather than by vendoring the 1.0.0 header, because cpp/ must
+    // not depend on experiments/.  X2 ~ Gamma(a,1) is materialized and underflows to
+    // exactly zero for a = 0.005, which no rearrangement of sqrt(X1)/sqrt(X2) can
+    // survive; the log path never forms it.
+    {
+        const long long n= 1000000;
+        const double kappa= 0.505, a= kappa - 0.5, sqrt_kappa= std::sqrt(kappa);
+        std::mt19937 gen(90035u);
+        std::gamma_distribution<double> gamma_x1(1.5, 1.0);
+        std::gamma_distribution<double> gamma_x2(a, 1.0);
+        std::uniform_real_distribution<double> uni(0.0, 1.0);
+        long long legacy_bad= 0;
+        for (long long i= 0; i < n; ++i)
+        {
+            const double x1= gamma_x1(gen);
+            const double x2= gamma_x2(gen);
+            const double r= std::sqrt(x1) / std::sqrt(x2);
+            const double cos_theta= 2.0 * uni(gen) - 1.0;
+            const double sin_theta= std::sqrt(std::max(0.0, 1.0 - cos_theta * cos_theta));
+            const double phi= 2.0 * test_pi() * uni(gen);
+            const double vx= r * sqrt_kappa * (sin_theta * std::cos(phi));
+            const double vy= r * sqrt_kappa * (sin_theta * std::sin(phi));
+            const double vz= r * sqrt_kappa * cos_theta;
+            if (!std::isfinite(vx) || !std::isfinite(vy) || !std::isfinite(vz))
+                ++legacy_bad;
+        }
+        const long long cand_bad= test_count_nonfinite<double>(kappa, 1.0, 90035, n);
+        const double ratio= (cand_bad > 0)
+                                ? static_cast<double>(legacy_bad) /
+                                      static_cast<double>(cand_bad)
+                                : std::numeric_limits<double>::infinity();
+        const bool ok= (legacy_bad >= 10 * cand_bad) && (cand_bad > 0);
+        all_ok= all_ok && ok;
+        std::cout << "  N4 double kappa=0.505: materialized X2 loses " << legacy_bad << "/"
+                  << n << " against the log path's " << cand_bad << " (" << ratio
+                  << "x, required >= 10x): " << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    std::cout << "test_log_radius_finiteness: " << (all_ok ? "PASS" : "FAIL") << std::endl;
+    return all_ok ? 0 : 1;
+}
+
+// ================================================================
+// test_overflow_observability
+//
+// n_attempts() and n_nonfinite() are the only way a caller can tell "the box
+// rejected a representable sample" from "the box rejected a sample that could not
+// have been returned at all".  In capped mode the second case is otherwise
+// invisible: every returned draw is finite and the acceptance rate alone does not
+// separate them.
+// ================================================================
+
+/// Draw until the sampler has recorded at least one unrepresentable attempt, so that
+/// a following reset has something to clear.
+static void test_dirty_counters(bi_kappa_distribution<double> &dist)
+{
+    for (int i= 0; i < 500000 && dist.n_nonfinite() == 0ULL; ++i)
+    {
+        const bi_kappa_distribution<double>::result_type v= dist();
+        (void)v;
+    }
+}
+
+static int test_overflow_observability()
+{
+    bool all_ok= true;
+    std::cout << "\n--- test_overflow_observability ---" << std::endl;
+
+    // ---- O1: the counter equals what the caller can see ---------------------
+    {
+        const long long n= 200000;
+        bi_kappa_distribution<double> dist(0.505, 1.0, 1.0);
+        dist.seed(90040);
+        long long seen= 0;
+        for (long long i= 0; i < n; ++i)
+        {
+            const bi_kappa_distribution<double>::result_type v= dist();
+            if (!std::isfinite(v[0]) || !std::isfinite(v[1]) || !std::isfinite(v[2]))
+                ++seen;
+        }
+        const bool ok= (static_cast<unsigned long long>(seen) == dist.n_nonfinite()) &&
+                       (dist.n_attempts() == static_cast<unsigned long long>(n)) && (seen > 0);
+        all_ok= all_ok && ok;
+        std::cout << "  O1 uncapped kappa=0.505: n_nonfinite()=" << dist.n_nonfinite()
+                  << " equals the " << seen << " non-finite returns, n_attempts()="
+                  << dist.n_attempts() << " equals " << n << " draws: "
+                  << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    // ---- O2: the silent-discard guard ---------------------------------------
+    // With lambda = 5 at kappa = 0.505 the box accepts about 1.8 % of attempts, so
+    // 2000 returned samples cost roughly 1.1e5 attempts, of which the analytic floor
+    // makes about 90 unrepresentable.  P(none) is below 1e-30, so requiring a
+    // non-zero count is not a coin flip.
+    {
+        const int n_returned= 2000;
+        bi_kappa_distribution<double> dist(0.505, 1.0, 1.0, {0.0, 0.0, 1.0}, 5.0);
+        dist.seed(90041);
+        bool all_finite= true;
+        for (int i= 0; i < n_returned; ++i)
+        {
+            const bi_kappa_distribution<double>::result_type v= dist();
+            if (!std::isfinite(v[0]) || !std::isfinite(v[1]) || !std::isfinite(v[2]))
+                all_finite= false;
+        }
+        const bool ok= all_finite && (dist.n_nonfinite() > 0ULL) &&
+                       (dist.n_attempts() > static_cast<unsigned long long>(n_returned));
+        all_ok= all_ok && ok;
+        std::cout << "  O2 capped kappa=0.505 lambda=5: " << n_returned
+                  << " returned draws all finite, n_nonfinite()=" << dist.n_nonfinite()
+                  << " > 0, n_attempts()=" << dist.n_attempts() << " > " << n_returned
+                  << ": " << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    // ---- O3: every path that restarts a stream also restarts the counters ----
+    {
+        bool ok= true;
+        const bi_kappa_distribution<double>::param_type params(0.505, 1.0, 1.0,
+                                                               {0.0, 0.0, 1.0});
+        const bi_kappa_distribution<double>::point_type z_hat= {0.0, 0.0, 1.0};
+        for (int path= 0; path < 6; ++path)
+        {
+            bi_kappa_distribution<double> dist(0.505, 1.0, 1.0);
+            dist.seed(90042 + path);
+            test_dirty_counters(dist);
+            if (dist.n_attempts() == 0ULL || dist.n_nonfinite() == 0ULL)
+                ok= false;
+            switch (path)
+            {
+            case 0: dist.reset(); break;
+            case 1: dist.define(params); break;
+            case 2: dist.define(0.505, 1.0, 1.0); break;
+            case 3: dist.define(params, 90042 + path); break;
+            case 4:
+                dist.define(0.505, 1.0, 1.0, z_hat,
+                            bi_kappa_distribution<double>::no_cap(), 90042 + path);
+                break;
+            default: dist.seed(90042 + path); break;
+            }
+            if (dist.n_attempts() != 0ULL || dist.n_nonfinite() != 0ULL)
+                ok= false;
+        }
+        all_ok= all_ok && ok;
+        std::cout << "  O3 reset(), all four define() overloads and seed() zero both"
+                     " counters: " << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    std::cout << "test_overflow_observability: " << (all_ok ? "PASS" : "FAIL") << std::endl;
+    return all_ok ? 0 : 1;
+}
+
+// ================================================================
+// test_seed_reset_contract
+// ================================================================
+static void test_collect(bi_kappa_distribution<double> &dist, int n,
+                         std::vector<double> &out)
+{
+    out.clear();
+    for (int i= 0; i < n; ++i)
+    {
+        const bi_kappa_distribution<double>::result_type v= dist();
+        out.push_back(v[0]);
+        out.push_back(v[1]);
+        out.push_back(v[2]);
+    }
+}
+
+static int test_seed_reset_contract()
+{
+    bool all_ok= true;
+    std::cout << "\n--- test_seed_reset_contract ---" << std::endl;
+
+    // ---- P1: seed(s) restarts the stream for every length -------------------
+    // seed() now calls reset(), which discards the cached second polar-normal
+    // variate.  Without that the second run opens with a variate belonging to the
+    // first, so the two agree only when the draw count leaves the cache empty.
+    // Before the fix this FAILED under libstdc++ for every odd n.
+    {
+        bool ok= true;
+        int first_bad= 0;
+        for (int n= 1; n <= 8; ++n)
+        {
+            bi_kappa_distribution<double> dist(2.0, 1.0, 2.0);
+            std::vector<double> a, b;
+            dist.seed(90050);
+            test_collect(dist, n, a);
+            dist.seed(90050);
+            test_collect(dist, n, b);
+            if (a != b)
+            {
+                ok= false;
+                if (first_bad == 0)
+                    first_bad= n;
+            }
+        }
+        all_ok= all_ok && ok;
+        std::cout << "  P1 seed(s) then n draws reproduces bitwise for n = 1..8; before"
+                     " seed() called reset() this FAILED under libstdc++ for every odd n";
+        if (!ok)
+            std::cout << " (first n that still fails: " << first_bad << ")";
+        std::cout << ": " << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    // ---- P2: the two ways of seeding a configuration agree ------------------
+    {
+        const bi_kappa_distribution<double>::param_type params(1.5, 1.0, 2.0,
+                                                               {0.0, 0.0, 1.0});
+        bi_kappa_distribution<double> a(2.0, 1.0, 1.0), b(2.0, 1.0, 1.0);
+        a.define(params, 90051);
+        b.seed(90051);
+        b.define(params);
+        std::vector<double> va, vb;
+        test_collect(a, 64, va);
+        test_collect(b, 64, vb);
+        const bool ok= (va == vb);
+        all_ok= all_ok && ok;
+        std::cout << "  P2 define(params, seed) == seed(s) then define(params), bitwise over"
+                     " 64 draws: " << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    // ---- P3: different seeds give different streams -------------------------
+    {
+        bi_kappa_distribution<double> dist(2.0, 1.0, 2.0);
+        std::vector<double> va, vb;
+        dist.seed(90052);
+        test_collect(dist, 64, va);
+        dist.seed(90053);
+        test_collect(dist, 64, vb);
+        const bool ok= (va != vb);
+        all_ok= all_ok && ok;
+        std::cout << "  P3 two different seeds give different sequences: "
+                  << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    std::cout << "test_seed_reset_contract: " << (all_ok ? "PASS" : "FAIL") << std::endl;
+    return all_ok ? 0 : 1;
+}
+// ================================================================
+// test_log_cap_semantics
+//
+// The cap is now decided in the log domain, before anything is exponentiated, so
+// that a sample far outside the box is rejected rather than overflowed first and
+// rejected afterwards.  That is only legitimate if it accepts exactly the set the
+// published linear definition accepts.
+// ================================================================
+static int test_log_cap_semantics()
+{
+    bool all_ok= true;
+    std::cout << "\n--- test_log_cap_semantics ---" << std::endl;
+
+    // ---- Q1: the two predicates accept exactly the same set -----------------
+    // The linear predicate |point_j| / theta_j <= lambda is private, so it is
+    // transcribed here.  Note that theta cancels out of it: with
+    // point = R sqrt(kappa) (theta_perp n_x, theta_perp n_y, theta_par n_z) the
+    // normalized components are sqrt(kappa) R |n_j|, which is what the log form
+    // tests.  ub is the axis, so the returned vector is the field-aligned one and
+    // the linear predicate applies to it unchanged.
+    //
+    // The replayed accepted draws are also compared against the sampler's own
+    // returned stream bitwise, so this checks the transcription as well as the
+    // predicates.
+    {
+        const long long attempts= 300000;
+        const double kappa= 0.75, theta_perp= 1.0, theta_par= 2.0, lambda= 5.0;
+        const double a= kappa - 0.5, sqrt_kappa= std::sqrt(kappa);
+        const double log_cap= std::log(lambda), log_sqrt_kappa= std::log(sqrt_kappa);
+
+        bi_kappa_distribution<double> dist(kappa, theta_perp, theta_par, {0.0, 0.0, 1.0},
+                                           lambda);
+        std::mt19937 gen_sampler(90060u), gen_replay(90060u);
+        test_replay_state st;
+        long long comparable= 0, disagreements= 0, accepted= 0, stream_mismatch= 0;
+        for (long long i= 0; i < attempts; ++i)
+        {
+            const test_replay_draw d= test_replay(a, gen_replay, st);
+            const double max_abs_n=
+                std::max(std::abs(d.nx), std::max(std::abs(d.ny), std::abs(d.nz)));
+            const double log_largest= d.log_r + log_sqrt_kappa + std::log(max_abs_n);
+            const bool log_accepts= !(log_largest > log_cap);
+
+            const double r= std::exp(d.log_r);
+            bi_kappa_distribution<double>::point_type point;
+            point[0]= r * (sqrt_kappa * theta_perp * d.nx);
+            point[1]= r * (sqrt_kappa * theta_perp * d.ny);
+            point[2]= r * (sqrt_kappa * theta_par * d.nz);
+            if (!std::isfinite(r) || !std::isfinite(point[0]) || !std::isfinite(point[1]) ||
+                !std::isfinite(point[2]))
+                continue; // not representable in the linear form; nothing to compare
+            ++comparable;
+
+            const bool linear_accepts= (std::abs(point[0]) / theta_perp <= lambda) &&
+                                       (std::abs(point[1]) / theta_perp <= lambda) &&
+                                       (std::abs(point[2]) / theta_par <= lambda);
+            if (log_accepts != linear_accepts)
+                ++disagreements;
+            if (log_accepts)
+            {
+                ++accepted;
+                const bi_kappa_distribution<double>::result_type v= dist(gen_sampler);
+                if (v[0] != point[0] || v[1] != point[1] || v[2] != point[2])
+                    ++stream_mismatch;
+            }
+        }
+        const bool ok= (disagreements == 0) && (stream_mismatch == 0) &&
+                       (comparable >= 100000) && (accepted > 0);
+        all_ok= all_ok && ok;
+        std::cout << "  Q1 log-domain cap and linear |point_j|/theta_j <= lambda accept the"
+                     " same set over " << comparable << " representable attempts ("
+                  << disagreements << " disagreements, " << accepted
+                  << " accepted, " << stream_mismatch
+                  << " stream mismatches): " << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    // ---- Q2: capped draws never leave the box (the B4 guard, re-run) --------
+    {
+        const long long n= 100000;
+        const double lambda= 5.0, theta_perp= 1.0, theta_par= 2.0;
+        bi_kappa_distribution<double> dist(1.0, theta_perp, theta_par, {0.0, 0.0, 1.0},
+                                           lambda);
+        dist.seed(90061);
+        long long violations= 0;
+        for (long long i= 0; i < n; ++i)
+        {
+            const bi_kappa_distribution<double>::result_type v= dist();
+            if (std::abs(v[0]) / theta_perp > lambda || std::abs(v[1]) / theta_perp > lambda ||
+                std::abs(v[2]) / theta_par > lambda)
+                ++violations;
+        }
+        const bool ok= (violations == 0);
+        all_ok= all_ok && ok;
+        std::cout << "  Q2 capped draws never leave the box over " << n << " draws ("
+                  << violations << " violations): " << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    // ---- Q3: omitting the cap is bitwise identical to no_cap() (the B7 guard) ----
+    {
+        const long long n= 20000;
+        bi_kappa_distribution<double> omitted(1.5, 1.0, 2.0);
+        bi_kappa_distribution<double> named(1.5, 1.0, 2.0, {0.0, 0.0, 1.0},
+                                            bi_kappa_distribution<double>::no_cap());
+        omitted.seed(90062);
+        named.seed(90062);
+        long long mismatches= 0;
+        for (long long i= 0; i < n; ++i)
+        {
+            const bi_kappa_distribution<double>::result_type a= omitted();
+            const bi_kappa_distribution<double>::result_type b= named();
+            if (a[0] != b[0] || a[1] != b[1] || a[2] != b[2])
+                ++mismatches;
+        }
+        const bool ok= (mismatches == 0);
+        all_ok= all_ok && ok;
+        std::cout << "  Q3 omitted cap == explicit no_cap() bitwise over " << n << " draws ("
+                  << mismatches << " mismatches): " << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    std::cout << "test_log_cap_semantics: " << (all_ok ? "PASS" : "FAIL") << std::endl;
+    return all_ok ? 0 : 1;
+}
+
+// ================================================================
+// test_log_rotation_stability
+//
+// An orthogonal rotation can spread one over-large field-aligned component across
+// three representable global ones, which is why the sampler builds the order-unity
+// vector g = Q(ub) diag(sqrt(kappa) theta) n first and decides representability from
+// log|V_j| = log R + log|g_j| on the components it is actually going to return.
+// Deciding on the pre-rotation vector instead would discard draws that have a
+// perfectly good answer.
+// ================================================================
+static int test_log_rotation_stability()
+{
+    bool all_ok= true;
+    std::cout << "\n--- test_log_rotation_stability ---" << std::endl;
+
+    // ---- R1: finiteness follows the log-domain predicate, and the rotation is
+    //          accurate -----------------------------------------------------
+    // The reference recomputes the same draw in long double the other way round --
+    // scale first, then rotate -- so the comparison is between two different
+    // orderings of the same algebra rather than a repetition of one.  A rotation is
+    // backward stable in the norm but not component by component: with ub = (1,1,1)
+    // the three products cancel, so a component that is small compared with the
+    // vector carries a large relative error and a small absolute one.  The tolerance
+    // is therefore stated in ulp of the vector's largest component, which is the
+    // quantity a rotation error is actually bounded by.
+    //
+    // Note that long double is not wider than double on every platform; this build
+    // reports its mantissa below, and where the two coincide the reference is an
+    // independent recomputation at the same precision rather than a more accurate
+    // one.
+    {
+        const long long n= 200000;
+        const double kappa= 0.51, theta_perp= 1.0, theta_par= 2.0;
+        const double a= kappa - 0.5, sqrt_kappa= std::sqrt(kappa);
+        const double log_max= std::log(std::numeric_limits<double>::max());
+        const bi_kappa_distribution<double>::point_type ub= {1.0, 1.0, 1.0};
+        const std::array<long double, 3> ub_ld= {1.0L, 1.0L, 1.0L};
+
+        bi_kappa_distribution<double> dist(kappa, theta_perp, theta_par, ub);
+        bi_kappa_distribution<long double> rot_ld(2.0L, 1.0L, 1.0L);
+        std::mt19937 gen_sampler(90070u), gen_replay(90070u);
+        test_replay_state st;
+
+        long long predicate_mismatch= 0, compared= 0, skipped= 0;
+        double worst_ulp= 0.0;
+        for (long long i= 0; i < n; ++i)
+        {
+            const test_replay_draw d= test_replay(a, gen_replay, st);
+            bi_kappa_distribution<double>::point_type local;
+            local[0]= sqrt_kappa * theta_perp * d.nx;
+            local[1]= sqrt_kappa * theta_perp * d.ny;
+            local[2]= sqrt_kappa * theta_par * d.nz;
+            const bi_kappa_distribution<double>::point_type g=
+                dist.rotate_from_fieldAligned_frame(local, ub);
+
+            bool predicted_finite= true;
+            for (int j= 0; j < 3; ++j)
+            {
+                if (g[j] != 0.0 && d.log_r + std::log(std::abs(g[j])) >= log_max)
+                    predicted_finite= false;
+            }
+
+            const bi_kappa_distribution<double>::result_type v= dist(gen_sampler);
+            const bool actually_finite=
+                std::isfinite(v[0]) && std::isfinite(v[1]) && std::isfinite(v[2]);
+            if (predicted_finite != actually_finite)
+                ++predicate_mismatch;
+            if (!actually_finite)
+                continue;
+
+            const long double r_ld= std::exp(static_cast<long double>(d.log_r));
+            std::array<long double, 3> scaled;
+            bool scaled_ok= true;
+            for (int j= 0; j < 3; ++j)
+            {
+                scaled[j]= r_ld * static_cast<long double>(local[j]);
+                if (!std::isfinite(static_cast<double>(scaled[j])))
+                    scaled_ok= false;
+            }
+            if (!scaled_ok)
+            {
+                // rotation-recoverable draw: the pre-rotation vector has no double
+                // representation, so scale-then-rotate has nothing to compare.
+                ++skipped;
+                continue;
+            }
+            const std::array<long double, 3> reference=
+                rot_ld.rotate_from_fieldAligned_frame(scaled, ub_ld);
+            const double scale=
+                std::max(std::abs(v[0]), std::max(std::abs(v[1]), std::abs(v[2])));
+            ++compared;
+            for (int j= 0; j < 3; ++j)
+            {
+                const double u=
+                    test_ulp_distance(v[j], static_cast<double>(reference[j]), scale);
+                if (u > worst_ulp)
+                    worst_ulp= u;
+            }
+        }
+        const bool ok= (predicate_mismatch == 0) && (worst_ulp <= 8.0) && (compared > 0);
+        all_ok= all_ok && ok;
+        std::cout << "  R1 kappa=0.51, ub={1,1,1}: finite exactly where log R + log|g_j| <"
+                     " log DBL_MAX for all j (" << predicate_mismatch
+                  << " mismatches in " << n << "), and within " << worst_ulp
+                  << " ulp of the vector scale against a long double reference with "
+                  << std::numeric_limits<long double>::digits
+                  << "-bit mantissa (bound 8, " << compared << " compared, " << skipped
+                  << " rotation-recoverable): " << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    // ---- R2: the rotation-recoverable case exists and is kept ---------------
+    // A draw whose field-aligned vector has no representation can still have three
+    // representable global components, because a rotation can spread it: with
+    // ub = (1,1,1) a vector along the field maps to (1,1,1)/sqrt(3) times its norm,
+    // so the largest component falls by sqrt(3).  The set is therefore the band of
+    // log R of width log sqrt(3) just above the threshold, and its probability comes
+    // from the same closed form as the floor: about 2.4e-6 here, so a few tens of
+    // millions of attempts are needed before "a few" is more than noise.  At 3e7 the
+    // expected count is about 71, which is far enough from zero that the existence
+    // claim is not a coin flip and well enough determined that the count itself can
+    // be tested against the closed form.
+    {
+        const long long n= 30000000;
+        const double kappa= 0.505, theta_perp= 1.0, theta_par= 8.0;
+        const double a= kappa - 0.5, sqrt_kappa= std::sqrt(kappa);
+        const double log_max= std::log(std::numeric_limits<double>::max());
+        const bi_kappa_distribution<double>::point_type ub= {1.0, 1.0, 1.0};
+        const std::array<double, 3> ub_q= {1.0, 1.0, 1.0};
+        double p_overflow= 0.0, p_rescued= 0.0;
+        test_overflow_floor(kappa, theta_perp, theta_par, ub_q, log_max, &p_overflow,
+                            &p_rescued);
+
+        bi_kappa_distribution<double> dist(kappa, theta_perp, theta_par, ub);
+        std::mt19937 gen_sampler(90075u), gen_replay(90075u);
+        test_replay_state st;
+        long long rescued= 0, rescued_lost= 0;
+        for (long long i= 0; i < n; ++i)
+        {
+            const test_replay_draw d= test_replay(a, gen_replay, st);
+            bi_kappa_distribution<double>::point_type local;
+            local[0]= sqrt_kappa * theta_perp * d.nx;
+            local[1]= sqrt_kappa * theta_perp * d.ny;
+            local[2]= sqrt_kappa * theta_par * d.nz;
+            const bi_kappa_distribution<double>::point_type g=
+                dist.rotate_from_fieldAligned_frame(local, ub);
+            const double m_local= std::max(std::abs(local[0]),
+                                           std::max(std::abs(local[1]), std::abs(local[2])));
+            const double m_rot=
+                std::max(std::abs(g[0]), std::max(std::abs(g[1]), std::abs(g[2])));
+            const bool local_overflows= (d.log_r + std::log(m_local) >= log_max);
+            const bool rotated_fits= (d.log_r + std::log(m_rot) < log_max);
+
+            const bi_kappa_distribution<double>::result_type v= dist(gen_sampler);
+            if (local_overflows && rotated_fits)
+            {
+                ++rescued;
+                if (!std::isfinite(v[0]) || !std::isfinite(v[1]) || !std::isfinite(v[2]))
+                    ++rescued_lost;
+            }
+        }
+        const bool consistent= test_binom_consistent(rescued, n, p_rescued, 1.0e-3);
+        const bool ok= (rescued > 0) && (rescued_lost == 0) && consistent;
+        all_ok= all_ok && ok;
+        std::cout << "  R2 kappa=0.505, theta_par/theta_perp=8, ub={1,1,1}: " << rescued
+                  << " rotation-recoverable draws in " << n << " (expected "
+                  << p_rescued * static_cast<double>(n)
+                  << " from the closed form, exact binomial alpha=1e-3), all returned"
+                     " finite (" << rescued_lost << " lost): " << (ok ? "PASS" : "FAIL")
+                  << std::endl;
+    }
+
+    std::cout << "test_log_rotation_stability: " << (all_ok ? "PASS" : "FAIL") << std::endl;
+    return all_ok ? 0 : 1;
+}
+
+// ================================================================
 // run_all_tests – call this from main()
 // Returns 0 if all tests pass, 1 if any test fails.
 // ================================================================
@@ -1631,6 +3014,13 @@ static int run_all_tests()
     result|= test_radius_formation();
     result|= test_no_cap_semantics();
     result|= test_no_cap_semantics_bimaxwellian();
+    result|= test_log_radius_primitive();
+    result|= test_log_radius_no_regression();
+    result|= test_log_radius_finiteness();
+    result|= test_overflow_observability();
+    result|= test_seed_reset_contract();
+    result|= test_log_cap_semantics();
+    result|= test_log_rotation_stability();
     std::cout << "\n=== Test suite: " << (result == 0 ? "ALL PASS" : "SOME FAILED") << " ==="
               << std::endl;
     return result;

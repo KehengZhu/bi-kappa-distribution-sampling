@@ -35,29 +35,43 @@ RAW = os.path.join(HERE, "raw")
 # written.  Keeping this set separate is what lets the manifest say precisely which
 # sources a given raw file came from.
 SAMPLING_DEPENDENCIES = [
-    "../../cpp/bi_kappa_distribution.H",
-    "src/exp6_common.H",
-    "src/exp6_loaders.H",
-    "src/exp6_probe.cpp",
-    "src/log_gamma_identity.H",
-    "src/log_gamma_published.H",
-    "config/frozen.json",
+    "../../cpp/bi_kappa_distribution.H",          # the candidate under test
+    "src/legacy/bi_kappa_distribution_v1.H",      # the frozen comparator
+    "src/exp7_common.H",
+    "src/exp7_loaders.H",
+    "src/exp7_digest.H",
+    "src/exp7_probe.cpp",
+    "src/exp7_protocol.H",                        # generated from the protocol
+    "PROTOCOL.md",                                # the frozen rules
+    "config/protocol.json",
 ]
 
 # Files that determine what is derived from those draws.
 ANALYSIS_DEPENDENCIES = [
-    "src/exp6_oracle.cpp",
+    "src/exp7_oracle.cpp",
+    "src/gen_protocol_header.py",
+    "src/check_legacy.py",
     "GNUmakefile",
     "analyze.py",
     "make_figures.py",
     "preflight.py",
-    "exp6_stats.py",
-    "exp6_io.py",
-    "config/pilot.json",
+    "exp7_stats.py",
+    "exp7_io.py",
+    "exp7_families.py",
+    "exp7_gates.py",
+    "exp7_portability.py",
+    "config/make_protocol.py",
 ]
 
 # Every file whose content determines a number this experiment reports.
 DEPENDENCIES = SAMPLING_DEPENDENCIES + ANALYSIS_DEPENDENCIES
+
+# The frozen protocol, and the hash that ties this run to it.  Loaded once, at import, so a
+# missing or malformed protocol stops the run before any data is produced rather than after.
+with open(os.path.join(HERE, "config", "protocol.json"), "rb") as _fh:
+    _PROTOCOL_BYTES = _fh.read()
+PROTOCOL_SHA256 = hashlib.sha256(_PROTOCOL_BYTES).hexdigest()
+PROTOCOL = json.loads(_PROTOCOL_BYTES)
 
 
 def sh(*args: str, cwd: str | None = None) -> str:
@@ -89,7 +103,7 @@ def git_blob_hash(path: str) -> str | None:
 
 
 def probe_env(tag: str) -> dict | None:
-    exe = os.path.join(HERE, f"exp6_probe_{tag}.exe")
+    exe = os.path.join(HERE, f"exp7_probe_{tag}.exe")
     if not os.path.exists(exe):
         return None
     out = subprocess.run([exe, "env"], capture_output=True, text=True, check=False).stdout
@@ -174,7 +188,7 @@ def main() -> int:
     repo_dirty = bool(sh("git", "status", "--porcelain", cwd=ROOT))
 
     env = {
-        "experiment": "exp6_low_kappa_stabilization",
+        "experiment": "exp7_confirmatory",
         "generated_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "exploratory": bool(unclean),
         "git": {
@@ -208,7 +222,8 @@ def main() -> int:
         "toolchains": {
             "clang": sh("clang++", "--version").splitlines()[:2],
             "gcc": sh("g++-15", "--version").splitlines()[:1],
-            "cxxflags": "-Wall -Wextra -std=c++11 -O2 -ffp-contract=off",
+            "cxxflags": os.environ.get("EXP7_CXXFLAGS",
+                        "-Wall -Wextra -std=c++11 -O2 -ffp-contract=off"),
             "oracle_flags": "-Wall -Wextra -std=c++14 -O2 -ffp-contract=off",
             "boost": boost_version(),
         },
@@ -230,15 +245,24 @@ def main() -> int:
             "checksums": "make checksums",
             "verify": "make verify",
         },
+        # Read from the frozen protocol rather than mirrored here.  Experiment 6 kept the
+        # seed block in six places -- the probe, preflight, a config file, the analysis
+        # prose, the README and the plan -- and its performance phase then derived five more
+        # by arithmetic, so 4006-4010 appear in its manifest and in no declaration at all.
+        # One source, hashed, is the fix.
         "frozen_sizes": {
-            "baseline_attempts_per_seed": 1000000,
-            "pilot_attempts_per_seed": 200000,
-            "mechanism_attempts_per_seed": 1000000,
-            "conditioning_attempts_per_seed": 1000000,
-            "loader_samples_per_seed": 100000,
-            "portability_attempts_per_seed": 1000000,
-            "production_seeds": [4001, 4002, 4003, 4004, 4005],
-            "pilot_seeds": [4001, 4002, 4003],
+            "n_scalar": PROTOCOL["matrix"]["n_scalar"],
+            "n_mechanism": PROTOCOL["matrix"]["n_mechanism"],
+            "n_conditioning": PROTOCOL["matrix"]["n_conditioning"],
+            "n_loader": PROTOCOL["matrix"]["n_loader"],
+            "production_seeds": PROTOCOL["seeds"]["production"],
+            "performance_seeds": PROTOCOL["seeds"]["performance"],
+            "kappa_ladder": PROTOCOL["matrix"]["kappa_ladder"],
+        },
+        "protocol": {
+            "version": PROTOCOL["protocol_version"],
+            "sha256": PROTOCOL_SHA256,
+            "path": "config/protocol.json",
         },
     }
 
