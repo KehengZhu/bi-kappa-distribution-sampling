@@ -5,5 +5,7 @@ var searchData=
   ['_5fbuild_5fframe_2',['_build_frame',['../classgeneral__generators_1_1_field_aligned_velocity_generator.html#a6805ae36e4acf25ff1d9382743515601',1,'general_generators::FieldAlignedVelocityGenerator']]],
   ['_5festimate_5fdensity_5fupper_5fbound_3',['_estimate_density_upper_bound',['../classgeneral__generators_1_1_general_position_generator.html#aa3f976133436965f824ebc9cf7b7b597',1,'general_generators::GeneralPositionGenerator']]],
   ['_5festimate_5fpdf_5fupper_5fbound_4',['_estimate_pdf_upper_bound',['../classgeneral__generators_1_1_general_velocity_generator.html#a827f4117e2afbf2bf4935cf2fe2c95b2',1,'general_generators.GeneralVelocityGenerator._estimate_pdf_upper_bound()'],['../classgeneral__generators_1_1_field_aligned_velocity_generator.html#a0d23734fb650f21e5f863aeccef3e195',1,'general_generators.FieldAlignedVelocityGenerator._estimate_pdf_upper_bound()']]],
-  ['_5fsphere_5fpanel_5',['_sphere_panel',['../namespacesphere__sampling__bias.html#a21042e1bd0a3f55eb56ae311fddf1b27',1,'sphere_sampling_bias']]]
+  ['_5fholm_5',['_holm',['../namespacebikappa__validate.html#a2d01d9cac0f8c4994b8da287c503c035',1,'bikappa_validate']]],
+  ['_5fks_5fcritical_6',['_ks_critical',['../namespacebikappa__validate.html#a9e62f21a88fa6674718a9fcf70f346ae',1,'bikappa_validate']]],
+  ['_5fsphere_5fpanel_7',['_sphere_panel',['../namespacesphere__sampling__bias.html#a21042e1bd0a3f55eb56ae311fddf1b27',1,'sphere_sampling_bias']]]
 ];

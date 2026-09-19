@@ -1,4 +1,6 @@
 var searchData=
 [
-  ['max_5freject_5ftries_0',['max_reject_tries',['../classgeneral__generators_1_1_general_velocity_generator.html#a018eda951a34d6a0426d971210806f1a',1,'general_generators.GeneralVelocityGenerator.max_reject_tries'],['../classgeneral__generators_1_1_general_position_generator.html#aed38d322bec10f93bac15988c0d7dfb4',1,'general_generators.GeneralPositionGenerator.max_reject_tries'],['../classgeneral__generators_1_1_field_aligned_velocity_generator.html#adfdc33ebeb06b5a64f36a890fa9b9887',1,'general_generators.FieldAlignedVelocityGenerator.max_reject_tries']]]
+  ['log_5fmax_0',['LOG_MAX',['../namespacelowkappa__risk__audit.html#a595d7ee29a3d07437e3d5a75273752ff',1,'lowkappa_risk_audit']]],
+  ['log_5fr_1',['log_r',['../structtest__replay__draw.html#af3b8d7a7457e71854ef89b51d28020c7',1,'test_replay_draw']]],
+  ['lower_5fbounds_2',['lower_bounds',['../classgeneral__generators_1_1_general_position_generator.html#a7e15c91a159b4561c943372fad575d28',1,'general_generators::GeneralPositionGenerator']]]
 ];

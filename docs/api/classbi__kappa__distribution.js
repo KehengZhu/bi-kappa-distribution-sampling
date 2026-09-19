@@ -14,6 +14,8 @@ var classbi__kappa__distribution =
     [ "kappa", "classbi__kappa__distribution.html#a758a03458aaab59b2577811af7a095cd", null ],
     [ "max_normalized_velocity", "classbi__kappa__distribution.html#ab8f1e8f652ea4b002ec20fe5137cfeee", null ],
     [ "max_normalized_velocity", "classbi__kappa__distribution.html#a79cd6a1b637d1afaab66874691c2de88", null ],
+    [ "n_attempts", "classbi__kappa__distribution.html#a7d07cd82270174a9214bea92ae7ca6d9", null ],
+    [ "n_nonfinite", "classbi__kappa__distribution.html#a05ea352a1a4a3fc3c43db5f16490f06b", null ],
     [ "no_cap", "classbi__kappa__distribution.html#ae297e0e424247abd355b55109bdb9dde", null ],
     [ "operator!=", "classbi__kappa__distribution.html#ac503a975fc585ba562c438514f190114", null ],
     [ "operator()", "classbi__kappa__distribution.html#a4f77a350829b6af0766bb163ce719b41", null ],

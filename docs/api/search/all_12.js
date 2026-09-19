@@ -5,7 +5,7 @@ var searchData=
   ['sample_5fspeed_5fsq_2',['sample_speed_sq',['../classgeneral__generators_1_1_general_velocity_generator.html#a6259ab2d8e130bd7a86c42ee338222c2',1,'general_generators.GeneralVelocityGenerator.sample_speed_sq()'],['../classgeneral__generators_1_1_field_aligned_velocity_generator.html#a90f425a5e14a060cecb9b7734f743fab',1,'general_generators.FieldAlignedVelocityGenerator.sample_speed_sq()']]],
   ['sampler_3',['sampler',['../choosing.html',1,'Choosing a sampler'],['../usage.html#usage_redefine',1,'Reconfiguring a sampler']]],
   ['sampler_20knobs_3a_20probe_5fpoints_20max_5freject_5ftries_4',['Rejection-sampler knobs: &lt;span class=&quot;tt&quot;&gt;probe_points&lt;/span&gt;, &lt;span class=&quot;tt&quot;&gt;max_reject_tries&lt;/span&gt;',['../parameters.html#params_rejection',1,'']]],
-  ['samplers_5',['samplers',['../parameters.html#params_shared',1,'Conventions shared by all samplers'],['../usage.html#usage_external_rng',1,'Sharing one RNG across samplers'],['../index.html#autotoc_md3',1,'The five samplers']]],
+  ['samplers_5',['samplers',['../parameters.html#params_shared',1,'Conventions shared by all samplers'],['../usage.html#usage_external_rng',1,'Sharing one RNG across samplers'],['../index.html#autotoc_md4',1,'The five samplers']]],
   ['samplers_20at_20a_20glance_6',['Velocity samplers at a glance',['../choosing.html#choosing_velocity',1,'']]],
   ['samples_7',['samples',['../usage.html#usage_bikappa',1,'Bi-kappa velocity samples'],['../usage.html#usage_bimaxwell',1,'Bi-Maxwellian velocity samples']]],
   ['seed_8',['seed',['../classbi__kappa__distribution.html#a004ccef23cf4f1cc3271134c1dde60b8',1,'bi_kappa_distribution::seed()'],['../classbi__maxwellian__distribution.html#a91b1bf3e96f4175ac83d4ee39b1c79dd',1,'bi_maxwellian_distribution::seed()'],['../classfield__aligned__velocity__generator.html#a7de700c28adc297d1fcee9864767266a',1,'field_aligned_velocity_generator::seed()'],['../classgeneral__position__generator.html#a9e24551cc12367f1dfc653a95bdddd88',1,'general_position_generator::seed()'],['../classgeneral__velocity__generator.html#a2e42f5bd2170a5adc0a2382071574935',1,'general_velocity_generator::seed()'],['../parameters.html#params_seed',1,'Seeding: &lt;span class=&quot;tt&quot;&gt;seed&lt;/span&gt;']]],
@@ -26,6 +26,6 @@ var searchData=
   ['sphere_5fsampling_5fbias_23',['sphere_sampling_bias',['../namespacesphere__sampling__bias.html',1,'']]],
   ['sphere_5fsampling_5fbias_2epy_24',['sphere_sampling_bias.py',['../sphere__sampling__bias_8py.html',1,'']]],
   ['squared_20distribution_25',['Custom speed-squared distribution',['../usage.html#usage_velocity',1,'']]],
-  ['start_20—_20c_26',['Quick start — C++',['../index.html#autotoc_md2',1,'']]],
-  ['start_20—_20python_27',['Quick start — Python',['../index.html#autotoc_md4',1,'']]]
+  ['start_20—_20c_26',['Quick start — C++',['../index.html#autotoc_md3',1,'']]],
+  ['start_20—_20python_27',['Quick start — Python',['../index.html#autotoc_md5',1,'']]]
 ];

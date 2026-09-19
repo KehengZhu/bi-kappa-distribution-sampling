@@ -181,6 +181,13 @@ static double test_radius_tail_prefactor(double a)
     return std::exp(std::lgamma(1.5 + a) - std::lgamma(1.5) - std::lgamma(1.0 + a));
 }
 
+/// The analytic representability floor for one configuration.
+///
+/// @param kappa       spectral index; the denominator shape is `a = kappa - 1/2`
+/// @param theta_perp  thermal speed transverse to @p ub
+/// @param theta_par   thermal speed along @p ub
+/// @param ub          magnetic-field direction; need not be normalized
+/// @param log_max     natural logarithm of the largest finite value of the type
 /// @param p_overflow  P(the returned, rotated vector has no representation)
 /// @param p_rescued   P(the unrotated field-aligned vector has no representation
 ///                    while the rotated one does) -- the rotation-recoverable set
