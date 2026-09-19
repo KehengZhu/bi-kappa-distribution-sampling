@@ -150,6 +150,13 @@ make analyze && make figures
 make checksums && make verify
 ```
 
+Run the steps in that order. `make preflight` is the opening step of a run, not a status
+command: it rewrites `raw/environment.json` with the commit and timestamp the run starts
+from, and that file is covered by `checksums.sha256`. Running it again after `make
+checksums` will therefore invalidate the bundle and replace an accurate provenance record
+with a later one; if you do, either restore the committed `raw/environment.json` or redo
+`make checksums`.
+
 Every simulation target accepts `SMOKE=1`, which shrinks the run to 1000 attempts on one
 seed and diverts its output to `raw/smoke/`, where `analyze.py` ignores it unless `--smoke`
 is passed. `ALLOW_DIRTY_DEV=1 make preflight` permits a development run against an
