@@ -126,11 +126,19 @@ def main() -> int:
     w(f"static const double kMaxRelErrorDouble= {c_double(acc['double'])};")
     w(f"static const double kMaxRelErrorFloat= {c_double(acc['float'])};")
     w("")
-    w("/// Amendment 1.1.0: the audit stratum sampling rates are a protocol datum, not an")
-    w("/// implementation detail.  A rate of 1 means the stratum is adjudicated in full.")
-    rates = p["audit"]["strata_rates"]
-    order = ["near_limit_2_log_units", "method_disagreement", "finite_but_wrong_candidate",
-             "public_path_failure", "subnormal_denominator", "uniform_sample"]
+    w("/// Amendment 1.2.0: the audit stratum sampling rates and the decision-relevance")
+    w("/// margin are protocol data, not implementation details.  A rate of 1 means the")
+    w("/// stratum is adjudicated in full.")
+    audit = p["audit"]
+    rates = audit["strata_rates"]
+    w(f"static const double kAuditMarginLogUnits= {c_double(audit['margin_log_units'])};")
+    order = ["within_margin_of_a_type_limit",
+             "method_disagreement",
+             "finite_but_wrong_candidate",
+             "avoidable_loss_candidate",
+             "subnormal_or_zero_denominator_representable_target",
+             "unambiguous_failure_beyond_margin",
+             "uniform_sample"]
     missing = [k for k in order if k not in rates]
     if missing:
         sys.stderr.write(f"exp7: protocol.json declares no rate for {missing}\n")
@@ -142,7 +150,8 @@ def main() -> int:
         return 1
     w(f"static const int kNumAuditRates= {len(order)};")
     w("static const char *const kAuditStratumNames[kNumAuditRates]= {")
-    w("    " + ", ".join('"%s"' % k for k in order) + "};")
+    for i, k in enumerate(order):
+        w('    "%s"%s' % (k, "," if i + 1 < len(order) else "};"))
     w("static const double kAuditStratumRates[kNumAuditRates]= {")
     w("    " + ", ".join(c_double(rates[k]) for k in order) + "};")
     w("")

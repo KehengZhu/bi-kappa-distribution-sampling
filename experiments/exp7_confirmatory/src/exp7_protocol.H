@@ -7,7 +7,7 @@
 // else the protocol fixes is a decision rule, and decision rules belong to the
 // analysis, which reads the JSON directly.
 //
-// config/protocol.json SHA-256: 76032d91863a5c937b64ad24156f9062098ae736e5f6da3e989fb60b55131007
+// config/protocol.json SHA-256: e336f6a392bdf2f370a4f368f5816a1847b0b6d41150c9c3b4ff5a11cf608971
 
 #ifndef EXP7_PROTOCOL_H
 #define EXP7_PROTOCOL_H
@@ -17,8 +17,8 @@ namespace exp7
 namespace protocol
 {
 
-static const char *const kProtocolVersion= "1.1.0";
-static const char *const kProtocolSha256= "76032d91863a5c937b64ad24156f9062098ae736e5f6da3e989fb60b55131007";
+static const char *const kProtocolVersion= "1.2.0";
+static const char *const kProtocolSha256= "e336f6a392bdf2f370a4f368f5816a1847b0b6d41150c9c3b4ff5a11cf608971";
 
 /// Intended attempts per seed, by phase, exactly as PROTOCOL.md Sec. 4 freezes them.
 static const long long kNScalar= 1000000;
@@ -53,13 +53,21 @@ static const double kLogQSwitch= -30.0;
 static const double kMaxRelErrorDouble= 1.0536712127723509e-08;
 static const double kMaxRelErrorFloat= 0.000244140625;
 
-/// Amendment 1.1.0: the audit stratum sampling rates are a protocol datum, not an
-/// implementation detail.  A rate of 1 means the stratum is adjudicated in full.
-static const int kNumAuditRates= 6;
+/// Amendment 1.2.0: the audit stratum sampling rates and the decision-relevance
+/// margin are protocol data, not implementation details.  A rate of 1 means the
+/// stratum is adjudicated in full.
+static const double kAuditMarginLogUnits= 20.0;
+static const int kNumAuditRates= 7;
 static const char *const kAuditStratumNames[kNumAuditRates]= {
-    "near_limit_2_log_units", "method_disagreement", "finite_but_wrong_candidate", "public_path_failure", "subnormal_denominator", "uniform_sample"};
+    "within_margin_of_a_type_limit",
+    "method_disagreement",
+    "finite_but_wrong_candidate",
+    "avoidable_loss_candidate",
+    "subnormal_or_zero_denominator_representable_target",
+    "unambiguous_failure_beyond_margin",
+    "uniform_sample"};
 static const double kAuditStratumRates[kNumAuditRates]= {
-    1.0, 1.0, 1.0, 1.0, 0.1, 0.0001};
+    1.0, 1.0, 1.0, 1.0, 1.0, 0.001, 0.0001};
 
 /// The matrix, restated here so that the hand-written declarations in
 /// exp7_common.H can be checked against the frozen JSON at start-up.

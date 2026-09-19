@@ -11,7 +11,10 @@
 //              (Ahrens-Dieter shape boosting), log R = (log X1 - log X2)/2, the order-unity
 //              vector g = Q(ub) diag(sqrt(kappa) theta) n built first, and each component's
 //              representability decided from log|V_j| = log R + log|g_j| before anything is
-//              exponentiated.
+//              exponentiated.  The direction n comes from the rejection method of Marsaglia
+//              (1972): two open-interval uniforms per try, retried until the pair falls in
+//              the unit disc, then lifted onto the sphere.  It uses sqrt and no library
+//              transcendental, and it consumes a variable number of uniforms per attempt.
 //
 // QF (`sqrt(X1/X2)`, the pre-1.0 formation whose intermediate quotient overflows even where
 // its square root is representable) survives only as a third *diagnostic column of the
@@ -25,11 +28,24 @@
 //       LEGACY, CANDIDATE and QF all receive the *same* declared primitives
 //       (x1, y, u, cos_theta, phi), so one mathematical attempt can be followed through
 //       every formation and "was this draw recoverable?" is decided per draw instead of by
-//       comparing histograms.  This is a mechanism experiment.  It is NOT a draw-by-draw
-//       reconstruction of any standard library's Gamma generator: it declares its own
-//       primitives and says so.  Those primitives are the candidate's own, which has the
-//       useful side effect that the paired layer is itself identical across standard
-//       libraries -- the mechanism decomposition does not depend on which library ran it.
+//       comparing histograms.  What the layer compares is the three RADIUS formations on
+//       one mathematical draw; the direction is a shared nuisance parameter, and all three
+//       columns are handed the identical one.
+//
+//       This is a mechanism experiment.  It is NOT a draw-by-draw reconstruction of either
+//       native path's direction sampling, and cannot be one: release 1.0.0 draws cos(theta)
+//       and phi through std::uniform_real_distribution, while release 2.0.0 draws no angle
+//       at all.  The layer therefore declares its own direction primitive and says so, and
+//       (cos_theta, phi) is that declaration -- the representation the audit record, the
+//       100-digit oracle and the analysis reader are all written against.  README.md,
+//       "The paired layer's declared direction", records the choice and the alternative.
+//
+//       One consequence is stated rather than left implicit: that primitive reaches the
+//       vector through sin(phi) and cos(phi) of one argument, which a compiler is free to
+//       fuse into a combined routine whose sine differs by an ulp.  This layer's per-draw
+//       numbers are therefore a function of the compiler as well as of the source text.
+//       The portability claim rests on the released class -- P5, and P1's class rows --
+//       and not on this layer.
 //
 //   NATIVE LAYER (legacyNativeAttempt / candidateNativeAttempt)
 //       Each method runs its own real implementation end to end, against its own
@@ -136,7 +152,8 @@ struct Reference
     double log_local_max;     ///< log of the largest *local*-frame component
     bool representable;       ///< every returned component is representable in the run type
     bool local_representable; ///< the pre-rotation local vector is representable
-    bool near_limit;          ///< within kOracleBandLogUnits of the overflow threshold
+    bool near_limit;          ///< within the protocol margin of the overflow threshold
+    double overflow_margin;   ///< max_log_component - log_ovf, in natural-log units
 };
 
 template <typename T>
@@ -205,8 +222,9 @@ Reference makeReference(double a, const SharedPrimitives<T> &s, const Geometry<T
 
     r.representable= (mx < log_ovf);
     r.local_representable= (loc_max < log_ovf);
-    r.near_limit= std::fabs(mx - log_ovf) <= kOracleBandLogUnits ||
-                  std::fabs(loc_max - log_ovf) <= kOracleBandLogUnits;
+    r.overflow_margin= mx - log_ovf;
+    const double band= oracleBandLogUnits();
+    r.near_limit= std::fabs(mx - log_ovf) <= band || std::fabs(loc_max - log_ovf) <= band;
     return r;
 }
 
@@ -256,10 +274,9 @@ bool legacyCapAccept(T r, T cos_theta, T phi, const Geometry<T> &geom, T lambda)
 /// exponentiating.  The predicate is the released one -- log(max()) -- not the exact
 /// overflow threshold, because that is the predicate a user actually gets.
 template <typename T>
-std::array<T, 3> candidateVectorFromLogRadius(T log_r, T cos_theta, T phi,
+std::array<T, 3> candidateVectorFromLogRadius(T log_r, const std::array<T, 3> &n,
                                               const Geometry<T> &geom, bool *any_overflow)
 {
-    const std::array<T, 3> n= Geometry<T>::direction(cos_theta, phi);
     const std::array<T, 3> g= geom.gVector(n);
 
     const T log_max= static_cast<T>(std::log(std::numeric_limits<T>::max()));
@@ -304,13 +321,22 @@ std::array<T, 3> candidateVectorFromLogRadius(T log_r, T cos_theta, T phi,
     return v;
 }
 
+/// The same, from the paired layer's declared direction primitive.  Release 2.0.0 never
+/// forms an angle, so this overload exists for the paired layer and not for the native one.
+template <typename T>
+std::array<T, 3> candidateVectorFromLogRadius(T log_r, T cos_theta, T phi,
+                                              const Geometry<T> &geom, bool *any_overflow)
+{
+    return candidateVectorFromLogRadius<T>(log_r, Geometry<T>::direction(cos_theta, phi),
+                                           geom, any_overflow);
+}
+
 /// The CANDIDATE cap predicate, in the log domain, in the field-aligned frame.  Exactly the
 /// released test: only the largest |n_j| has to be examined, so it costs one logarithm.
 template <typename T>
-bool candidateCapAcceptLog(T log_r, T cos_theta, T phi, const Geometry<T> &geom, T log_cap,
-                           bool *unrepresentable)
+bool candidateCapAcceptLog(T log_r, const std::array<T, 3> &n, const Geometry<T> &geom,
+                           T log_cap, bool *unrepresentable)
 {
-    const std::array<T, 3> n= Geometry<T>::direction(cos_theta, phi);
     const T max_abs_n= std::max(std::fabs(n[0]), std::max(std::fabs(n[1]), std::fabs(n[2])));
     const T log_largest= log_r + std::log(geom.sqrt_kappa) + std::log(max_abs_n);
     if (log_largest > log_cap)
@@ -323,6 +349,15 @@ bool candidateCapAcceptLog(T log_r, T cos_theta, T phi, const Geometry<T> &geom,
     if (unrepresentable)
         *unrepresentable= false;
     return true;
+}
+
+/// The same, from the paired layer's declared direction primitive.
+template <typename T>
+bool candidateCapAcceptLog(T log_r, T cos_theta, T phi, const Geometry<T> &geom, T log_cap,
+                           bool *unrepresentable)
+{
+    return candidateCapAcceptLog<T>(log_r, Geometry<T>::direction(cos_theta, phi), geom,
+                                    log_cap, unrepresentable);
 }
 
 // ---------------------------------------------------------------------------
@@ -481,6 +516,11 @@ template <typename T> struct NativeAttempt
     double log_r; ///< the radius the method carried or materialized, widened; +-inf/NaN possible
     bool finite;
     bool overflow; ///< the method itself detected an unrepresentable component
+    /// Top-level uniform variates this attempt consumed, reported rather than assumed.
+    /// LEGACY always draws two, one per angle.  CANDIDATE draws one for the boosting
+    /// identity plus two per try of the direction's disc rejection, so its count is not a
+    /// constant and a caller that hard-codes one desynchronizes from the stream.
+    int uniform_variates;
 };
 
 /// LEGACY, reproducing bikappa_v1::bi_kappa_distribution<T>::operator() including its
@@ -491,7 +531,8 @@ template <typename T> class LegacyNative
     explicit LegacyNative(double kappa)
         : m_gX1(T(1.5), T(1)), m_gX2(T(1), T(1)), m_uCos(T(-1), T(1)),
           m_uPhi(T(0), T(2) * piValue<T>()),
-          m_px2(shapeFromKappa<T>(kappa), T(1))
+          m_px2(shapeFromKappa<T>(kappa), T(1)), m_lastCos(T(0)), m_lastPhi(T(0)),
+          m_lastX1(T(0)), m_lastR(T(0))
     {
     }
 
@@ -514,6 +555,7 @@ template <typename T> class LegacyNative
                                          : std::numeric_limits<double>::quiet_NaN()));
         a.finite= allFiniteT<T>(a.v);
         a.overflow= !a.finite;
+        a.uniform_variates= 2;
         m_lastCos= ct;
         m_lastPhi= ph;
         m_lastX1= x1;
@@ -543,7 +585,8 @@ template <typename T> class CandidateNative
 {
   public:
     explicit CandidateNative(double kappa)
-        : m_a(shapeFromKappa<T>(kappa)), m_ncache(T(0)), m_ncached(false)
+        : m_a(shapeFromKappa<T>(kappa)), m_ncache(T(0)), m_ncached(false), m_lastN(),
+          m_lastX1(T(0)), m_lastLogX2(T(0)), m_lastDiscTries(0)
     {
     }
 
@@ -561,25 +604,47 @@ template <typename T> class CandidateNative
                                                                 m_ncached);
         const T log_x2= bikappa_detail::logGamma<T, Gen>(m_a, gen, m_ncache, m_ncached);
         const T log_r= T(0.5) * (std::log(x1) - log_x2);
-        const T ct= T(2) * bikappa_detail::openCanonical<T, Gen>(gen) - T(1);
-        const T ph= T(2) * piValue<T>() * bikappa_detail::openCanonical<T, Gen>(gen);
+
+        // Step 2 of the released operator(), expression for expression: a direction uniform
+        // on S^2 by the rejection method of Marsaglia (1972).  The order of the two
+        // openCanonical calls, the acceptance test `dsq >= 1` and the lift are what make the
+        // replica bit-for-bit equal to the class, so none of them may be rearranged -- and
+        // the loop is why the attempt's uniform count is variable rather than fixed.
+        int tries= 0;
+        T d1, d2, dsq;
+        do
+        {
+            d1= T(2) * bikappa_detail::openCanonical<T, Gen>(gen) - T(1);
+            d2= T(2) * bikappa_detail::openCanonical<T, Gen>(gen) - T(1);
+            dsq= d1 * d1 + d2 * d2;
+            ++tries;
+        } while (dsq >= T(1));
+        const T dscale= T(2) * std::sqrt(T(1) - dsq);
+        std::array<T, 3> n;
+        n[0]= d1 * dscale;
+        n[1]= d2 * dscale;
+        n[2]= T(1) - T(2) * dsq;
 
         bool overflow= false;
-        a.v= candidateVectorFromLogRadius<T>(log_r, ct, ph, geom, &overflow);
+        a.v= candidateVectorFromLogRadius<T>(log_r, n, geom, &overflow);
         a.x2= T(0);
         a.log_r= static_cast<double>(log_r);
         a.overflow= overflow;
         a.finite= !overflow && allFiniteT<T>(a.v);
-        m_lastCos= ct;
-        m_lastPhi= ph;
+        a.uniform_variates= 1 + 2 * tries;
+        m_lastN= n;
         m_lastX1= x1;
         m_lastLogX2= log_x2;
+        m_lastDiscTries= tries;
         return a;
     }
 
     T shape() const { return m_a; }
-    T lastCosTheta() const { return m_lastCos; }
-    T lastPhi() const { return m_lastPhi; }
+    /// The unit direction the last attempt actually drew.  There is no last cos(theta) or
+    /// phi to report: 2.0.0 never forms either.
+    const std::array<T, 3> &lastDirection() const { return m_lastN; }
+    /// Disc-rejection tries the last attempt used; 1 whenever the first pair was accepted.
+    int lastDiscTries() const { return m_lastDiscTries; }
     T lastX1() const { return m_lastX1; }
     T lastLogX2() const { return m_lastLogX2; }
 
@@ -587,7 +652,9 @@ template <typename T> class CandidateNative
     T m_a;
     T m_ncache;
     bool m_ncached;
-    T m_lastCos, m_lastPhi, m_lastX1, m_lastLogX2;
+    std::array<T, 3> m_lastN;
+    T m_lastX1, m_lastLogX2;
+    int m_lastDiscTries;
 };
 
 // ---------------------------------------------------------------------------
@@ -673,10 +740,19 @@ struct AttemptCounters
     double max_log_r_ref;
     long long stratum_total[kNumAuditStrata];
     long long stratum_audited[kNumAuditStrata];
+    /// Amendment 1.2.0 requires the decision-relevance margin to be *asserted in working
+    /// precision* for every attempt the run calls unambiguous, rather than merely implied by
+    /// the stratum it was put in.  These three record that assertion: how many were made,
+    /// how many failed (which must be zero), and the smallest margin any of them cleared.
+    long long margin_assertions;
+    long long margin_assertion_failures;
+    double min_unambiguous_margin;
 
     AttemptCounters()
         : n(0), x2_zero(0), x2_subnormal(0), ref_nonrepresentable(0), rotation_recoverable(0),
-          near_limit(0), audited(0), max_log_r_ref(-std::numeric_limits<double>::infinity())
+          near_limit(0), audited(0), max_log_r_ref(-std::numeric_limits<double>::infinity()),
+          margin_assertions(0), margin_assertion_failures(0),
+          min_unambiguous_margin(std::numeric_limits<double>::infinity())
     {
         for (int i= 0; i < kNumAuditStrata; ++i)
         {

@@ -210,29 +210,44 @@ p6: $(TARGETS) preflight
 # succeeded.  Smoke streams are adjudicated only under SMOKE=1 and never alongside
 # production ones.
 # ---------------------------------------------------------------------------
+# ORACLE_JOBS shards each audit stream across processes.  Sharding is a scheduling device
+# only: shard i adjudicates the records congruent to i modulo N, so the union is exactly the
+# unsharded run and every record is adjudicated exactly once.  Verified on the smoke stream --
+# 2294 records unsharded, 574+574+573+573 across four shards.  At about 1.1 ms a record the
+# frozen matrix is hours on one core, and there are only a handful of audit files, so
+# parallelising over files alone would leave most of the machine idle.
+ORACLE_JOBS ?= $(shell sysctl -n hw.perflevel0.logicalcpu 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null || echo 4)
+
 oracle: exp7_oracle.exe
 	@mkdir -p results $(RAWROOT)
 	@rm -f $(RAWROOT)/oracle_audit.jsonl $(RAWROOT)/oracle_disagreements.jsonl
-	@found=0; rc=0; \
+	@found=0; rc=0; J=$(ORACLE_JOBS); \
 	for f in $(RAWROOT)/p2/audit_*.bin $(RAWROOT)/p3/audit_*.bin; do \
 	  test -f "$$f" || continue; found=1; \
-	  echo "  oracle $$f"; \
-	  if ./exp7_oracle.exe "$$f" \
-	        --disagreements $(RAWROOT)/oracle_disagreements_tmp.jsonl --progress \
-	        >> $(RAWROOT)/oracle_audit.jsonl; then \
-	    :; \
-	  else \
-	    rc=1; echo "    DISAGREEMENTS OR CONVERSION FAILURES in $$f"; \
-	  fi; \
-	  if [ -f $(RAWROOT)/oracle_disagreements_tmp.jsonl ]; then \
-	    cat $(RAWROOT)/oracle_disagreements_tmp.jsonl >> $(RAWROOT)/oracle_disagreements.jsonl; \
-	    rm -f $(RAWROOT)/oracle_disagreements_tmp.jsonl; \
-	  fi; \
+	  echo "  oracle $$f  ($$J shards)"; \
+	  pids=""; i=0; \
+	  while [ $$i -lt $$J ]; do \
+	    ( ./exp7_oracle.exe "$$f" --shard $$i --shards $$J \
+	        --disagreements $(RAWROOT)/oracle_dis_$$i.tmp \
+	        > $(RAWROOT)/oracle_aud_$$i.tmp ; echo $$? > $(RAWROOT)/oracle_rc_$$i.tmp ) & \
+	    pids="$$pids $$!"; i=$$((i+1)); \
+	  done; \
+	  wait $$pids; \
+	  i=0; \
+	  while [ $$i -lt $$J ]; do \
+	    cat $(RAWROOT)/oracle_aud_$$i.tmp >> $(RAWROOT)/oracle_audit.jsonl; \
+	    test -f $(RAWROOT)/oracle_dis_$$i.tmp && \
+	      cat $(RAWROOT)/oracle_dis_$$i.tmp >> $(RAWROOT)/oracle_disagreements.jsonl; \
+	    if [ "$$(cat $(RAWROOT)/oracle_rc_$$i.tmp 2>/dev/null)" != "0" ]; then \
+	      rc=1; echo "    DISAGREEMENTS OR CONVERSION FAILURES in $$f (shard $$i)"; fi; \
+	    rm -f $(RAWROOT)/oracle_aud_$$i.tmp $(RAWROOT)/oracle_dis_$$i.tmp \
+	          $(RAWROOT)/oracle_rc_$$i.tmp; \
+	    i=$$((i+1)); \
+	  done; \
 	done; \
-	rm -f $(RAWROOT)/oracle_disagreements_tmp.jsonl; \
 	if [ $$found -ne 1 ]; then \
 	  echo "  no audit streams under $(RAWROOT) - run p2 and p3 first"; exit 1; fi; \
-	echo "  oracle: $$(grep -c '\"kind\":\"disagreement\"' $(RAWROOT)/oracle_disagreements.jsonl || true) disagreement record(s)"; \
+	echo "  oracle: $$(grep -c '"kind":"disagreement"' $(RAWROOT)/oracle_disagreements.jsonl || true) disagreement record(s)"; \
 	exit $$rc
 
 # ---------------------------------------------------------------------------

@@ -60,11 +60,13 @@ namespace exp7
 static const uint32_t kCondSchemaVersion= 1;
 static const uint32_t kLoaderSchemaVersion= 1;
 static const uint32_t kAuditSchemaVersion= 1;
+static const uint32_t kTailSchemaVersion= 1;
 
 /// Record kinds carried in the binary file header.
 static const uint32_t kKindCond= 2;
 static const uint32_t kKindLoader= 3;
 static const uint32_t kKindAudit= 4;
+static const uint32_t kKindTail= 5;
 
 /// The manifest schema, so that a reader can tell an old manifest from a new one.
 static const char *const kManifestSchema= "exp7-manifest-1";
@@ -160,40 +162,47 @@ template <typename T> inline double logMaxFinite()
     return std::log(static_cast<double>(std::numeric_limits<T>::max()));
 }
 
-/// Draws whose intended log-component lands inside this band of the overflow threshold
-/// are never classified locally; they are written to the audit stream for the oracle.
-static const double kOracleBandLogUnits= 2.0;
+/// Draws whose intended log-component lands inside this band of a type limit are the
+/// decision-relevant ones: they are written to the audit stream in full and never settled by
+/// the working-precision reference alone.  The width is the protocol's, not this file's --
+/// amendment 1.2.0 states audit coverage as a margin so that the claim rests on an
+/// inequality rather than on a sampling rate.  Twenty natural-log units is about four
+/// thousand times the worst reference-versus-oracle disagreement ever measured here.
+inline double oracleBandLogUnits() { return protocol::kAuditMarginLogUnits; }
 
 // ---------------------------------------------------------------------------
-// Stratified audit sampling.
+// Stratified audit sampling, by margin rather than by rate.
 //
 // The independent oracle costs of order a millisecond per record at 100 decimal digits, so
-// which draws it sees is a real decision and amendment 1.1.0 takes it out of the
-// implementation's hands: `audit.strata_rates` in config/protocol.json fixes the rate of
-// every stratum, and the rates arrive here through the generated header rather than as
-// literals.  Four strata are adjudicated in full -- every public-path failure, every draw
-// within kOracleBandLogUnits of a type limit, every draw on which the formations reached
-// different terminal categories, and every draw on which CANDIDATE returned a finite but
-// inaccurate radius.  Only the subnormal-denominator and unbiased-sample strata are
-// subsampled, and BOTH the audited and the total count of every stratum is reported, so the
-// coverage is visible rather than implied.
+// which draws it sees is a real decision and amendment 1.2.0 takes it out of the
+// implementation's hands.  An attempt is *decision-relevant* -- adjudicated in full -- when
+// its intended log-component lies within `audit.margin_log_units` of a type limit, when the
+// formations reach different terminal categories, when CANDIDATE returned a finite but
+// inaccurate radius, when CANDIDATE suffered avoidable loss, or when a subnormal or zero
+// denominator coincided with a representable target.  Everything else is *unambiguous*: the
+// intended value lies so far outside the type's range that no arithmetic could have returned
+// it.  Those are sampled, and the margin is asserted in working precision for every one of
+// them, so the claim rests on an inequality rather than on a sampling rate.
 //
-// Experiment 6 sampled its bulk failures at 1 in 4957 where its plan said "every
-// public-path failure"; with zero disagreements in 7039 of them the one-sided 95 % bound
-// still admitted about 14 900 misclassified failures among 34.9 million.  That is the gap
-// the full rates close, and it is why this phase, not the sampling, dominates the run's
-// cost.  A single disagreement in any stratum fails gate G2.
+// Experiment 6 sampled its bulk failures at 1 in 4957 while its plan said "every public-path
+// failure"; with zero disagreements in 7039 of them the one-sided 95 % bound still admitted
+// about 14 900 misclassified failures among 34.9 million.  Requiring every public-path
+// failure instead is both infeasible and beside the point, because almost all of them are
+// thousands of log units outside the range.  The margin is what closes the gap.  BOTH the
+// audited and the total count of every stratum is reported, so the coverage is visible
+// rather than implied, and a single disagreement in any stratum fails gate G2.
 // ---------------------------------------------------------------------------
 enum AuditStratum
 {
     kAuditNone= 0,
-    kAuditNearLimit= 1,       ///< within kOracleBandLogUnits of the overflow threshold
-    kAuditDisagree= 2,        ///< the formations reached different terminal categories
-    kAuditFiniteButWrong= 3,  ///< CANDIDATE returned a finite radius that is wrong
-    kAuditPublicFailure= 4,   ///< the public path returned a non-finite vector
-    kAuditSubnormal= 5,       ///< the denominator Gamma landed in the subnormal range
-    kAuditSample= 6,          ///< the unbiased deterministic sample of all attempts
-    kNumAuditStrata= 7
+    kAuditWithinMargin= 1,   ///< intended log-component within the margin of a type limit
+    kAuditDisagree= 2,       ///< the formations reached different terminal categories
+    kAuditFiniteButWrong= 3, ///< CANDIDATE returned a finite radius that is wrong
+    kAuditAvoidableCandidate= 4, ///< CANDIDATE suffered avoidable loss; this must stay empty
+    kAuditSubnormalRepresentable= 5, ///< subnormal or zero denominator, representable target
+    kAuditUnambiguous= 6,    ///< a failure more than the margin beyond a type limit
+    kAuditSample= 7,         ///< everything else, sampled without reference to its content
+    kNumAuditStrata= 8
 };
 
 /// The stratum names are the protocol's own, so a reader can line the reported coverage up
@@ -202,12 +211,13 @@ inline const char *auditStratumName(int s)
 {
     switch (s)
     {
-    case kAuditNearLimit: return protocol::kAuditStratumNames[0];
+    case kAuditWithinMargin: return protocol::kAuditStratumNames[0];
     case kAuditDisagree: return protocol::kAuditStratumNames[1];
     case kAuditFiniteButWrong: return protocol::kAuditStratumNames[2];
-    case kAuditPublicFailure: return protocol::kAuditStratumNames[3];
-    case kAuditSubnormal: return protocol::kAuditStratumNames[4];
-    case kAuditSample: return protocol::kAuditStratumNames[5];
+    case kAuditAvoidableCandidate: return protocol::kAuditStratumNames[3];
+    case kAuditSubnormalRepresentable: return protocol::kAuditStratumNames[4];
+    case kAuditUnambiguous: return protocol::kAuditStratumNames[5];
+    case kAuditSample: return protocol::kAuditStratumNames[6];
     default: return "none";
     }
 }
@@ -216,21 +226,19 @@ inline double auditStratumRate(int s)
 {
     switch (s)
     {
-    case kAuditNearLimit: return protocol::kAuditStratumRates[0];
+    case kAuditWithinMargin: return protocol::kAuditStratumRates[0];
     case kAuditDisagree: return protocol::kAuditStratumRates[1];
     case kAuditFiniteButWrong: return protocol::kAuditStratumRates[2];
-    case kAuditPublicFailure: return protocol::kAuditStratumRates[3];
-    case kAuditSubnormal: return protocol::kAuditStratumRates[4];
-    case kAuditSample: return protocol::kAuditStratumRates[5];
+    case kAuditAvoidableCandidate: return protocol::kAuditStratumRates[3];
+    case kAuditSubnormalRepresentable: return protocol::kAuditStratumRates[4];
+    case kAuditUnambiguous: return protocol::kAuditStratumRates[5];
+    case kAuditSample: return protocol::kAuditStratumRates[6];
     default: return 0.0;
     }
 }
 
 /// One in this many members of each stratum is audited; 1 means exhaustive.  The rates come
-/// from config/protocol.json rather than from this file, because amendment 1.1.0 makes them
-/// a protocol datum: Experiment 6 sampled bulk failures at 1 in 4957 where its plan said
-/// "every public-path failure", and with zero disagreements in 7039 of them the one-sided
-/// 95 % bound still admitted about 14 900 misclassified failures among 34.9 million.
+/// from config/protocol.json rather than from this file.
 inline long long auditStride(int stratum)
 {
     const double rate= auditStratumRate(stratum);
@@ -324,7 +332,7 @@ enum PrimitiveFlag
     kFlagHonestOverflowRef= 1u << 5, ///< intended final vector not representable (reference)
     kFlagCapAccept= 1u << 6,
     kFlagAudited= 1u << 7,   ///< written to the oracle audit stream
-    kFlagNearLimit= 1u << 8, ///< within kOracleBandLogUnits of the overflow threshold
+    kFlagNearLimit= 1u << 8, ///< within the protocol margin of a type limit
     /// The *local* field-aligned vector overflowed while the rotated global components are
     /// all representable.  LEGACY forms the local vector and then rotates, so it loses
     /// these draws; an orthogonal rotation can spread one over-large local component across
@@ -382,6 +390,17 @@ struct LoaderRecord
     uint32_t attempts; // attempts consumed to produce this record
 };
 
+/// P1 upper tail.  One record per draw whose Z exceeded the *lowest* protocol threshold
+/// z0 = -log(1e-2), which nests the other two, so F4's exceedance counts and its KS of the
+/// excesses against Exp(1) are both exact for every q0 in the protocol from this file plus
+/// the resolved count in the summary row.  Draws whose Z is not finite are not written --
+/// they exceed every threshold by construction and are carried as a count instead, which
+/// keeps the file at its expected 10^4 records rather than at 10^6.
+struct TailRecord
+{
+    double z;
+};
+
 /// One row handed to the arbitrary-precision oracle.  It carries the *primitives*, not any
 /// derived quantity, so the oracle re-derives everything independently.
 struct AuditRecord
@@ -389,6 +408,11 @@ struct AuditRecord
     double x1;             // Ga(3/2,1) variate, exactly as produced in the working precision
     double y;              // Ga(a+1,1) variate of the boosting identity
     double u;              // U(0,1) variate of the boosting identity
+    // The paired layer's two declared direction primitives.  They are the layer's own
+    // declaration, not a record of what either released sampler drew: 1.0.0 draws its
+    // angles through std::uniform_real_distribution, and 2.0.0 draws no angle at all.
+    // Both are exact functions of the engine, so this stream is identical across standard
+    // libraries by construction rather than by result.
     double cos_theta;
     double phi;
     double log_x2_working; // what the working-precision log path computed
@@ -419,7 +443,7 @@ struct RunContext
     std::string probe_path;
     std::string probe_sha256;
     std::string tag;       ///< environment tag: libcxx, libstdcxx, ...
-    std::string exec_mode; ///< native | translated (Rosetta, emulation)
+    std::string execution; ///< native | translated (Rosetta, emulation)
     bool smoke;
 
     RunContext() : smoke(false) {}
@@ -471,7 +495,7 @@ inline void manifestAppend(const RunContext &rc, const char *phase, const char *
                  kind, bytes, sha256.c_str(), csvField(rc.probe_path).c_str(),
                  rc.probe_sha256.c_str(), csvField(std::string(cxxFlagsId())).c_str(),
                  csvField(std::string(compilerId())).c_str(), stdlibId(), archId(),
-                 rc.tag.c_str(), rc.exec_mode.c_str(), protocol::kProtocolSha256,
+                 rc.tag.c_str(), rc.execution.c_str(), protocol::kProtocolSha256,
                  rc.smoke ? "true" : "false");
     std::fclose(f);
 }
@@ -665,7 +689,10 @@ template <typename T> inline double shapeReference(double kappa)
     return static_cast<double>(shapeFromKappa<T>(kappa));
 }
 
-/// Pi exactly as both headers spell it, so that the uniform on phi has the identical bound.
+/// Pi exactly as release 1.0.0 spells it, so that the uniform on phi has the identical
+/// bound.  Release 2.0.0 does not spell pi at all: its direction comes from a rejection
+/// method on the unit disc and needs no angle.  This constant therefore serves the LEGACY
+/// replica and the paired layer's declared direction primitive, and nothing else.
 template <typename T> inline T piValue()
 {
     return T(3.14159265358979323846264338327950288L);
@@ -821,7 +848,12 @@ template <typename T> struct Geometry
     {
     }
 
-    /// Unit direction from the two loader uniforms, in the field-aligned frame.
+    /// Unit direction from an angle pair, in the field-aligned frame.  This is release
+    /// 1.0.0's construction and the paired diagnostic layer's declared direction primitive;
+    /// release 2.0.0 draws its direction by disc rejection instead and does not come
+    /// through here.  It evaluates sin(phi) and cos(phi) of one argument, which a compiler
+    /// may fuse into a combined routine whose sine differs by an ulp -- and it must keep
+    /// doing so, because reproducing 1.0.0 exactly means reproducing that too.
     static std::array<T, 3> direction(T cos_theta, T phi)
     {
         const T sin_theta= std::sqrt(std::max(T(0), T(1) - cos_theta * cos_theta));
@@ -933,6 +965,19 @@ inline std::vector<unsigned> performanceSeeds()
     return s;
 }
 
+/// Fixture seeds for `make selftest`.  They write no data and no result depends on them,
+/// but they are declared and kept disjoint from both blocks above for a reason that matters:
+/// the selftest asserts that CANDIDATE has zero avoidable loss at kappa = 0.501 in double,
+/// which is a gate G1 predicate.  Running that check on a production seed before the
+/// holdout is read would be reading the holdout.
+inline std::vector<unsigned> selftestSeeds()
+{
+    std::vector<unsigned> s;
+    s.push_back(7501u); s.push_back(7502u); s.push_back(7503u); s.push_back(7504u);
+    s.push_back(7505u);
+    return s;
+}
+
 /// Compare the declarations above against the frozen protocol.  Called at start-up by every
 /// phase; a mismatch is a hard stop, never a warning.
 inline void checkAgainstProtocol()
@@ -962,10 +1007,20 @@ inline void checkAgainstProtocol()
             if (qs[static_cast<size_t>(i)] != protocol::kPerformanceSeeds[i])
                 ok= false;
 
-    // The two blocks must also be disjoint, which is the property Sec. 3 actually relies on.
+    // The blocks must also be pairwise disjoint, which is the property Sec. 3 actually
+    // relies on, and the fixture seeds must touch neither of them.
+    const std::vector<unsigned> fs= selftestSeeds();
     for (size_t i= 0; i < ps.size(); ++i)
         for (size_t j= 0; j < qs.size(); ++j)
             if (ps[i] == qs[j])
+                ok= false;
+    for (size_t i= 0; i < fs.size(); ++i)
+        for (size_t j= 0; j < ps.size(); ++j)
+            if (fs[i] == ps[j])
+                ok= false;
+    for (size_t i= 0; i < fs.size(); ++i)
+        for (size_t j= 0; j < qs.size(); ++j)
+            if (fs[i] == qs[j])
                 ok= false;
 
     if (!ok)
