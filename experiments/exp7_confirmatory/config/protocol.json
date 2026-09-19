@@ -1,6 +1,11 @@
 {
-  "protocol_version": "1.1.0",
+  "protocol_version": "1.2.0",
   "amendments": [
+    {
+      "version": "1.2.0",
+      "before_any_data": true,
+      "reason": "Amendment 1.1.0 required every public-path failure to be adjudicated. Costing it showed that is infeasible and, worse, unnecessary: the honest failures alone come to 17.5 million across the frozen matrix, about 5.4 CPU-hours of oracle time, and almost all of them are draws whose intended value lies thousands of log units outside the type's range, where no arithmetic could have returned them and the classification is not in doubt. Committing to a rule that cannot be followed is how Experiment 6 ended up sampling bulk failures at 1 in 4957 while its plan said 'every'. The rule is therefore restated by MARGIN rather than by category: everything whose classification could go either way is adjudicated in full, and a draw beyond a 20-log-unit margin -- four thousand times the worst float disagreement between the working-precision reference and the 100-digit oracle -- is sampled, with the margin asserted for every one of them. This narrows nothing that was decision-relevant and makes the coverage claim one that is actually kept."
+    },
     {
       "version": "1.1.0",
       "before_any_data": true,
@@ -6672,17 +6677,21 @@
     "never_pool_precisions": true
   },
   "audit": {
-    "rule": "every public-path failure is adjudicated; the remaining strata are sampled at the declared rates and BOTH the audited and the total count of every stratum is reported, so coverage is visible rather than implied",
+    "rule": "every DECISION-RELEVANT attempt is adjudicated in full; an attempt is decision-relevant when its classification could go either way. An attempt whose intended log-component lies more than margin_log_units beyond a type limit is UNAMBIGUOUS -- no arithmetic could have returned it -- and is sampled instead, with the margin itself asserted for every such attempt in working precision. BOTH the audited and the total count of every stratum is reported, so coverage is visible rather than implied.",
+    "margin_log_units": 20.0,
+    "margin_justification": "The working-precision reference and the 100-digit oracle differ by at most about 7.3e-12 natural-log units in double and 4.2e-3 in float (Experiment 6's own oracle record). A 20-log-unit margin is over four thousand times the worst float discrepancy, so beyond it a misclassification is impossible rather than merely improbable. That is an argument the sampling rate does not have to carry.",
     "strata_rates": {
-      "public_path_failure": 1.0,
-      "near_limit_2_log_units": 1.0,
+      "within_margin_of_a_type_limit": 1.0,
       "method_disagreement": 1.0,
       "finite_but_wrong_candidate": 1.0,
-      "subnormal_denominator": 0.1,
+      "avoidable_loss_candidate": 1.0,
+      "subnormal_or_zero_denominator_representable_target": 1.0,
+      "unambiguous_failure_beyond_margin": 0.001,
       "uniform_sample": 0.0001
     },
     "require_header_record_even_when_zero_disagreements": true,
-    "require_audited_file_sha256": true
+    "require_audited_file_sha256": true,
+    "require_margin_assertion_for_unambiguous": true
   },
   "power_study": {
     "artifact": "config/power_study.json",

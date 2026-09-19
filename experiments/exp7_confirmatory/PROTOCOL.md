@@ -119,14 +119,32 @@ rather than silent. It adds acceptance criteria; it weakens none.
    `double` and 2.4e-4 in `float`. Stating the threshold in bits makes it type-aware, and it
    leaves the candidate a wide margin: its own error is about `eps·|log R|`, which is 1.5e-13
    at the `double` overflow threshold and 5.3e-6 at the `float` one.
-2. **Audit coverage is a declared rate, not an implementation detail.** Experiment 6's
-   stratified audit sampled bulk failures at 1 in 4957 where the plan says "send every
-   public-path failure"; with zero disagreements in 7039 of them, the one-sided 95 % bound
-   still admits about 14 900 misclassified failures among 34.9 million. Every public-path
-   failure, every near-limit draw, every method disagreement and every FINITE_BUT_WRONG
-   candidate draw is now adjudicated in full; the remaining strata are sampled at rates fixed
-   in `config/protocol.json`, and **both the audited and the total count of every stratum are
-   reported**.
+2. **Audit coverage is stated by margin, and the margin is kept.** Experiment 6's stratified
+   audit sampled bulk failures at 1 in 4957 while its plan said "send every public-path
+   failure"; with zero disagreements in 7039 of them, the one-sided 95 % bound still admits
+   about 14 900 misclassified failures among 34.9 million.
+
+   Amendment 1.1.0 first responded by requiring *every* public-path failure. Costing that
+   showed it is infeasible and, more to the point, unnecessary: the honest failures alone
+   come to 17.5 million across the frozen matrix — about 5.4 CPU-hours of oracle time — and
+   almost all of them are draws whose intended value lies thousands of log units outside the
+   type's range, where the classification is not in doubt because no arithmetic could have
+   returned them. Writing down a rule that cannot be followed is exactly how Experiment 6
+   arrived at 1 in 4957.
+
+   **Amendment 1.2.0** therefore states the rule by margin. An attempt is *decision-relevant*
+   — and adjudicated in full — when its intended log-component lies within **20 natural-log
+   units** of a type limit, when the two methods reach different terminal categories, when the
+   candidate returned a FINITE_BUT_WRONG value, when a subnormal or zero denominator
+   coincided with a representable target (the avoidable-loss candidates), or when it falls in
+   the uniform 1-in-10⁴ sample. Everything else is *unambiguous*: it is sampled at 1 in 10³,
+   **and the margin is asserted in working precision for every one of them**, so the claim
+   rests on an inequality rather than on a sampling rate.
+
+   Twenty log units is four thousand times the worst disagreement ever measured between the
+   working-precision reference and the 100-digit oracle (7.3e-12 in `double`, 4.2e-3 in
+   `float`). Beyond it a misclassification is impossible, not merely improbable. Both the
+   audited and the total count of every stratum are reported.
 3. **Accuracy is never pooled across precisions.** Experiment 6's headline contrast — 0.48
    against 7.8e-6 — put a `float` worst case next to a `float` figure without labelling
    either, while the `double` worst cases are 0.46 and 1.1e-13. Six of the orders of magnitude

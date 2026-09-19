@@ -1,0 +1,287 @@
+# Experiment 7, phase P5 -- the evidence gate G4 is decided on.
+#
+# Why this workflow exists at all.  PROTOCOL.md 5.3 makes two portability claims and tests
+# them differently: on one architecture the candidate's stream is a function of the engine
+# alone, so libc++ and libstdc++ must agree BITWISE; across architectures log, exp and pow
+# are not correctly rounded and the libm implementations differ, so only the rates are
+# predicted to agree, within a pre-registered equivalence margin.  The second claim needs
+# real x86_64 hardware.  The development host is arm64 macOS; Rosetta 2 and Docker/Rosetta
+# can execute x86_64 there, but PROTOCOL.md 5.3 records translated execution as
+# corroborating evidence only and excludes it from the F7 decision.  Hosted runners are
+# therefore the only native x86_64 this project has.
+#
+# Cost.  The full scalar envelope is a minute of single-core work, so the frozen sizes run
+# unreduced: 10^6 attempts x 5 seeds (7001-7005) over the whole kappa ladder.  Nothing here
+# shrinks a sample to fit a runner.  The bulky per-draw binaries stay on the runner; G4
+# needs counter rows and an environment record, and that is all that is uploaded.
+#
+# What an unavailable environment means.  Not a pass.  The final job fails when an expected
+# environment is missing, and results/portability_remote.md carries the exact command to
+# run it elsewhere.
+#
+# Dependencies owned by other agents:
+#   * experiments/exp7_confirmatory/GNUmakefile must provide a `portability` target that
+#     runs P5 at the frozen sizes, honour CXX_LIBCXX and CXX_LIBSTDCXX (an empty
+#     CXX_LIBSTDCXX disables that build), echo its compile lines, and write
+#     raw/portability/portability_<tag>.jsonl with tags libcxx and libstdcxx.
+#   * experiments/exp7_confirmatory/analyze.py must provide --portability-ingest; the
+#     contract is stated on that step below.
+
+name: portability (G4)
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # actions: read is what lets the decision job pull the environments' artifacts back.
+  actions: read
+
+concurrency:
+  group: portability-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  p5:
+    name: P5 ${{ matrix.env_id }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    # A failure in one environment must still leave the others' evidence on the run.
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - env_id: linux-x86_64
+            os: ubuntu-latest
+            arch: x86_64
+            cxx_libcxx: clang++ -stdlib=libc++
+            cxx_libstdcxx: g++
+            apt: libc++-dev libc++abi-dev
+            experimental: false
+          # ubuntu-24.04-arm is a GitHub-hosted arm64 label whose availability depends on
+          # the account's plan and on the repository being public.  It is provided and
+          # marked experimental rather than assumed: if the label is not served, this leg
+          # fails or never starts, the final job reports arm64 Linux as missing, and G4
+          # stays open with a command in results/portability_remote.md.
+          - env_id: linux-arm64
+            os: ubuntu-24.04-arm
+            arch: arm64
+            cxx_libcxx: clang++ -stdlib=libc++
+            cxx_libstdcxx: g++
+            apt: libc++-dev libc++abi-dev
+            experimental: true
+          # macOS ships no libstdc++ toolchain, so this environment contributes one
+          # standard library.  It carries the cross-architecture comparison against
+          # linux-arm64's libc++ build, not a cross-library one.
+          - env_id: macos-arm64
+            os: macos-latest
+            arch: arm64
+            cxx_libcxx: clang++ -stdlib=libc++
+            cxx_libstdcxx: ""
+            apt: ""
+            experimental: false
+
+    steps:
+      - name: check out the repository
+        uses: actions/checkout@v4
+
+      - name: install the standard library packages this environment needs
+        if: matrix.apt != ''
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ${{ matrix.apt }}
+
+      - name: prepare the evidence directory
+        run: mkdir -p "$GITHUB_WORKSPACE/evidence"
+
+      # The build log is evidence, not diagnostics: the environment record quotes the
+      # compile line make actually used and fails if the frozen flags are not on it.
+      # -ffp-contract=off in particular is load-bearing -- a fused multiply-add changes the
+      # rounding of the very products whose overflow is being counted.
+      - name: build the probe and run P5 at the frozen sizes
+        run: |
+          set -euo pipefail
+          make -C experiments/exp7_confirmatory portability \
+            CXX_LIBCXX="${{ matrix.cxx_libcxx }}" \
+            CXX_LIBSTDCXX="${{ matrix.cxx_libstdcxx }}" \
+            2>&1 | tee "$GITHUB_WORKSPACE/evidence/run.log"
+
+      - name: record the floating-point environment, once per standard library
+        run: |
+          set -euo pipefail
+          record_one () {
+            tag="$1"; shift
+            cxx="$*"
+            if [ -z "$cxx" ]; then
+              echo "no $tag toolchain in this environment; nothing to record"
+              return 0
+            fi
+            # shellcheck disable=SC2086
+            $cxx -std=c++11 -O2 -ffp-contract=off -Wall -Wextra \
+                 -I cpp -o "$RUNNER_TEMP/env_probe_$tag" .github/ci/env_probe.cpp
+            "$RUNNER_TEMP/env_probe_$tag" > "$RUNNER_TEMP/env_probe_$tag.json"
+            python3 .github/ci/make_env_record.py \
+              --probe-json "$RUNNER_TEMP/env_probe_$tag.json" \
+              --tag "$tag" \
+              --env-id "${{ matrix.env_id }}" \
+              --cxx "$cxx" \
+              --repo-root "$GITHUB_WORKSPACE" \
+              --build-log "$GITHUB_WORKSPACE/evidence/run.log" \
+              --phase P5 \
+              --out "$GITHUB_WORKSPACE/evidence/environment_$tag.json"
+          }
+          record_one libcxx "${{ matrix.cxx_libcxx }}"
+          record_one libstdcxx "${{ matrix.cxx_libstdcxx }}"
+
+      # Counter rows only.  The per-draw binaries G4 does not need stay on the runner.
+      - name: collect the counter rows
+        run: |
+          set -euo pipefail
+          src=experiments/exp7_confirmatory/raw/portability
+          found=0
+          for f in "$src"/portability_*.jsonl; do
+            [ -e "$f" ] || continue
+            cp "$f" "$GITHUB_WORKSPACE/evidence/"
+            found=1
+            echo "collected $(basename "$f") ($(wc -l < "$f") rows)"
+          done
+          if [ "$found" -eq 0 ]; then
+            echo "no counter rows were produced in $src" >&2
+            exit 1
+          fi
+          python3 - "$GITHUB_WORKSPACE/evidence" "${{ matrix.env_id }}" \
+                    "${{ matrix.arch }}" "${{ matrix.os }}" <<'PY'
+          import json, os, sys
+          evidence, env_id, arch, os_label = sys.argv[1:5]
+          tags = sorted(f[len("environment_"):-len(".json")]
+                        for f in os.listdir(evidence)
+                        if f.startswith("environment_") and f.endswith(".json"))
+          manifest = {
+              "schema": "exp7-portability-run/1",
+              "experiment": "exp7_confirmatory",
+              "phase": "P5",
+              "gate": "G4",
+              "env_id": env_id,
+              "arch": arch,
+              "runner_label": os_label,
+              "tags": tags,
+              "files": sorted(os.listdir(evidence)),
+              "github_run_id": os.environ.get("GITHUB_RUN_ID"),
+              "github_sha": os.environ.get("GITHUB_SHA"),
+          }
+          with open(os.path.join(evidence, "run_manifest.json"), "w") as fh:
+              json.dump(manifest, fh, indent=2)
+              fh.write("\n")
+          print(json.dumps(manifest, indent=2))
+          PY
+
+      - name: upload this environment's evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: portability-${{ matrix.env_id }}
+          path: evidence/
+          if-no-files-found: error
+          retention-days: 90
+
+  g4-decision:
+    name: G4 decision
+    needs: p5
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: check out the repository
+        uses: actions/checkout@v4
+
+      - name: download every environment's evidence
+        id: download
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          path: evidence
+          pattern: portability-*
+
+      # Presence and shape only -- no statistic is computed here.  Its purpose is that a
+      # missing environment cannot end as a green check.  The environments G4 requires are
+      # read from .github/ci/expected_environments.json, the same file the hand-run recipe
+      # in results/portability_remote.md points at, so that what is expected is stated in
+      # one place rather than inferred from whatever turned up.
+      - name: coverage of the G4 matrix
+        id: coverage
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          python3 .github/ci/check_evidence.py \
+            --evidence evidence \
+            --expect .github/ci/expected_environments.json \
+            --protocol experiments/exp7_confirmatory/config/protocol.json \
+            --out evidence/coverage.json
+
+      - name: set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: install uv
+        run: python -m pip install --disable-pip-version-check uv
+
+      # The two things G4 tests, both decided by the experiment's own analysis against
+      # config/protocol.json.  Neither rule is reimplemented here.
+      #
+      # Contract with analyze.py (owned by the analysis agent):
+      #   analyze.py --portability-ingest <EVIDENCE_DIR>
+      # <EVIDENCE_DIR> holds one subdirectory per artifact, named portability-<env_id>,
+      # each containing environment_<tag>.json, portability_<tag>.jsonl, run.log and
+      # run_manifest.json, plus <EVIDENCE_DIR>/coverage.json written by the step above.
+      # It must:
+      #   (a) group records by the environment record's "arch" and, within an
+      #       architecture, require bitwise equality of every candidate counter and of the
+      #       per-row sample digest across standard libraries -- no tolerance, because the
+      #       claim is exact (PROTOCOL.md 5.3);
+      #   (b) across architectures, run the two one-sided tests on the log rate ratio at
+      #       the margin in gates.G4.log_ratio_margin and the level in
+      #       statistics.family_alpha.F7_portability, Holm-corrected across
+      #       configurations, comparing zero-count cells by the exact conditional test;
+      #   (c) ignore every record whose "execution" is not "native";
+      #   (d) write results/portability.csv and a machine-readable verdict; and
+      #   (e) exit non-zero unless G4 closes.
+      - name: F7 tests and the G4 verdict
+        id: ingest
+        continue-on-error: true
+        working-directory: experiments/exp7_confirmatory
+        run: |
+          set -euo pipefail
+          uv run --project ../../python python analyze.py \
+            --portability-ingest "$GITHUB_WORKSPACE/evidence"
+
+      - name: upload the decision inputs and outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: g4-decision
+          path: |
+            evidence/
+            .github/ci/expected_environments.json
+            experiments/exp7_confirmatory/results/
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: report the gate
+        run: |
+          set -euo pipefail
+          coverage='${{ steps.coverage.outcome }}'
+          ingest='${{ steps.ingest.outcome }}'
+          echo "coverage step: $coverage"
+          echo "F7/G4 step:    $ingest"
+          if [ "$coverage" != success ] || [ "$ingest" != success ]; then
+            echo "G4 is OPEN.  An environment is missing, or the F7 rules did not pass." >&2
+            echo "The exact command for every environment is in" >&2
+            echo "experiments/exp7_confirmatory/results/portability_remote.md" >&2
+            exit 1
+          fi
+          echo "G4 closed on the environments declared in evidence_expected.json."
