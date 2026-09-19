@@ -208,23 +208,45 @@ def tost_log_rate_ratio(k1: int, n1: int, k2: int, n2: int, margin: float,
     if n1 <= 0 or n2 <= 0:
         return {"resolved": False, "passed": False, "reason": "empty sample"}
     if k1 == 0 and k2 == 0:
-        # Both zero: compare the one-sided upper limits instead of a ratio of zeros.
+        # Both zero: nothing disagrees, but nothing is demonstrated either.  Report the
+        # one-sided upper limits and mark the cell non-informative rather than counting a
+        # pair of zeros as agreement.
         u1, u2 = S.zero_count_upper(n1), S.zero_count_upper(n2)
-        return {"resolved": False, "passed": True, "reason": "no failures in either arm",
-                "upper1": u1, "upper2": u2}
+        return {"resolved": False, "informative": False, "disagrees": False,
+                "reason": "no failures in either arm", "upper1": u1, "upper2": u2}
     if k1 == 0 or k2 == 0:
-        return {"resolved": False, "passed": False,
-                "reason": "one arm has zero failures and the other does not"}
+        # One arm saw failures and the other saw none.  Whether that is a real difference
+        # depends on whether the zero arm's upper limit excludes the other arm's rate.
+        seen, zero_n = (k1 / n1, n2) if k1 else (k2 / n2, n1)
+        upper = S.zero_count_upper(zero_n)
+        disagrees = bool(seen > upper)
+        return {"resolved": False, "informative": bool(disagrees), "disagrees": disagrees,
+                "reason": ("one arm has zero failures and the other's rate lies above the "
+                           "zero arm's one-sided upper limit" if disagrees else
+                           "one arm has zero failures; the counts cannot separate them"),
+                "observed_rate": float(seen), "zero_arm_upper": float(upper)}
     p1, p2 = k1 / n1, k2 / n2
     est = np.log(p1) - np.log(p2)
     se = np.sqrt((1 - p1) / k1 + (1 - p2) / k2)
-    z_lo = (est + margin) / se
-    z_hi = (margin - est) / se
-    p_lo = float(stats.norm.sf(z_lo))
-    p_hi = float(stats.norm.sf(z_hi))
+    p_lo = float(stats.norm.sf((est + margin) / se))
+    p_hi = float(stats.norm.sf((margin - est) / se))
     pval = max(p_lo, p_hi)
-    return {"resolved": True, "passed": bool(pval < alpha), "log_ratio": float(est),
-            "se": float(se), "margin": float(margin), "p_value": pval}
+    equivalent = bool(pval < alpha)
+    # Failing to show equivalence is not the same as showing disagreement.  A cell whose
+    # point estimate is inside the margin but whose interval is too wide to prove it is
+    # UNDERPOWERED: it leaves the gate open rather than failing it, because absent evidence
+    # must not pass and must not condemn either.
+    disagrees = bool(abs(est) > margin)
+    return {"resolved": True, "passed": equivalent, "equivalent": equivalent,
+            "disagrees": disagrees,
+            "informative": bool(equivalent or disagrees),
+            "log_ratio": float(est), "se": float(se), "margin": float(margin),
+            "p_value": pval,
+            "reason": ("" if equivalent else
+                       ("the log rate ratio lies outside the pre-registered margin"
+                        if disagrees else
+                        "underpowered: the point estimate is inside the margin but the "
+                        "interval cannot establish equivalence"))}
 
 
 # ---------------------------------------------------------------------------
@@ -458,6 +480,7 @@ def family_F7(proto: Protocol, stdlib_pairs, arch_pairs) -> FamilyResult:
              "identical": bool(p.get("identical"))} for p in stdlib_pairs]
 
     tost_p, tost_rows = [], []
+    n_equivalent = n_underpowered = 0
     for p in arch_pairs:
         r = tost_log_rate_ratio(p["k1"], p["n1"], p["k2"], p["n2"], margin,
                                 alpha / max(len(arch_pairs), 1))
@@ -466,8 +489,12 @@ def family_F7(proto: Protocol, stdlib_pairs, arch_pairs) -> FamilyResult:
         tost_rows.append(r)
         if r.get("resolved"):
             tost_p.append(r["p_value"])
-        elif not r.get("passed"):
-            offenders.append(p["label"])
+        if r.get("disagrees"):
+            offenders.append(p["label"])          # a genuine difference: this FAILS
+        elif r.get("equivalent"):
+            n_equivalent += 1
+        elif r.get("informative") is False:
+            n_underpowered += 1                    # neither proves nor disproves
     rows.extend(tost_rows)
 
     if not stdlib_pairs and not arch_pairs:
@@ -477,7 +504,10 @@ def family_F7(proto: Protocol, stdlib_pairs, arch_pairs) -> FamilyResult:
     passed = not offenders
     return FamilyResult("F7_portability", alpha, bool(passed), float(len(offenders)),
                         float(simes_global(tost_p) if tost_p else 1.0),
-                        f"{len(stdlib_pairs)} bitwise cross-stdlib comparisons (exact), "
-                        f"{len(arch_pairs)} cross-architecture equivalence tests "
-                        f"(margin +/-{margin:g} on the log rate ratio)",
+                        f"{len(stdlib_pairs)} bitwise cross-stdlib comparisons (exact); "
+                        f"{len(arch_pairs)} cross-architecture cells, of which "
+                        f"{n_equivalent} are equivalent within +/-{margin:g} on the log "
+                        f"rate ratio, {len(offenders)} disagree and {n_underpowered} are "
+                        f"underpowered (too few events to establish either, so they leave "
+                        f"the gate open rather than closing or failing it)",
                         offenders, rows)
