@@ -101,6 +101,71 @@ corrections rather than preferences:
   second normal variate of `std::gamma_distribution` survived a reseed, so `seed(s)` followed
   by an odd number of draws did not reproduce. This is a defect fix; it changes behaviour.
 
+### 2.3 Amendment 1.1.0 — three criteria added, none relaxed
+
+Made **before any Experiment 7 draw existed**, in response to an independent audit of
+Experiment 6's evidence that completed after §1–§9 were first written. Recorded here and in
+`config/protocol.json` under `amendments`, with the reason, so that the addition is auditable
+rather than silent. It adds acceptance criteria; it weakens none.
+
+1. **A returned value can be finite and still be wrong.** Experiment 6's terminal classifier
+   read `return method_finite ? kCatFinite : kCatHonestOverflow`, so a method that returned a
+   finite vector for a mathematically unrepresentable draw was scored as a *success*. That is
+   exactly the regime where the legacy form is worst: Experiment 6's own oracle measured up
+   to 0.48 relative error on the surviving radius once the denominator went subnormal, and no
+   gate looked at it. A draw is now classified **FINITE_BUT_WRONG**, and counted as a loss,
+   when its returned radius differs from the arbitrary-precision oracle by more than
+   `2^-(digits/2)` — losing more than half the significand of its type, i.e. 1.1e-8 in
+   `double` and 2.4e-4 in `float`. Stating the threshold in bits makes it type-aware, and it
+   leaves the candidate a wide margin: its own error is about `eps·|log R|`, which is 1.5e-13
+   at the `double` overflow threshold and 5.3e-6 at the `float` one.
+2. **Audit coverage is a declared rate, not an implementation detail.** Experiment 6's
+   stratified audit sampled bulk failures at 1 in 4957 where the plan says "send every
+   public-path failure"; with zero disagreements in 7039 of them, the one-sided 95 % bound
+   still admits about 14 900 misclassified failures among 34.9 million. Every public-path
+   failure, every near-limit draw, every method disagreement and every FINITE_BUT_WRONG
+   candidate draw is now adjudicated in full; the remaining strata are sampled at rates fixed
+   in `config/protocol.json`, and **both the audited and the total count of every stratum are
+   reported**.
+3. **Accuracy is never pooled across precisions.** Experiment 6's headline contrast — 0.48
+   against 7.8e-6 — put a `float` worst case next to a `float` figure without labelling
+   either, while the `double` worst cases are 0.46 and 1.1e-13. Six of the orders of magnitude
+   in that contrast came from the type, not from the method. Every accuracy statistic carries
+   its precision.
+
+### 2.4 What the frozen battery can detect, computed before the run
+
+`config/power_study.py` measures the power of the frozen families against survivor
+conditioning — the effect the battery is used to certify *absent* — at the frozen sample size,
+from simulated draws only. The finite survivors of a loader that loses a fraction `q` of its
+draws are the target conditioned on `Z < -log q`, so the question is answerable exactly.
+
+Power at `n = 10^6` (200 replicates per cell), against a loss fraction of:
+
+| statistic | 1e-2 | 1e-3 | 1e-4 | 1e-5 |
+|---|---:|---:|---:|---:|
+| Anderson–Darling on `Z` | 1.00 | 0.99 | 0.01 | 0.01 |
+| Kolmogorov–Smirnov | 1.00 | 0.14 | 0.00 | 0.01 |
+| Cramér–von Mises | 1.00 | 0.21 | 0.01 | 0.01 |
+| **F1 global** | 1.00 | 0.93 | 0.01 | 0.01 |
+| **F4 exceedance** | 1.00 | 1.00 | 1.00 | 0.07 |
+
+Minimum loss fraction detectable at power ≥ 0.90: **1e-3 for F1, 1e-4 for F4**. Neither
+detects 1e-5, and the protocol says so here rather than discovering it afterwards.
+
+Level, checked over 2000 replicates at `n = 5×10^4`: 0.0095 (AD), 0.0085 (KS), 0.011 (CvM),
+0.0085 (F1), 0.0055 (F4), against a nominal 0.01; the Anderson–Darling p-value is uniform
+under the null (KS against `U(0,1)`, p = 0.25). The statistics hold their size, so the power
+figures above are comparable.
+
+This is why F4 exists. Experiment 6 had no equivalent, and its radial battery's detection
+floor was about a 0.3 % truncation at `n = 5×10^5` — while the candidate's residual loss in
+the cells it certified was 0.076 % and 0.015 %, below that floor by factors of 4 and 18. "The
+log path passes the radial test" therefore meant "its residual truncation is under 0.3 %",
+not "it is correct". The P1 output must carry what F4 needs — exceedance counts above
+`z0 = -log q0` and the excesses themselves — or the confirmatory run cannot detect the effect
+it exists to rule out.
+
 ## 3. Seeds
 
 **Production seeds: 7001–7005. Performance-block seeds: 7006–7010.** Both blocks are declared

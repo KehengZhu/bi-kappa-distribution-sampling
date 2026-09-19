@@ -209,6 +209,28 @@ biMaxwell.define(1.0,        2.0,       {0, 0, 1},  bi_maxwellian_distribution<R
 Each sampler owns an internal `std::mt19937`. Seed it for byte-for-byte
 reproducible sequences; re-seeding with the same value restarts the stream.
 
+\note What "byte-for-byte" does and does not cover.
+
+- **Same binary, same seed:** identical, and `seed(s)` restarts the stream cleanly.
+  Before version 2.0.0 that second half was not true of `bi_kappa_distribution` on
+  every platform: `seed(int)` reseeded the engine without discarding the variate
+  cached inside `std::gamma_distribution`, so under libstdc++ a reseed followed by an
+  odd number of draws did not reproduce. `seed()` now calls `reset()`.
+- **Different standard library, same architecture:** identical for
+  `bi_kappa_distribution` from version 2.0.0 on, because it draws its Gamma, normal
+  and uniform variates from primitives defined in its own header rather than from
+  `<random>`, whose distribution templates are specified only up to their
+  distribution and do use different algorithms in libc++ and libstdc++. The other
+  samplers in this repository still call `<random>` distributions directly and so do
+  **not** have this property.
+- **Different architecture:** not guaranteed for any sampler here. `log`, `exp` and
+  `pow` are not correctly rounded and their implementations differ, so results agree
+  statistically rather than bitwise.
+- **Across releases:** not guaranteed, and version 2.0.0 deliberately breaks it for
+  `bi_kappa_distribution`. Its radius is now built in the log domain, which changes
+  which variates are drawn, so a given seed produces a different sequence than it did
+  under 1.x. Pin the release if a stored stream must be reproduced.
+
 \code{.cpp}
 bi_kappa_distribution<Real> dist;
 

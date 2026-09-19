@@ -1,5 +1,12 @@
 {
-  "protocol_version": "1.0.0",
+  "protocol_version": "1.1.0",
+  "amendments": [
+    {
+      "version": "1.1.0",
+      "before_any_data": true,
+      "reason": "An independent audit of Experiment 6's evidence, completed after 1.0.0 was written and before any Experiment 7 draw existed, found three gaps that no decision rule in 1.0.0 covered: its terminal classifier had no FINITE_BUT_WRONG category and scored a finite return as a success even for an unrepresentable draw; its oracle audit sampled bulk failures at 1 in 4957 where the plan says every public-path failure; and its accuracy statistics pooled float and double. This amendment adds the accuracy threshold, the audit stratum rates, and the requirement that accuracy be reported per precision. It adds criteria; it relaxes none, and no Experiment 7 datum had been generated when it was made."
+    }
+  ],
   "experiment": "exp7_confirmatory",
   "frozen_before_any_data": true,
   "candidate": {
@@ -6653,6 +6660,34 @@
       "NC3_survivor_conditioning"
     ],
     "missing_control_is_failure": true
+  },
+  "accuracy": {
+    "bits_lost_fraction": 0.5,
+    "max_relative_error": {
+      "double": 1.0536712127723509e-08,
+      "float": 0.000244140625
+    },
+    "rule": "a returned draw whose radius differs from the arbitrary-precision oracle by more than max_relative_error for its type is classified FINITE_BUT_WRONG and counted as a loss, not as a success",
+    "report_per_precision": true,
+    "never_pool_precisions": true
+  },
+  "audit": {
+    "rule": "every public-path failure is adjudicated; the remaining strata are sampled at the declared rates and BOTH the audited and the total count of every stratum is reported, so coverage is visible rather than implied",
+    "strata_rates": {
+      "public_path_failure": 1.0,
+      "near_limit_2_log_units": 1.0,
+      "method_disagreement": 1.0,
+      "finite_but_wrong_candidate": 1.0,
+      "subnormal_denominator": 0.1,
+      "uniform_sample": 0.0001
+    },
+    "require_header_record_even_when_zero_disagreements": true,
+    "require_audited_file_sha256": true
+  },
+  "power_study": {
+    "artifact": "config/power_study.json",
+    "computed_before_any_data": true,
+    "note": "Anderson-Darling, KS and Cramer-von Mises on Z are blind to survivor conditioning below a 1e-3 loss fraction at the frozen n; the F4 exceedance tests are not. P1 output must therefore carry exceedance counts and excesses, not only an ECDF grid."
   },
   "gates": {
     "G4": {

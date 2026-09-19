@@ -52,6 +52,18 @@ LOG_Q_ORACLE_TOL = 1e-10
 # sampler from a badly wrong one, so it is declared non-informative in advance.
 INFORMATIVE_WIDTH_LOG_UNITS = 1.0
 
+# A returned value can be finite and still be wrong.  Experiment 6 had no category for that:
+# its classifier scored any finite return as a success even when the intended draw was not
+# representable, which is exactly the regime where the legacy form is worst -- its own oracle
+# measured up to 0.48 relative error on the surviving radius once the denominator went
+# subnormal.  A draw is declared FINITE_BUT_WRONG when its returned radius has lost more than
+# half of the significand of its type, i.e. relative error against the arbitrary-precision
+# oracle above 2^-(digits/2): 1.5e-8 in double, 2.4e-4 in float.  Stating it in bits rather
+# than as an absolute number makes it type-aware and leaves the log path a wide margin -- its
+# own error is about eps*|log R|, which is 1.5e-13 at the double overflow threshold and
+# 5.3e-6 at the float one.
+ACCURACY_MAX_REL_ERROR_BITS_LOST_FRACTION = 0.5
+
 # G5 acceptability bound on candidate/LEGACY time per returned sample.
 PERFORMANCE_BOUND = 2.0
 # G4 equivalence margin on the log rate ratio between architectures.
@@ -129,7 +141,22 @@ def f2_cells() -> tuple[list[dict], dict]:
 def main() -> None:
     cells, f2 = f2_cells()
     protocol = {
-        "protocol_version": "1.0.0",
+        "protocol_version": "1.1.0",
+        "amendments": [
+            {"version": "1.1.0",
+             "before_any_data": True,
+             "reason": "An independent audit of Experiment 6's evidence, completed after "
+                       "1.0.0 was written and before any Experiment 7 draw existed, found "
+                       "three gaps that no decision rule in 1.0.0 covered: its terminal "
+                       "classifier had no FINITE_BUT_WRONG category and scored a finite "
+                       "return as a success even for an unrepresentable draw; its oracle "
+                       "audit sampled bulk failures at 1 in 4957 where the plan says every "
+                       "public-path failure; and its accuracy statistics pooled float and "
+                       "double. This amendment adds the accuracy threshold, the audit "
+                       "stratum rates, and the requirement that accuracy be reported per "
+                       "precision. It adds criteria; it relaxes none, and no Experiment 7 "
+                       "datum had been generated when it was made."},
+        ],
         "experiment": "exp7_confirmatory",
         "frozen_before_any_data": True,
         "candidate": {
@@ -191,6 +218,42 @@ def main() -> None:
             "controls": ["NC1_radius_direction_coupling", "NC2_capped_vs_uncapped_weak_cap",
                          "NC3_survivor_conditioning"],
             "missing_control_is_failure": True,
+        },
+        "accuracy": {
+            "bits_lost_fraction": ACCURACY_MAX_REL_ERROR_BITS_LOST_FRACTION,
+            "max_relative_error": {
+                # 2^-(digits * fraction); digits = 53 (double), 24 (float)
+                "double": 2.0 ** -(53 * ACCURACY_MAX_REL_ERROR_BITS_LOST_FRACTION),
+                "float": 2.0 ** -(24 * ACCURACY_MAX_REL_ERROR_BITS_LOST_FRACTION),
+            },
+            "rule": "a returned draw whose radius differs from the arbitrary-precision "
+                    "oracle by more than max_relative_error for its type is classified "
+                    "FINITE_BUT_WRONG and counted as a loss, not as a success",
+            "report_per_precision": True,
+            "never_pool_precisions": True,
+        },
+        "audit": {
+            "rule": "every public-path failure is adjudicated; the remaining strata are "
+                    "sampled at the declared rates and BOTH the audited and the total count "
+                    "of every stratum is reported, so coverage is visible rather than implied",
+            "strata_rates": {
+                "public_path_failure": 1.0,
+                "near_limit_2_log_units": 1.0,
+                "method_disagreement": 1.0,
+                "finite_but_wrong_candidate": 1.0,
+                "subnormal_denominator": 0.1,
+                "uniform_sample": 1e-4,
+            },
+            "require_header_record_even_when_zero_disagreements": True,
+            "require_audited_file_sha256": True,
+        },
+        "power_study": {
+            "artifact": "config/power_study.json",
+            "computed_before_any_data": True,
+            "note": "Anderson-Darling, KS and Cramer-von Mises on Z are blind to survivor "
+                    "conditioning below a 1e-3 loss fraction at the frozen n; the F4 "
+                    "exceedance tests are not. P1 output must therefore carry exceedance "
+                    "counts and excesses, not only an ECDF grid.",
         },
         "gates": {
             "G4": {"cross_stdlib_rule": "bitwise equality, no tolerance",
