@@ -1,10 +1,10 @@
 {
   "experiment": "exp7_confirmatory",
-  "generated_utc": "2026-09-20T16:15:50+00:00",
+  "generated_utc": "2026-09-20T16:06:21+00:00",
   "exploratory": false,
   "git": {
-    "commit": "182d6e51a409d60004ffc4f14cc1f38ae34676aa",
-    "repo_dirty": true,
+    "commit": "8c3643851e4717bc006c7996453c9287869b1bc3",
+    "repo_dirty": false,
     "dependencies_clean": true,
     "unclean_dependencies": []
   },
@@ -75,8 +75,8 @@
       "state": "clean"
     },
     "analyze.py": {
-      "sha256": "7388b7c12100e437310e03b1d2cb9f4e7320d5160341fb72f11281b973fd1d0d",
-      "head_sha256": "7388b7c12100e437310e03b1d2cb9f4e7320d5160341fb72f11281b973fd1d0d",
+      "sha256": "3c25c64eb02828b67e8b8b701e41e2b4410bd49cdd314ac347750f8d71a41324",
+      "head_sha256": "3c25c64eb02828b67e8b8b701e41e2b4410bd49cdd314ac347750f8d71a41324",
       "state": "clean"
     },
     "make_figures.py": {
@@ -126,9 +126,9 @@
     }
   },
   "continuity": {
-    "previous_preflight_utc": "2026-09-20T16:15:07+00:00",
-    "dependency_hashes_unchanged_since_previous_preflight": true,
-    "sampling_dependency_hashes_unchanged_since_previous_preflight": true,
+    "previous_preflight_utc": "2026-09-20T04:27:45+00:00",
+    "dependency_hashes_unchanged_since_previous_preflight": false,
+    "sampling_dependency_hashes_unchanged_since_previous_preflight": false,
     "note": "Raw draws depend only on the sampling dependencies. If those hashes are unchanged since the preflight a raw file was produced under, that file came from this content, whatever else was edited afterwards."
   },
   "sampling_dependencies": [

@@ -2,7 +2,7 @@
 
 Every figure is generated from the CSVs under `results/` by `make_figures.py`, which reads no raw binary and recomputes no statistic. This file carries no generation timestamp: `make reverify` regenerates every derived artifact and diffs it, which a wall-clock stamp would make impossible.
 
-Protocol `config/protocol.json` SHA-256 `40ceb4f99bac0d94ddff8894df4b9622281826331513e24a733186ee484d2445`.
+Protocol `config/protocol.json` SHA-256 `914c5d1d2b6900d872402a545f46a99819038987416d1b882909eb4ca2bafa48`.
 
 A caption is a property of the figure's definition rather than of the run that drew it, so all five are written here; `figure_manifest.json` records which figures this run actually produced, with the SHA-256 of every source CSV behind them.
 
