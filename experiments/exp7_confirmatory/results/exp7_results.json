@@ -1,0 +1,664 @@
+{
+  "F2": {
+    "informative_intervals": 442,
+    "observed_misses": 0,
+    "resolved_intervals": 650,
+    "total_intervals": 650
+  },
+  "F5_tail_q0": [
+    0.01,
+    0.001,
+    0.0001
+  ],
+  "F5_test_names": [
+    "direction_uniformity",
+    "independence",
+    "frame_invariance",
+    "anisotropy",
+    "cap_law",
+    "tail_1em2_count",
+    "tail_1em2_excess",
+    "tail_1em3_count",
+    "tail_1em3_excess",
+    "tail_1em4_count",
+    "tail_1em4_excess"
+  ],
+  "F5_tests": [
+    {
+      "conditional": false,
+      "label": "C0|CANDIDATE|direction_uniformity",
+      "loss_fraction": 0.0,
+      "p": 0.8442407174961012
+    },
+    {
+      "conditional": false,
+      "label": "C0|CANDIDATE|independence",
+      "loss_fraction": 0.0,
+      "p": 0.6731673704885738
+    },
+    {
+      "conditional": false,
+      "label": "C0|CANDIDATE|frame_invariance",
+      "loss_fraction": 0.0,
+      "p": 0.11264790183509876
+    },
+    {
+      "conditional": false,
+      "label": "C0|CANDIDATE|anisotropy",
+      "loss_fraction": 0.0,
+      "p": 0.30902705011357723
+    },
+    {
+      "conditional": false,
+      "label": "C0|CANDIDATE|tail_1em2_count",
+      "loss_fraction": 0.0,
+      "p": 0.12131714632802174
+    },
+    {
+      "conditional": false,
+      "label": "C0|CANDIDATE|tail_1em2_excess",
+      "loss_fraction": 0.0,
+      "p": 0.9509540194730827
+    },
+    {
+      "conditional": false,
+      "label": "C0|CANDIDATE|tail_1em3_count",
+      "loss_fraction": 0.0,
+      "p": 0.2828125488472941
+    },
+    {
+      "conditional": false,
+      "label": "C0|CANDIDATE|tail_1em3_excess",
+      "loss_fraction": 0.0,
+      "p": 0.9203132337818373
+    },
+    {
+      "conditional": false,
+      "label": "C0|CANDIDATE|tail_1em4_count",
+      "loss_fraction": 0.0,
+      "p": 0.8873444670950759
+    },
+    {
+      "conditional": false,
+      "label": "C0|CANDIDATE|tail_1em4_excess",
+      "loss_fraction": 0.0,
+      "p": 0.9170622225627231
+    },
+    {
+      "conditional": true,
+      "label": "C1|CANDIDATE|direction_uniformity",
+      "loss_fraction": 2e-06,
+      "p": 0.8016184325118987
+    },
+    {
+      "conditional": true,
+      "label": "C1|CANDIDATE|independence",
+      "loss_fraction": 2e-06,
+      "p": 0.6621376747722255
+    },
+    {
+      "conditional": true,
+      "label": "C1|CANDIDATE|frame_invariance",
+      "loss_fraction": 2e-06,
+      "p": 0.2958434415612653
+    },
+    {
+      "conditional": true,
+      "label": "C1|CANDIDATE|anisotropy",
+      "loss_fraction": 2e-06,
+      "p": 0.9244801989872076
+    },
+    {
+      "conditional": true,
+      "label": "C1|CANDIDATE|tail_1em2_count",
+      "loss_fraction": 2e-06,
+      "p": 0.7437336343188267
+    },
+    {
+      "conditional": true,
+      "label": "C1|CANDIDATE|tail_1em2_excess",
+      "loss_fraction": 2e-06,
+      "p": 0.8818441153907243
+    },
+    {
+      "conditional": true,
+      "label": "C1|CANDIDATE|tail_1em3_count",
+      "loss_fraction": 2e-06,
+      "p": 0.8579339204534213
+    },
+    {
+      "conditional": true,
+      "label": "C1|CANDIDATE|tail_1em3_excess",
+      "loss_fraction": 2e-06,
+      "p": 0.23369938222552056
+    },
+    {
+      "conditional": true,
+      "label": "C1|CANDIDATE|tail_1em4_count",
+      "loss_fraction": 2e-06,
+      "p": 0.5709222414565954
+    },
+    {
+      "conditional": true,
+      "label": "C1|CANDIDATE|tail_1em4_excess",
+      "loss_fraction": 2e-06,
+      "p": 0.3481978317462737
+    },
+    {
+      "conditional": true,
+      "label": "C2|CANDIDATE|direction_uniformity",
+      "loss_fraction": 2e-06,
+      "p": 0.8016184325117788
+    },
+    {
+      "conditional": true,
+      "label": "C2|CANDIDATE|independence",
+      "loss_fraction": 2e-06,
+      "p": 0.6621376747722255
+    },
+    {
+      "conditional": true,
+      "label": "C2|CANDIDATE|frame_invariance",
+      "loss_fraction": 2e-06,
+      "p": 0.29584344156131004
+    },
+    {
+      "conditional": true,
+      "label": "C2|CANDIDATE|anisotropy",
+      "loss_fraction": 2e-06,
+      "p": 0.9244801989872076
+    },
+    {
+      "conditional": true,
+      "label": "C2|CANDIDATE|tail_1em2_count",
+      "loss_fraction": 2e-06,
+      "p": 0.7437336343188267
+    },
+    {
+      "conditional": true,
+      "label": "C2|CANDIDATE|tail_1em2_excess",
+      "loss_fraction": 2e-06,
+      "p": 0.8818441153907243
+    },
+    {
+      "conditional": true,
+      "label": "C2|CANDIDATE|tail_1em3_count",
+      "loss_fraction": 2e-06,
+      "p": 0.8579339204534213
+    },
+    {
+      "conditional": true,
+      "label": "C2|CANDIDATE|tail_1em3_excess",
+      "loss_fraction": 2e-06,
+      "p": 0.23369938222552056
+    },
+    {
+      "conditional": true,
+      "label": "C2|CANDIDATE|tail_1em4_count",
+      "loss_fraction": 2e-06,
+      "p": 0.5709222414565954
+    },
+    {
+      "conditional": true,
+      "label": "C2|CANDIDATE|tail_1em4_excess",
+      "loss_fraction": 2e-06,
+      "p": 0.3481978317462737
+    },
+    {
+      "conditional": true,
+      "label": "C3|CANDIDATE|direction_uniformity",
+      "loss_fraction": 0.000176,
+      "p": 0.9452214192057254
+    },
+    {
+      "conditional": true,
+      "label": "C3|CANDIDATE|independence",
+      "loss_fraction": 0.000176,
+      "p": 0.8881400775417596
+    },
+    {
+      "conditional": true,
+      "label": "C3|CANDIDATE|frame_invariance",
+      "loss_fraction": 0.000176,
+      "p": 0.39916325738743796
+    },
+    {
+      "conditional": true,
+      "label": "C3|CANDIDATE|anisotropy",
+      "loss_fraction": 0.000176,
+      "p": 0.4146107392705134
+    },
+    {
+      "conditional": true,
+      "label": "C3|CANDIDATE|tail_1em2_count",
+      "loss_fraction": 0.000176,
+      "p": 0.9094685802714144
+    },
+    {
+      "conditional": true,
+      "label": "C3|CANDIDATE|tail_1em2_excess",
+      "loss_fraction": 0.000176,
+      "p": 0.1674168745218395
+    },
+    {
+      "conditional": true,
+      "label": "C3|CANDIDATE|tail_1em3_count",
+      "loss_fraction": 0.000176,
+      "p": 0.1397606976034786
+    },
+    {
+      "conditional": true,
+      "label": "C3|CANDIDATE|tail_1em3_excess",
+      "loss_fraction": 0.000176,
+      "p": 2.9238159122131868e-09
+    },
+    {
+      "conditional": true,
+      "label": "C4|CANDIDATE|direction_uniformity",
+      "loss_fraction": 0.000834,
+      "p": 0.9330096876861893
+    },
+    {
+      "conditional": true,
+      "label": "C4|CANDIDATE|independence",
+      "loss_fraction": 0.000834,
+      "p": 0.5845947852336114
+    },
+    {
+      "conditional": true,
+      "label": "C4|CANDIDATE|frame_invariance",
+      "loss_fraction": 0.000834,
+      "p": 0.6997955134576836
+    },
+    {
+      "conditional": true,
+      "label": "C4|CANDIDATE|anisotropy",
+      "loss_fraction": 0.000834,
+      "p": 0.868775555032552
+    },
+    {
+      "conditional": true,
+      "label": "C4|CANDIDATE|tail_1em2_count",
+      "loss_fraction": 0.000834,
+      "p": 0.9546611519496606
+    },
+    {
+      "conditional": true,
+      "label": "C4|CANDIDATE|tail_1em2_excess",
+      "loss_fraction": 0.000834,
+      "p": 3.3475144639728425e-28
+    },
+    {
+      "conditional": true,
+      "label": "C4|CANDIDATE|tail_1em3_count",
+      "loss_fraction": 0.000834,
+      "p": 1.0
+    },
+    {
+      "conditional": true,
+      "label": "C4|CANDIDATE|tail_1em3_excess",
+      "loss_fraction": 0.000834,
+      "p": 3.0933774544401005e-63
+    },
+    {
+      "conditional": false,
+      "label": "C5|CANDIDATE|anisotropy",
+      "loss_fraction": 0.0,
+      "p": 0.8716964980265212
+    },
+    {
+      "conditional": false,
+      "label": "C5|CANDIDATE|cap_law",
+      "loss_fraction": 0.0,
+      "p": 0.90847534825567
+    },
+    {
+      "conditional": false,
+      "label": "C6|CANDIDATE|anisotropy",
+      "loss_fraction": 0.0,
+      "p": 0.8188028541117693
+    },
+    {
+      "conditional": false,
+      "label": "C6|CANDIDATE|cap_law",
+      "loss_fraction": 0.0,
+      "p": 0.968319464441403
+    }
+  ],
+  "F6_controls": [
+    {
+      "detections": 200,
+      "effect": 0.001,
+      "injections": 200,
+      "name": "NC1_radius_direction_coupling"
+    },
+    {
+      "detections": 200,
+      "effect": 0.0001,
+      "injections": 200,
+      "name": "NC1_radius_direction_coupling"
+    },
+    {
+      "detections": 200,
+      "effect": 20.0,
+      "injections": 200,
+      "name": "NC2_capped_vs_uncapped_weak_cap"
+    },
+    {
+      "detections": 200,
+      "effect": 0.000834,
+      "injections": 200,
+      "name": "NC3_survivor_conditioning"
+    }
+  ],
+  "amendments": [
+    "1.3.0",
+    "1.2.0",
+    "1.1.0"
+  ],
+  "corrections_applied": {
+    "F1_contents": "Anderson-Darling, KS and Cramer-von Mises on Z only. The Beta test on W is dropped: the schema emits no W sample, Z is a monotone transform of log W so the two are near-redundant, and G0 already validates the log-q evaluator against an arbitrary-precision incomplete beta to 1e-10, which is a stronger check than an overlap comparison between the routes.",
+    "F2_informativeness": "misses are counted over every RESOLVED interval, which is what the frozen Poisson-binomial null was built over. The informativeness flag is published as a map per section 5.1 and does not change the count; excluding non-informative cells would make F2 unevaluable against its own frozen null.",
+    "G5_interval": "0.99, the cluster-bootstrap level in statistics.bootstrap.conf. Section 6 said 95 per cent in prose; the machine-readable value governs and is the conservative choice for a gate on an upper limit.",
+    "NC3_effect": "the largest loss fraction among the UNCAPPED LOADER CELLS (C0-C4), not the global maximum over the scalar ladder. The earlier wording said 'whose loss is not dominated by honest overflow', which is unusable: G1 requires the candidate's avoidable loss to be exactly zero, so every loss it has is honest overflow and that qualifier empties the set. What it was there to exclude is the degenerate scalar configurations -- float kappa = 0.5001 loses 98 per cent of its draws, where detection is trivial and says nothing -- not any cell from among C0-C4."
+  },
+  "cross_phase_native_disagreements": 0,
+  "evidence": {
+    "accounting_failures": 0,
+    "archive_identifier": null,
+    "audit_coverage": {
+      "avoidable_loss_candidate": "nan",
+      "finite_but_wrong_candidate": "nan",
+      "method_disagreement": 1.0,
+      "subnormal_or_zero_denominator_representable_target": 1.0,
+      "unambiguous_failure_beyond_margin": 0.0010018529478861846,
+      "uniform_sample": 0.00010019619983321951,
+      "within_margin_of_a_type_limit": 1.0
+    },
+    "baseline_comparison_resolved": true,
+    "benign_control_exercises_candidate": true,
+    "candidate_avoidable_total": 2,
+    "conditional_cells_without_loss_fraction": 0,
+    "dependencies_clean": true,
+    "environments": [
+      {
+        "arch": "arm64",
+        "available": true,
+        "compiler": "clang 21.0.0 (clang-2100.3.34.2)",
+        "completed": true,
+        "execution": "native",
+        "n_rows": 130,
+        "os": null,
+        "reason_not_run": null,
+        "stdlib": "libc++"
+      },
+      {
+        "arch": "arm64",
+        "available": true,
+        "compiler": "gcc 15.2.0",
+        "completed": true,
+        "execution": "native",
+        "n_rows": 130,
+        "os": null,
+        "reason_not_run": null,
+        "stdlib": "libstdc++"
+      },
+      {
+        "arch": "x86_64",
+        "available": false,
+        "compiler": null,
+        "completed": false,
+        "execution": null,
+        "n_rows": 0,
+        "os": "ubuntu-latest",
+        "reason_not_run": "this host provides neither that architecture nor that standard library; the exact command is in results/portability_remote.md, and the CI workflow .github/workflows/portability.yml runs it",
+        "stdlib": "libcxx"
+      },
+      {
+        "arch": "x86_64",
+        "available": false,
+        "compiler": null,
+        "completed": false,
+        "execution": null,
+        "n_rows": 0,
+        "os": "ubuntu-latest",
+        "reason_not_run": "this host provides neither that architecture nor that standard library; the exact command is in results/portability_remote.md, and the CI workflow .github/workflows/portability.yml runs it",
+        "stdlib": "libstdcxx"
+      }
+    ],
+    "honest_minus_floor_unadjudicated": 0,
+    "log_q_worst_abs_error": 2.842170943040401e-14,
+    "make_reverify_identical": null,
+    "make_verify_exit_code": null,
+    "oracle_audited_records": 14233536,
+    "oracle_conversion_failures": 0,
+    "oracle_disagreements": 2,
+    "protocol_sha256": "7d6e05fbbf3cd9f864b265ffa6122b0ea4fd88757752dbc00ba634762d91b76b",
+    "rng_stream_break_documented": true,
+    "same_seed_reproducible": true,
+    "time_per_return_ratio": 0.8968046420090129,
+    "time_per_return_ratio_hi": 0.9090137742768141
+  },
+  "expected_false_failure_bound": 0.05,
+  "experiment": "exp7_confirmatory",
+  "families": {
+    "F1_radial_law": {
+      "alpha": 0.01,
+      "detail": "Simes over 26 configurations; 0 identified by Holm on rejection",
+      "family": "F1_radial_law",
+      "offenders": [],
+      "p_value": 0.7798810655146808,
+      "passed": true,
+      "statistic": 0.7798810655146808
+    },
+    "F2_quantile_coverage": {
+      "alpha": 0.005,
+      "detail": "0 misses of 650 resolved intervals; expected 6.21; fail above 13",
+      "family": "F2_quantile_coverage",
+      "offenders": [],
+      "p_value": 1.0,
+      "passed": true,
+      "statistic": 0.0
+    },
+    "F3_quantile_direction": {
+      "alpha": 0.01,
+      "detail": "Holm over 130 (kappa, precision, p) cells",
+      "family": "F3_quantile_direction",
+      "offenders": [],
+      "p_value": 0.6213005546896088,
+      "passed": true,
+      "statistic": 0.6213005546896088
+    },
+    "F4_upper_tail_mass": {
+      "alpha": 0.01,
+      "detail": "Simes over 780 exceedance statistics",
+      "family": "F4_upper_tail_mass",
+      "offenders": [],
+      "p_value": 1.0,
+      "passed": true,
+      "statistic": 1.0
+    },
+    "F5_loader_battery": {
+      "alpha": 0.01,
+      "detail": "Holm jointly over 50 tests across all cells; 36 cells are conditional on success and are labelled as such",
+      "family": "F5_loader_battery",
+      "offenders": [
+        "C3|CANDIDATE|tail_1em3_excess",
+        "C4|CANDIDATE|tail_1em2_excess",
+        "C4|CANDIDATE|tail_1em3_excess"
+      ],
+      "p_value": 1.5466887272200502e-61,
+      "passed": false,
+      "statistic": 1.5466887272200502e-61
+    },
+    "F6_negative_controls": {
+      "alpha": "nan",
+      "detail": "4 controls; required power 0.9 at the pre-registered effect",
+      "family": "F6_negative_controls",
+      "offenders": [],
+      "p_value": "nan",
+      "passed": true,
+      "statistic": "nan"
+    },
+    "F7_portability": {
+      "alpha": 0.005,
+      "detail": "1 bitwise cross-stdlib comparisons (exact); 0 cross-architecture cells, of which 0 are equivalent within +/-0.15 on the log rate ratio, 0 disagree and 0 are underpowered (too few events to establish either, so they leave the gate open rather than closing or failing it)",
+      "family": "F7_portability",
+      "offenders": [],
+      "p_value": 1.0,
+      "passed": true,
+      "statistic": 0.0
+    }
+  },
+  "gates": {
+    "G0": {
+      "evidence": "log-q evaluator agrees with the 60-digit oracle to 2.84e-14 (tolerance 1e-10); attribution checklist complete for 7/7 cited methods; acceptance-rate predictor pre-registered as 'area_ratio'",
+      "gate": "G0",
+      "inputs": {
+        "incomplete_attributions": [],
+        "log_q_worst_abs_error": 2.842170943040401e-14,
+        "tolerance": 1e-10
+      },
+      "status": "PASS",
+      "title": "primary-source audit"
+    },
+    "G1": {
+      "evidence": "4/4 scalar families pass; candidate avoidable loss 2 (required exactly 0); benign control exercises the candidate: True",
+      "gate": "G1",
+      "inputs": {
+        "avoidable": 2,
+        "benign_control_ok": true,
+        "failed_families": []
+      },
+      "status": "FAIL",
+      "title": "scalar correctness"
+    },
+    "G2": {
+      "evidence": "0 accounting-identity failures; 2 oracle disagreements in 14233536 adjudicated attempts; 0 honest-count discrepancies left unadjudicated",
+      "gate": "G2",
+      "inputs": {
+        "audit_coverage": {
+          "avoidable_loss_candidate": "nan",
+          "finite_but_wrong_candidate": "nan",
+          "method_disagreement": 1.0,
+          "subnormal_or_zero_denominator_representable_target": 1.0,
+          "unambiguous_failure_beyond_margin": 0.0010018529478861846,
+          "uniform_sample": 0.00010019619983321951,
+          "within_margin_of_a_type_limit": 1.0
+        },
+        "declared_rates": {
+          "avoidable_loss_candidate": 1.0,
+          "finite_but_wrong_candidate": 1.0,
+          "method_disagreement": 1.0,
+          "subnormal_or_zero_denominator_representable_target": 1.0,
+          "unambiguous_failure_beyond_margin": 0.001,
+          "uniform_sample": 0.0001,
+          "within_margin_of_a_type_limit": 1.0
+        }
+      },
+      "status": "FAIL",
+      "title": "mechanism closure"
+    },
+    "G3": {
+      "evidence": "F5 FAILS jointly over its cells (Holm jointly over 50 tests across all cells; 36 cells are conditional on success and are labelled as such); F6 passes (4 controls; required power 0.9 at the pre-registered effect); 0 conditional cells lack a loss fraction",
+      "gate": "G3",
+      "inputs": {
+        "F5": {
+          "alpha": 0.01,
+          "detail": "Holm jointly over 50 tests across all cells; 36 cells are conditional on success and are labelled as such",
+          "family": "F5_loader_battery",
+          "offenders": [
+            "C3|CANDIDATE|tail_1em3_excess",
+            "C4|CANDIDATE|tail_1em2_excess",
+            "C4|CANDIDATE|tail_1em3_excess"
+          ],
+          "p_value": 1.5466887272200502e-61,
+          "passed": false,
+          "statistic": 1.5466887272200502e-61
+        },
+        "F6": {
+          "alpha": "nan",
+          "detail": "4 controls; required power 0.9 at the pre-registered effect",
+          "family": "F6_negative_controls",
+          "offenders": [],
+          "p_value": "nan",
+          "passed": true,
+          "statistic": "nan"
+        }
+      },
+      "status": "FAIL",
+      "title": "complete-loader fidelity"
+    },
+    "G4": {
+      "evidence": "2 native environments completed ([('arm64', 'libc++'), ('arm64', 'libstdc++')]); 0 translated results recorded as corroborating only and excluded from the decision; 1 bitwise cross-stdlib comparisons (exact); 0 cross-architecture cells, of which 0 are equivalent within +/-0.15 on the log rate ratio, 0 disagree and 0 are underpowered (too few events to establish either, so they leave the gate open rather than closing or failing it); 2 environments not yet run: [('x86_64', 'libcxx'), ('x86_64', 'libstdcxx')]. only one architecture has native results, so the cross-architecture claim is untested. The exact commands are in results/portability_remote.md. Emulation is not accepted as a substitute, so the gate stays open rather than being quietly passed.",
+      "gate": "G4",
+      "inputs": {
+        "F7": {
+          "alpha": 0.005,
+          "detail": "1 bitwise cross-stdlib comparisons (exact); 0 cross-architecture cells, of which 0 are equivalent within +/-0.15 on the log rate ratio, 0 disagree and 0 are underpowered (too few events to establish either, so they leave the gate open rather than closing or failing it)",
+          "family": "F7_portability",
+          "offenders": [],
+          "p_value": 1.0,
+          "passed": true,
+          "statistic": 0.0
+        },
+        "pending": [
+          {
+            "arch": "x86_64",
+            "available": false,
+            "compiler": null,
+            "completed": false,
+            "execution": null,
+            "n_rows": 0,
+            "os": "ubuntu-latest",
+            "reason_not_run": "this host provides neither that architecture nor that standard library; the exact command is in results/portability_remote.md, and the CI workflow .github/workflows/portability.yml runs it",
+            "stdlib": "libcxx"
+          },
+          {
+            "arch": "x86_64",
+            "available": false,
+            "compiler": null,
+            "completed": false,
+            "execution": null,
+            "n_rows": 0,
+            "os": "ubuntu-latest",
+            "reason_not_run": "this host provides neither that architecture nor that standard library; the exact command is in results/portability_remote.md, and the CI workflow .github/workflows/portability.yml runs it",
+            "stdlib": "libstdcxx"
+          }
+        ],
+        "underpowered_cross_arch": []
+      },
+      "status": "OPEN",
+      "title": "portability"
+    },
+    "G5": {
+      "evidence": "candidate/LEGACY time per returned sample 0.897 (cluster-bootstrap upper limit 0.909; pre-registered bound 2); same-seed reproducible: True; RNG-stream break documented: True",
+      "gate": "G5",
+      "inputs": {
+        "bound": 2.0,
+        "hi": 0.9090137742768141,
+        "ratio": 0.8968046420090129
+      },
+      "status": "PASS",
+      "title": "operational viability"
+    },
+    "G6": {
+      "evidence": "required evidence is absent: `make verify` was never run. An absent measurement fails this gate; it never passes it.",
+      "gate": "G6",
+      "inputs": {},
+      "status": "FAIL",
+      "title": "reproducible artifact"
+    }
+  },
+  "mode": "production",
+  "performance": {
+    "bound": 2.0,
+    "hi": 0.9090137742768141,
+    "lo": 0.845195115653088,
+    "ratio": 0.8968046420090129
+  },
+  "primary_environment_tag": "libcxx",
+  "protocol_sha256": "7d6e05fbbf3cd9f864b265ffa6122b0ea4fd88757752dbc00ba634762d91b76b",
+  "protocol_version": "1.3.0",
+  "verdict": "NO-GO"
+}
