@@ -451,7 +451,7 @@
     "honest_minus_floor_unadjudicated": 0,
     "log_q_worst_abs_error": 2.842170943040401e-14,
     "make_reverify_identical": null,
-    "make_verify_exit_code": null,
+    "make_verify_exit_code": 1,
     "oracle_audited_records": 14244766,
     "oracle_conversion_failures": 0,
     "oracle_disagreements": 0,
@@ -632,7 +632,7 @@
       "title": "operational viability"
     },
     "G6": {
-      "evidence": "required evidence is absent: `make verify` was never run (receipt: absent). An absent measurement fails this gate; it never passes it.",
+      "evidence": "required evidence is absent: derived artifacts were never regenerated and compared (receipt: absent). An absent measurement fails this gate; it never passes it.",
       "gate": "G6",
       "inputs": {},
       "status": "FAIL",
