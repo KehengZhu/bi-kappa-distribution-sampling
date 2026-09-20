@@ -1479,8 +1479,19 @@ def loader_tail_tests(z_intended, z_returned, c_returned, n_attempted: int, q0s,
         sel = np.isfinite(zr) & (zr > z0)
         zz, cc = zr[sel], cr[sel]
         out[f"tail_{slug}_observed_returned"] = int(zz.size)
+        # A NaN boundary is not the same as an absent one.  `+inf` means "this direction
+        # cannot overflow", which is a real and common case; NaN means the geometry could not
+        # be evaluated, and treating it as +inf would quietly test a censored draw against an
+        # uncensored null -- the very substitution amendment 2.0.0 exists to undo.
+        n_bad_c = int(np.sum(np.isnan(cc)))
+        if n_bad_c:
+            raise AnalysisError(
+                f"{label}: {n_bad_c} of {cc.size} returned draws above z0={z0:.4f} have a "
+                "NaN representability threshold, so their censored null is undefined. The "
+                "cell's geometry (kappa, theta, ub, precision) could not be evaluated; this "
+                "is a defect in the run record, not a result.")
         if zz.size >= 8:
-            span = np.where(np.isfinite(cc), cc - z0, np.inf)
+            span = np.where(np.isinf(cc), np.inf, cc - z0)
             with np.errstate(divide="ignore", invalid="ignore"):
                 u = -np.expm1(-(zz - z0)) / -np.expm1(-span)
             # A returned draw satisfies Z <= C by construction, so U cannot exceed 1 except
@@ -1559,7 +1570,8 @@ def loader_tests(log_r, n_hat, kappa, cap, n_attempted=None, q0s=(), z=None,
     lr, nh = log_r[ok], n_hat[ok]
     tests = f5_test_names(q0s)
     out = {"n_analyzed": int(lr.size), "n_attempted": int(
-        n_attempted if n_attempted is not None else lr.size), "honest_floor_rate": None}
+        n_attempted if n_attempted is not None else lr.size), "honest_floor_rate": None,
+        "tail_records": None, "tail_records_missing": None}
     for t in tests:
         out[f"p_{t}"] = None
         out[f"stat_{t}"] = None
@@ -1662,7 +1674,8 @@ def analyse_p4(ctx: Context) -> dict:
         columns += [f"p_{t}", f"stat_{t}", f"applies_{t}", f"f5_holm_rejected_{t}"]
     for q0 in q0s:
         columns += [f"tail_{tail_slug(q0)}_{f}" for f in TAIL_EXTRA_FIELDS]
-    columns += ["seed_homogeneity_chi2", "seed_homogeneity_p"]
+    columns += ["tail_records", "tail_records_missing",
+                "seed_homogeneity_chi2", "seed_homogeneity_p"]
     for pref in ("nonfinite_attempt_rate",):
         columns += [f"{pref}_count", f"{pref}_n", f"{pref}_rate", f"{pref}_ci_lo",
                     f"{pref}_ci_hi", f"{pref}_interval_kind", f"{pref}_is_upper_bound"]
@@ -1733,6 +1746,8 @@ def analyse_p4(ctx: Context) -> dict:
         for q0 in q0s:
             for f in TAIL_EXTRA_FIELDS:
                 row[f"tail_{tail_slug(q0)}_{f}"] = tests[f"tail_{tail_slug(q0)}_{f}"]
+        row["tail_records"] = tests["tail_records"]
+        row["tail_records_missing"] = tests["tail_records_missing"]
         row.update(rate_columns(nf_attempt, attempts, "nonfinite_attempt_rate",
                                 ctx.interval_conf))
         if conditional and not np.isfinite(loss_fraction):
@@ -1811,6 +1826,8 @@ def analyse_p4(ctx: Context) -> dict:
         for q0 in q0s:
             for f in TAIL_EXTRA_FIELDS:
                 row[f"tail_{tail_slug(q0)}_{f}"] = tests[f"tail_{tail_slug(q0)}_{f}"]
+        row["tail_records"] = tests["tail_records"]
+        row["tail_records_missing"] = tests["tail_records_missing"]
         row.update(rate_columns(nf_attempt, attempts, "nonfinite_attempt_rate",
                                 ctx.interval_conf))
         if conditional and not np.isfinite(loss_fraction):
