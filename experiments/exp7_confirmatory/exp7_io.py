@@ -17,33 +17,57 @@ import numpy as np
 HEADER_FMT = "<8sIIII7dIIq"
 HEADER_SIZE = struct.calcsize(HEADER_FMT)  # 96
 
-RECORD_KINDS = {1: "pilot", 2: "conditioning", 3: "loader", 4: "audit"}
+RECORD_KINDS = {2: "conditioning", 3: "loader", 4: "audit", 5: "tail"}
 
-PILOT_DTYPE = np.dtype([("log_r", "<f8"), ("log_w", "<f8"),
-                        ("retries", "<u4"), ("flags", "<u4")])
-COND_DTYPE = np.dtype([("log_r_ref", "<f8"), ("log_w_ref", "<f8"),
-                       ("log_speed_ref", "<f8"), ("max_log_component_ref", "<f8"),
-                       ("flags", "<u4"), ("cat_qf", "u1"), ("cat_split", "u1"),
-                       ("cat_log", "u1"), ("reserved", "u1")])
+# These mirror the structs in src/exp7_common.H exactly.  numpy's `itemsize` is checked
+# against the header's `record_size` on every read, so a layout that drifts from the C++
+# fails loudly instead of being reinterpreted as different numbers.
+COND_DTYPE = np.dtype([("log_r_ref", "<f8"), ("log_speed_ref", "<f8"),
+                       ("max_log_component_ref", "<f8"),
+                       ("flags", "<u4"), ("cat_legacy", "u1"), ("cat_candidate", "u1"),
+                       ("cat_qf", "u1"), ("reserved", "u1")])
 LOADER_DTYPE = np.dtype([("v", "<f8", 3), ("log_r_ref", "<f8"),
                          ("status", "<u4"), ("attempts", "<u4")])
+TAIL_DTYPE = np.dtype([("z", "<f8")])
 AUDIT_DTYPE = np.dtype([("x1", "<f8"), ("y", "<f8"), ("u", "<f8"), ("cos_theta", "<f8"),
                         ("phi", "<f8"), ("log_x2_working", "<f8"), ("kappa", "<f8"),
                         ("flags", "<u4"), ("precision_is_float", "<u4"),
-                        ("cat_qf", "u1"), ("cat_split", "u1"), ("cat_log", "u1"),
+                        ("cat_legacy", "u1"), ("cat_candidate", "u1"), ("cat_qf", "u1"),
                         ("reserved", "u1"), ("pad", "<u4")])
 
-DTYPE_BY_KIND = {1: PILOT_DTYPE, 2: COND_DTYPE, 3: LOADER_DTYPE, 4: AUDIT_DTYPE}
+DTYPE_BY_KIND = {2: COND_DTYPE, 3: LOADER_DTYPE, 4: AUDIT_DTYPE, 5: TAIL_DTYPE}
 
-CATEGORY_NAMES = ["finite", "denominator_zero", "quotient_first_loss", "split_form_loss",
-                  "log_primitive_failure", "honest_overflow", "cap_reject", "cap_exhausted"]
+# Order matters: these are the values of the `kCat*` enum in src/exp7_common.H.
+CATEGORY_NAMES = ["finite", "denominator_zero", "quotient_first_loss", "legacy_form_loss",
+                  "log_primitive_failure", "honest_overflow", "cap_reject", "cap_exhausted",
+                  "finite_but_wrong", "overflow_returned_finite"]
 
+# `enum PrimitiveFlag` in src/exp7_common.H, bit for bit.  This table was inherited from
+# Experiment 6 and had drifted: bits 3 and 4 named the wrong methods, `u_endpoint_redraw`
+# no longer exists (the open-interval uniform never produces an endpoint to redraw),
+# `rotation_recoverable` and `cap_exhausted` were one bit too high, and the two success
+# bits were missing entirely.  Nothing read it, which is what let it drift.
 FLAG_BITS = {
-    "x2_zero": 1 << 0, "x2_subnormal": 1 << 1, "qf_nonfinite": 1 << 2,
-    "split_nonfinite": 1 << 3, "log_nonfinite": 1 << 4, "honest_overflow_ref": 1 << 5,
-    "cap_accept": 1 << 6, "audited": 1 << 7, "near_limit": 1 << 8,
-    "u_endpoint_redraw": 1 << 9, "rotation_recoverable": 1 << 10, "cap_exhausted": 1 << 11,
+    "x2_zero": 1 << 0,
+    "x2_subnormal": 1 << 1,
+    "qf_nonfinite": 1 << 2,
+    "legacy_nonfinite": 1 << 3,
+    "candidate_nonfinite": 1 << 4,
+    "honest_overflow_ref": 1 << 5,
+    "cap_accept": 1 << 6,
+    "audited": 1 << 7,
+    "near_limit": 1 << 8,
+    "rotation_recoverable": 1 << 9,
+    "cap_exhausted": 1 << 10,
+    "legacy_success": 1 << 11,
+    "candidate_success": 1 << 12,
 }
+
+
+class MissingPhaseError(RuntimeError):
+    """A phase directory is absent or empty.  Raised rather than returning an
+    empty list: Experiment 6 returned [] for a missing phase and still printed a
+    GO/PARTIAL/NO-GO line."""
 
 
 class SchemaError(RuntimeError):
@@ -59,8 +83,8 @@ def read_records(path: str, expect_kind: int, expect_schema: int = 1):
             raise SchemaError(f"{path}: shorter than one header")
         (magic, schema, kind, rsize, _res, kappa, tperp, tpar, ub0, ub1, ub2, cap,
          seed, is_float, n_records) = struct.unpack(HEADER_FMT, raw)
-        if magic[:7] != b"EXP6REC":
-            raise SchemaError(f"{path}: not an exp6 record file")
+        if magic[:7] != b"EXP7REC":
+            raise SchemaError(f"{path}: not an exp7 record file")
         if kind != expect_kind:
             raise SchemaError(f"{path}: record kind {kind}, expected {expect_kind}")
         if schema != expect_schema:
@@ -98,14 +122,22 @@ def load_phase(raw_dir: str, phase: str, smoke: bool = False) -> list[dict]:
     explicitly: a smoke row carries 1000 attempts and would otherwise sit in a pooled rate
     beside a production row carrying a million.
     """
-    sub = "smoke" if smoke else phase
-    d = os.path.join(raw_dir, sub)
+    # The probe writes <raw>/<phase>/<phase>_<tag>.jsonl, and under SMOKE=1 it writes
+    # <raw>/smoke/<phase>/<phase>_<tag>.jsonl -- a smoke tree that mirrors the production
+    # one rather than flattening into it, so the two can never be globbed together.
+    d = os.path.join(raw_dir, "smoke", phase) if smoke else os.path.join(raw_dir, phase)
     if not os.path.isdir(d):
-        return []
+        raise MissingPhaseError(
+            f"{d} does not exist: phase {phase!r} has not been run"
+            + (" under SMOKE=1" if smoke else "")
+            + ". An absent phase is an error, not an empty result -- returning [] here is "
+              "how an analysis ends up emitting a verdict over data it never read.")
     rows = []
     for name in sorted(os.listdir(d)):
         if name.startswith(phase + "_") and name.endswith(".jsonl"):
             rows.extend(read_jsonl(os.path.join(d, name)))
+    if not rows:
+        raise MissingPhaseError(f"{d} exists but holds no {phase}_*.jsonl counter rows")
     return rows
 
 

@@ -175,6 +175,16 @@ preflight: $(TARGETS) exp7_oracle.exe protocol-check check-legacy
 # ---------------------------------------------------------------------------
 define RUN_PHASE
 	@mkdir -p $(RAWROOT)/$(1)
+	@# Drop this phase's manifest rows before rewriting them.  The probe appends, so a
+	@# re-run would otherwise keep the old rows beside the new ones and every total taken
+	@# over the manifest would double-count.  Production rows are written once, from a
+	@# clean tree; a smoke phase is re-run constantly and accumulated 111 rows into 327
+	@# doing it.  `phase` is column 3.
+	@if [ -f $(RAWROOT)/manifest.csv ]; then \
+	  head -1 $(RAWROOT)/manifest.csv > $(RAWROOT)/manifest.keep; \
+	  awk -F, 'NR>1 && $$3 != "$(1)"' $(RAWROOT)/manifest.csv >> $(RAWROOT)/manifest.keep; \
+	  mv $(RAWROOT)/manifest.keep $(RAWROOT)/manifest.csv; \
+	fi
 	@for b in $(TARGETS); do \
 	  tag=$${b%.exe}; tag=$${tag#exp7_probe_}; \
 	  echo "  $(1) [$$tag] $(STAMP)"; \

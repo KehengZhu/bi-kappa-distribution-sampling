@@ -141,8 +141,29 @@ def f2_cells() -> tuple[list[dict], dict]:
 def main() -> None:
     cells, f2 = f2_cells()
     protocol = {
-        "protocol_version": "1.2.0",
+        "protocol_version": "1.3.0",
         "amendments": [
+            {"version": "1.3.0",
+             "before_any_data": True,
+             "reason": "The frozen F5 loader battery contained no upper-tail statistic, and "
+                       "section 2.4's own power study had already established that nothing "
+                       "else has power against survivor conditioning below a 1e-3 loss "
+                       "fraction. Section 5.4 then required negative control NC1 to be "
+                       "detected at 1e-3 AND 1e-4 with power 0.90. The protocol therefore "
+                       "demanded a power the battery it froze could not deliver, and a "
+                       "correct candidate would have failed F6, G3 and the verdict. "
+                       "Measured at production scale, n = 5e5 over 40 injections: the F5 "
+                       "independence test detects 0 of 40 at either effect size; an "
+                       "upper-tail exceedance statistic detects 40 of 40 at both. The "
+                       "arithmetic is not subtle -- removing 50 draws from 500000 cannot "
+                       "move an 8x8 chi-square whose cells expect 7800, and removes "
+                       "essentially every exceedance above q0 = 1e-4. F5 therefore gains an "
+                       "exceedance statistic on each loader cell's recovered radial law, "
+                       "mirroring F4. This ADDS a test to the family rather than relaxing "
+                       "one, and it closes a real gap: a battery certifying a heavy-tailed "
+                       "law had no statistic that looks at the tail. Four smaller "
+                       "corrections travel with it, listed under 'corrections' below. No "
+                       "Experiment 7 holdout datum existed when this was made."},
             {"version": "1.2.0",
              "before_any_data": True,
              "reason": "Amendment 1.1.0 required every public-path failure to be "
@@ -280,6 +301,69 @@ def main() -> None:
             "require_header_record_even_when_zero_disagreements": True,
             "require_audited_file_sha256": True,
             "require_margin_assertion_for_unambiguous": True,
+        },
+        "F5_tail": {
+            "statistic": "exceedance count above z0 = -log q0 on the recovered radial Z of "
+                         "each uncapped loader cell, exact binomial against "
+                         "Binomial(n_attempted, q0), plus KS of the excesses against Exp(1)",
+            "q0": TAIL_Q0,
+            "rationale": "added by amendment 1.3.0; without it the loader battery has no "
+                         "statistic with power against the effect it certifies absent",
+            "capped_cells_excluded": True,
+            "capped_cells_reason":
+                "under a cap the accepted radius is truncated at a direction-dependent "
+                "bound, so the count above z0 is not Binomial(n, q0)",
+            "count_member_requires_q0_above_honest_floor": True,
+            "count_member_applicability":
+                "The count member applies at a threshold q0 only when q0 exceeds the cell's "
+                "honest-overflow rate f. The reason is what is observable, not a "
+                "convenience. When q0 > f the threshold z0 = -log q0 lies below the "
+                "overflow threshold z_f = -log f, so every attempt above z0 is either a "
+                "returned survivor above z0 or an overflowed attempt, and both are counted "
+                "exactly. When q0 < f every attempt above z0 has overflowed, and separating "
+                "those above z0 from those merely above z_f needs the intended value of a "
+                "draw that has none -- the loader returns no number for it. Such a cell is "
+                "reported not-applicable for that threshold, never passed and never failed "
+                "on it, with its honest floor published on the row so a reader can see why. "
+                "Without this, the member would silently require every uncapped cell's loss "
+                "to fall below 1e-4, which case C4 exists precisely to violate: its floor "
+                "is 8.25e-4, so honest overflow alone would give p ~ 1.7e-223 and fail a "
+                "correct candidate.",
+            "excess_member_applies_at_every_threshold": True,
+            "unresolved_Z_counts_toward_every_threshold": True,
+            "unresolved_Z_note":
+                "'Unresolved' here means the Z transform itself underflowed, so the draw is "
+                "further into the tail than any threshold. It does NOT mean the velocity "
+                "overflowed: an overflowed draw has a perfectly ordinary Z and must be "
+                "counted by it, not treated as exceeding everything.",
+        },
+        "corrections": {
+            "F1_contents": "Anderson-Darling, KS and Cramer-von Mises on Z only. The Beta "
+                           "test on W is dropped: the schema emits no W sample, Z is a "
+                           "monotone transform of log W so the two are near-redundant, and "
+                           "G0 already validates the log-q evaluator against an "
+                           "arbitrary-precision incomplete beta to 1e-10, which is a "
+                           "stronger check than an overlap comparison between the routes.",
+            "NC3_effect": "the largest loss fraction among the UNCAPPED LOADER CELLS "
+                          "(C0-C4), not the global maximum over the scalar ladder. The "
+                          "earlier wording said 'whose loss is not dominated by honest "
+                          "overflow', which is unusable: G1 requires the candidate's "
+                          "avoidable loss to be exactly zero, so every loss it has is "
+                          "honest overflow and that qualifier empties the set. What it was "
+                          "there to exclude is the degenerate scalar configurations -- "
+                          "float kappa = 0.5001 loses 98 per cent of its draws, where "
+                          "detection is trivial and says nothing -- not any cell from among "
+                          "C0-C4.",
+            "G5_interval": "0.99, the cluster-bootstrap level in statistics.bootstrap.conf. "
+                           "Section 6 said 95 per cent in prose; the machine-readable value "
+                           "governs and is the conservative choice for a gate on an upper "
+                           "limit.",
+            "F2_informativeness": "misses are counted over every RESOLVED interval, which "
+                                  "is what the frozen Poisson-binomial null was built over. "
+                                  "The informativeness flag is published as a map per "
+                                  "section 5.1 and does not change the count; excluding "
+                                  "non-informative cells would make F2 unevaluable against "
+                                  "its own frozen null.",
         },
         "power_study": {
             "artifact": "config/power_study.json",

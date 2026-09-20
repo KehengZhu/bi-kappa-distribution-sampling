@@ -160,6 +160,21 @@ def gate_G3(proto: F.Protocol, fams: dict, ev: dict) -> Gate:
                 {"F5": f5.as_dict(), "F6": f6.as_dict()})
 
 
+
+def arch_cells_exist(f7) -> bool:
+    return any(r.get("kind") == "cross_arch_equivalence" for r in (f7.rows or []))
+
+
+def any_equivalent(f7) -> bool:
+    """At least one cross-architecture cell actually established equivalence.
+
+    F7 passing means "nothing disagreed", which is also true of a matrix in which every cell
+    was too sparse to resolve.  Closing G4 needs a positive result somewhere.
+    """
+    return any(r.get("kind") == "cross_arch_equivalence" and r.get("equivalent")
+               for r in (f7.rows or []))
+
+
 def gate_G4(proto: F.Protocol, fams: dict, ev: dict) -> Gate:
     """Bitwise across standard libraries, equivalence across architectures, and an
     unavailable environment leaves the gate OPEN rather than passing."""
@@ -180,7 +195,15 @@ def gate_G4(proto: F.Protocol, fams: dict, ev: dict) -> Gate:
     if not f7.passed:
         return Gate("G4", "FAIL", detail + f"; offenders: {f7.offenders}",
                     {"F7": f7.as_dict()})
-    if pending or len(archs) < 2:
+    # An underpowered cross-architecture cell proves neither agreement nor disagreement, so
+    # it cannot close the gate.  family_F7 already distinguishes the three outcomes; without
+    # this, a matrix whose every cross-architecture cell was too sparse to resolve would
+    # report G4 PASS on the strength of F7 having found nothing to complain about.
+    underpowered = [r.get("label") for r in (f7.rows or [])
+                    if r.get("kind") == "cross_arch_equivalence"
+                    and r.get("informative") is False
+                    and not r.get("disagrees")]
+    if pending or len(archs) < 2 or (arch_cells_exist(f7) and not any_equivalent(f7)):
         return Gate("G4", "OPEN",
                     detail + "; "
                     + (f"{len(pending)} environments not yet run: "
@@ -188,10 +211,14 @@ def gate_G4(proto: F.Protocol, fams: dict, ev: dict) -> Gate:
                        if pending else "")
                     + ("only one architecture has native results, so the "
                        "cross-architecture claim is untested. " if len(archs) < 2 else "")
+                    + (f"{len(underpowered)} cross-architecture cells are underpowered and "
+                       "no cell established equivalence, so the claim is unproven rather "
+                       "than established. " if underpowered and len(archs) >= 2 else "")
                     + "The exact commands are in results/portability_remote.md. Emulation "
                       "is not accepted as a substitute, so the gate stays open rather than "
                       "being quietly passed.",
-                    {"F7": f7.as_dict(), "pending": pending})
+                    {"F7": f7.as_dict(), "pending": pending,
+                     "underpowered_cross_arch": underpowered})
     return Gate("G4", "PASS", detail, {"F7": f7.as_dict()})
 
 

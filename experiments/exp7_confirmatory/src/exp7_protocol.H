@@ -7,7 +7,7 @@
 // else the protocol fixes is a decision rule, and decision rules belong to the
 // analysis, which reads the JSON directly.
 //
-// config/protocol.json SHA-256: e336f6a392bdf2f370a4f368f5816a1847b0b6d41150c9c3b4ff5a11cf608971
+// config/protocol.json SHA-256: 7d6e05fbbf3cd9f864b265ffa6122b0ea4fd88757752dbc00ba634762d91b76b
 
 #ifndef EXP7_PROTOCOL_H
 #define EXP7_PROTOCOL_H
@@ -17,8 +17,8 @@ namespace exp7
 namespace protocol
 {
 
-static const char *const kProtocolVersion= "1.2.0";
-static const char *const kProtocolSha256= "e336f6a392bdf2f370a4f368f5816a1847b0b6d41150c9c3b4ff5a11cf608971";
+static const char *const kProtocolVersion= "1.3.0";
+static const char *const kProtocolSha256= "7d6e05fbbf3cd9f864b265ffa6122b0ea4fd88757752dbc00ba634762d91b76b";
 
 /// Intended attempts per seed, by phase, exactly as PROTOCOL.md Sec. 4 freezes them.
 static const long long kNScalar= 1000000;

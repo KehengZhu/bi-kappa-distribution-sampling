@@ -190,6 +190,81 @@ not "it is correct". The P1 output must carry what F4 needs — exceedance count
 `z0 = -log q0` and the excesses themselves — or the confirmatory run cannot detect the effect
 it exists to rule out.
 
+### 2.5 Amendment 1.3.0 — the loader battery gains a tail statistic
+
+Also made **before any holdout datum existed**, and it repairs an inconsistency between
+§2.4 and §5.4 that was mine.
+
+§2.4 establishes that nothing bulk-weighted has power against survivor conditioning below a
+1e-3 loss fraction. §5.4 then required negative control NC1 to be *detected* at 1e-3 **and**
+1e-4 with power ≥ 0.90. But the frozen F5 loader battery — direction uniformity,
+independence, frame invariance, cap law, anisotropy — contains no upper-tail statistic at
+all. The protocol therefore demanded a power the battery it froze could not deliver, and a
+perfectly correct candidate would have failed F6, then G3, then the verdict.
+
+Measured at production scale, `n = 5×10^5`, 40 injections per effect:
+
+| effect | F5 independence | upper-tail exceedance |
+|---|---:|---:|
+| loss fraction 1e-3 | 0 / 40 | 40 / 40 |
+| loss fraction 1e-4 | 0 / 40 | 40 / 40 |
+
+The arithmetic is not subtle. Removing 50 draws from 500 000 cannot move an 8×8 χ² whose
+cells expect 7 800 apiece; the same 50 draws are essentially every exceedance above
+`q0 = 1e-4`.
+
+**F5 therefore gains an exceedance statistic on each uncapped loader cell's recovered radial
+law**, mirroring F4: the count above `z0 = -log q0` for `q0 ∈ {1e-2, 1e-3, 1e-4}` against
+`Binomial(n_attempted, q0)`, plus a KS of the excesses against `Exp(1)`. Capped cells are
+excluded, because under a cap the accepted radius is truncated at a direction-dependent bound
+and the count is not binomial.
+
+Two conditions are part of the rule, not caveats on it.
+
+**A draw whose `Z` transform underflowed counts toward every threshold** — it is further into
+the tail than any of them — and the denominator stays `n_attempted`. Testing only the
+resolved subset would condition on resolvability, which is monotone in the tail, i.e. exactly
+the bias these statistics exist to detect. *This is not the same as a draw whose velocity
+overflowed.* An overflowed draw has a perfectly ordinary `Z` and must be counted by it.
+
+**The count member applies at a threshold `q0` only where `q0` exceeds the cell's
+honest-overflow rate `f`.** The reason is what is observable. When `q0 > f`, the threshold
+`z0 = -log q0` lies below the overflow threshold `z_f = -log f`, so every attempt above `z0`
+is either a returned survivor above `z0` or an overflowed attempt, and both are counted
+exactly. When `q0 < f`, every attempt above `z0` has overflowed, and separating those above
+`z0` from those merely above `z_f` needs the intended value of a draw that has none — the
+loader returned no number for it. Such a cell is reported **not applicable** at that
+threshold: never passed on it, never failed on it, with its honest floor printed on the row.
+
+Without that condition the member would silently demand that every uncapped cell lose less
+than 1e-4, which case C4 exists precisely to violate — its floor is 8.25e-4, so honest
+overflow alone would give `p ≈ 1.7e-223` and fail a correct candidate on the physics of the
+floating-point type. The excess member is unaffected and applies at every threshold.
+
+This **adds** a test to the family rather than relaxing one — it gives the candidate one more
+way to be rejected — and it closes a genuine gap: a battery certifying a heavy-tailed law had
+nothing in it that looks at the tail.
+
+Four smaller corrections travel with it, recorded under `corrections` in
+`config/protocol.json`:
+
+- **F1 is Anderson–Darling, KS and Cramér–von Mises on `Z` only.** The Beta test on `W` is
+  dropped. The probe emits no `W` sample; `Z` is a monotone transform of `log W`, so the two
+  routes are near-redundant; and G0 already validates the `log q` evaluator against an
+  arbitrary-precision incomplete beta to `1e-10`, which is a stronger check on the transform
+  than comparing the two routes to each other would be.
+- **NC3's effect size** is the loss fraction of the worst cell *among those the fidelity claim
+  rests on* — the uncapped loader cells whose loss is not dominated by honest overflow — not
+  the global maximum, which is float `kappa = 0.5001`, where almost every draw is
+  unrepresentable and detection is trivial.
+- **G5's interval is 99 %**, the cluster-bootstrap level in `statistics.bootstrap.conf`. §6
+  said 95 % in prose; the machine-readable value governs, and it is the conservative choice
+  for a gate on an upper limit.
+- **F2 counts misses over every *resolved* interval**, which is what its frozen
+  Poisson-binomial null was built over. The informativeness flag of §5.1 is published as a map
+  and does not change the count — excluding non-informative cells would make F2 unevaluable
+  against its own null.
+
 ## 3. Seeds
 
 **Production seeds: 7001–7005. Performance-block seeds: 7006–7010.** Both blocks are declared
@@ -245,11 +320,11 @@ direction, which for Experiment 6's E1 alone was 0.57 per candidate.
 
 | family | contents | α_F | global rule |
 |---|---|---:|---|
-| **F1** radial law | Anderson–Darling, KS and Cramér–von Mises on `Z = −log I_W(a, 3/2) ~ Exp(1)`, per configuration; the Beta test on `W` additionally where *every* draw resolves | 0.010 | Simes global test over all configurations; on rejection, Holm within the family names the configuration |
+| **F1** radial law | Anderson–Darling, KS and Cramér–von Mises on `Z = −log I_W(a, 3/2) ~ Exp(1)`, per configuration (see §2.5: the Beta route on `W` is withdrawn) | 0.010 | Simes global test over all configurations; on rejection, Holm within the family names the configuration |
 | **F2** quantile coverage | every order-statistic interval, all kappa × precision × seed × level | 0.005 | Poisson–binomial upper-tail test on the miss count against Σ(1 − c_i), where each `c_i` is the **analytically computed** achieved coverage. Report count, μ and p; never a ratio |
 | **F3** quantile direction | standardized signed quantile error per (kappa, precision, p), Stouffer-combined over seeds, Holm over cells | 0.010 | null calibrated by parametric Monte Carlo from the exact law at the same n and a, ≥ 2000 replicates, because the null is not symmetric at small a |
 | **F4** upper-tail mass | exceedance counts above `z₀ = −log q₀` for `q₀ ∈ {1e−2, 1e−3, 1e−4}` (exact binomial), and KS of the excesses against Exp(1) | 0.010 | Holm within the family, Simes globally |
-| **F5** loader battery | direction uniformity, rank-based independence, frame invariance, cap law, anisotropy | 0.010 | Holm over **all** cells and tests jointly, not per cell |
+| **F5** loader battery | direction uniformity, rank-based independence, frame invariance, cap law, anisotropy, and — per §2.5 — upper-tail exceedance count and excess-KS on each uncapped cell | 0.010 | Holm over **all** cells and tests jointly, not per cell |
 | **F6** negative controls | measured power curves | — | reversed: require power ≥ 0.90 at the pre-registered minimum detectable effect |
 | **F7** portability | pairwise environment comparison | 0.005 | equivalence, not identity — see §5.3 |
 
