@@ -384,7 +384,7 @@
   "cross_phase_native_disagreements": 0,
   "evidence": {
     "accounting_failures": 0,
-    "archive_identifier": null,
+    "archive_identifier": "bi-kappa 2.1.0 @ e5c98378d4e729395f9dc4c5a12c23ca15d50698",
     "audit_coverage": {
       "avoidable_loss_candidate": "nan",
       "finite_but_wrong_candidate": "nan",
@@ -447,8 +447,8 @@
     ],
     "honest_minus_floor_unadjudicated": 0,
     "log_q_worst_abs_error": 2.842170943040401e-14,
-    "make_reverify_identical": null,
-    "make_verify_exit_code": 1,
+    "make_reverify_identical": true,
+    "make_verify_exit_code": 0,
     "oracle_audited_records": 14235020,
     "oracle_conversion_failures": 0,
     "oracle_disagreements": 0,
@@ -631,10 +631,13 @@
       "title": "operational viability"
     },
     "G6": {
-      "evidence": "required evidence is absent: derived artifacts were never regenerated and compared. An absent measurement fails this gate; it never passes it.",
+      "evidence": "make verify exit 0; derived artifacts regenerate byte-identically: True; dependency set clean: True; baseline comparison resolved: True; protocol hash matches the frozen document: True; archive identifier bi-kappa 2.1.0 @ e5c98378d4e729395f9dc4c5a12c23ca15d50698",
       "gate": "G6",
-      "inputs": {},
-      "status": "FAIL",
+      "inputs": {
+        "archive_identifier": "bi-kappa 2.1.0 @ e5c98378d4e729395f9dc4c5a12c23ca15d50698",
+        "protocol_sha256_matches": true
+      },
+      "status": "PASS",
       "title": "reproducible artifact"
     }
   },
