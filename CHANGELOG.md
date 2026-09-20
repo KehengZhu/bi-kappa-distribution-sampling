@@ -4,7 +4,75 @@ This project follows [Semantic Versioning](https://semver.org/). For a sampler, 
 includes changing which random numbers a given seed produces, even when the API is untouched
 and the sampled law is unchanged — a stored stream is part of what a user depends on.
 
-## 2.0.0 — unreleased
+## 2.1.0 — unreleased
+
+### Fixed — representability is decided from the component, not from its logarithm
+
+`bi_kappa_distribution` decided whether a velocity component could be returned by comparing a
+logarithm — `log R`, or `log R + log|g_j|` — against `log(max())`. That comparison cannot be
+made to agree with the arithmetic it predicts. `log(max())` is itself a rounded value and can
+land on either side of the true logarithm of the largest finite number; on the libm this was
+tested against it lands *above* in `float`, where `exp(log(FLT_MAX))` is exactly `+inf`, and
+below in `double`. So the defect's visibility was a property of a rounding direction rather
+than of the type.
+
+A `float` draw at `kappa = 0.51` whose `log R` equalled `log(FLT_MAX)` bit for bit therefore
+passed the test, overflowed when it was exponentiated, and was returned as
+`(-inf, +inf, +inf)` — while all three components it should have produced were representable,
+the largest at 1.92e38 against a limit of 3.40e38, because every `|g_j|` is below one and
+pulls the product back under the limit. Worse, `n_nonfinite()` was **not** incremented: the
+branch that produced the infinities never looked at what it had produced, so the loss was
+invisible to the caller. One such draw appeared in 14 233 536 audited attempts.
+
+The decision now lives in one place, `bikappa_detail::materializeComponents`, which
+materializes each component and compares the component with `max()`. The test is applied to
+the number that will be returned, so this invariant holds by construction and in both modes:
+
+> the returned vector has a non-finite component **if and only if** `n_nonfinite()` counted it.
+
+Two consequences for anyone who had pinned 2.0.0:
+
+- **Returned values change, for draws 2.0.0 got wrong.** Where `exp(log R)` overflows but the
+  components do not, 2.0.0 returned infinities and 2.1.0 returns the numbers. The random
+  stream — which variates are drawn, and in what order — is unchanged, so every other draw is
+  bit-identical.
+- **`n_nonfinite()` changes under a cap.** It counted the representability of the *normalized*
+  coordinate the cap predicate is written in; it now counts the representability of the
+  velocity, which is what its documentation always said. The two differ by `theta` and by the
+  rotation — up to 2.33× on the geometry this was measured on.
+
+2.0.0 is superseded before release and should not be used: it and 2.1.0 are two different
+samplers, and giving them one version string would make them indistinguishable to a consumer
+that vendors the header.
+
+### Changed — the header refuses to compile under `-ffast-math`
+
+The representability test asks whether a materialized value is finite. `-ffast-math`, and
+`-ffinite-math-only` on its own, license a compiler to assume no infinity or NaN ever occurs
+and so to fold that test to `true` — which would return an overflowed component as if it were
+a number *and* leave the counters reading zero, reinstating exactly the defect above with no
+symptom. There is nothing to check at run time once the check has been compiled away, so the
+header stops the build instead. Define `BI_KAPPA_ALLOW_FAST_MATH` to override; the overflow
+counters then mean nothing.
+
+### Changed — parameters are validated against NaN
+
+`kappa`, both `theta`s and `ub` are now rejected when they are NaN or non-finite, and `ub` is
+checked when the parameters are set rather than when the rotation first runs. The old
+spellings (`kappa <= 0.5`, `theta <= 0`) are false for a NaN, so a NaN parameter used to
+propagate into `log R`, where it could no longer be told from an unrepresentable velocity: the
+sampler would report a non-finite draw and count it as honest overflow, which it is not.
+
+### Changed — floating-point environment
+
+The sampler now evaluates `exp(log R)` on every draw, so a draw whose radius genuinely
+overflows raises `FE_OVERFLOW` and sets `errno` to `ERANGE` where 2.0.0 suppressed both by
+testing a logarithm first. Near `kappa = 1/2` that is most draws — at double `kappa = 0.5001`
+the representability floor is 0.868 — and it is the honest signal, not noise: those draws
+really do have no representation. A caller that inspects `fetestexcept` or `errno` around the
+sampler will see state it did not see before.
+
+## 2.0.0 — unreleased, superseded by 2.1.0 before release
 
 ### Changed — the bi-Kappa radius is built in the logarithmic domain
 
@@ -17,7 +85,8 @@ the division happens.
 `X2` is therefore no longer formed. The sampler carries `log X2`, obtained from the
 Ahrens–Dieter shape-boosting identity, propagates `log R = (log X1 - log X2)/2`, builds the
 order-unity vector `g` with `V = R g` before exponentiating anything, and decides whether each
-returned component is representable from `log|V_j| = log R + log|g_j|`. The velocity cap is
+returned component is representable — by a logarithmic test that 2.1.0 replaces, for the
+reasons given above. The velocity cap is
 tested in the same domain, so a sample far outside the box is rejected rather than overflowed
 first and rejected afterwards.
 

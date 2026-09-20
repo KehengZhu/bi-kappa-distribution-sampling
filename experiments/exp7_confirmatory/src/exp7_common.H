@@ -15,10 +15,11 @@
 //     is the arbiter that decides whether a lost draw was recoverable.
 //
 //  2. The final velocity is R times an order-unity vector.  Writing V = R g with
-//     g = Q(ub) diag(sqrt(kappa) theta) n lets representability be decided from
-//     log|V_j| = log R + log|g_j| before anything is exponentiated.  LEGACY instead forms
-//     R n, scales, and then rotates, so it can overflow on a draw whose final components
-//     are perfectly representable.
+//     g = Q(ub) diag(sqrt(kappa) theta) n lets each component be materialized on its own and
+//     its representability decided from the component itself -- the number that will be
+//     returned -- rather than from a logarithm compared against a rounded log(max()).
+//     LEGACY instead forms R n, scales, and then rotates, so it can overflow on a draw whose
+//     final components are perfectly representable.
 //
 //  3. "Failure" is three different things - avoidable arithmetic loss, honest output
 //     overflow, and legal cap rejection - and they must never be pooled.  The accounting
@@ -157,9 +158,16 @@ template <typename T> inline double logOverflowThreshold()
     return static_cast<double>(emax) * kLn2 + std::log(2.0 - std::ldexp(1.0, -p));
 }
 
+/// The logarithm of the largest finite value, TAKEN IN T, which is the value the released
+/// header's capped screen actually compares against.  Computing it in `double` and narrowing
+/// gives a different number for `float` -- 88.72283905206835 against 88.72283935546875 -- and
+/// reporting the one the code does not use is how a record of a finite-precision experiment
+/// comes to disagree with the experiment.  The released loader no longer decides
+/// representability from this quantity at all (see bikappa_detail::materializeComponents);
+/// it remains a screening threshold and an environment record.
 template <typename T> inline double logMaxFinite()
 {
-    return std::log(static_cast<double>(std::numeric_limits<T>::max()));
+    return static_cast<double>(std::log(std::numeric_limits<T>::max()));
 }
 
 /// Draws whose intended log-component lands inside this band of a type limit are the
@@ -841,10 +849,21 @@ template <typename T> struct Geometry
     bool identity_rotation;
     bi_kappa_distribution<T> rotator; // used only for rotate_from_fieldAligned_frame
 
+    /// Loop invariants of the capped branch, hoisted exactly as the released class hoists
+    /// them, so that the replica matches its cost profile and not only its arithmetic.
+    /// `log_g_bound` is the rotation-invariant bound
+    /// max_j |g_j| <= |g| <= sqrt(kappa) max(theta_perp, theta_par).
+    T log_sqrt_kappa;
+    T log_g_bound;
+    T log_max_finite;
+
     Geometry(T k, T tperp, T tpar, const std::array<T, 3> &b)
         : kappa(k), sqrt_kappa(std::sqrt(k)), theta_perp(tperp), theta_par(tpar), ub(b),
           identity_rotation(b[0] == T(0) && b[1] == T(0) && b[2] == T(1)),
-          rotator(k, tperp, tpar, b, bi_kappa_distribution<T>::no_cap())
+          rotator(k, tperp, tpar, b, bi_kappa_distribution<T>::no_cap()),
+          log_sqrt_kappa(std::log(std::sqrt(k))),
+          log_g_bound(std::log(std::sqrt(k)) + std::log(std::max(tperp, tpar))),
+          log_max_finite(std::log(std::numeric_limits<T>::max()))
     {
     }
 
@@ -949,19 +968,36 @@ inline std::vector<double> kappaLadder()
 /// performance seeds as `4001 + block`, which is why 4006-4010 appear in its manifest and in
 /// no declaration; both blocks here are written out, and no seed anywhere in this
 /// experiment is computed from another.
+///
+/// Protocol 2.0.0 governs the SECOND holdout and uses 8001-8010.  The block follows from the
+/// rule in PROTOCOL.md Sec. 3 rather than from a choice: the highest seed declared anywhere
+/// in this repository is 7505, rounded up to the next multiple of 1000 gives 8000, and the
+/// next ten integers are taken.  7001-7010 belong to the first holdout, whose NO-GO result
+/// is preserved in commit 45d3ef8; Sec. 8 forbids recomputing any result on them.
 inline std::vector<unsigned> productionSeeds()
 {
     std::vector<unsigned> s;
-    s.push_back(7001u); s.push_back(7002u); s.push_back(7003u); s.push_back(7004u);
-    s.push_back(7005u);
+    s.push_back(8001u); s.push_back(8002u); s.push_back(8003u); s.push_back(8004u);
+    s.push_back(8005u);
     return s;
 }
 
 inline std::vector<unsigned> performanceSeeds()
 {
     std::vector<unsigned> s;
-    s.push_back(7006u); s.push_back(7007u); s.push_back(7008u); s.push_back(7009u);
-    s.push_back(7010u);
+    s.push_back(8006u); s.push_back(8007u); s.push_back(8008u); s.push_back(8009u);
+    s.push_back(8010u);
+    return s;
+}
+
+/// The first holdout's block.  Declared so that a rerun on it is a compile-time-visible
+/// mistake rather than an accident, and so that `spentSeeds()` can be asserted disjoint from
+/// the block actually in use.
+inline std::vector<unsigned> spentSeeds()
+{
+    std::vector<unsigned> s;
+    for (unsigned v= 7001u; v <= 7010u; ++v)
+        s.push_back(v);
     return s;
 }
 

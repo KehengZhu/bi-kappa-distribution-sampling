@@ -2,12 +2,16 @@
 #define _BI_KAPPA_DISTRIBUTION_H_
 
 /// Release version of this header.  A consumer that vendors the file can test these to tell
-/// which sampler it has; 2.0.0 is the first release whose radius is built in the log domain,
-/// and its random stream differs from 1.x for every seed.
+/// which sampler it has; 2.x is the first line whose radius is built in the log domain, and
+/// its random stream differs from 1.x for every seed.
+///
+/// 2.1.0 supersedes 2.0.0, which was never released.  The two differ in which vectors they
+/// return at the representability boundary and in what `n_nonfinite()` counts under a cap,
+/// so they are two samplers and are versioned as two; see CHANGELOG.md.
 #define BI_KAPPA_VERSION_MAJOR 2
-#define BI_KAPPA_VERSION_MINOR 0
+#define BI_KAPPA_VERSION_MINOR 1
 #define BI_KAPPA_VERSION_PATCH 0
-#define BI_KAPPA_VERSION_STRING "2.0.0"
+#define BI_KAPPA_VERSION_STRING "2.1.0"
 
 #include <array>
 #include <algorithm>
@@ -15,6 +19,19 @@
 #include <limits>
 #include <random>
 #include <stdexcept>
+
+// This sampler decides what it may return by materializing a value and asking whether it is
+// finite.  `-ffast-math` (and `-ffinite-math-only` alone) licenses a compiler to assume no
+// infinity or NaN ever occurs, and so to fold `mag <= max()` to `true` -- which would return
+// an overflowed component as if it were a number AND leave n_nonfinite() reading zero: the
+// exact failure this file is built to prevent, with no symptom.  Refusing to compile is the
+// only safe response, because there is nothing to check at run time once the check is gone.
+// Define BI_KAPPA_ALLOW_FAST_MATH to override, and do not trust the counters if you do.
+#if defined(__FAST_MATH__) && !defined(BI_KAPPA_ALLOW_FAST_MATH)
+#error "bi_kappa_distribution.H requires IEEE-754 infinity semantics: -ffast-math / \
+-ffinite-math-only would silently disable its representability test. Define \
+BI_KAPPA_ALLOW_FAST_MATH to compile anyway (the overflow counters then mean nothing)."
+#endif
 
 /**
  * @brief Sampling primitives used to build the bi-Kappa radius.
@@ -172,6 +189,73 @@ RealType logGamma(RealType a, GeneratorType &gen, RealType &ncache, bool &ncache
     return std::log(y) + std::log(u) / a;
 }
 
+/**
+ * @brief Materialize `V_j = R g_j` from `log R`, and report whether any component overflowed.
+ *
+ * This is the one place the loader decides what is representable, and it decides it from the
+ * value it is about to return rather than from that value's logarithm.
+ *
+ * The obvious test -- compare `log|V_j| = log R + log|g_j|` against `log(max())` -- is wrong
+ * by up to a rounding step, in both directions, and neither error is academic:
+ *
+ *  - `log(max())` is itself a rounded value and can land *above* the true logarithm, so
+ *    `exp` of it need not be finite.  In `float`, `exp(log(FLT_MAX))` is exactly `+inf`.  A
+ *    draw whose `log R` equals `log(FLT_MAX)` bit for bit therefore passes a
+ *    `log R <= logMax` test, and `exp(log R)` then overflows -- while every component it
+ *    should have produced is perfectly representable, because `|g_j| < 1` pulls each of them
+ *    back under the limit.  A confirmatory run found exactly such a draw in 14.2 million
+ *    audited attempts, at `float kappa = 0.51`: `log R` was `0x1.62e43p+6`, identical to
+ *    `log(FLT_MAX)`, the largest component's logarithm was 88.151 against a limit of 88.723,
+ *    and the loader returned `(-inf, +inf, +inf)` -- and, the overflow never having been
+ *    detected, counted nothing.
+ *  - The same rounding in the other direction makes a logarithmic test discard a draw that
+ *    *is* representable, which is an avoidable loss rather than an honest one.
+ *
+ * Comparing the materialized magnitude against `max()` cannot have either defect: it is the
+ * number that will be returned, so the test and the result agree by construction.  It is
+ * also cheaper, because the common path takes no logarithm at all -- one per component is
+ * needed only where `R` alone overflows, which is where the log domain is doing the work
+ * anyway and where there is no accuracy left to lose.
+ *
+ * @param logR   logarithm of the radius.
+ * @param g      the order-unity vector, already rotated into the frame the caller returns.
+ * @param point  receives the materialized components, `+/-inf` where one has no
+ *               representation, with the sign the mathematics gives it.
+ * @return       true iff at least one component had no representation in @c RealType.
+ */
+template <typename RealType>
+bool materializeComponents(RealType logR, const std::array<RealType, 3> &g,
+                           std::array<RealType, 3> &point)
+{
+    const RealType maxFinite= std::numeric_limits<RealType>::max();
+    const RealType rTry= std::exp(logR);
+    // `false` for +infinity and for NaN, both of which fail every comparison.
+    const bool radiusRepresentable= (rTry <= maxFinite);
+    const RealType R= radiusRepresentable ? rTry : RealType(0.0);
+
+    bool anyOverflow= false;
+    for (int j= 0; j < 3; ++j)
+    {
+        if (g[j] == RealType(0.0))
+        {
+            point[j]= RealType(0.0);
+            continue;
+        }
+        const RealType mag= radiusRepresentable
+                                ? R * std::abs(g[j])
+                                : std::exp(logR + std::log(std::abs(g[j])));
+        if (!(mag <= maxFinite))
+        {
+            anyOverflow= true;
+            point[j]= (g[j] < RealType(0.0)) ? -std::numeric_limits<RealType>::infinity()
+                                             : std::numeric_limits<RealType>::infinity();
+            continue;
+        }
+        point[j]= (g[j] < RealType(0.0)) ? -mag : mag;
+    }
+    return anyOverflow;
+}
+
 } // namespace bikappa_detail
 
 /**
@@ -194,9 +278,11 @@ RealType logGamma(RealType a, GeneratorType &gen, RealType &ncache, bool &ncache
  * @note **The radius is built in the logarithmic domain.**  `R = sqrt(X1)/sqrt(X2)` with
  * `X2 ~ Gamma(kappa - 1/2, 1)`, so as `kappa -> 1/2` the denominator's shape goes to zero
  * and `X2` underflows to exactly zero.  `X2` is therefore never formed: the sampler carries
- * `log X2` and `log R`, and decides whether each returned component is representable from
- * `log|V_j| = log R + log|g_j|` before exponentiating anything.  Two consequences a caller
- * should know about:
+ * `log X2` and `log R`, and reaches the linear domain only at the last step, once per
+ * component.  Whether a component is representable is then decided from the component
+ * itself -- the number about to be returned -- and never from its logarithm, because
+ * `log(max())` is a rounded value that can sit on either side of the true limit; see
+ * @ref bikappa_detail::materializeComponents.  Two consequences a caller should know about:
  *
  *  - **The random stream differs from releases before 2.0.0.**  The Gamma, normal and
  *    uniform primitives are implemented in @ref bikappa_detail rather than taken from
@@ -247,13 +333,39 @@ template <typename RealType= double> class bi_kappa_distribution
             : m_kappa(kappa), m_theta_perp(theta_perp), m_theta_par(theta_par), m_ub(ub),
               m_maxNormalizedVelocity(max_normalized_velocity)
         {
-            if (m_kappa <= RealType(0.5))
+            // Each test is written so that NaN fails it.  `x <= 0.5` is false for a NaN,
+            // so the natural spelling admits one, and a NaN parameter then propagates into
+            // log R, where it can no longer be told from an unrepresentable velocity: the
+            // sampler would report a non-finite draw and count it as honest overflow, which
+            // it is not.  Rejecting the parameter is the only point at which the two are
+            // still distinguishable.
+            if (!(m_kappa > RealType(0.5)))
             {
                 throw std::invalid_argument("kappa must be > 0.5 for normalization");
             }
-            if (m_theta_perp <= RealType(0.0) || m_theta_par <= RealType(0.0))
+            if (!(m_theta_perp > RealType(0.0)) || !(m_theta_par > RealType(0.0)) ||
+                !(m_theta_perp <= std::numeric_limits<RealType>::max()) ||
+                !(m_theta_par <= std::numeric_limits<RealType>::max()))
             {
-                throw std::invalid_argument("Temperature parameters must be positive");
+                throw std::invalid_argument(
+                    "Temperature parameters must be positive and finite");
+            }
+            {
+                // The field direction is validated here rather than inside the rotation, so
+                // that an axis-aligned-looking NaN cannot slip past the fast path.
+                RealType n2= RealType(0.0);
+                for (int j= 0; j < 3; ++j)
+                {
+                    if (!(std::abs(m_ub[j]) <= std::numeric_limits<RealType>::max()))
+                    {
+                        throw std::invalid_argument("ub components must be finite");
+                    }
+                    n2+= m_ub[j] * m_ub[j];
+                }
+                if (!(n2 > RealType(0.0)))
+                {
+                    throw std::invalid_argument("ub must be a non-zero vector");
+                }
             }
             // A positive finite value selects the capped mode.  no_cap() (= +inf)
             // selects the untruncated mode, in which no acceptance-rejection loop
@@ -390,7 +502,9 @@ template <typename RealType= double> class bi_kappa_distribution
      * std::random_device.  Without either, the stream stays as seeded at
      * construction, which is *not* reproducible.
      *
-     * @throws std::invalid_argument if kappa <= 0.5, either theta is non-positive,
+     * @throws std::invalid_argument if kappa <= 0.5, either theta is non-positive or
+     *                non-finite, `ub` is zero or has a non-finite component, any of these is
+     *                NaN,
      *         @p max_normalized_velocity is non-positive, or @p ub is the zero vector.
      *
      * @see \ref parameters for the full table, \ref choosing to compare samplers.
@@ -503,7 +617,11 @@ template <typename RealType= double> class bi_kappa_distribution
     /// honest answer, and unchanged from earlier releases -- and counts them here.  Capped
     /// mode rejects them, as it rejects anything outside the box, and still counts them
     /// here, so that a caller can tell "the box rejected a representable sample" from "the
-    /// box rejected a sample that could not have been returned at all".  Without this
+    /// box rejected a sample that could not have been returned at all".  In both modes the
+    /// vector whose representability is counted is the *velocity* the caller would have
+    /// received, rotation and thermal scaling included -- not the normalized coordinate the
+    /// cap predicate is written in, which understates the largest component whenever
+    /// `theta_par` and `theta_perp` differ.  Without this
     /// counter the second case is invisible: the returned samples are all finite and the
     /// acceptance rate alone does not distinguish the two.
     unsigned long long n_nonfinite() const { return m_nonfinite; }
@@ -546,16 +664,29 @@ template <typename RealType= double> class bi_kappa_distribution
                                 approximatelyEqual(ub[1], RealType(0.0)) &&
                                 approximatelyEqual(ub[2], RealType(1.0));
 
-        // The largest finite magnitude, and its logarithm.  A component is representable
-        // exactly when log|V_j| is below this; the comparison is made in the log domain,
-        // before anything is exponentiated.
-        const RealType logMax= std::log(std::numeric_limits<RealType>::max());
-        const RealType logCap= capped ? std::log(maxNormalizedVelocity)
-                                      : std::numeric_limits<RealType>::infinity();
-        const RealType logSqrtKappa= std::log(sqrtKappa);
-        // |g_j| never exceeds sqrt(kappa) max(theta_perp, theta_par), because a rotation
-        // preserves the norm; see step 5.
-        const RealType logGBound= logSqrtKappa + std::log(std::max(theta_perp, theta_par));
+        // Four logarithms that only the capped branch reads, and so are only taken when
+        // there is a cap.  Untruncated mode decides representability from the components
+        // themselves and needs no logarithm at all outside step 1; computing these anyway
+        // cost two `std::log` calls on every untruncated draw, which `-fmath-errno` (the
+        // default) forbids a compiler from removing.
+        //
+        // `logMax` is a screening quantity only: the cap branch uses it to decide whether a
+        // rejected draw is near enough to the type's limit to be worth materializing.
+        // Representability itself is never decided from a logarithm -- see
+        // bikappa_detail::materializeComponents.
+        //
+        // `logGBound` bounds the *velocity* from its radius alone:
+        // |g_j| <= |g| <= sqrt(kappa) max(theta_perp, theta_par) for every direction and
+        // every rotation, because a rotation preserves the norm.  That is what the capped
+        // branch needs and what the normalized coordinate the cap test is written in cannot
+        // give it.  It is finite because define() rejects a non-positive or non-finite
+        // theta, so the screen below is never comparing against a NaN.
+        const RealType logMax= capped ? std::log(std::numeric_limits<RealType>::max())
+                                      : RealType(0.0);
+        const RealType logCap= capped ? std::log(maxNormalizedVelocity) : RealType(0.0);
+        const RealType logSqrtKappa= capped ? std::log(sqrtKappa) : RealType(0.0);
+        const RealType logGBound=
+            capped ? logSqrtKappa + std::log(std::max(theta_perp, theta_par)) : RealType(0.0);
 
         int tries= 0;
         for (tries= 0; tries < maxTries; ++tries)
@@ -627,11 +758,52 @@ template <typename RealType= double> class bi_kappa_distribution
                 const RealType logLargest= logR + logSqrtKappa + std::log(maxAbsN);
                 if (logLargest > logCap)
                 {
-                    // An intended sample that is outside the box and also unrepresentable
-                    // is still counted, so a caller can tell the two apart.
-                    if (logLargest >= logMax)
+                    // An intended sample that is outside the box and also unrepresentable is
+                    // still counted, so a caller can tell the two apart.  Two things have to
+                    // be right here, and the released 2.0.0 form had neither.
+                    //
+                    // *What* is tested.  Representability is a property of the velocity
+                    // `R g_j`, not of the normalized coordinate `sqrt(kappa) R |n_j|` the cap
+                    // test just used: the two differ by `theta` and by the rotation.  The
+                    // ratio is bounded by `sqrt(3) max(theta_perp, theta_par)/min(...)`,
+                    // since `|w|/sqrt(3) <= max_j |w_j| <= |w|` -- at
+                    // `theta_par/theta_perp = 2` that is 3.46, and 2.33 is the largest value
+                    // the C5/C6 geometry actually reaches.  The rotation concentrates the
+                    // largest component as readily as it spreads it, which is why the bound
+                    // is not simply the theta ratio.  The counter must answer the question
+                    // n_nonfinite() documents, which is about the velocity.
+                    //
+                    // *How* it is tested.  By materializing, for the same reason as step 5.
+                    // The exponential is worth avoiding here -- in capped mode this is the
+                    // hot branch -- so `logGBound` screens first.  It is an upper bound on
+                    // log|V_j| that holds for every direction and every rotation, so a draw a
+                    // whole natural-log unit below the limit by that bound cannot overflow.
+                    //
+                    // The screen is sound, not merely generous.  Its error is dominated by
+                    // half an ulp of `logR + logGBound` at the limit, which is 88.72 * 2^-24
+                    // = 5.3e-6 in `float` and 709.78 * 2^-53 = 7.9e-14 in `double`; with the
+                    // libm and normalization terms the worst case is about 1.1e-5 and
+                    // 1.0e-13.  One natural-log unit exceeds those by 9.4e4 and 1.0e13.
+                    //
+                    // How often it fires is a property of the configuration, not a constant:
+                    // about 7e-7 of attempts at double kappa = 0.51, but 17 % at float
+                    // kappa = 0.51 and 87 % at double kappa = 0.5001, where most of the law
+                    // genuinely lies outside the type.  Where it fires often, it is doing
+                    // the work it exists for.
+                    if (logR + logGBound > logMax - kOne)
                     {
-                        ++m_nonfinite;
+                        point_type gRej= fieldAlignedG(sqrtKappa, theta_perp, theta_par,
+                                                       nx, ny, nz);
+                        if (!axisAligned)
+                        {
+                            gRej= rotate_from_fieldAligned_frame(gRej, ub);
+                        }
+                        point_type scratch;
+                        if (bikappa_detail::materializeComponents<RealType>(logR, gRej,
+                                                                            scratch))
+                        {
+                            ++m_nonfinite;
+                        }
                     }
                     continue;
                 }
@@ -641,72 +813,31 @@ template <typename RealType= double> class bi_kappa_distribution
             // the representability test meaningful: an orthogonal rotation can spread one
             // over-large local component across three representable global ones, so the test
             // has to be applied to the components that are actually returned.
-            point_type g;
-            g[0]= sqrtKappa * theta_perp * nx;
-            g[1]= sqrtKappa * theta_perp * ny;
-            g[2]= sqrtKappa * theta_par * nz;
+            point_type g= fieldAlignedG(sqrtKappa, theta_perp, theta_par, nx, ny, nz);
             if (!axisAligned)
             {
                 g= rotate_from_fieldAligned_frame(g, ub);
             }
 
-            // Step 5: decide representability from log|V_j| = log R + log|g_j|, and only
-            // then exponentiate.  Where the radius itself is representable the product
-            // R * g_j keeps a full working-precision result; the per-component exponential
-            // is used only where it is not.
-            //
-            // A rotation is orthogonal, so |g_j| <= |g| <= sqrt(kappa) max(theta_perp,
-            // theta_par) =: gBound whatever ub is.  When log R + log gBound is below the
-            // type's limit every component is representable, and the three per-component
-            // logarithms can be skipped entirely.  That is the overwhelmingly common case;
-            // the exact per-component test below runs only near the limit.
-            const bool radiusRepresentable= (logR <= logMax);
-            const RealType R= radiusRepresentable ? std::exp(logR) : RealType(0.0);
-
+            // Step 5: materialize the components and decide representability from the
+            // components themselves, never from their logarithms.  The whole of that
+            // decision lives in bikappa_detail::materializeComponents, which documents why
+            // a logarithmic test is wrong in both directions; the capped branch above calls
+            // the same routine, so the counter and the return can never disagree.
             point_type point;
-            bool anyOverflow= false;
-            if (radiusRepresentable && logR + logGBound < logMax)
-            {
-                point[0]= R * g[0];
-                point[1]= R * g[1];
-                point[2]= R * g[2];
-            }
-            else
-            {
-                for (int j= 0; j < 3; ++j)
-                {
-                    if (g[j] == RealType(0.0))
-                    {
-                        point[j]= RealType(0.0);
-                        continue;
-                    }
-                    const RealType logComponent= logR + std::log(std::abs(g[j]));
-                    if (logComponent >= logMax)
-                    {
-                        anyOverflow= true;
-                        point[j]= (g[j] < RealType(0.0))
-                                      ? -std::numeric_limits<RealType>::infinity()
-                                      : std::numeric_limits<RealType>::infinity();
-                        continue;
-                    }
-                    if (radiusRepresentable)
-                    {
-                        point[j]= R * g[j];
-                    }
-                    else
-                    {
-                        const RealType mag= std::exp(logComponent);
-                        point[j]= (g[j] < RealType(0.0)) ? -mag : mag;
-                    }
-                }
-            }
+            const bool anyOverflow=
+                bikappa_detail::materializeComponents<RealType>(logR, g, point);
 
             if (anyOverflow)
             {
                 // Honest overflow: the intended velocity has no representation in RealType.
                 // No formation can rescue it, so it is returned as a non-finite vector and
-                // counted, never silently redrawn.  In capped mode it is unreachable, having
-                // already been rejected by the box test above.
+                // counted, never silently redrawn.  In capped mode this is unreachable for
+                // every cap a caller would write: an accepted draw has
+                // sqrt(kappa) R max_j|n_j| <= lambda, hence
+                // max_j |g_j| R <= sqrt(3) lambda max(theta_perp, theta_par), so reaching it
+                // would take lambda max(theta) above 1.97e38 in `float` or 1.04e308 in
+                // `double` -- a box larger than the type.
                 ++m_nonfinite;
             }
 
@@ -795,6 +926,19 @@ template <typename RealType= double> class bi_kappa_distribution
             gen.seed(std::random_device{}());
         else
             gen.seed(static_cast<unsigned int>(s));
+    }
+
+    /// The order-unity vector in the field-aligned frame, `V = R g` before any rotation.
+    /// Shared by step 4 and by the capped branch of step 3, so the vector whose
+    /// representability is counted is the vector that would have been returned.
+    static point_type fieldAlignedG(RealType sqrtKappa, RealType theta_perp,
+                                    RealType theta_par, RealType nx, RealType ny, RealType nz)
+    {
+        point_type g;
+        g[0]= sqrtKappa * theta_perp * nx;
+        g[1]= sqrtKappa * theta_perp * ny;
+        g[2]= sqrtKappa * theta_par * nz;
+        return g;
     }
 
     static bool approximatelyEqual(RealType a, RealType b)

@@ -7,7 +7,7 @@
 #---------------------------------------------------------------------------
 PROJECT_NAME           = "bi-kappa"
 PROJECT_BRIEF          = "Monte Carlo particle samplers for plasma velocity and position distributions"
-PROJECT_NUMBER         = 2.0.0
+PROJECT_NUMBER         = 2.1.0
 OUTPUT_LANGUAGE        = English
 
 #---------------------------------------------------------------------------

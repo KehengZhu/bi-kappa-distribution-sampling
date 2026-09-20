@@ -7,10 +7,14 @@ R = sqrt(X1) / sqrt(X2),    X1 ~ Ga(3/2, 1),    X2 ~ Ga(a, 1),    a = κ − 1/2
 ```
 
 so as κ → 1/2 the denominator shape goes to zero, `X2` underflows, and draws are lost.
-Version 2.0.0 never forms `X2`: it carries `log X2 = log Y + log(U)/a` with `Y ~ Ga(a+1,1)`,
+Version 2.1.0 never forms `X2`: it carries `log X2 = log Y + log(U)/a` with `Y ~ Ga(a+1,1)`,
 propagates `log R = (log X1 − log X2)/2`, builds the order-unity vector
-`g = Q(b̂) diag(√κ θ) n` **first**, and decides each returned component's representability
-from `log|V_j| = log R + log|g_j|` before exponentiating anything. Its direction `n` is drawn
+`g = Q(b̂) diag(√κ θ) n` **first**, and then materializes each component and decides its
+representability from the component itself. Version 2.0.0 decided it from
+`log|V_j| = log R + log|g_j|` against `log(max())`; that test disagrees with the arithmetic
+it predicts, because `log(max())` is rounded and `exp` of it need not be finite, and the
+first holdout found a draw where it returned three infinities in place of three
+representable numbers and counted none of them. See PROTOCOL.md §2.6.1. Its direction `n` is drawn
 by the rejection method of Marsaglia (1972) — two open-interval uniforms per try, retried
 until the pair falls in the unit disc, then lifted onto the sphere — so the sampler calls no
 library transcendental and consumes a variable number of uniforms per attempt. Experiment 6

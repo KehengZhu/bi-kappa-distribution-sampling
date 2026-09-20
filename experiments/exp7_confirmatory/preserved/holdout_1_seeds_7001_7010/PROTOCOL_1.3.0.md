@@ -1,18 +1,10 @@
 # Experiment 7 — pre-registered confirmatory protocol
 
-**Protocol 2.0.0. Status: frozen before any datum on seeds 8001–8010 existed.** This document
-and `config/protocol.json` are committed in a source-only commit. The analysis refuses to run
+**Status: frozen before any Experiment 7 data existed.** This document and
+`config/protocol.json` are committed in a source-only commit. The analysis refuses to run
 unless the SHA-256 of both files matches the values recorded in the run manifest, and every
 decision rule below is evaluated by code that reads `config/protocol.json` rather than by a
 constant written into the analysis.
-
-**This is the second confirmatory holdout.** The first ran on seeds 7001–7010 under protocol
-1.3.0 and returned **NO-GO**. It is preserved unmodified in commit `45d3ef8`, is not reopened,
-and its seed block is spent. §8 permits exactly one path after a failure — identify a concrete
-defect, fix it, freeze a new implementation hash *and a new protocol document*, draw a further
-disjoint seed block, and rerun — and §2.6 records the two defects that were found, one in the
-implementation and one in this protocol. Nothing in 2.0.0 relaxes a threshold, removes a cell,
-changes a family's α, or excludes a result.
 
 ---
 
@@ -47,9 +39,8 @@ different implementation.
 
 ## 2. What is under test
 
-The candidate is the released loader `cpp/bi_kappa_distribution.H` at version **2.1.0**, whose
-radius is built in the log domain.  2.0.0 carried the same construction and the representability
-defect of §2.6.1; it is superseded before release and is not the candidate. The comparator is the same file at version 1.0.0, vendored
+The candidate is the released loader `cpp/bi_kappa_distribution.H` at version 2.0.0, whose
+radius is built in the log domain. The comparator is the same file at version 1.0.0, vendored
 unmodified as `src/legacy/bi_kappa_distribution_v1.H` and referred to as **LEGACY**.
 
 Neither the Gamma-ratio construction, log-domain Gamma generation, the small-shape underflow,
@@ -101,7 +92,7 @@ corrections rather than preferences:
 
 - The random stream changes for every seed. No seed-for-seed continuity with 1.x is claimed
   or possible; the stream change is the point, not a side effect.
-- Within the 2.x line the stream is a function of the engine and the parameters alone, so
+- Within version 2.0.0 the stream is a function of the engine and the parameters alone, so
   libc++ and libstdc++ builds agree bit for bit at a fixed multiply-add contraction setting.
   Reaching that took two changes, not one: moving the Gamma, normal and uniform primitives
   into the header, and then replacing the `cos θ, φ` direction with a rejection method that
@@ -230,12 +221,6 @@ and the count is not binomial.
 
 Two conditions are part of the rule, not caveats on it.
 
-> **Superseded in part by §2.6.2.** The two conditions below were 1.3.0's answer to the
-> censoring problem, and the second of them — the count member's applicability rule — is
-> **withdrawn**, because the quantity it could not observe turns out to be recorded. The
-> members themselves, their statistics and their thresholds are unchanged. Read §2.6.2 for
-> what governs.
-
 **A draw whose `Z` transform underflowed counts toward every threshold** — it is further into
 the tail than any of them — and the denominator stays `n_attempted`. Testing only the
 resolved subset would condition on resolvability, which is monotone in the tail, i.e. exactly
@@ -280,162 +265,17 @@ Four smaller corrections travel with it, recorded under `corrections` in
   and does not change the count — excluding non-informative cells would make F2 unevaluable
   against its own null.
 
-## 2.6 Amendment 2.0.0 — what the first holdout found, and what changes
-
-Made **after** the first holdout was read, which is what makes it a different kind of
-amendment from the three above and why it carries a new major version. §8 allows it only on
-the terms §8 states, and those terms are met: two concrete defects were identified, both are
-corrected, the implementation hash is new, this document is new, and the seed block is new.
-
-### 2.6.1 The implementation defect
-
-The released loader decided representability by comparing a logarithm — `log R`, or
-`log R + log|g_j|` — against `log(max())`. That comparison cannot be made to agree with the
-arithmetic it predicts, because `log(max())` is itself a rounded value and can land on either
-side of the true logarithm of the largest finite number. On the tested libm it lands *above*
-in `float`: `exp(log(FLT_MAX))` is exactly `+inf`, while in `double` `exp(log(DBL_MAX))` is
-finite. So the defect's visibility is a property of a rounding direction, not of the type.
-
-One draw in 14 233 536 audited attempts hit it, at `float kappa = 0.51`. Its `log R` was
-`0x1.62e43p+6`, bit for bit `log(FLT_MAX)`; it passed `log R <= logMax`; `exp(log R)`
-overflowed; and the sampler returned `(-inf, +inf, +inf)` — and, the overflow never having
-been detected, counted nothing. All three components it should have produced were
-representable, the largest at 1.92e38 against a limit of 3.40e38, a margin of 0.571 natural-log
-units, because every `|g_j|` is below one and pulls the product back under the limit. The draw
-was scored `log_primitive_failure`, which is an avoidable loss, and it failed **G1** (avoidable
-loss must be exactly zero) and **G2** (oracle disagreements must be zero). The two recorded
-losses and the two oracle disagreements are the same draw seen in the libc++ and libstdc++
-streams, not four events.
-
-The correction, in `bikappa_detail::materializeComponents`, materializes each component and
-decides from the component: the test is applied to the number that will be returned, so the
-test and the result agree by construction, whichever way the library rounds. A second defect
-of the same family is corrected with it: in capped mode the non-representability counter was
-testing the *normalized* coordinate the cap predicate is written in rather than the velocity,
-and the two differ by `theta` and by the rotation — up to 2.33× on the C5/C6 geometry. The
-counter now answers the question `n_nonfinite()` documents.
-
-The implementation under test is therefore **2.1.0**. 2.0.0 is superseded before release, so
-no two samplers share a version string.
-
-### 2.6.2 The protocol defect
-
-Amendment 1.3.0 gave F5 two upper-tail members and stated both against the **untruncated**
-law. That is not the law the data obey. Near `kappa = 1/2` the target puts non-zero
-probability outside every finite floating-point range, so the loader cannot return the far
-tail — and is right not to. Honest overflow therefore right-censors the returned sample, and
-at a **direction-dependent** point: a draw comes back iff `R max_j |g_j(n)| <= max()`, and
-`max_j |g_j|` varies over the sphere by up to `sqrt(3) theta_max / theta_min`. A cutoff
-inferred from a cell's total overflow rate is the average of that boundary, not the boundary.
-
-Measured over 2000 replicates of a **perfectly correct** loader at the frozen production size:
-
-| member | C4 (double κ=0.505) | C3 (float κ=0.55) | C1 (double κ=0.51) | C0 (double κ=2) |
-|---|---:|---:|---:|---:|
-| 1.3.0 excess, q₀=1e−2 | **1.000** | 0.115 | 0.009 | 0.009 |
-| 1.3.0 excess, q₀=1e−3 | **1.000** | **1.000** | 0.009 | 0.012 |
-| 1.3.0 count, q₀=1e−4 | **1.000** | 0.584 | 0.010 | 0.007 |
-
-against a nominal 0.010. The three F5 rejections that failed **G3** in the first holdout were
-those cells. The failure was a property of the null, not of the candidate.
-
-Both members keep their statistic, their threshold and their place in the joint Holm. What
-changes is the null each is compared against.
-
-**The count member** is computed from the **intended** `Z` of every attempt instead of from
-the radius recovered from the returned vectors. The probe records `log_r_ref` — the radius the
-attempt carried — for every attempt including the overflowed ones, and an uncapped cell runs
-its core mapping exactly once per attempt, so its record count equals its attempt count and
-that sample is complete and uncensored. It was on disk for the first holdout too; the analysis
-simply was not reading it. Against it the count above `z₀` is `Binomial(n_attempted, q₀)`
-**exactly**. Family F4 was already computed this way on the scalar phase, which is why F4
-passed the first holdout while F5 did not.
-
-That also **withdraws the side condition** 1.3.0 needed. `count_member_requires_q0_above_honest_floor`
-declared the member "not applicable" wherever it would have misfired; the quantity it could not
-observe turns out to be observable, so the member now applies at every threshold of every
-uncapped cell. C3 and C4 at `q₀ = 1e−4` are now tested where they previously were not. This
-adds tests; it removes none.
-
-**The excess member** stays on the returned draws — the fidelity claim is about the population
-the loader hands back — and is given the null those draws obey. `Z` is independent of the
-direction, so conditional on its own direction a returned draw above `z₀` is `Exp(1)` truncated
-to `(z₀, C_i]`, with
-
-    C_i = Z( log max() − log max_j |g_j(n_i)| )
-
-computed from that draw's own recovered direction and the cell's declared `theta` and `ub`.
-The member is a Kolmogorov–Smirnov test of the per-draw probability integral transform
-
-    U_i = (1 − exp(−(Z_i − z₀))) / (1 − exp(−(C_i − z₀)))
-
-against `Uniform(0,1)`. Where no attempt can overflow, `C_i` is effectively infinite, `U_i`
-reduces to `1 − exp(−(Z_i − z₀))`, and because a Kolmogorov–Smirnov statistic is invariant
-under a common monotone transform of the data and the null CDF, **the number returned is
-identical to 1.3.0's** — measured on C0, the two agree to 1.1e−16. The replacement equals the
-frozen test wherever the frozen test was valid and is defined where it was not. It is also the
-construction this protocol already used for the capped cells, whose accepted radius is
-truncated at a direction-dependent bound in exactly the same way.
-
-Neither member needs quadrature, a grid, or numerical integration: both are per-draw arithmetic
-in the frozen `Z` evaluator that G0 validates against an arbitrary-precision incomplete beta.
-
-Level and power are measured in `docs/revision/experiments/f5_tail_calibration.md`, on
-simulated cells and on the spent block, before any datum on 8001–8010 existed.
-
-### 2.6.3 Negative control NC3, respecified for the same reason
-
-1.3.0's NC3 removed every draw above a single direction-independent cutoff from an uncensored
-sample and required the battery to detect it. But that is, up to the direction dependence,
-exactly what honest overflow does to a **correct** loader. The battery "detected" it only
-because its null was the untruncated law — the measured NC3 power was type-I error wearing a
-power label, and it was the same defect that failed the candidate on C3 and C4.
-
-NC3 is split into the two questions that were tangled together:
-
-- **NC3a**, honest censoring alone at the cell's own direction-dependent boundary, correctly
-  reported. The battery must **not** reject. This is a level, is published as one, and carries
-  no power threshold.
-- **NC3b**, honest censoring **plus** a further `q` fraction of the draws the type *would* have
-  allowed back, removed silently. That is the defect. Required power ≥ 0.90 at the
-  pre-registered `F6.nc3_excess_loss_fractions`.
-
-NC1 and NC2 are unchanged in construction; NC1 now computes its censoring boundary from the
-source cell's real `theta` and `ub` rather than from an isotropic stand-in.
-
-### 2.6.4 Scope
-
-Acceptance is limited to the **supported environment**: arm64 macOS under both standard
-libraries. The cross-architecture claim is **withdrawn** — removed from §9 and published as a
-limitation — rather than left as a permanently open gate on evidence this project cannot
-obtain, since §5.3 refuses emulation as closure and no native x86_64 host is available. What
-remains in G4 is the sharper of the two predictions and the one that is decidable here: within
-2.x the stream is a function of the engine alone, so libc++ and libstdc++ must agree **bitwise**,
-with no tolerance at all. Narrowing the claim does not license ignoring contrary evidence: a
-cross-architecture comparison filed anyway that *disagrees* still fails G4.
-
 ## 3. Seeds
 
-**Production seeds: 8001–8005. Performance-block seeds: 8006–8010.** Both blocks are declared
+**Production seeds: 7001–7005. Performance-block seeds: 7006–7010.** Both blocks are declared
 here, in `config/protocol.json`, and in `src/exp7_common.H`, and are disjoint from every seed
 used anywhere else in this repository (exp1 1001–1005, exp2 2001–2005, exp3 3001–3003 and
-3101, exp4 and exp6 4001–4010, the first holdout 7001–7010, the Experiment 7 selftest fixtures
-7501–7505). Experiment 6 derived five of its performance seeds implicitly as `4001 + block`,
-which is why 4006–4010 appear in its manifest and in no declaration; the second block above
-exists so that no seed in Experiment 7 is derived rather than declared.
+3101, exp4 and exp6 4001–4010). Experiment 6 derived five of its performance seeds implicitly
+as `4001 + block`, which is why 4006–4010 appear in its manifest and in no declaration; the
+second block above exists so that no seed in Experiment 7 is derived rather than declared.
 
-**How this block was drawn.** Not by choice. The rule is: take the highest seed declared
-anywhere in this repository — 7505, the selftest fixtures — round up to the next multiple of
-1000, which is 8000, and take the next ten integers. The rule admits exactly one answer, so
-the block is a consequence of the repository's state rather than a selection made after a
-result was seen, and it remains disjoint from anything a future experiment adds below it.
-`make selftest` asserts that 7001–7010 appear in no block in use, so a rerun on the spent
-block fails before it writes a byte.
-
-**7001–7010 are spent.** They carry the preserved NO-GO holdout. No result may be recomputed
-on them; they may now serve only as preserved failure evidence and as development material for
-calibrating a replacement test, which is what §2.6 used them for. If this holdout fails too,
-the recovery path is in §8.
+No result may be recomputed on a different seed block. If the holdout fails, the recovery path
+is in §8.
 
 ## 4. Test matrix
 
@@ -484,7 +324,7 @@ direction, which for Experiment 6's E1 alone was 0.57 per candidate.
 | **F2** quantile coverage | every order-statistic interval, all kappa × precision × seed × level | 0.005 | Poisson–binomial upper-tail test on the miss count against Σ(1 − c_i), where each `c_i` is the **analytically computed** achieved coverage. Report count, μ and p; never a ratio |
 | **F3** quantile direction | standardized signed quantile error per (kappa, precision, p), Stouffer-combined over seeds, Holm over cells | 0.010 | null calibrated by parametric Monte Carlo from the exact law at the same n and a, ≥ 2000 replicates, because the null is not symmetric at small a |
 | **F4** upper-tail mass | exceedance counts above `z₀ = −log q₀` for `q₀ ∈ {1e−2, 1e−3, 1e−4}` (exact binomial), and KS of the excesses against Exp(1) | 0.010 | Holm within the family, Simes globally |
-| **F5** loader battery | direction uniformity, rank-based independence, frame invariance, cap law, anisotropy, and — per §2.5, with the nulls corrected in §2.6 — an upper-tail count and an upper-tail excess test on each uncapped cell at each `q₀` | 0.010 | Holm over **all** cells and tests jointly, not per cell |
+| **F5** loader battery | direction uniformity, rank-based independence, frame invariance, cap law, anisotropy, and — per §2.5 — upper-tail exceedance count and excess-KS on each uncapped cell | 0.010 | Holm over **all** cells and tests jointly, not per cell |
 | **F6** negative controls | measured power curves | — | reversed: require power ≥ 0.90 at the pre-registered minimum detectable effect |
 | **F7** portability | pairwise environment comparison | 0.005 | equivalence, not identity — see §5.3 |
 
@@ -549,13 +389,9 @@ measures power:
 - **NC1 radius–direction coupling**, injected at the loss fractions actually observed in the
   cells being certified (1e−3 and 1e−4), 200 injections each, requiring power ≥ 0.90.
 - **NC2 capped against uncapped** at the *weakest* cap, λ = 20, not the strongest.
-- **NC3 survivor conditioning**, respecified in §2.6.3. **NC3a** injects the cell's own honest,
-  direction-dependent censoring, correctly reported — a *correct* loader — and the battery must
-  not reject it; the row is a level and carries no threshold. **NC3b** injects that plus a
-  further `q` fraction of the draws the type would have allowed back, removed silently, and
-  requires power ≥ 0.90 at the pre-registered `F6.nc3_excess_loss_fractions`. 1.3.0 injected
-  honest overflow alone and called detecting it power; that is what §2.6.3 corrects. Experiment
-  6 had no such control at all.
+- **NC3 survivor conditioning**: an uncapped sample with its non-finite attempts removed, at
+  the loss fraction of the candidate's worst cell. This measures directly whether the battery
+  can see the effect it is being used to certify absent. Experiment 6 had no such control.
 
 A missing control is a gate failure, not a vacuous pass.
 
@@ -570,7 +406,7 @@ or by a number being finite.
 | **G1** scalar correctness | F1, F2, F3 and F4 all pass on in-domain configurations including a benign control that exercises the candidate itself; and the candidate's avoidable loss is **exactly zero** at every configuration, with no tolerance proportional to a data-dependent count |
 | **G2** mechanism closure | the accounting identity `N = finite + avoidable + honest` holds exactly per seed and configuration; oracle disagreements and conversion failures are zero; the candidate's honest count equals the oracle floor exactly, or each discrepancy is individually adjudicated and listed |
 | **G3** complete-loader fidelity | F5 passes jointly; F6 power thresholds are met and the expected number of control cells exists; every conditional cell is labelled with its loss fraction |
-| **G4** portability | within the scope §2.6.4 declares: every environment in `gates.G4.supported_environments` completed **natively**, F7 passed, and at least one cross-standard-library comparison was actually made and was **bitwise** equal, with no tolerance. A supported environment that did not run FAILS the gate. A cross-architecture comparison is not required — the claim is withdrawn — but one that is filed and **disagrees** still fails |
+| **G4** portability | F7 passes on every **native** environment; bitwise equality holds across standard libraries on each architecture; unavailable environments leave the gate open with an exact command |
 | **G5** operational viability | the cluster-bootstrap median of the candidate/LEGACY time per returned sample is below the pre-registered bound of **2.0×** with its 95 % interval, same-seed reproducibility holds, and the RNG-stream break is documented |
 | **G6** reproducible artifact | `make verify` exits zero on both manifests **from a fresh extraction**; the production run's dependency set is clean and the manifest records it consistently; `make reverify` reproduces every derived artifact byte for byte; the P1 baseline comparison resolved; and an exact-version archive identifier is present |
 
@@ -606,16 +442,12 @@ Supportable if every gate passes:
 
 > Attributed integration of established log-scale Gamma generation into a complete anisotropic
 > bi-Kappa Gamma-ratio loader, with mechanism-resolved finite-precision, tail, bounded-law,
-> three-dimensional and performance validation, and with cross-standard-library reproducibility
-> established bitwise on the one architecture tested.
+> three-dimensional, portability and performance validation.
 
 Not supportable, and not to be written anywhere: discovery of the small-shape Gamma underflow
 or of the low-parameter denominator hazard; a new or first log-domain Gamma generator; a new
 Gamma-ratio, Beta-prime, Student-t or rejection Kappa sampler; that the log representation is
-exact; any universal mathematical lower bound on kappa; **and, under 2.0.0, any claim about
-behaviour on an architecture other than the one tested.** Cross-architecture agreement is
-untested here, is withdrawn from the claim, and must be stated as a limitation wherever the
-result is reported — not as an expectation, and not silently omitted. Rates are reported as observed counts
+exact; any universal mathematical lower bound on kappa. Rates are reported as observed counts
 with intervals, and a configuration with no observed failure is reported as "no failures
 observed in N draws under the tested configuration" with its one-sided upper bound — never as
 "reliable down to".

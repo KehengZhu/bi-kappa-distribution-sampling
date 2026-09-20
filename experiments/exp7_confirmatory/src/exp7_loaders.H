@@ -7,11 +7,12 @@
 //   LEGACY     the shipped 1.0.0 loader.  R = sqrt(X1)/sqrt(X2) with X2 materialized by
 //              std::gamma_distribution, the unit direction multiplied by R, the thermal
 //              scaling applied, and the rotation last.
-//   CANDIDATE  the released 2.0.0 loader.  log X2 = log Y + log(U)/a with Y ~ Ga(a+1,1)
+//   CANDIDATE  the released 2.1.0 loader.  log X2 = log Y + log(U)/a with Y ~ Ga(a+1,1)
 //              (Ahrens-Dieter shape boosting), log R = (log X1 - log X2)/2, the order-unity
-//              vector g = Q(ub) diag(sqrt(kappa) theta) n built first, and each component's
-//              representability decided from log|V_j| = log R + log|g_j| before anything is
-//              exponentiated.  The direction n comes from the rejection method of Marsaglia
+//              vector g = Q(ub) diag(sqrt(kappa) theta) n built first, and each component
+//              then materialized and its representability decided from the component -- not
+//              from log|V_j| against a rounded log(max()), which is the defect 2.1.0
+//              corrects.  The direction n comes from the rejection method of Marsaglia
 //              (1972): two open-interval uniforms per try, retried until the pair falls in
 //              the unit disc, then lifted onto the sphere.  It uses sqrt and no library
 //              transcendental, and it consumes a variable number of uniforms per attempt.
@@ -269,32 +270,30 @@ bool legacyCapAccept(T r, T cos_theta, T phi, const Geometry<T> &geom, T lambda)
 }
 
 /// CANDIDATE vector construction, reproducing bi_kappa_distribution 2.0.0 step for step:
-/// build the order-unity vector first, take the fast path when log R + log gBound is safely
-/// below the type's limit, and otherwise decide each component from log|V_j| before
-/// exponentiating.  The predicate is the released one -- log(max()) -- not the exact
-/// overflow threshold, because that is the predicate a user actually gets.
+/// build the order-unity vector first, then materialize each component and decide its
+/// representability from the component itself.  The predicate is the released one, so the
+/// replica reproduces what a user actually gets -- including at the boundary, which is the
+/// whole reason the released form no longer compares a logarithm against log(max()).
 template <typename T>
 std::array<T, 3> candidateVectorFromLogRadius(T log_r, const std::array<T, 3> &n,
                                               const Geometry<T> &geom, bool *any_overflow)
 {
     const std::array<T, 3> g= geom.gVector(n);
 
-    const T log_max= static_cast<T>(std::log(std::numeric_limits<T>::max()));
-    const T log_g_bound= std::log(geom.sqrt_kappa) +
-                         std::log(std::max(geom.theta_perp, geom.theta_par));
+    // Mirrors the released step 5 exactly, including why it no longer tests a logarithm.
+    // `log_max` is a rounded value and `exp` of it need not land below `max()`: in float,
+    // `exp(log(FLT_MAX))` is +infinity.  A draw at `log_r == log_max` therefore passed the
+    // old `log_r <= log_max` test and then overflowed when it was exponentiated -- while
+    // every component it should have produced was representable, because |g_j| < 1 pulled
+    // each back under the limit.  Comparing the materialized magnitude cannot do that: it
+    // is the value that gets returned, so the test and the result agree by construction.
+    const T max_finite= std::numeric_limits<T>::max();
+    const T r_try= std::exp(log_r);
+    const bool radius_representable= (r_try <= max_finite); // false for inf and for NaN
+    const T R= radius_representable ? r_try : T(0);
 
     *any_overflow= false;
-    const bool radius_representable= (log_r <= log_max);
-    const T R= radius_representable ? std::exp(log_r) : T(0);
-
     std::array<T, 3> v;
-    if (radius_representable && log_r + log_g_bound < log_max)
-    {
-        v[0]= R * g[0];
-        v[1]= R * g[1];
-        v[2]= R * g[2];
-        return v;
-    }
     for (int j= 0; j < 3; ++j)
     {
         if (g[j] == T(0))
@@ -302,21 +301,17 @@ std::array<T, 3> candidateVectorFromLogRadius(T log_r, const std::array<T, 3> &n
             v[j]= T(0);
             continue;
         }
-        const T lv= log_r + std::log(std::fabs(g[j]));
-        if (lv >= log_max)
+        const T mag= radius_representable
+                         ? R * std::fabs(g[j])
+                         : std::exp(log_r + std::log(std::fabs(g[j])));
+        if (!(mag <= max_finite))
         {
             *any_overflow= true;
             v[j]= (g[j] < T(0)) ? -std::numeric_limits<T>::infinity()
                                 : std::numeric_limits<T>::infinity();
             continue;
         }
-        if (radius_representable)
-            v[j]= R * g[j];
-        else
-        {
-            const T mag= std::exp(lv);
-            v[j]= (g[j] < T(0)) ? -mag : mag;
-        }
+        v[j]= (g[j] < T(0)) ? -mag : mag;
     }
     return v;
 }
@@ -338,12 +333,29 @@ bool candidateCapAcceptLog(T log_r, const std::array<T, 3> &n, const Geometry<T>
                            T log_cap, bool *unrepresentable)
 {
     const T max_abs_n= std::max(std::fabs(n[0]), std::max(std::fabs(n[1]), std::fabs(n[2])));
-    const T log_largest= log_r + std::log(geom.sqrt_kappa) + std::log(max_abs_n);
+    const T log_largest= log_r + geom.log_sqrt_kappa + std::log(max_abs_n);
     if (log_largest > log_cap)
     {
         if (unrepresentable)
-            *unrepresentable= (log_largest >= static_cast<T>(std::log(
-                                  std::numeric_limits<T>::max())));
+        {
+            // Mirrors the released capped branch, which counts the representability of the
+            // VELOCITY the caller would have received -- not of `log_largest`, which is the
+            // normalized coordinate the cap predicate is written in and understates the
+            // largest component whenever theta_par and theta_perp differ.  The released form
+            // screens on the rotation-invariant bound
+            // max_j |g_j| <= |g| <= sqrt(kappa) max(theta_perp, theta_par) and materializes
+            // only where that cannot decide it; both steps are reproduced here.
+            if (log_r + geom.log_g_bound > geom.log_max_finite - T(1))
+            {
+                bool ov= false;
+                candidateVectorFromLogRadius<T>(log_r, n, geom, &ov);
+                *unrepresentable= ov;
+            }
+            else
+            {
+                *unrepresentable= false;
+            }
+        }
         return false;
     }
     if (unrepresentable)

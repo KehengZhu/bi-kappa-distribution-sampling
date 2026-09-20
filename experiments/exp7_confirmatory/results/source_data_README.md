@@ -368,15 +368,16 @@ the family rather than replacing any of it.
 | `frame_invariance` | KS and CvM of the azimuth in the re-derived field-aligned frame against `U(-pi, pi)`, Simes-combined | uncapped cells |
 | `anisotropy` | two-sample KS between `abs(n_3)` and `abs(n_1)` after dividing by the declared scale. After descaling, the three components of an isotropic direction are exchangeable, so a mis-applied `theta` ratio breaks the equality. Moment-free on purpose: for `kappa <= 3/2` the loaded population has no finite variance | every cell |
 | `cap_law` | KS against `U(0,1)` of `F(R)/F(R_max(n))`, where `log R_max = log(lambda) - log(sqrt(kappa)) - log(max_j abs(n_j))`. Given the direction, the accepted radius is the target truncated at `R_max`, so the transform is exactly uniform under the declared bounded law | capped cells |
-| `tail_<q0>_count` | exceedance count above `z0 = -log q0` on the cell's recovered radial `Z`, the unresolved draws included, against `Binomial(attempts, q0)`. `stat_T` is the count itself | uncapped cells |
-| `tail_<q0>_excess` | KS of the resolved excesses `Z - z0` against `Exp(1)`. `stat_T` is how many excesses it was computed from; fewer than eight leaves the member `NA` | uncapped cells |
+| `tail_<q0>_count` | the number of **attempts** whose INTENDED `Z` exceeds `z0 = -log q0`, against `Binomial(attempts, q0)` — exactly. The intended `Z` comes from `log_r_ref`, the radius the probe recorded for every attempt including the overflowed ones, so the sample is complete and uncensored. `stat_T` is the count itself | uncapped cells, every threshold |
+| `tail_<q0>_excess` | KS against `U(0,1)` of the per-draw conditional transform of the **returned** draws above `z0`: `U_i = (1 - exp(-(Z_i - z0))) / (1 - exp(-(C_i - z0)))` with `C_i = Z(log max() - log max_j abs(g_j(n_i)))` that draw's own representability threshold. Where nothing can overflow, `C_i` is effectively infinite and the statistic is bit-for-bit the KS of `Z - z0` against `Exp(1)`. `stat_T` is the KS statistic; fewer than eight returned excesses leaves the member `NA` | uncapped cells, every threshold |
 
 `applies_T = false` means the test is **not a property of that cell's law**, not that it
 passed. Under a cap the accepted set couples the radius to the direction and is not
 rotationally symmetric in the azimuth, so direction uniformity, independence and frame
 invariance do not apply there; the accepted radius is truncated at a direction-dependent
-bound, so the count above `z0` is not `Binomial(n, q0)` and the upper-tail members do not
-apply there either; the accepted set is symmetric under permuting the three
+bound, so neither the attempt count nor the returned sample is the one the upper-tail members
+are defined on and they do not apply there either; the accepted set is symmetric under
+permuting the three
 components, so the anisotropy test survives the cap. `p_T` and `stat_T` are `NA` there.
 
 ### The parts of every exceedance count
@@ -385,16 +386,25 @@ One block per threshold, on the same convention as §1's tail blocks.
 
 | column | meaning |
 |---|---|
-| `tail_<q0>_observed_resolved` | recovered draws with `Z > z0` |
-| `tail_<q0>_unresolved` | draws the cell attempted and the analysis could not resolve, each of which is above every threshold |
+| `tail_<q0>_z0` | the threshold itself, `-log q0` |
+| `tail_<q0>_observed_intended` | attempts whose intended `Z` exceeds `z0`. **This is the count member's statistic** |
+| `tail_<q0>_observed_returned` | of those, how many the loader returned. The difference is honest overflow, and it is what the excess member's censoring accounts for |
 | `tail_<q0>_expected` | `attempts * q0` |
 | `tail_<q0>_n` | the denominator, which is `attempts` |
-| `tail_<q0>_p_count_resolved_only` | what the count would have said on the resolved draws alone. Published bookkeeping; no decision reads it |
+| `tail_<q0>_z_unresolved` | attempts whose `Z` transform itself underflowed. Each is above every threshold and is counted by all of them. This is NOT the overflow count |
+| `tail_<q0>_censoring_span_min`, `_max` | the range of `C_i - z0` over the returned draws above `z0`: how much room the censored null actually leaves. A large span means the member is reading an essentially untruncated tail; a small one means most of the tail is outside the type |
+| `tail_<q0>_excess_clipped` | transformed values that fell outside `[0,1]` and were clipped. **This should be zero.** A returned draw satisfies `Z <= C` by construction, so a non-zero count means the boundary model and the loader have stopped agreeing, and the member should not be read |
 
-A cell whose loss fraction exceeds `q0` is read by the count member as an excess, because
-its unresolved draws lie above its own overflow threshold and not necessarily above `z0`.
-The two columns above make that visible on the row rather than leaving it to be inferred
-from a p-value.
+`tail_records` and `tail_records_missing` are published once per cell rather than per
+threshold: an uncapped cell must produce exactly one record per attempt, so a shortfall means
+attempts went unrecorded, which is silent conditioning. It is reported as a count, never
+absorbed into a rate.
+
+Amendment 1.3.0 computed the count member from the radius **recovered from the returned
+vectors**, which representability censors, and patched around the censoring with an
+applicability side condition. Amendment 2.0.0 withdraws that side condition and computes the
+member from `log_r_ref` instead, so it now applies at every threshold of every uncapped cell —
+including the two (C3 and C4 at `q0 = 1e-4`) that 1.3.0 had to declare not applicable.
 
 `validation_matrix.md` is the same information as a table, with the Holm decisions, the
 `n.a.` cells and every conditional cell's loss fraction shown.

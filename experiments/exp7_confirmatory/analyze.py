@@ -49,6 +49,7 @@ from scipy import special, stats
 
 import exp7_families as F
 import exp7_gates as GATES
+import exp7_censoring as CEN
 import exp7_io as IO
 import exp7_portability as PORT
 import exp7_stats as S
@@ -392,7 +393,6 @@ def cvm_pvalue(w2: float) -> float:
 #
 # Both arrive at this function the same way -- as a count of draws with no measured `Z` --
 # so it is the caller's applicability rule, not this function, that keeps the second from
-# being treated as the first.  See `count_member_applies` below.
 #
 # The excess Kolmogorov-Smirnov statistic has no such choice: an unresolved draw contributes
 # no measured excess.  It is computed on the resolved excesses, by the frozen
@@ -491,84 +491,6 @@ def honest_floor(kappa: float, precision: str) -> dict:
     log_floor = float(log_floor)
     return {"log_floor": log_floor, "floor": float(math.exp(log_floor))
             if log_floor > -740.0 else 0.0, "log10_floor": log_floor / math.log(10.0)}
-
-
-def honest_floor_band(theta_ratio: float, a: float) -> tuple[float, float]:
-    """Multiplicative bounds on a loader cell's honest-overflow rate around `honest_floor`.
-
-    `honest_floor` evaluates the closed form of `config/honest_floor.md` in the isotropic,
-    unrotated, `theta = 1` configuration.  A loader cell scales the direction by
-    `(theta_perp, theta_perp, theta_par)` and rotates it into the field frame, and the count
-    member's applicability is decided against a single number `f`, so the two places that
-    number is not exactly the published floor have to be bounded rather than assumed away:
-
-      1. The cell's own rate is `C MAX^-2a kappa^a E[M^2a]` with
-         `M = max_j |(Q diag(theta) n)_j|`, against `E[(max_j |n_j|)^2a]` for the published
-         floor.  For any unit `n` and any orthogonal `Q`,
-         `theta_min/sqrt(3) <= M / max_j|n_j| <= theta_max sqrt(3)`, since
-         `|w|/sqrt(3) <= max_j |w_j| <= |w|` and `theta_min <= |Q diag(theta) n| <= theta_max`.
-      2. A draw overflows at a direction-dependent radius, not at one threshold, so the
-         soundness condition is really `q0` above the tail probability at the SMALLEST
-         overflow radius over directions, `q(L_min) / f_iso = M_max^2a / E[(max_j|n_j|)^2a]`,
-         which the same inequalities bound by `(theta_max sqrt(3))^2a`.
-
-    Both are covered by the returned band.  `a > 0` makes `x -> x^2a` increasing, so the
-    bounds carry through the expectation.
-    """
-    a = float(a)
-    if a <= 0.0:
-        return (1.0, 1.0)
-    th_lo = min(1.0, float(theta_ratio))
-    th_hi = max(1.0, float(theta_ratio))
-    lo = math.exp(2.0 * a * math.log(th_lo / math.sqrt(3.0)))
-    hi = math.exp(2.0 * a * math.log(th_hi * math.sqrt(3.0)))
-    return (lo, hi)
-
-
-def count_member_applies(q0: float, floor: float, band, label: str) -> tuple[bool, str]:
-    """Whether F5's tail COUNT member applies to this cell at this threshold.
-
-    `config/protocol.json -> F5_tail.count_member_requires_q0_above_honest_floor`.  The
-    member applies at `q0` only where `q0` exceeds the cell's honest-overflow rate `f`, and
-    the justification is observability rather than convenience:
-
-      * `q0 > f`.  Then `z0 = -log q0` lies BELOW `z_f = -log f`, so every attempt above
-        `z0` is either a returned survivor whose `Z` was measured or an attempt whose
-        velocity overflowed -- and both are counted exactly.  The count is
-        `Binomial(n_attempted, q0)` under the null and the member is a test.
-      * `q0 < f`.  Then every attempt above `z0` has overflowed, and telling the ones above
-        `z0` from the ones merely above `z_f` needs the intended value of a draw that has
-        none: the loader returned no number for it.  Nothing is observable, so the cell is
-        NOT APPLICABLE at that threshold -- never passed, never failed, kept out of the Holm
-        family, with its honest floor on the row so a reader can check the decision.
-
-    Without this, the member silently demands that every uncapped cell lose less than 1e-4.
-    Case C4 exists precisely to violate that: its analytic floor is 8.25e-4, so honest
-    overflow alone puts about 8.25 times the expected count above `z0 = -log 1e-4` and
-    returns `p ~ 1.7e-223`, failing a correct candidate on the arithmetic of the type.
-
-    `floor` is the ANALYTIC floor, never the cell's measured loss, so that whether a test
-    applies is a property of the cell and not of the data it would be applied to.  Where the
-    band of `honest_floor_band` brackets `q0` the rule does not determine an answer on the
-    number available, and this raises rather than picking one.
-    """
-    lo, hi = band
-    if floor is None or not np.isfinite(floor):
-        raise AnalysisError(
-            f"{label}: the honest floor is {floor!r}, so the applicability of the tail count "
-            f"member at q0={q0:g} cannot be decided. F5_tail requires the analytic floor of "
-            "config/honest_floor.md for every uncapped loader cell.")
-    if q0 > floor * hi:
-        return True, None
-    if q0 <= floor * lo:
-        return False, "q0_at_or_below_honest_floor"
-    raise AnalysisError(
-        f"{label}: q0={q0:g} lies inside the cell's honest-floor band "
-        f"[{floor * lo:.4g}, {floor * hi:.4g}] around the published floor {floor:.4g}, so "
-        "F5_tail.count_member_requires_q0_above_honest_floor does not determine whether the "
-        "count member applies. The band is the anisotropy and direction-spread bound of "
-        "honest_floor_band; deciding this cell either way would be a choice this analysis "
-        "is not entitled to make.")
 
 
 # ---------------------------------------------------------------------------
@@ -1502,64 +1424,99 @@ def f5_display(name: str) -> str:
     return name.replace("_", " ")
 
 
-def loader_tail_tests(log_r, kappa: float, n_attempted: int, q0s, z=None,
-                      precision: str = "double", theta_ratio: float = 1.0,
+def loader_tail_tests(z_intended, z_returned, c_returned, n_attempted: int, q0s,
                       label: str = "cell") -> dict:
-    """The upper-tail members of F5, on one recovered loader sample.
+    """The upper-tail members of F5, corrected for the representability boundary.
 
-    ``log_r`` is the recovered radius of the draws the analysis could resolve; the cell
-    attempted ``n_attempted`` of them, so ``n_attempted - log_r.size`` draws never resolved
-    and, per `F5_tail.unresolved_exceedances_count_toward_every_threshold`, sit above every
-    threshold.  ``z`` overrides the transform when the caller already holds ``Z`` itself.
+    The derivation, and why the frozen nulls were invalid, are in `exp7_censoring`.
 
-    The COUNT member is gated by `count_member_applies`: it is a test only where ``q0``
-    exceeds the cell's analytic honest-overflow rate, because below that every attempt above
-    ``z0`` has overflowed and none of them carries the value that would say which side of
-    ``z0`` it fell.  Where it does not apply the count is emitted as ``None`` -- not
-    applicable, kept out of the Holm family -- and the cell's floor is published beside it.
-    The EXCESS member is unaffected and applies at every threshold.
+    ``z_intended``   the intended ``Z`` of every recorded attempt, overflowed ones included.
+    ``z_returned``   the ``Z`` of the draws the loader actually returned.
+    ``c_returned``   each returned draw's own representability threshold ``C(n_i)``.
+    ``n_attempted``  the cell's attempt count, which is the count member's denominator.
+
+    COUNT: exact binomial on ``#{intended Z > z0}`` against ``Binomial(n_attempted, q0)``.
+    Applies at every threshold of every uncapped cell -- the side condition amendment 1.3.0
+    needed is gone, because the quantity it could not observe is observable after all.
+
+    EXCESS: Kolmogorov-Smirnov of the per-draw conditional probability integral transform
+    against ``Uniform(0,1)``.  Where nothing can overflow this is the frozen Exp(1) statistic,
+    to the last bit.
     """
-    a = float(kappa) - 0.5
-    zz = np.asarray(z, dtype=float) if z is not None else S.z_from_log_w(
-        S.log_w_from_log_r(log_r), a)
-    finite = np.isfinite(zz)
-    n_unresolved = max(0, int(n_attempted) - int(zz.size)) + int(np.sum(~finite))
-    zz = zz[finite]
-    floor_info = honest_floor(float(kappa), precision)
-    floor = floor_info["floor"]
-    band = honest_floor_band(float(theta_ratio), a)
-    out = {"honest_floor_rate": float(floor) if floor is not None else None}
+    zi = np.asarray(z_intended, dtype=float)
+    zr = np.asarray(z_returned, dtype=float)
+    cr = np.asarray(c_returned, dtype=float)
+    out: dict = {}
+    n_att = int(n_attempted)
+    # A draw whose Z transform underflowed sits above every threshold by construction; it is
+    # counted, never dropped, because dropping it would condition on resolvability, which is
+    # monotone in the tail -- the exact bias these statistics exist to detect.
+    zi_finite = np.isfinite(zi)
+    n_zi_unresolved = int(np.sum(~zi_finite))
+    zi_ok = zi[zi_finite]
+    # The record count must equal the attempt count for an uncapped cell: the probe pushes
+    # one record per attempt.  A shortfall means attempts went unrecorded, which is silent
+    # conditioning, and it is reported rather than averaged into a rate.
+    out["tail_records"] = int(zi.size)
+    out["tail_records_missing"] = max(0, n_att - int(zi.size))
+
     for q0 in q0s:
         slug = tail_slug(q0)
-        t = (exceedance_test_counting_unresolved(zz, n_unresolved, int(n_attempted), q0)
-             if zz.size else {"resolved": False})
-        ok = bool(t.get("resolved"))
-        applies, why = count_member_applies(q0, floor, band, f"{label}|tail_{slug}")
-        out[f"tail_{slug}_count_applies"] = bool(applies)
-        out[f"tail_{slug}_count_not_applicable_reason"] = None if applies else why
-        out[f"p_tail_{slug}_count"] = t["p_count"] if (ok and applies) else None
-        out[f"stat_tail_{slug}_count"] = (float(t["observed"])
-                                          if (ok and applies) else None)
-        pe = t.get("p_excess") if ok else None
-        out[f"p_tail_{slug}_excess"] = (float(pe) if pe is not None and np.isfinite(pe)
-                                        else None)
-        out[f"stat_tail_{slug}_excess"] = float(t["n_excess"]) if ok else None
-        out[f"tail_{slug}_observed_resolved"] = t.get("observed_resolved") if ok else None
-        out[f"tail_{slug}_unresolved"] = t.get("n_unresolved") if ok else None
-        out[f"tail_{slug}_expected"] = t.get("expected") if ok else None
-        out[f"tail_{slug}_n"] = t.get("n") if ok else None
-        out[f"tail_{slug}_p_count_resolved_only"] = (t.get("p_count_resolved_only")
-                                                     if ok else None)
+        z0 = -math.log(q0)
+        # ---- count, on the intended Z of every attempt --------------------------------
+        k = int(np.sum(zi_ok > z0)) + n_zi_unresolved
+        resolved = zi.size > 0 and n_att > 0
+        out[f"p_tail_{slug}_count"] = (
+            float(stats.binomtest(k, n_att, q0).pvalue) if resolved else None)
+        out[f"stat_tail_{slug}_count"] = float(k) if resolved else None
+        out[f"tail_{slug}_observed_intended"] = int(k) if resolved else None
+        out[f"tail_{slug}_expected"] = n_att * q0 if resolved else None
+        out[f"tail_{slug}_n"] = n_att if resolved else None
+        out[f"tail_{slug}_z0"] = z0
+        out[f"tail_{slug}_z_unresolved"] = n_zi_unresolved
+
+        # ---- excess, on the returned draws, against their own censored null ------------
+        sel = np.isfinite(zr) & (zr > z0)
+        zz, cc = zr[sel], cr[sel]
+        out[f"tail_{slug}_observed_returned"] = int(zz.size)
+        if zz.size >= 8:
+            span = np.where(np.isfinite(cc), cc - z0, np.inf)
+            with np.errstate(divide="ignore", invalid="ignore"):
+                u = -np.expm1(-(zz - z0)) / -np.expm1(-span)
+            # A returned draw satisfies Z <= C by construction, so U cannot exceed 1 except
+            # by the rounding of a recovered direction.  The count that does is published
+            # rather than absorbed: if it is ever more than a handful, the boundary model and
+            # the loader have stopped agreeing and the member should not be read.
+            n_clip = int(np.sum(~((u >= 0.0) & (u <= 1.0))))
+            u = np.clip(u, 0.0, 1.0)
+            ks = stats.kstest(u, "uniform")
+            out[f"p_tail_{slug}_excess"] = float(ks.pvalue)
+            out[f"stat_tail_{slug}_excess"] = float(ks.statistic)
+            out[f"tail_{slug}_excess_clipped"] = n_clip
+            out[f"tail_{slug}_censoring_span_min"] = float(np.min(span))
+            out[f"tail_{slug}_censoring_span_max"] = float(np.max(span))
+        else:
+            out[f"p_tail_{slug}_excess"] = None
+            out[f"stat_tail_{slug}_excess"] = None
+            out[f"tail_{slug}_excess_clipped"] = 0
+            out[f"tail_{slug}_censoring_span_min"] = None
+            out[f"tail_{slug}_censoring_span_max"] = None
     return out
 
 
-TAIL_EXTRA_FIELDS = ("observed_resolved", "unresolved", "expected", "n",
-                     "p_count_resolved_only", "count_applies",
-                     "count_not_applicable_reason")
+TAIL_EXTRA_FIELDS = ("z0", "observed_intended", "observed_returned", "expected", "n",
+                     "z_unresolved", "excess_clipped", "censoring_span_min",
+                     "censoring_span_max")
 
 
 def loader_sample(ctx: Context, row: dict):
-    """``(log R, unit direction in the field-aligned frame, status)`` for one P4 file."""
+    """``(log R, unit direction, status, intended log R)`` for one P4 file.
+
+    The fourth value is the probe's ``log_r_ref``: the radius each attempt carried, recorded
+    for every attempt including the ones whose velocity overflowed.  It is what makes the
+    corrected tail count member possible -- see exp7_censoring -- and it was on disk all
+    along; this analysis simply was not reading it.
+    """
     rf = row.get("raw_file")
     if not rf:
         raise AnalysisError(f"phase p4: the {row.get('layer')} row for case "
@@ -1567,15 +1524,17 @@ def loader_sample(ctx: Context, row: dict):
     _h, arr = read_exp7_records(ctx.resolve_raw(rf), 3)
     v = np.asarray(arr["v"], dtype=float)
     status = np.asarray(arr["status"])
+    log_r_ref = np.asarray(arr["log_r_ref"], dtype=float)
     kappa = jnum(row, "kappa")
     ratio = jnum(row, "theta_ratio", 1.0)
     ub = row.get("ub") or [0.0, 0.0, 1.0]
     log_r, n_hat = IO.recover_radius_direction(v, kappa, 1.0, ratio, ub)
-    return log_r, n_hat, status
+    return log_r, n_hat, status, log_r_ref
 
 
 def loader_tests(log_r, n_hat, kappa, cap, n_attempted=None, q0s=(), z=None,
-                 precision="double", theta_ratio=1.0, label="cell") -> dict:
+                 precision="double", theta_ratio=1.0, label="cell", log_r_ref=None,
+                 ub=None, z_intended=None) -> dict:
     """The pre-registered F5 statistics, on one recovered sample.
 
     Which of them applies depends on the cell, and the ones that do not are reported as not
@@ -1587,10 +1546,11 @@ def loader_tests(log_r, n_hat, kappa, cap, n_attempted=None, q0s=(), z=None,
     components, so the anisotropy test -- which asks only that the descaled components stay
     exchangeable -- survives the cap and is applied to every cell.
 
-    The upper-tail members amendment 1.3.0 added are on the same footing: the accepted
-    radius under a cap is truncated at a direction-dependent bound, so the count above
-    ``z0 = -log q0`` is not ``Binomial(n, q0)`` there and the tail members do not apply to a
-    capped cell either.  ``n_attempted`` is the cell's attempt count, which is what the
+    The upper-tail members are on the same footing: under a cap the accepted radius is
+    truncated at a direction-dependent bound and the count above ``z0 = -log q0`` is not
+    ``Binomial(n, q0)`` there, so they do not apply to a capped cell.  For an uncapped cell
+    amendment 1.4.0 rebuilds both of them against the representability boundary; see
+    `exp7_censoring` for the derivation.  ``n_attempted`` is the cell's attempt count, which is what the
     unresolved draws are counted against; it defaults to the number of draws that did
     resolve, i.e. to a cell that reports no loss.  ``z`` lets a caller that already holds
     ``Z`` supply it instead of having it re-derived from ``log_r``.
@@ -1625,9 +1585,27 @@ def loader_tests(log_r, n_hat, kappa, cap, n_attempted=None, q0s=(), z=None,
             out["p_frame_invariance"] = F.simes_global([x.pvalue for x in gp])
             out["stat_frame_invariance"] = gp[0].statistic
         if q0s:
-            out.update(loader_tail_tests(lr, kappa, out["n_attempted"], q0s,
-                                         z=None if z is None else np.asarray(z)[ok],
-                                         precision=precision, theta_ratio=theta_ratio,
+            a = float(kappa) - 0.5
+            ubv = ub if ub is not None else [0.0, 0.0, 1.0]
+            # Z of the draws the loader returned.
+            z_ret = (np.asarray(z)[ok] if z is not None
+                     else S.z_from_log_w(S.log_w_from_log_r(lr), a))
+            # Z of every attempt the probe recorded, overflowed ones included.  `log_r_ref`
+            # is the probe's record of the radius each attempt carried; a caller that holds
+            # Z itself passes `z_intended`.  Where neither exists -- an injected control
+            # whose sample is the returned one by construction -- the returned sample stands
+            # in, and the count member then reads exactly the conditioned sample, which is
+            # what makes it able to see the conditioning.
+            if z_intended is not None:
+                z_int = np.asarray(z_intended, dtype=float)
+            elif log_r_ref is not None:
+                lr_all = np.asarray(log_r_ref, dtype=float)
+                z_int = S.z_from_log_w(S.log_w_from_log_r(lr_all[np.isfinite(lr_all)]), a)
+            else:
+                z_int = z_ret
+            c_ret = CEN.censoring_threshold_z(nh, kappa, 1.0, float(theta_ratio), ubv,
+                                              precision)
+            out.update(loader_tail_tests(z_int, z_ret, c_ret, out["n_attempted"], q0s,
                                          label=label))
 
     # Anisotropy: after dividing by the declared (sqrt(kappa) theta_perp, ..., sqrt(kappa)
@@ -1691,12 +1669,13 @@ def analyse_p4(ctx: Context) -> dict:
 
     measured = [r for r in rows if r.get("layer") in ("uncapped", "capped")]
     out_rows: list[dict] = []
-    pooled: dict = defaultdict(lambda: {"log_r": [], "n_hat": [], "rows": []})
+    pooled: dict = defaultdict(lambda: {"log_r": [], "n_hat": [], "log_r_ref": [],
+                                        "rows": []})
     unlabelled_conditional = 0
 
     for r in sorted(measured, key=lambda r: (r.get("tag"), r.get("case"), r.get("method"),
                                              jint(r, "seed"))):
-        log_r, n_hat, _status = loader_sample(ctx, r)
+        log_r, n_hat, _status, log_r_ref = loader_sample(ctx, r)
         cap = r.get("cap")
         cap = float(cap) if cap is not None else None
         kappa = jnum(r, "kappa")
@@ -1712,7 +1691,9 @@ def analyse_p4(ctx: Context) -> dict:
                              precision=r.get("precision", "double"),
                              theta_ratio=jnum(r, "theta_ratio", 1.0),
                              label=f"{r.get('case')}|{r.get('method')}|seed "
-                                   f"{jint(r, 'seed', 0)}")
+                                   f"{jint(r, 'seed', 0)}",
+                             log_r_ref=(log_r_ref if cap is None else None),
+                             ub=r.get("ub"))
         n_analyzed = tests["n_analyzed"]
         # Anything that removes a returned draw before a statistic sees it is correlated with
         # the radius here: a non-finite component is exactly what a large radius produces.
@@ -1761,6 +1742,7 @@ def analyse_p4(ctx: Context) -> dict:
         key = (r.get("tag"), r.get("case"), r.get("method"))
         pooled[key]["log_r"].append(log_r)
         pooled[key]["n_hat"].append(n_hat)
+        pooled[key]["log_r_ref"].append(log_r_ref)
         pooled[key]["rows"].append(r)
 
     f5_tests: list[dict] = []
@@ -1774,13 +1756,16 @@ def analyse_p4(ctx: Context) -> dict:
         kappa = jnum(r0, "kappa")
         log_r = np.concatenate(blob["log_r"])
         n_hat = np.concatenate(blob["n_hat"])
+        log_r_ref = np.concatenate(blob["log_r_ref"])
         attempts = sum(jint(r, "attempts", 0) for r in blob["rows"])
         n_returned = sum(jint(r, "n_returned", 0) for r in blob["rows"])
         tests = loader_tests(log_r, n_hat, kappa, cap,
                              n_attempted=attempts if cap is None else n_returned, q0s=q0s,
                              precision=r0.get("precision", "double"),
                              theta_ratio=jnum(r0, "theta_ratio", 1.0),
-                             label=f"{case}|{method}")
+                             label=f"{case}|{method}",
+                             log_r_ref=(log_r_ref if cap is None else None),
+                             ub=r0.get("ub"))
         nf_attempt = sum(jint(r, "nonfinite_attempt", 0) for r in blob["rows"])
         nf_returned = sum(jint(r, "nonfinite_returned", 0) for r in blob["rows"])
         n_analyzed = tests["n_analyzed"]
@@ -1861,7 +1846,7 @@ def write_validation_matrix(ctx: Context, pooled_rows: dict, family_F5, alpha: f
          f"Protocol `config/protocol.json` SHA-256 `{ctx.proto.sha256}`.", "",
          "Rows are the curated configurations of PROTOCOL.md 4.1, pooled over the frozen "
          "seeds; columns are the tests of family F5 -- the five frozen with the protocol, "
-         "then the upper-tail members amendment 1.3.0 added at each threshold in "
+         "then the upper-tail members at each threshold in "
          "`F5_tail.q0`. Decisions are Holm-"
          f"corrected jointly over **all** cells and tests at a familywise alpha of {alpha:g}, "
          "not within each cell.", "",
@@ -1875,12 +1860,18 @@ def write_validation_matrix(ctx: Context, pooled_rows: dict, family_F5, alpha: f
          "the radius had already filtered -- a non-finite component is exactly what a large "
          "radius produces. Every such cell carries its loss fraction in the last column and "
          "in `loader_validation.csv`.", "",
-         "A tail count is the number of draws above `z0 = -log q0`, the unresolved draws "
-         "included, against `Binomial(attempts, q0)`; the excess test is a "
-         "Kolmogorov-Smirnov of the resolved excesses against `Exp(1)`. Because an "
-         "unresolved draw counts toward every threshold, the count member also reads on any "
-         "cell whose loss fraction is itself above `q0`, and `loader_validation.csv` "
-         "publishes the resolved and unresolved parts of every count separately.", "",
+         "The two upper-tail members are amendment 1.3.0's, with the nulls corrected in "
+         "amendment 2.0.0. The **count** is the number of ATTEMPTS whose intended `Z` "
+         "exceeds `z0 = -log q0`, taken from the radius the probe recorded for every "
+         "attempt including the overflowed ones, against `Binomial(attempts, q0)` -- exact, "
+         "and applicable at every threshold, which is why no cell is marked not-applicable "
+         "for a count any more. The **excess** is a Kolmogorov-Smirnov test of the returned "
+         "draws above `z0`, each transformed by its own representability threshold "
+         "`C(n) = Z(log max() - log max_j|g_j(n)|)`; where nothing can overflow that "
+         "transform is the identity on the frozen `Exp(1)` statistic. `loader_validation."
+         "csv` publishes, per cell and threshold, the intended count, the returned count, "
+         "the expected count, the span of the censoring interval, and how many transformed "
+         "values had to be clipped to [0,1] -- which should be none.", "",
          "| case | method | tag | " + " | ".join(f5_display(t) for t in f5_tests_names)
          + " | n analysed | conditional |",
          "|---|---|---|" + "---|" * (len(f5_tests_names) + 2)]
@@ -1903,7 +1894,7 @@ def write_validation_matrix(ctx: Context, pooled_rows: dict, family_F5, alpha: f
         L.append(f"| {case} | {method} | {tag} | " + " | ".join(cells)
                  + f" | {r['n_analyzed']} | {cond} |")
     L += ["", "Only the CANDIDATE cells of the primary environment "
-              f"(`{PRIMARY_TAG}`) enter the F5 decision: within version 2.0.0 the stream is a "
+              f"(`{PRIMARY_TAG}`) enter the F5 decision: within the 2.x line the stream is a "
               "function of the engine alone, so the other environment's rows are the same "
               "draws and would enter Holm twice. The LEGACY rows are the comparator and are "
               "printed with their p-values but are not gated -- where the released 1.0.0 form "
@@ -1962,6 +1953,9 @@ def analyse_negative_controls(ctx: Context, p1: dict, p4: dict) -> dict:
     if src is not None:
         nc1_sample = _pooled_loader_sample(ctx, "C1", "CANDIDATE")
     kappa1 = jnum(src, "kappa") if src is not None else float("nan")
+    nc1_ratio = jnum(src, "theta_ratio", 1.0) if src is not None else 1.0
+    nc1_ub = (src.get("ub") or [0.0, 0.0, 1.0]) if src is not None else [0.0, 0.0, 1.0]
+    nc1_precision = (src.get("precision") or "double") if src is not None else "double"
 
     # The effect list carries a leading 0: the same procedure with nothing removed, which
     # measures the rejection rate of the measurement itself.  A power figure quoted without
@@ -1988,11 +1982,20 @@ def analyse_negative_controls(ctx: Context, p1: dict, p4: dict) -> dict:
                 # the cell labelled conditional with its loss fraction under PROTOCOL.md 5.2.
                 # Both readings are measured; only the first is the control.
                 t = loader_tests(lr_i, nh_i, kappa1, None,
-                                 n_attempted=lr_i.size, q0s=q0s)
+                                 n_attempted=lr_i.size, q0s=q0s,
+                                 precision=nc1_precision, theta_ratio=nc1_ratio,
+                                 ub=nc1_ub)
                 if not F.family_F5(proto, f5_cell(t, "NC1", q)).passed:
                     det_silent += 1
+                # The same injection read as a loss the loader DOES report: the removed
+                # draws are restored to the count member's denominator and to its intended
+                # sample, which is what a loader that notices its own losses would supply.
                 t_rep = dict(t)
-                t_rep.update(loader_tail_tests(lr_i, kappa1, lr_p.size, q0s))
+                t_rep.update(loader_tests(lr_i, nh_i, kappa1, None, n_attempted=lr_p.size,
+                                          q0s=q0s, precision=nc1_precision,
+                                          theta_ratio=nc1_ratio, ub=nc1_ub,
+                                          z_intended=S.z_from_log_w(
+                                              S.log_w_from_log_r(lr_p), kappa1 - 0.5)))
                 if not F.family_F5(proto, f5_cell(t_rep, "NC1", q)).passed:
                     det_reported += 1
         level = (q == 0.0)
@@ -2063,17 +2066,34 @@ def analyse_negative_controls(ctx: Context, p1: dict, p4: dict) -> dict:
     controls.append({"name": "NC2_capped_vs_uncapped_weak_cap", "effect": cap2,
                      "injections": row2["injections"], "detections": det2})
 
-    # --- NC3: survivor conditioning at the worst cell the claim rests on -------------
-    # corrections.NC3_effect: the effect is the loss fraction of the worst cell among those
-    # the fidelity claim rests on -- the uncapped loader cells -- and not the global maximum
-    # over the scalar ladder, which is float kappa = 0.5001, where almost every draw is
-    # unrepresentable and detection is trivial.  The correction adds "whose loss is not
-    # dominated by honest overflow"; G1 requires the candidate's avoidable loss to be exactly
-    # zero, so every loss it has IS honest overflow and reading that clause as a filter would
-    # empty the set.  It is read here as it is illustrated there: excluding the degenerate
-    # configurations outside the uncapped loader cases, not excluding a case from among them.
-    # Each cell's honest floor is published beside its loss fraction in
-    # `loader_validation.csv` so that the reading can be checked rather than taken on trust.
+    # --- NC3: survivor conditioning, measured against the representability boundary ---
+    # corrections.NC3_effect picks the worst cell among those the fidelity claim rests on --
+    # the uncapped loader cells.  What CHANGED in amendment 1.4.0 is what is injected into
+    # it, and the reason is that the old injection was not an injection of a defect.
+    #
+    # The frozen NC3 removed every draw above a single cutoff `-log q` from a pure Exp(1)
+    # sample and required the battery to detect it.  But that is, to within the direction
+    # dependence, exactly what honest overflow does to a CORRECT loader: near kappa = 1/2 the
+    # law puts probability outside the type, and a loader that declines to return it is
+    # behaving correctly.  The frozen battery "detected" it because its null was the
+    # untruncated law, i.e. because it rejected correct behaviour -- its measured NC3 power
+    # was Type-I error wearing a power label, and the same defect failed the candidate on
+    # cases C3 and C4.
+    #
+    # NC3 is therefore split into the two questions that were tangled together:
+    #
+    #   NC3a  honest censoring ALONE, at the cell's own direction-dependent boundary,
+    #         correctly reported.  The battery must NOT reject.  This is a level, not a
+    #         power, and it is published as such.
+    #   NC3b  honest censoring PLUS an extra silent conditioning of the draws the loader
+    #         could have returned.  That is the defect, and the battery must detect it with
+    #         power >= F6.required_power at the pre-registered effect sizes in
+    #         F6.nc3_excess_loss_fractions.
+    #
+    # Both are simulated from the exact law by its own generative construction -- the
+    # shape-boosting identity of config/honest_floor.md -- so the null is exact rather than
+    # approximated, and the direction is drawn uniformly and independently of the radius,
+    # which is what a correct loader produces.
     worst = None
     for key, r in sorted(p4["pooled"].items(), key=str):
         if key[0] != PRIMARY_TAG or key[2] != "CANDIDATE" or r.get("cap") is not None:
@@ -2087,42 +2107,72 @@ def analyse_negative_controls(ctx: Context, p1: dict, p4: dict) -> dict:
     worst_n = jint(worst_row, "attempts", 0) if worst_row is not None else 0
     worst_label = (f"{worst_row['case']} CANDIDATE {worst_row['precision']} "
                    f"kappa={worst_row['kappa']:g}" if worst_row is not None else None)
-    nc3_effects = [("in_family", worst_q, worst_label)]
-    nc3_effects += [("diagnostic", q, "simulated exact law") for q in effects]
-    for kind, q, label in nc3_effects:
+    nc3_excess = [float(x) for x in proto.get("F6", "nc3_excess_loss_fractions")]
+
+    def nc3_replicate(rng, n_attempt, kappa, ratio, ub, precision, extra):
+        """One cell's worth of attempts: intended Z, which of them the type allows back,
+        and each returned draw's own representability threshold."""
+        a = float(kappa) - 0.5
+        log_r = 0.5 * (np.log(rng.gamma(1.5, 1.0, size=n_attempt))
+                       - np.log(rng.gamma(a + 1.0, 1.0, size=n_attempt))
+                       + rng.exponential(size=n_attempt) / a)
+        gv = rng.normal(size=(n_attempt, 3))
+        n_hat = gv / np.sqrt(np.einsum("ij,ij->i", gv, gv))[:, None]
+        log_m = np.log(CEN.max_component(n_hat, kappa, 1.0, ratio, ub))
+        log_max = math.log(CEN.MAX_FINITE[precision])
+        returned = (log_r + log_m) <= log_max
+        recorded = np.ones(n_attempt, dtype=bool)
+        if extra > 0.0:
+            m = int(round(extra * n_attempt))
+            elig = np.flatnonzero(returned)
+            if m > 0 and elig.size > m:
+                # Condition on the largest component, which is the quantity representability
+                # acts on, among the draws the type would have allowed back.  The injected
+                # loss is therefore strictly IN EXCESS of the honest floor rather than
+                # overlapping it.
+                key_ = (log_r + log_m)[elig]
+                drop = elig[np.argpartition(key_, elig.size - m)[elig.size - m:]]
+                recorded[drop] = False
+                returned[drop] = False
+        return log_r[recorded], returned[recorded], n_hat[recorded], n_attempt
+
+    nc3_cases = [("level", 0.0)] + [("in_family", q) for q in nc3_excess]
+    for kind, q in nc3_cases:
         det, n_used = 0, int(worst_n)
-        if q > 0.0 and n_used > 0:
-            zmax = -math.log(q)
+        if worst_row is not None and n_used > 0:
+            kappa3 = jnum(worst_row, "kappa")
+            ratio3 = jnum(worst_row, "theta_ratio", 1.0)
+            ub3 = worst_row.get("ub") or [0.0, 0.0, 1.0]
+            prec3 = worst_row.get("precision") or "double"
+            a3 = kappa3 - 0.5
             for i in range(n_inj):
                 rng = np.random.default_rng(stable_seed("NC3", f"{q:.12g}", i))
-                z = rng.exponential(size=n_used)
-                z = z[z < zmax]                 # the finite survivors of a loss fraction q
-                if z.size < 100:
+                lr_rec, ret, nh_rec, n_att = nc3_replicate(rng, n_used, kappa3, ratio3, ub3,
+                                                           prec3, q)
+                if int(np.sum(ret)) < 100:
                     continue
-                # A full three-dimensional null sample: directions uniform on the sphere and
-                # independent of the radius, which is what a correct loader produces.  The
-                # conditioning removes draws by Z alone, so the direction members of the
-                # battery have no power against it by construction and only the upper-tail
-                # members can respond -- which is the point of the control.  `log_r` is
-                # passed as Z itself: the only statistic that reads the radius other than
-                # through Z is the independence chi-square, whose x-bins are quantiles of the
-                # radius, and Z is a strictly increasing function of it, so the bins and the
-                # table are identical.
-                g = rng.normal(size=(z.size, 3))
-                nh = g / np.sqrt(np.einsum("ij,ij->i", g, g))[:, None]
-                t = loader_tests(z, nh, jnum(worst_row, "kappa"), None,
-                                 n_attempted=z.size, q0s=q0s, z=z)
+                z_int = S.z_from_log_w(S.log_w_from_log_r(lr_rec), a3)
+                t = loader_tests(lr_rec[ret], nh_rec[ret], kappa3, None,
+                                 n_attempted=n_att, q0s=q0s, precision=prec3,
+                                 theta_ratio=ratio3, ub=ub3, z_intended=z_int)
                 if not F.family_F5(proto, f5_cell(t, "NC3", q)).passed:
                     det += 1
-        row = _power_row(ctx, "NC3_survivor_conditioning", "loss_fraction", q,
-                         "F5 loader battery including the upper-tail members of amendment "
-                         "1.3.0, Holm jointly over the cell's applicable tests",
-                         n_inj if (q > 0 and n_used > 0) else 0, det, required,
-                         kind == "in_family", f"{label}; n = {n_used}",
-                         "the finite survivors of a loader that loses a fraction q are the "
-                         "target conditioned on Z < -log q, so the effect is simulated "
-                         "exactly from the null rather than approximated",
-                         nc3_rule if kind == "in_family" else None)
+        row = _power_row(
+            ctx, "NC3_survivor_conditioning",
+            "level" if kind == "level" else "excess_loss_fraction", q,
+            "F5 loader battery including the upper-tail members of amendment 1.4.0, Holm "
+            "jointly over the cell's applicable tests",
+            n_inj if (worst_row is not None and n_used > 0) else 0, det,
+            None if kind == "level" else required, kind == "in_family",
+            f"{worst_label}; n = {n_used}; measured loss fraction {worst_q:.3g}",
+            ("honest overflow alone, at the cell's own direction-dependent representability "
+             "boundary, correctly reported: a CORRECT loader, so this row is the battery's "
+             "false-rejection rate and carries no power threshold"
+             if kind == "level" else
+             "honest overflow, plus a further q fraction of the draws the type WOULD have "
+             "allowed back, removed silently -- conditioning in excess of what the floor "
+             "forces, which is the defect the battery exists to exclude"),
+            nc3_rule if kind == "in_family" else None)
         rows.append(row)
         if kind == "in_family":
             controls.append({"name": "NC3_survivor_conditioning", "effect": q,
@@ -2173,7 +2223,7 @@ def _pooled_loader_sample(ctx: Context, case: str, method: str):
             and r.get("tag") == PRIMARY_TAG and r.get("layer") in ("uncapped", "capped")]
     lrs, nhs = [], []
     for r in sorted(rows, key=lambda r: jint(r, "seed")):
-        lr, nh, _ = loader_sample(ctx, r)
+        lr, nh, _, _ = loader_sample(ctx, r)
         ok = np.isfinite(lr) & np.all(np.isfinite(nh), axis=1)
         lrs.append(lr[ok])
         nhs.append(nh[ok])
@@ -2304,6 +2354,11 @@ def analyse_p5(ctx: Context, p1: dict) -> dict:
                 reason = ("this host provides neither that architecture nor that standard "
                           "library; the exact command is in results/portability_remote.md, "
                           "and the CI workflow .github/workflows/portability.yml runs it")
+                if not spec.get("in_scope_protocol_2_0_0", True):
+                    reason = ("out of scope under protocol 2.0.0, which limits acceptance "
+                              "to the supported environment and withdraws the "
+                              "cross-architecture claim; recorded so that what a broader "
+                              "claim would require stays visible. " + reason)
                 environments.append({"arch": spec.get("arch"), "os": spec.get("os"),
                                      "compiler": None, "stdlib": etag, "execution": None,
                                      "available": False, "completed": False, "n_rows": 0,

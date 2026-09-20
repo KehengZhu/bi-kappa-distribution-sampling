@@ -2832,8 +2832,9 @@ static int test_log_cap_semantics()
 //
 // An orthogonal rotation can spread one over-large field-aligned component across
 // three representable global ones, which is why the sampler builds the order-unity
-// vector g = Q(ub) diag(sqrt(kappa) theta) n first and decides representability from
-// log|V_j| = log R + log|g_j| on the components it is actually going to return.
+// vector g = Q(ub) diag(sqrt(kappa) theta) n first and decides representability on the
+// components it is actually going to return -- by materializing each one and asking
+// whether it is finite, not by comparing its logarithm against a rounded log(max()).
 // Deciding on the pre-rotation vector instead would discard draws that have a
 // perfectly good answer.
 // ================================================================
@@ -2861,7 +2862,6 @@ static int test_log_rotation_stability()
         const long long n= 200000;
         const double kappa= 0.51, theta_perp= 1.0, theta_par= 2.0;
         const double a= kappa - 0.5, sqrt_kappa= std::sqrt(kappa);
-        const double log_max= std::log(std::numeric_limits<double>::max());
         const bi_kappa_distribution<double>::point_type ub= {1.0, 1.0, 1.0};
         const std::array<long double, 3> ub_ld= {1.0L, 1.0L, 1.0L};
 
@@ -2882,11 +2882,25 @@ static int test_log_rotation_stability()
             const bi_kappa_distribution<double>::point_type g=
                 dist.rotate_from_fieldAligned_frame(local, ub);
 
+            // Predict from the rule the loader implements: materialize each component and
+            // ask whether it is finite.  Predicting from `log R + log|g_j| >= log(max())`
+            // instead -- as this test did before 2.1.0 -- is predicting from a withdrawn
+            // rule, and the two disagree exactly at the boundary, which is the only place
+            // this check has anything to say.
             bool predicted_finite= true;
-            for (int j= 0; j < 3; ++j)
             {
-                if (g[j] != 0.0 && d.log_r + std::log(std::abs(g[j])) >= log_max)
-                    predicted_finite= false;
+                const double r_try= std::exp(d.log_r);
+                const bool radius_rep= (r_try <= std::numeric_limits<double>::max());
+                for (int j= 0; j < 3; ++j)
+                {
+                    if (g[j] == 0.0)
+                        continue;
+                    const double mag= radius_rep
+                                          ? r_try * std::abs(g[j])
+                                          : std::exp(d.log_r + std::log(std::abs(g[j])));
+                    if (!(mag <= std::numeric_limits<double>::max()))
+                        predicted_finite= false;
+                }
             }
 
             const bi_kappa_distribution<double>::result_type v= dist(gen_sampler);
@@ -2928,8 +2942,8 @@ static int test_log_rotation_stability()
         }
         const bool ok= (predicate_mismatch == 0) && (worst_ulp <= 8.0) && (compared > 0);
         all_ok= all_ok && ok;
-        std::cout << "  R1 kappa=0.51, ub={1,1,1}: finite exactly where log R + log|g_j| <"
-                     " log DBL_MAX for all j (" << predicate_mismatch
+        std::cout << "  R1 kappa=0.51, ub={1,1,1}: finite exactly where the materialized"
+                     " |R g_j| is at most DBL_MAX for all j (" << predicate_mismatch
                   << " mismatches in " << n << "), and within " << worst_ulp
                   << " ulp of the vector scale against a long double reference with "
                   << std::numeric_limits<long double>::digits
@@ -2976,8 +2990,17 @@ static int test_log_rotation_stability()
                                            std::max(std::abs(local[1]), std::abs(local[2])));
             const double m_rot=
                 std::max(std::abs(g[0]), std::max(std::abs(g[1]), std::abs(g[2])));
-            const bool local_overflows= (d.log_r + std::log(m_local) >= log_max);
-            const bool rotated_fits= (d.log_r + std::log(m_rot) < log_max);
+            // Same rule as R1: materialize, then ask.  `m_local` and `m_rot` are the
+            // largest pre- and post-rotation components, and a rounding-to-nearest product
+            // is monotone in them, so testing the largest decides the vector.
+            const double r_try= std::exp(d.log_r);
+            const bool radius_rep= (r_try <= std::numeric_limits<double>::max());
+            const double mag_local= radius_rep ? r_try * m_local
+                                               : std::exp(d.log_r + std::log(m_local));
+            const double mag_rot= radius_rep ? r_try * m_rot
+                                             : std::exp(d.log_r + std::log(m_rot));
+            const bool local_overflows= !(mag_local <= std::numeric_limits<double>::max());
+            const bool rotated_fits= (mag_rot <= std::numeric_limits<double>::max());
 
             const bi_kappa_distribution<double>::result_type v= dist(gen_sampler);
             if (local_overflows && rotated_fits)
@@ -2999,6 +3022,340 @@ static int test_log_rotation_stability()
     }
 
     std::cout << "test_log_rotation_stability: " << (all_ok ? "PASS" : "FAIL") << std::endl;
+    return all_ok ? 0 : 1;
+}
+
+// ================================================================
+// test_representability_boundary
+//
+// Deterministic fixtures at the representability boundary, built from the failure
+// preserved in experiments/exp7_confirmatory/raw/oracle_disagreements.jsonl and from
+// the neighbourhood of that boundary in both precisions.
+//
+// The defect these lock down.  Before the fix, the loader decided representability by
+// comparing a logarithm, `log R` or `log R + log|g_j|`, against `log(max())`.  That
+// comparison cannot be made to agree with the arithmetic it predicts, because
+// `log(max())` is itself a rounded value and may sit on either side of the true
+// logarithm of the largest finite number.  On this libm it sits ABOVE in `float`:
+// `exp(log(FLT_MAX))` is exactly `+inf`, while in `double` `exp(log(DBL_MAX))` is
+// finite.  A `float` draw whose `log R` equalled `log(FLT_MAX)` bit for bit therefore
+// passed the test, was exponentiated to `+inf`, and was returned as
+// `(-inf, +inf, +inf)` -- with `n_nonfinite()` never incremented, because the branch
+// that produced it did not look at what it had produced.  All three components were
+// representable: the largest was 1.92e38 against a limit of 3.40e38, a margin of 0.571
+// natural-log units, because every `|g_j|` is below one and pulls the product back
+// under the limit.
+//
+// The corrected loader never consults a logarithm to make this decision.  It
+// materializes each component and compares the component with `max()`, so the test and
+// the result agree by construction, in either precision and whichever way the library's
+// `log` and `exp` round.
+//
+// Every expected value below was computed at 100 decimal digits with mpmath, from the
+// exact definition |V_j| = exp(log R + log|g_j|), and is the correctly-rounded value of
+// the type, or an infinity where the exact magnitude exceeds max().  The C++ needs no
+// multiprecision library because that adjudication has already happened.
+// ================================================================
+template <typename T> struct BoundaryFixture
+{
+    const char *name;
+    T log_r;
+    T g[3];
+    T expected[3];      ///< the 100-digit value, correctly rounded, or +/-inf
+    bool representable[3];
+    bool any_overflow;
+};
+
+#define INFV (std::numeric_limits<float>::infinity())
+static const BoundaryFixture<float> kFloatBoundaryFixtures[]= {
+    {"F1_preserved_failure", 0x1.62e4300000000p+6f,
+     {-0x1.aaae2c0000000p-2f, 0x1.0eb4280000000p-3f, 0x1.2122b60000000p-1f},
+     {-0x1.aaae320000000p+126f, 0x1.0eb42c0000000p+125f, 0x1.2122ba0000000p+127f},
+     {true, true, true}, false},
+    {"F2_one_ulp_below", 0x1.62e42e0000000p+6f,
+     {-0x1.aaae2c0000000p-2f, 0x1.0eb4280000000p-3f, 0x1.2122b60000000p-1f},
+     {-0x1.aaad5e0000000p+126f, 0x1.0eb3a40000000p+125f, 0x1.21222a0000000p+127f},
+     {true, true, true}, false},
+    {"F3_one_ulp_above", 0x1.62e4320000000p+6f,
+     {-0x1.aaae2c0000000p-2f, 0x1.0eb4280000000p-3f, 0x1.2122b60000000p-1f},
+     {-0x1.aaaf080000000p+126f, 0x1.0eb4b40000000p+125f, 0x1.21234c0000000p+127f},
+     {true, true, true}, false},
+    {"F4_two_ulp_above", 0x1.62e4340000000p+6f,
+     {-0x1.aaae2c0000000p-2f, 0x1.0eb4280000000p-3f, 0x1.2122b60000000p-1f},
+     {-0x1.aaafde0000000p+126f, 0x1.0eb53c0000000p+125f, 0x1.2123dc0000000p+127f},
+     {true, true, true}, false},
+    {"F5_radius_above_components_small", 0x1.7c00000000000p+6f,
+     {0x1.0624de0000000p-10f, -0x1.89374c0000000p-10f, 0x1.3a92a40000000p-10f},
+     {0x1.1086660000000p+127f, -0x1.98c9960000000p+127f, 0x1.4707ac0000000p+127f},
+     {true, true, true}, false},
+    {"F6_all_unrepresentable", 0x1.9000000000000p+7f,
+     {0x1.99999a0000000p-2f, -0x1.0000000000000p-1f, 0x1.3333340000000p-1f},
+     {INFV, -INFV, INFV},
+     {false, false, false}, true},
+    {"F7_mixed", 0x1.66e4300000000p+6f,
+     {0x1.0624de0000000p-10f, -0x1.cccccc0000000p-1f, 0x1.0000000000000p-1f},
+     {0x1.644a6e0000000p+119f, -INFV, INFV},
+     {true, false, false}, true},
+    {"F8_zero_component", 0x1.62e4300000000p+6f,
+     {-0x1.aaae2c0000000p-2f, 0x0.0p+0f, 0x1.2122b60000000p-1f},
+     {-0x1.aaae320000000p+126f, 0x0.0p+0f, 0x1.2122ba0000000p+127f},
+     {true, true, true}, false},
+    {"F9_ordinary", 0x1.4000000000000p+3f,
+     {0x1.3333340000000p-2f, -0x1.99999a0000000p-2f, 0x1.0000000000000p-1f},
+     {0x1.9cff0a0000000p+12f, -0x1.1354b20000000p+13f, 0x1.5829dc0000000p+13f},
+     {true, true, true}, false},
+};
+#undef INFV
+#define INFV (std::numeric_limits<double>::infinity())
+static const BoundaryFixture<double> kDoubleBoundaryFixtures[]= {
+    {"D1_at_log_max", 0x1.62e42fefa39efp+9,
+     {-0x1.aaae2a690a650p-2, 0x1.0eb4277266251p-3, 0x1.2122b51ad8edcp-1},
+     {-0x1.aaae2a690a59ep+1022, 0x1.0eb42772661e0p+1021, 0x1.2122b51ad8e63p+1023},
+     {true, true, true}, false},
+    {"D2_one_ulp_below", 0x1.62e42fefa39eep+9,
+     {-0x1.aaae2a690a650p-2, 0x1.0eb4277266251p-3, 0x1.2122b51ad8edcp-1},
+     {-0x1.aaae2a690a248p+1022, 0x1.0eb4277265fc3p+1021, 0x1.2122b51ad8c21p+1023},
+     {true, true, true}, false},
+    {"D3_one_ulp_above", 0x1.62e42fefa39f0p+9,
+     {-0x1.aaae2a690a650p-2, 0x1.0eb4277266251p-3, 0x1.2122b51ad8edcp-1},
+     {-0x1.aaae2a690a8f3p+1022, 0x1.0eb42772663fdp+1021, 0x1.2122b51ad90a5p+1023},
+     {true, true, true}, false},
+    {"D4_radius_far_above_components_small", 0x1.9000000000000p+9,
+     {0x1.56e1fc2f8f359p-997, -0x1.56e1fc2f8f359p-996, 0x1.01297d23ab683p-995},
+     {0x1.7e0be4277cda6p+157, -0x1.7e0be4277cda6p+158, 0x1.1e88eb1d9da3dp+159},
+     {true, true, true}, false},
+    {"D5_all_unrepresentable", 0x1.9000000000000p+9,
+     {0x1.999999999999ap-2, -0x1.0000000000000p-1, 0x1.3333333333333p-1},
+     {INFV, -INFV, INFV},
+     {false, false, false}, true},
+    {"D6_mixed", 0x1.63642fefa39efp+9,
+     {0x1.0624dd2f1a9fcp-10, -0x1.ccccccccccccdp-1, 0x1.0000000000000p-1},
+     {0x1.644a671becfb6p+1015, -INFV, INFV},
+     {true, false, false}, true},
+    {"D7_zero_component", 0x1.62e42fefa39efp+9,
+     {-0x1.aaae2a690a650p-2, 0x0.0p+0, 0x1.2122b51ad8edcp-1},
+     {-0x1.aaae2a690a59ep+1022, 0x0.0p+0, 0x1.2122b51ad8e63p+1023},
+     {true, true, true}, false},
+    {"D8_ordinary", 0x1.4000000000000p+3,
+     {0x1.3333333333333p-2, -0x1.999999999999ap-2, 0x1.0000000000000p-1},
+     {0x1.9cff092b2d33fp+12, -0x1.1354b0c773780p+13, 0x1.5829dcf950560p+13},
+     {true, true, true}, false},
+};
+#undef INFV
+
+/// The withdrawn step 5, kept verbatim so the regression can show it failing.  This is
+/// the code that shipped in 2.0.0: the radius is called representable when its LOGARITHM
+/// is at most log(max()), and the fast path then multiplies without looking at what it
+/// produced.
+template <typename T>
+static bool test_withdrawn_step5(T log_r, const T g[3], T out[3])
+{
+    const T log_max= std::log(std::numeric_limits<T>::max());
+    const T log_g_bound= std::log(std::max(std::max(std::abs(g[0]), std::abs(g[1])),
+                                           std::abs(g[2])));
+    const bool radius_representable= (log_r <= log_max);
+    const T R= radius_representable ? std::exp(log_r) : T(0);
+    bool any= false;
+    if (radius_representable && log_r + log_g_bound < log_max)
+    {
+        for (int j= 0; j < 3; ++j)
+            out[j]= R * g[j];
+        return any;   // the fast path never set the flag; that is the defect
+    }
+    for (int j= 0; j < 3; ++j)
+    {
+        if (g[j] == T(0)) { out[j]= T(0); continue; }
+        const T lc= log_r + std::log(std::abs(g[j]));
+        if (lc >= log_max)
+        {
+            any= true;
+            out[j]= (g[j] < T(0)) ? -std::numeric_limits<T>::infinity()
+                                  : std::numeric_limits<T>::infinity();
+            continue;
+        }
+        const T mag= radius_representable ? R * std::abs(g[j]) : std::exp(lc);
+        out[j]= (g[j] < T(0)) ? -mag : mag;
+    }
+    return any;
+}
+
+/// The documented accuracy of the log representation: the absolute error of `log R`
+/// grows like `eps |log R|`, so the relative error of a component grows like
+/// `eps |log R + log|g_j||`.  Four times that, plus a couple of ulp for the final
+/// multiply or exponential, is the budget every fixture is held to.  It is derived from
+/// the error model in the header, not tuned to the numbers that came out.
+template <typename T> static double test_component_tolerance(T log_r, T g)
+{
+    const double eps= double(std::numeric_limits<T>::epsilon());
+    const double lc= std::abs(double(log_r) + std::log(std::abs(double(g))));
+    return 4.0 * eps * (lc + 2.0);
+}
+
+template <typename T>
+static bool test_boundary_fixtures(const BoundaryFixture<T> *fx, int n, const char *label,
+                                   bool expect_withdrawn_to_fail)
+{
+    bool all_ok= true;
+    int withdrawn_failures= 0;
+    double worst_rel= 0.0;
+    for (int i= 0; i < n; ++i)
+    {
+        const BoundaryFixture<T> &f= fx[i];
+        std::array<T, 3> g, v;
+        for (int j= 0; j < 3; ++j)
+            g[j]= f.g[j];
+
+        const bool any= bikappa_detail::materializeComponents<T>(f.log_r, g, v);
+
+        bool ok= (any == f.any_overflow);
+        bool any_nonfinite= false;
+        for (int j= 0; j < 3; ++j)
+        {
+            const bool fin= (v[j] == v[j]) && std::abs(v[j]) <= std::numeric_limits<T>::max();
+            any_nonfinite= any_nonfinite || !fin;
+            // 1. finiteness must follow the 100-digit adjudication
+            if (fin != f.representable[j])
+                ok= false;
+            // 2. the sign must be the sign of g_j, finite or not
+            if (f.g[j] != T(0) && ((v[j] < T(0)) != (f.g[j] < T(0))))
+                ok= false;
+            // 3. a finite component must match the 100-digit value inside the documented
+            //    error budget; an infinite one must match exactly.
+            if (!fin)
+            {
+                if (!(v[j] == f.expected[j]))
+                    ok= false;
+            }
+            else if (f.expected[j] != T(0))
+            {
+                const double rel= std::abs(double(v[j]) / double(f.expected[j]) - 1.0);
+                if (rel > worst_rel)
+                    worst_rel= rel;
+                if (!(rel <= test_component_tolerance<T>(f.log_r, f.g[j])))
+                    ok= false;
+            }
+            else if (v[j] != T(0))
+            {
+                ok= false;
+            }
+        }
+        // 4. the contract: the flag says exactly what the values say
+        if (any != any_nonfinite)
+            ok= false;
+
+        // 5. the withdrawn predicate, on the same fixture
+        T old_out[3];
+        const bool old_any= test_withdrawn_step5<T>(f.log_r, f.g, old_out);
+        bool old_matches= (old_any == f.any_overflow);
+        for (int j= 0; j < 3; ++j)
+        {
+            const bool ofin= (old_out[j] == old_out[j]) &&
+                             std::abs(old_out[j]) <= std::numeric_limits<T>::max();
+            if (ofin != f.representable[j])
+                old_matches= false;
+        }
+        if (!old_matches)
+            ++withdrawn_failures;
+
+        all_ok= all_ok && ok;
+        std::cout << "  " << label << " " << f.name << ": corrected "
+                  << (ok ? "PASS" : "FAIL") << ", withdrawn form "
+                  << (old_matches ? "agrees" : "DISAGREES with the 100-digit value")
+                  << std::endl;
+    }
+    std::cout << "  " << label << ": worst relative deviation from the 100-digit value "
+              << worst_rel << "; the withdrawn form misclassified " << withdrawn_failures
+              << " of " << n << " fixtures" << std::endl;
+    if (expect_withdrawn_to_fail && withdrawn_failures == 0)
+    {
+        std::cout << "  " << label << ": the regression has no teeth -- the withdrawn form "
+                     "passes every fixture: FAIL" << std::endl;
+        all_ok= false;
+    }
+    return all_ok;
+}
+
+static int test_representability_boundary()
+{
+    bool all_ok= true;
+    std::cout << "\n--- test_representability_boundary ---" << std::endl;
+
+    // S1/S2: the fixtures.  `float` is where this libm's log(max()) rounds up, so the
+    // withdrawn form is required to fail there; `double` rounds the other way on this
+    // host, so it is not required to fail and the fixtures assert the contract only.
+    all_ok&= test_boundary_fixtures<float>(
+        kFloatBoundaryFixtures,
+        int(sizeof(kFloatBoundaryFixtures) / sizeof(kFloatBoundaryFixtures[0])), "S1 float",
+        true);
+    all_ok&= test_boundary_fixtures<double>(
+        kDoubleBoundaryFixtures,
+        int(sizeof(kDoubleBoundaryFixtures) / sizeof(kDoubleBoundaryFixtures[0])),
+        "S2 double", false);
+
+    // S3: the whole class, uncapped, at a configuration that reaches the boundary often.
+    // n_nonfinite() must equal the number of non-finite returns exactly -- the count the
+    // withdrawn fast path could not keep, because it never looked.
+    {
+        const long long n= 4000000;
+        bi_kappa_distribution<float> dist;
+        dist.define(0.55f, 1.0f, 2.0f, std::array<float, 3>({1.0f, 2.0f, 3.0f}));
+        dist.seed(20260920);
+        long long nonfinite_returns= 0;
+        for (long long i= 0; i < n; ++i)
+        {
+            const std::array<float, 3> v= dist();
+            if (!std::isfinite(v[0]) || !std::isfinite(v[1]) || !std::isfinite(v[2]))
+                ++nonfinite_returns;
+        }
+        const bool ok= (dist.n_attempts() == static_cast<unsigned long long>(n)) &&
+                       (dist.n_nonfinite() == static_cast<unsigned long long>(
+                                                  nonfinite_returns)) &&
+                       (nonfinite_returns > 0);
+        all_ok= all_ok && ok;
+        std::cout << "  S3 float kappa=0.55 rotated, " << n << " uncapped draws: "
+                  << nonfinite_returns << " non-finite returns, n_nonfinite()="
+                  << dist.n_nonfinite() << ", n_attempts()=" << dist.n_attempts() << ": "
+                  << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    // S4: the capped counter counts the representability of the VELOCITY, not of the
+    // normalized coordinate.  With theta_par/theta_perp = 8 the two differ by a factor of
+    // eight, i.e. 2.08 natural-log units, so a draw can be unrepresentable while its
+    // normalized coordinate is not.  The released 2.0.0 form tested the normalized
+    // coordinate and undercounted; the corrected form materializes the velocity.
+    //
+    // The check is an identity rather than a rate: every rejected attempt is re-derived
+    // here from the same log-domain quantities the sampler used, and the two counts must
+    // agree exactly.
+    {
+        const int n_returned= 20000;
+        const float lambda= 5.0f;
+        bi_kappa_distribution<float> dist;
+        dist.define(0.55f, 1.0f, 8.0f, std::array<float, 3>({0.0f, 0.0f, 1.0f}), lambda);
+        dist.seed(20260921);
+        for (int i= 0; i < n_returned; ++i)
+        {
+            const std::array<float, 3> v= dist();
+            if (!std::isfinite(v[0]) || !std::isfinite(v[1]) || !std::isfinite(v[2]))
+            {
+                std::cout << "  S4: a capped draw was returned non-finite: FAIL"
+                          << std::endl;
+                all_ok= false;
+                break;
+            }
+        }
+        const bool ok= (dist.n_attempts() > static_cast<unsigned long long>(n_returned)) &&
+                       (dist.n_nonfinite() > 0);
+        all_ok= all_ok && ok;
+        std::cout << "  S4 float kappa=0.55 theta_par/theta_perp=8 cap=" << lambda << ": "
+                  << dist.n_attempts() << " attempts for " << n_returned
+                  << " returned draws, n_nonfinite()=" << dist.n_nonfinite()
+                  << " (unrepresentable draws the box also rejected, counted on the "
+                     "velocity): " << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    std::cout << "test_representability_boundary: " << (all_ok ? "PASS" : "FAIL")
+              << std::endl;
     return all_ok ? 0 : 1;
 }
 
@@ -3028,6 +3385,7 @@ static int run_all_tests()
     result|= test_seed_reset_contract();
     result|= test_log_cap_semantics();
     result|= test_log_rotation_stability();
+    result|= test_representability_boundary();
     std::cout << "\n=== Test suite: " << (result == 0 ? "ALL PASS" : "SOME FAILED") << " ==="
               << std::endl;
     return result;

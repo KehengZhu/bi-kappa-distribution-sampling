@@ -7,7 +7,7 @@
 // else the protocol fixes is a decision rule, and decision rules belong to the
 // analysis, which reads the JSON directly.
 //
-// config/protocol.json SHA-256: 7d6e05fbbf3cd9f864b265ffa6122b0ea4fd88757752dbc00ba634762d91b76b
+// config/protocol.json SHA-256: 914c5d1d2b6900d872402a545f46a99819038987416d1b882909eb4ca2bafa48
 
 #ifndef EXP7_PROTOCOL_H
 #define EXP7_PROTOCOL_H
@@ -17,8 +17,8 @@ namespace exp7
 namespace protocol
 {
 
-static const char *const kProtocolVersion= "1.3.0";
-static const char *const kProtocolSha256= "7d6e05fbbf3cd9f864b265ffa6122b0ea4fd88757752dbc00ba634762d91b76b";
+static const char *const kProtocolVersion= "2.0.0";
+static const char *const kProtocolSha256= "914c5d1d2b6900d872402a545f46a99819038987416d1b882909eb4ca2bafa48";
 
 /// Intended attempts per seed, by phase, exactly as PROTOCOL.md Sec. 4 freezes them.
 static const long long kNScalar= 1000000;
@@ -76,10 +76,10 @@ static const double kKappaLadder[kNumKappa]= {
     0.5001, 0.501, 0.505, 0.51, 0.55, 0.6, 0.75, 1.0, 1.25, 1.49, 1.5, 2.0, 5.0};
 static const int kNumProductionSeeds= 5;
 static const unsigned kProductionSeeds[kNumProductionSeeds]= {
-    7001u, 7002u, 7003u, 7004u, 7005u};
+    8001u, 8002u, 8003u, 8004u, 8005u};
 static const int kNumPerformanceSeeds= 5;
 static const unsigned kPerformanceSeeds[kNumPerformanceSeeds]= {
-    7006u, 7007u, 7008u, 7009u, 7010u};
+    8006u, 8007u, 8008u, 8009u, 8010u};
 
 } // namespace protocol
 } // namespace exp7

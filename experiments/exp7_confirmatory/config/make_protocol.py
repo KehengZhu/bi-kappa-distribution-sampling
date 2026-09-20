@@ -22,8 +22,16 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 # --- frozen matrix ---------------------------------------------------------------------
 KAPPA_LADDER = [0.5001, 0.501, 0.505, 0.51, 0.55, 0.60, 0.75, 1.0, 1.25, 1.49, 1.5, 2.0, 5.0]
 PRECISIONS = ["float", "double"]
-SEEDS_PRODUCTION = [7001, 7002, 7003, 7004, 7005]
-SEEDS_PERFORMANCE = [7006, 7007, 7008, 7009, 7010]
+# Seed block for the SECOND holdout, drawn by the rule stated in PROTOCOL.md section 3 and
+# not by choice: take the highest seed declared anywhere in this repository (7505, the
+# Experiment 7 selftest fixtures), round up to the next multiple of 1000 (8000), and take the
+# next ten integers.  The rule admits exactly one answer, so no seed was selected after any
+# result was seen, and the block is disjoint from every other by construction.  The first
+# holdout's block, 7001-7010, is spent: PROTOCOL.md section 8 forbids reusing it, and its
+# NO-GO result is preserved in commit 45d3ef8.
+SEEDS_FIRST_HOLDOUT = [7001, 7002, 7003, 7004, 7005, 7006, 7007, 7008, 7009, 7010]
+SEEDS_PRODUCTION = [8001, 8002, 8003, 8004, 8005]
+SEEDS_PERFORMANCE = [8006, 8007, 8008, 8009, 8010]
 QUANTILE_LEVELS = [0.5, 0.9, 0.99, 0.999, 0.9999]
 TAIL_Q0 = [1e-2, 1e-3, 1e-4]
 
@@ -68,10 +76,22 @@ ACCURACY_MAX_REL_ERROR_BITS_LOST_FRACTION = 0.5
 PERFORMANCE_BOUND = 2.0
 # G4 equivalence margin on the log rate ratio between architectures.
 PORTABILITY_LOG_RATIO_MARGIN = 0.15
+# The environments acceptance is limited to under protocol 2.0.0.  Both must be present,
+# native and complete for G4 to close; see gates.G4.cross_arch_withdrawn_reason.
+SUPPORTED_ENVIRONMENTS = [
+    {"arch": "arm64", "os": "macOS", "stdlib": "libc++", "tag": "libcxx"},
+    {"arch": "arm64", "os": "macOS", "stdlib": "libstdc++", "tag": "libstdcxx"},
+]
 # F6 required power at the pre-registered minimum detectable effect.
 NC_REQUIRED_POWER = 0.90
 NC_INJECTION_LOSS_FRACTIONS = [1e-3, 1e-4]
 NC_INJECTIONS = 200
+# NC3's effect under protocol 2.0.0 is conditioning IN EXCESS of the representability floor,
+# measured as a fraction of attempts removed from among the draws the type would have allowed
+# back.  These are pre-registered from the development calibration in
+# docs/revision/experiments/f5_tail_calibration.md, on simulated cells only, before any
+# second-holdout datum existed.
+NC3_EXCESS_LOSS_FRACTIONS = [1e-3, 1e-4]
 
 
 def order_statistic_interval(n: int, p: float, conf: float, bonferroni: int):
@@ -141,8 +161,60 @@ def f2_cells() -> tuple[list[dict], dict]:
 def main() -> None:
     cells, f2 = f2_cells()
     protocol = {
-        "protocol_version": "1.3.0",
+        "protocol_version": "2.0.0",
         "amendments": [
+            {"version": "2.0.0",
+             "before_any_data": False,
+             "governs": "the second confirmatory holdout, on seeds 8001-8010",
+             "reason":
+                 "The first holdout, on seeds 7001-7010 under protocol 1.3.0, returned "
+                 "NO-GO. It is preserved unmodified in commit 45d3ef8 and is not reopened. "
+                 "PROTOCOL.md section 8 permits exactly one path after a failure -- "
+                 "identify a concrete implementation defect, fix it, freeze a new "
+                 "implementation hash AND a new protocol document, draw a further disjoint "
+                 "seed block, and rerun -- and this is that document. Two defects were "
+                 "identified, one in the implementation and one in this protocol.\n"
+                 "\n"
+                 "(1) IMPLEMENTATION. The released loader decided representability by "
+                 "comparing a logarithm against log(max()). log(max()) is a rounded value "
+                 "and exp of it need not be finite: in float, exp(log(FLT_MAX)) is exactly "
+                 "+inf. A float kappa = 0.51 draw whose log R equalled log(FLT_MAX) bit for "
+                 "bit therefore passed the test, overflowed when it was exponentiated, and "
+                 "was returned as (-inf, +inf, +inf) without being counted -- while all "
+                 "three components it should have produced were representable, the largest "
+                 "at 1.92e38 against a limit of 3.40e38. One such draw appeared in "
+                 "14233536 audited attempts and failed G1 and G2. The corrected loader "
+                 "materializes each component and decides from the component, so the test "
+                 "and the result agree by construction; it also counts the representability "
+                 "of the velocity rather than of the normalized coordinate in capped mode. "
+                 "The implementation is versioned 2.1.0 and 2.0.0 is superseded before "
+                 "release, so the two samplers are never confusable by version string.\n"
+                 "\n"
+                 "(2) PROTOCOL. Amendment 1.3.0's two upper-tail members of family F5 were "
+                 "stated against the untruncated law. That is not the law the data obey: "
+                 "near kappa = 1/2 the target puts probability outside the floating-point "
+                 "type, so honest overflow right-censors the returned tail, at a "
+                 "direction-dependent point. Measured over 2000 replicates of a perfectly "
+                 "correct loader at the frozen production size, the 1.3.0 excess member "
+                 "rejected with probability 1.000 on cases C3 and C4 against a nominal "
+                 "0.010. F5's failure in the first holdout was therefore a property of the "
+                 "null, not of the candidate. Both members keep their statistics and their "
+                 "thresholds and are given the nulls the data obey; see F5_tail. The count "
+                 "member's side condition is withdrawn because the quantity it could not "
+                 "observe turned out to be recorded already, so that member now applies "
+                 "where it used to be declared not applicable -- strictly more tests. "
+                 "Negative control NC3 is respecified for the same reason: what it injected "
+                 "was honest overflow, which a correct loader is right to produce, so its "
+                 "measured power was type-I error carrying a power label.\n"
+                 "\n"
+                 "(3) SCOPE. Acceptance is limited to the supported environment, arm64 "
+                 "macOS under both standard libraries. The cross-architecture claim is "
+                 "withdrawn from section 9 and published as a limitation rather than left "
+                 "as a permanently open gate on evidence this project cannot obtain.\n"
+                 "\n"
+                 "Nothing here relaxes a threshold, removes a cell, changes a family's "
+                 "alpha, or excludes a result. Every change was made and committed before "
+                 "any datum on seeds 8001-8010 existed."},
             {"version": "1.3.0",
              "before_any_data": True,
              "reason": "The frozen F5 loader battery contained no upper-tail statistic, and "
@@ -222,8 +294,23 @@ def main() -> None:
             "production": SEEDS_PRODUCTION,
             "performance": SEEDS_PERFORMANCE,
             "declared_not_derived": True,
+            "derivation_rule":
+                "The highest seed declared anywhere in this repository is 7505 (the "
+                "Experiment 7 selftest fixtures). Round up to the next multiple of 1000, "
+                "which is 8000, and take the next ten integers: 8001-8005 for production "
+                "and 8006-8010 for the performance block. The rule admits exactly one "
+                "answer, so the block is a consequence of the repository's state and not a "
+                "choice made after seeing a result.",
+            "spent_blocks": {"first_holdout": SEEDS_FIRST_HOLDOUT,
+                             "spent_reason":
+                                 "used by the NO-GO holdout preserved in commit 45d3ef8; "
+                                 "PROTOCOL.md section 8 forbids recomputing any result on "
+                                 "them, and they may now serve only as preserved failure "
+                                 "and development evidence"},
             "disjoint_from": {"exp1": [1001, 1005], "exp2": [2001, 2005],
-                              "exp3": [3001, 3003, 3101], "exp4_exp6": [4001, 4010]},
+                              "exp3": [3001, 3003, 3101], "exp4_exp6": [4001, 4010],
+                              "exp7_first_holdout": [7001, 7010],
+                              "exp7_selftest": [7501, 7505]},
         },
         "matrix": {
             "kappa_ladder": KAPPA_LADDER,
@@ -254,6 +341,17 @@ def main() -> None:
         "F6": {
             "required_power": NC_REQUIRED_POWER,
             "injection_loss_fractions": NC_INJECTION_LOSS_FRACTIONS,
+            "nc3_excess_loss_fractions": NC3_EXCESS_LOSS_FRACTIONS,
+            "nc3_effect_definition":
+                "NC3's effect size is the fraction of ATTEMPTS removed from among the draws "
+                "the floating-point type would have allowed the loader to return -- "
+                "conditioning in excess of the representability floor, not the floor "
+                "itself. Protocol 1.3.0 injected a single direction-independent cutoff into "
+                "an uncensored sample, which is what honest overflow does to a CORRECT "
+                "loader; the battery 'detected' it only because its null was the "
+                "untruncated law, so the measured power was type-I error carrying a power "
+                "label. A level row at zero excess is published beside the power rows and "
+                "carries no threshold.",
             "injections_per_effect": NC_INJECTIONS,
             "controls": ["NC1_radius_direction_coupling", "NC2_capped_vs_uncapped_weak_cap",
                          "NC3_survivor_conditioning"],
@@ -303,39 +401,92 @@ def main() -> None:
             "require_margin_assertion_for_unambiguous": True,
         },
         "F5_tail": {
-            "statistic": "exceedance count above z0 = -log q0 on the recovered radial Z of "
-                         "each uncapped loader cell, exact binomial against "
-                         "Binomial(n_attempted, q0), plus KS of the excesses against Exp(1)",
+            "statistic":
+                "Two upper-tail members per uncapped loader cell per threshold q0. COUNT: "
+                "the number of ATTEMPTS whose intended Z exceeds z0 = -log q0, against "
+                "Binomial(n_attempted, q0), exactly. EXCESS: a Kolmogorov-Smirnov test of "
+                "the per-draw conditional probability integral transform of the RETURNED "
+                "draws above z0 against Uniform(0,1), where each draw's truncation point is "
+                "its own representability threshold C(n) = Z(log max() - log max_j|g_j(n)|).",
             "q0": TAIL_Q0,
-            "rationale": "added by amendment 1.3.0; without it the loader battery has no "
-                         "statistic with power against the effect it certifies absent",
+            "rationale":
+                "Amendment 1.3.0 added an upper-tail statistic because the battery "
+                "certifying a heavy-tailed law had nothing in it that looked at the tail. "
+                "It stated both members against the untruncated law, which is not the law "
+                "the data obey: near kappa = 1/2 the bi-Kappa law puts probability outside "
+                "every finite floating-point range, so the loader cannot return the far "
+                "tail and is right not to. Amendment 2.0.0 keeps both members and both "
+                "statistics and corrects the nulls.",
             "capped_cells_excluded": True,
             "capped_cells_reason":
                 "under a cap the accepted radius is truncated at a direction-dependent "
-                "bound, so the count above z0 is not Binomial(n, q0)",
-            "count_member_requires_q0_above_honest_floor": True,
-            "count_member_applicability":
-                "The count member applies at a threshold q0 only when q0 exceeds the cell's "
-                "honest-overflow rate f. The reason is what is observable, not a "
-                "convenience. When q0 > f the threshold z0 = -log q0 lies below the "
-                "overflow threshold z_f = -log f, so every attempt above z0 is either a "
-                "returned survivor above z0 or an overflowed attempt, and both are counted "
-                "exactly. When q0 < f every attempt above z0 has overflowed, and separating "
-                "those above z0 from those merely above z_f needs the intended value of a "
-                "draw that has none -- the loader returns no number for it. Such a cell is "
-                "reported not-applicable for that threshold, never passed and never failed "
-                "on it, with its honest floor published on the row so a reader can see why. "
-                "Without this, the member would silently require every uncapped cell's loss "
-                "to fall below 1e-4, which case C4 exists precisely to violate: its floor "
-                "is 8.25e-4, so honest overflow alone would give p ~ 1.7e-223 and fail a "
-                "correct candidate.",
+                "bound, so neither the attempt count nor the returned sample is the one "
+                "these members are defined on; the cap-law member tests those cells by "
+                "their own conditional transform instead",
+            "count_member_applies_at_every_threshold": True,
+            "count_member_basis":
+                "The probe records log_r_ref -- the radius the attempt carried -- for every "
+                "attempt, the overflowed ones included, and an uncapped cell runs its core "
+                "mapping exactly once per attempt, so its record count equals its attempt "
+                "count and the INTENDED Z of every attempt is on disk, uncensored. Against "
+                "that sample the count above z0 is Binomial(n_attempted, q0) exactly. "
+                "Protocol 1.3.0 computed this member from the radius RECOVERED FROM THE "
+                "RETURNED VECTORS, which is censored by representability, and then patched "
+                "around the censoring with a side condition "
+                "(count_member_requires_q0_above_honest_floor) that declared the member not "
+                "applicable wherever it would have misfired. The side condition is "
+                "withdrawn: the member now applies at every threshold of every uncapped "
+                "cell, which is strictly more tests and not fewer. Family F4 was already "
+                "computed this way on the scalar phase, which is why F4 passed the first "
+                "holdout while F5 did not.",
+            "count_member_requires_q0_above_honest_floor": False,
+            "count_member_withdrawn_side_condition":
+                "count_member_requires_q0_above_honest_floor was true under 1.3.0 and is "
+                "false under 2.0.0. It is withdrawn because the quantity it could not "
+                "observe is observable, not because the cells it excluded became "
+                "convenient: those cells (C3 and C4 at q0 = 1e-4) are now tested where they "
+                "previously were not.",
             "excess_member_applies_at_every_threshold": True,
+            "excess_member_null":
+                "Z is independent of the direction, so conditional on its own direction a "
+                "returned draw above z0 is Exp(1) truncated to (z0, C_i], with "
+                "C_i = Z(log max() - log max_j |g_j(n_i)|) computed from that draw's own "
+                "recovered direction and the cell's declared theta and ub. Its probability "
+                "integral transform U_i = (1 - exp(-(Z_i - z0))) / (1 - exp(-(C_i - z0))) "
+                "is i.i.d. Uniform(0,1) under the null. Where no attempt can overflow, C_i "
+                "is effectively infinite and U_i reduces to 1 - exp(-(Z_i - z0)); a "
+                "Kolmogorov-Smirnov statistic is invariant under a common monotone "
+                "transform of the data and the null CDF, so the number returned is "
+                "IDENTICAL to amendment 1.3.0's, not merely equivalent. Measured on case "
+                "C0 the two agree to 1.1e-16. This is the same construction the protocol "
+                "already uses for the capped cells.",
+            "excess_member_why_the_frozen_null_was_invalid":
+                "Honest overflow removes exactly the largest draws, so the surviving "
+                "excesses are right-censored, and at a DIRECTION-DEPENDENT point: a draw is "
+                "returned iff R max_j |g_j(n)| <= max(), and max_j |g_j| varies over the "
+                "sphere by up to sqrt(3) theta_max / theta_min, so a cutoff inferred from "
+                "the cell's total overflow rate is the average of that boundary rather than "
+                "the boundary. Measured over 2000 replicates of a perfectly correct loader "
+                "at the frozen production size, the 1.3.0 excess member's rejection rate "
+                "was 1.000 on cases C3 and C4 against a nominal 0.010, and the 1.3.0 count "
+                "member's was 1.000 on C4 at q0 = 1e-4. Those are the three rejections that "
+                "failed the first holdout's gate G3.",
+            "calibration":
+                "Level and power are measured in "
+                "docs/revision/experiments/f5_tail_calibration.md on simulated cells only, "
+                "before any second-holdout datum existed, at the frozen production size of "
+                "500000 attempts per cell.",
             "unresolved_Z_counts_toward_every_threshold": True,
             "unresolved_Z_note":
                 "'Unresolved' here means the Z transform itself underflowed, so the draw is "
                 "further into the tail than any threshold. It does NOT mean the velocity "
-                "overflowed: an overflowed draw has a perfectly ordinary Z and must be "
-                "counted by it, not treated as exceeding everything.",
+                "overflowed: under 2.0.0 an overflowed attempt carries an ordinary intended "
+                "Z, taken from log_r_ref, and is counted by it.",
+            "record_count_must_equal_attempt_count": True,
+            "record_count_rule":
+                "An uncapped cell must produce exactly one record per attempt. A shortfall "
+                "means attempts went unrecorded, which is silent conditioning, and it is "
+                "reported as a count rather than absorbed into a rate.",
         },
         "corrections": {
             "F1_contents": "Anderson-Darling, KS and Cramer-von Mises on Z only. The Beta "
@@ -377,7 +528,26 @@ def main() -> None:
             "G4": {"cross_stdlib_rule": "bitwise equality, no tolerance",
                    "cross_arch_rule": "two one-sided tests on the log rate ratio",
                    "log_ratio_margin": PORTABILITY_LOG_RATIO_MARGIN,
-                   "translated_execution_excluded": True},
+                   "translated_execution_excluded": True,
+                   # Protocol 2.0.0 narrows G4 to the environment this work supports.  The
+                   # cross-architecture claim is WITHDRAWN, not assumed: it is removed from
+                   # the claim boundary in section 9 and published as a limitation. What
+                   # remains is the sharper of the two tests and the one that is decidable
+                   # here -- bitwise equality of the two standard libraries on the supported
+                   # architecture, which is a prediction with no tolerance at all.
+                   "scope": "single_architecture",
+                   "cross_arch_in_scope": False,
+                   "cross_arch_withdrawn_reason":
+                       "Native x86_64 hardware is not available to this project, and "
+                       "PROTOCOL.md section 5.3 refuses emulation as closure. Rather than "
+                       "leave the gate permanently OPEN on evidence that cannot be "
+                       "obtained, acceptance is limited to the supported environment and "
+                       "the cross-architecture claim is withdrawn from section 9. Contrary "
+                       "cross-architecture evidence, if any is ever filed, still FAILS the "
+                       "gate: narrowing the claim does not license ignoring a "
+                       "disagreement.",
+                   "supported_environments": SUPPORTED_ENVIRONMENTS,
+                   "requires_every_supported_environment_native": True},
             "G5": {"time_per_return_ratio_bound": PERFORMANCE_BOUND},
             "G6": {"requires_make_verify_exit_zero": True,
                    "requires_byte_identical_regeneration": True,

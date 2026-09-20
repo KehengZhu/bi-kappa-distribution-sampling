@@ -176,49 +176,85 @@ def any_equivalent(f7) -> bool:
 
 
 def gate_G4(proto: F.Protocol, fams: dict, ev: dict) -> Gate:
-    """Bitwise across standard libraries, equivalence across architectures, and an
-    unavailable environment leaves the gate OPEN rather than passing."""
+    """Portability, over the scope the protocol declares.
+
+    Protocol 2.0.0 narrows acceptance to the supported environment -- arm64 macOS under both
+    standard libraries -- and withdraws the cross-architecture claim rather than leaving the
+    gate permanently OPEN on evidence this project cannot obtain. Three things follow, and
+    all three are enforced here rather than assumed:
+
+    * every environment the protocol lists as supported must have completed, natively;
+    * the cross-standard-library prediction is bitwise equality, with no tolerance, and at
+      least one such comparison must actually have been made;
+    * narrowing the claim does not license ignoring contrary evidence. If a
+      cross-architecture comparison is filed anyway and it DISAGREES, the gate still fails.
+      What is withdrawn is the requirement to produce one, not the duty to heed one.
+    """
     env = ev.get("environments") or []
     if not env:
         return _missing("G4", "no environment records were produced")
-    native = [e for e in env if e.get("execution") == "native" and e.get("completed")]
-    translated = [e for e in env if e.get("execution") == "translated"]
-    pending = [e for e in env if not e.get("completed")]
     if "F7_portability" not in fams:
         return _missing("G4", "no portability comparison was produced")
     f7 = fams["F7_portability"]
-    archs = {e.get("arch") for e in native}
+
+    native = [e for e in env if e.get("execution") == "native" and e.get("completed")]
+    translated = [e for e in env if e.get("execution") == "translated"]
+    supported = list(proto.get("gates", "G4", "supported_environments"))
+    cross_arch_in_scope = bool(proto.get("gates", "G4", "cross_arch_in_scope"))
+
+    def present(spec) -> bool:
+        return any(e.get("arch") == spec["arch"] and e.get("stdlib") == spec["stdlib"]
+                   for e in native)
+
+    missing_supported = [s for s in supported if not present(s)]
+    n_bitwise = sum(1 for r in (f7.rows or []) if r.get("kind") == "cross_stdlib_bitwise")
+
+    scope_note = (
+        "acceptance is limited to the supported environment; the cross-architecture claim is "
+        "withdrawn from the claim boundary and published as a limitation, not assumed"
+        if not cross_arch_in_scope else "cross-architecture equivalence is in scope")
     detail = (f"{len(native)} native environments completed "
               f"({sorted({(e.get('arch'), e.get('stdlib')) for e in native})}); "
               f"{len(translated)} translated results recorded as corroborating only and "
-              f"excluded from the decision; {f7.detail}")
+              f"excluded from the decision; {n_bitwise} bitwise cross-standard-library "
+              f"comparisons; {scope_note}; {f7.detail}")
+
     if not f7.passed:
         return Gate("G4", "FAIL", detail + f"; offenders: {f7.offenders}",
                     {"F7": f7.as_dict()})
-    # An underpowered cross-architecture cell proves neither agreement nor disagreement, so
-    # it cannot close the gate.  family_F7 already distinguishes the three outcomes; without
-    # this, a matrix whose every cross-architecture cell was too sparse to resolve would
-    # report G4 PASS on the strength of F7 having found nothing to complain about.
-    underpowered = [r.get("label") for r in (f7.rows or [])
-                    if r.get("kind") == "cross_arch_equivalence"
-                    and r.get("informative") is False
-                    and not r.get("disagrees")]
-    if pending or len(archs) < 2 or (arch_cells_exist(f7) and not any_equivalent(f7)):
-        return Gate("G4", "OPEN",
-                    detail + "; "
-                    + (f"{len(pending)} environments not yet run: "
-                       f"{[(e.get('arch'), e.get('stdlib')) for e in pending]}. "
-                       if pending else "")
-                    + ("only one architecture has native results, so the "
-                       "cross-architecture claim is untested. " if len(archs) < 2 else "")
-                    + (f"{len(underpowered)} cross-architecture cells are underpowered and "
-                       "no cell established equivalence, so the claim is unproven rather "
-                       "than established. " if underpowered and len(archs) >= 2 else "")
-                    + "The exact commands are in results/portability_remote.md. Emulation "
-                      "is not accepted as a substitute, so the gate stays open rather than "
-                      "being quietly passed.",
-                    {"F7": f7.as_dict(), "pending": pending,
-                     "underpowered_cross_arch": underpowered})
+    if missing_supported:
+        return Gate("G4", "FAIL",
+                    detail + f"; the protocol lists {len(supported)} supported environments "
+                    f"and {len(missing_supported)} did not complete natively: "
+                    f"{[(m['arch'], m['stdlib']) for m in missing_supported]}. A supported "
+                    "environment that was not run fails this gate; it never passes it.",
+                    {"F7": f7.as_dict(), "missing_supported": missing_supported})
+    if n_bitwise < 1:
+        return Gate("G4", "FAIL",
+                    detail + "; no cross-standard-library comparison was made, so the one "
+                    "prediction still in scope was never tested",
+                    {"F7": f7.as_dict()})
+
+    # Contrary cross-architecture evidence fails the gate whether or not the claim is in
+    # scope.  Only the REQUIREMENT to produce such evidence is withdrawn.
+    disagreeing = [r.get("label") for r in (f7.rows or [])
+                   if r.get("kind") == "cross_arch_equivalence" and r.get("disagrees")]
+    if disagreeing:
+        return Gate("G4", "FAIL",
+                    detail + f"; cross-architecture cells disagree: {disagreeing}. The "
+                    "claim is withdrawn from the scope, which does not make a measured "
+                    "disagreement admissible.",
+                    {"F7": f7.as_dict(), "disagreeing_cross_arch": disagreeing})
+
+    if cross_arch_in_scope:
+        archs = {e.get("arch") for e in native}
+        pending = [e for e in env if not e.get("completed")]
+        if pending or len(archs) < 2 or (arch_cells_exist(f7) and not any_equivalent(f7)):
+            return Gate("G4", "OPEN",
+                        detail + "; the cross-architecture half of the gate is in scope and "
+                        "not established. The exact commands are in "
+                        "results/portability_remote.md. Emulation is not accepted as a "
+                        "substitute.", {"F7": f7.as_dict(), "pending": pending})
     return Gate("G4", "PASS", detail, {"F7": f7.as_dict()})
 
 

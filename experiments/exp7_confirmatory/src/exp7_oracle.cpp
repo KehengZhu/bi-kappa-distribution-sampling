@@ -138,18 +138,32 @@ WorkingOutcome<T> recomputeWorking(double kappa, double x1d, double yd, double u
     o.qf_finite= std::isfinite(qf0) && std::isfinite(qf1) && std::isfinite(qf2);
     o.legacy_finite= std::isfinite(sp0) && std::isfinite(sp1) && std::isfinite(sp2);
 
-    // CANDIDATE: build g first and decide from log|V_j| against log(max()), which is the
-    // predicate the released header applies.
-    const T log_max= static_cast<T>(std::log(std::numeric_limits<T>::max()));
+    // CANDIDATE: build g first, then materialize each component and decide from the
+    // component, which is the predicate the released header applies.  Written out here
+    // rather than included from exp7_loaders.H: the oracle must not share code with the
+    // thing it audits, and an independent transcription of the same rule is the point.
+    //
+    // The released header used to compare `log R` and `log R + log|g_j|` against
+    // `log(max())`.  That rule is not the arithmetic it predicts -- `log(max())` is a
+    // rounded value and `exp` of it need not be finite -- so an oracle carrying it would
+    // model code that no longer exists, and every draw within a rounding step of the
+    // boundary would be adjudicated against the wrong predicate.  Those draws are exactly
+    // the ones the margin rule of PROTOCOL.md 2.3 audits at rate 1.
+    const T max_finite= std::numeric_limits<T>::max();
     bool ok= (log_r == log_r);
     if (ok)
     {
         const T gs[3]= {sk * n0, sk * n1, sk * n2};
-        if (!(log_r <= log_max && log_r + std::log(sk) < log_max))
+        const T r_try= std::exp(log_r);
+        const bool radius_rep= (r_try <= max_finite);
+        for (int j= 0; j < 3; ++j)
         {
-            for (int j= 0; j < 3; ++j)
-                if (gs[j] != T(0) && log_r + std::log(std::fabs(gs[j])) >= log_max)
-                    ok= false;
+            if (gs[j] == T(0))
+                continue;
+            const T mag= radius_rep ? r_try * std::fabs(gs[j])
+                                    : std::exp(log_r + std::log(std::fabs(gs[j])));
+            if (!(mag <= max_finite))
+                ok= false;
         }
     }
     o.candidate_finite= ok;

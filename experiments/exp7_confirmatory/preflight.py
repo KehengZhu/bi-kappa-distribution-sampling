@@ -57,6 +57,7 @@ ANALYSIS_DEPENDENCIES = [
     "preflight.py",
     "exp7_stats.py",
     "exp7_io.py",
+    "exp7_censoring.py",
     "exp7_families.py",
     "exp7_gates.py",
     "exp7_portability.py",

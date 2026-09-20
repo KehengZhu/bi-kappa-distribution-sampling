@@ -1796,6 +1796,74 @@ static bool candidateReplicaMatchesClass(double kappa, double ratio, const doubl
            dist.n_nonfinite() == static_cast<unsigned long long>(nonfinite);
 }
 
+/// The CANDIDATE native replica against the released class **under a cap**.
+///
+/// The uncapped check above cannot reach the capped branch: it constructs the class with
+/// no_cap(), so the box test, its screen, and the counter behind it were never compared with
+/// anything.  That is where the released 2.0.0 form and its replica had drifted apart, and
+/// where the counter was answering a question about the normalized coordinate rather than
+/// about the velocity.  The relation asserted here is the one the analysis relies on:
+///
+///     n_nonfinite()  ==  cap_reject_unrepresentable + nonfinite among accepted draws
+///
+/// with every accepted vector bit-identical and every attempt accounted for.
+template <typename T>
+static bool candidateReplicaMatchesClassCapped(double kappa, double ratio, const double ub[3],
+                                               double cap, unsigned seed, long long n_returned,
+                                               unsigned long long min_counted)
+{
+    typedef typename bi_kappa_distribution<T>::point_type P;
+    P ubt;
+    ubt[0]= static_cast<T>(ub[0]);
+    ubt[1]= static_cast<T>(ub[1]);
+    ubt[2]= static_cast<T>(ub[2]);
+    const std::array<T, 3> ubarr= {{ubt[0], ubt[1], ubt[2]}};
+    Geometry<T> geom(static_cast<T>(kappa), T(1), static_cast<T>(ratio), ubarr);
+
+    bi_kappa_distribution<T> dist(static_cast<T>(kappa), T(1), static_cast<T>(ratio), ubt,
+                                  static_cast<T>(cap));
+    dist.seed(static_cast<int>(seed));
+
+    std::mt19937 gen(seed);
+    CandidateNative<T> rep(kappa);
+    // The class takes log(cap) in RealType; take it the same way, so a float cell does not
+    // differ by the ulp that narrowing a double logarithm would introduce.
+    const T log_cap= std::log(static_cast<T>(cap));
+
+    unsigned long long attempts= 0, reject_unrep= 0, nonfinite_accepted= 0;
+    for (long long i= 0; i < n_returned; ++i)
+    {
+        const P vc= dist();
+        for (;;)
+        {
+            const NativeAttempt<T> at= rep.attempt(gen, geom);
+            ++attempts;
+            bool unrep= false;
+            if (!candidateCapAcceptLog<T>(static_cast<T>(at.log_r), rep.lastDirection(), geom,
+                                          log_cap, &unrep))
+            {
+                if (unrep)
+                    ++reject_unrep;
+                continue;
+            }
+            if (!at.finite)
+                ++nonfinite_accepted;
+            for (int j= 0; j < 3; ++j)
+            {
+                const bool both_nan= !(vc[j] == vc[j]) && !(at.v[j] == at.v[j]);
+                if (!both_nan && !(vc[j] == at.v[j]))
+                    return false;
+            }
+            break;
+        }
+    }
+    // A comparison of two zeroes would pass whatever the code did, so the caller states how
+    // many increments this cell must actually produce.  The counter is the thing under test.
+    return dist.n_attempts() == attempts &&
+           dist.n_nonfinite() == reject_unrep + nonfinite_accepted &&
+           dist.n_nonfinite() >= min_counted;
+}
+
 static int phaseSelftest(const Options &o)
 {
     (void)o;
@@ -1837,11 +1905,23 @@ static int phaseSelftest(const Options &o)
         check(legacyReplicaMatchesClass<float>(0.55, 2.0, rot, fx[2], 20000),
               "LEGACY replica == v1 class, float, kappa=0.55, rotated");
         check(candidateReplicaMatchesClass<double>(2.0, 2.0, zhat, fx[0], 20000),
-              "CANDIDATE replica == 2.0.0 class, double, kappa=2, unrotated");
+              "CANDIDATE replica == released class, double, kappa=2, unrotated");
         check(candidateReplicaMatchesClass<double>(0.501, 2.0, rot, fx[1], 20000),
-              "CANDIDATE replica == 2.0.0 class, double, kappa=0.501, rotated");
+              "CANDIDATE replica == released class, double, kappa=0.501, rotated");
         check(candidateReplicaMatchesClass<float>(0.55, 2.0, rot, fx[2], 20000),
-              "CANDIDATE replica == 2.0.0 class, float, kappa=0.55, rotated");
+              "CANDIDATE replica == released class, float, kappa=0.55, rotated");
+        // Capped, which the three checks above cannot reach.  A rotated anisotropic cell is
+        // the case where the normalized coordinate and the velocity differ most, and a float
+        // cell is where the screen behind the counter actually fires.
+        check(candidateReplicaMatchesClassCapped<double>(0.51, 2.0, rot, 5.0, fx[3], 5000, 0),
+              "CANDIDATE replica == released class, capped, double, kappa=0.51, rotated, "
+              "lambda=5");
+        check(candidateReplicaMatchesClassCapped<double>(0.505, 8.0, rot, 20.0, fx[4], 5000, 1),
+              "CANDIDATE replica == released class, capped, double, kappa=0.505, "
+              "theta ratio 8, lambda=20");
+        check(candidateReplicaMatchesClassCapped<float>(0.51, 8.0, rot, 5.0, fx[0], 5000, 1000),
+              "CANDIDATE replica == released class, capped, float, kappa=0.51, "
+              "theta ratio 8, lambda=5 (the cell where the counter's screen fires)");
     }
 
     // 2. Accounting identity on a run guaranteed to exercise every branch, and the
@@ -2133,6 +2213,28 @@ static int phaseSelftest(const Options &o)
     {
         checkAgainstProtocol();
         check(true, "declared ladder and seed blocks agree with config/protocol.json");
+    }
+
+    // 13. The first holdout's seed block is spent.  PROTOCOL.md Sec. 8 forbids recomputing
+    //     any result on 7001-7010, and the cheapest place to enforce that is here, where a
+    //     rerun on them fails before it writes a byte.
+    {
+        const std::vector<unsigned> spent= spentSeeds();
+        const std::vector<unsigned> prod= productionSeeds();
+        const std::vector<unsigned> perf= performanceSeeds();
+        const std::vector<unsigned> fixt= selftestSeeds();
+        bool clash= false;
+        for (size_t i= 0; i < spent.size(); ++i)
+        {
+            for (size_t j= 0; j < prod.size(); ++j)
+                clash= clash || (spent[i] == prod[j]);
+            for (size_t j= 0; j < perf.size(); ++j)
+                clash= clash || (spent[i] == perf[j]);
+            for (size_t j= 0; j < fixt.size(); ++j)
+                clash= clash || (spent[i] == fixt[j]);
+        }
+        check(!clash && !spent.empty(),
+              "the first holdout's seed block is spent and appears in no block in use");
     }
 
     std::printf("%s: %d failure(s)\n", g_fail ? "SELFTEST FAILED" : "selftest ok", g_fail);
