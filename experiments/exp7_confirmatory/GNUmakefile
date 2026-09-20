@@ -278,9 +278,15 @@ checksums:
 	   \( -name '*.bin' -o -name '*.jsonl' -o -name 'manifest.csv' \) -print | sort | \
 	   xargs shasum -a 256 > raw_checksums.sha256 && \
 	   echo "  wrote raw/raw_checksums.sha256 ($$(wc -l < raw_checksums.sha256) files)"
+	@# `results/smoke/` is pruned for the same reason `raw/smoke/` is: a smoke run is
+	@# re-run constantly and its output is not production evidence.  Without the prune the
+	@# second manifest swept it in, so `make verify` would later fail on a smoke re-run --
+	@# the production targets are supposed never to look inside a smoke tree, and this one
+	@# did.
 	@find config results figures src PROTOCOL.md GNUmakefile README.md preflight.py \
 	   raw/environment.json raw/manifest.csv raw/raw_checksums.sha256 \
-	   -type f ! -name 'checksums.sha256' ! -name '*.pyc' 2>/dev/null | sort | \
+	   \( -path './results/smoke' -o -path 'results/smoke' \) -prune -o \
+	   -type f ! -name 'checksums.sha256' ! -name '*.pyc' -print 2>/dev/null | sort | \
 	   xargs shasum -a 256 > checksums.sha256
 	@echo "  wrote checksums.sha256 ($$(wc -l < checksums.sha256) files)"
 
