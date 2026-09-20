@@ -30,8 +30,22 @@ PRECISIONS = ["float", "double"]
 # holdout's block, 7001-7010, is spent: PROTOCOL.md section 8 forbids reusing it, and its
 # NO-GO result is preserved in commit 45d3ef8.
 SEEDS_FIRST_HOLDOUT = [7001, 7002, 7003, 7004, 7005, 7006, 7007, 7008, 7009, 7010]
-SEEDS_PRODUCTION = [8001, 8002, 8003, 8004, 8005]
-SEEDS_PERFORMANCE = [8006, 8007, 8008, 8009, 8010]
+SEEDS_SECOND_HOLDOUT = [8001, 8002, 8003, 8004, 8005, 8006, 8007, 8008, 8009, 8010]
+SEEDS_PRODUCTION = [9001, 9002, 9003, 9004, 9005]
+SEEDS_PERFORMANCE = [9006, 9007, 9008, 9009, 9010]
+
+# Protocol 3.0.0: P1 and P5 give every (precision, kappa) configuration of a replicate its
+# own engine stream, so that the 26 configurations of a replicate are independent rather
+# than driven by one shared mt19937.  The stream seed is
+#
+#     base + P1_STREAM_SEED_STRIDE * (13 * precision_index + kappa_index)
+#
+# with precision_index 0 for double and 1 for float, and kappa_index the 0-based position in
+# KAPPA_LADDER.  The formula is declared here, in PROTOCOL.md section 3, and in
+# src/exp7_common.H, it admits exactly one answer for each configuration, and every value it
+# produces is 9001-9005 modulo 10000, so it cannot collide with a declared block anywhere in
+# this repository.
+P1_STREAM_SEED_STRIDE = 10_000
 QUANTILE_LEVELS = [0.5, 0.9, 0.99, 0.999, 0.9999]
 TAIL_Q0 = [1e-2, 1e-3, 1e-4]
 
@@ -119,6 +133,42 @@ def achieved_coverage(n: int, p: float, lo: int, hi: int) -> float:
     return float(stats.binom.cdf(hi, n, p) - stats.binom.cdf(lo, n, p))
 
 
+# Monte Carlo settings for the per-configuration miss-count law.  Fixed here so that
+# `make protocol-check` regenerates config/protocol.json byte for byte.
+F2_GROUP_MC_REPLICATES = 20_000_000
+F2_GROUP_MC_SEED = 20260920
+
+
+def group_miss_pmf() -> tuple[np.ndarray, np.ndarray]:
+    """The miss-count law of ONE configuration: five dependent level indicators.
+
+    The five brackets of a configuration are read off one sample of ``N_SCALAR`` draws, so
+    their miss indicators are dependent however the streams are seeded.  That dependence is
+    exactly characterised: an interval at level ``p`` covers the quantile iff the number of
+    sample points at or below it lies in ``[lo + 1, hi]``, and under the null that count is
+    the running sum of a multinomial over the six intervals the five levels cut.  Nothing
+    about the sampler enters, so the law below is the null's, not the candidate's.
+    """
+    brackets = [order_statistic_interval(N_SCALAR, p, INTERVAL_CONF, len(QUANTILE_LEVELS))
+                for p in QUANTILE_LEVELS]
+    if any(b is None for b in brackets):
+        raise SystemExit("F2: a quantile level resolves no bracket")
+    pv = np.diff([0.0] + list(QUANTILE_LEVELS) + [1.0])
+    rng = np.random.default_rng(F2_GROUP_MC_SEED)
+    counts = np.zeros(len(QUANTILE_LEVELS) + 1, dtype=np.int64)
+    done, chunk = 0, 500_000
+    while done < F2_GROUP_MC_REPLICATES:
+        c = min(chunk, F2_GROUP_MC_REPLICATES - done)
+        k = np.cumsum(rng.multinomial(N_SCALAR, pv, size=c)[:, :len(QUANTILE_LEVELS)],
+                      axis=1)
+        miss = np.zeros(k.shape, dtype=bool)
+        for j, (lo, hi) in enumerate(brackets):
+            miss[:, j] = (k[:, j] < lo + 1) | (k[:, j] > hi)
+        counts += np.bincount(miss.sum(axis=1), minlength=len(QUANTILE_LEVELS) + 1)
+        done += c
+    return counts / float(F2_GROUP_MC_REPLICATES), counts
+
+
 def f2_cells() -> tuple[list[dict], dict]:
     """Every quantile interval in the run, with its achieved coverage frozen."""
     cells, miss_probs = [], []
@@ -139,33 +189,168 @@ def f2_cells() -> tuple[list[dict], dict]:
                                   "achieved_coverage": cov})
                     miss_probs.append(1.0 - cov)
 
-    # Poisson-binomial upper tail of the miss count, by exact convolution.
-    pmf = np.array([1.0])
-    for q in miss_probs:
-        pmf = np.convolve(pmf, [1.0 - q, q])
+    n_groups = len(PRECISIONS) * len(KAPPA_LADDER) * len(SEEDS_PRODUCTION)
+    group_size = len(QUANTILE_LEVELS)
+    if len(miss_probs) != n_groups * group_size:
+        raise SystemExit("F2: not every level resolves a bracket; the grouping is wrong")
+
+    pmf_c, mc = group_miss_pmf()
     alpha = FAMILY_ALPHA["F2_quantile_coverage"]
+    pmf = np.array([1.0])
+    for _ in range(n_groups):
+        pmf = np.convolve(pmf, pmf_c)
     surv = 1.0 - np.cumsum(pmf)                       # surv[k] = P(misses > k)
     critical = int(np.argmax(surv <= alpha))          # smallest k with P(misses > k) <= alpha
+    expected = float((pmf * np.arange(pmf.size)).sum())
+
+    # Independence across the five levels of one configuration is NOT assumed; it is also
+    # not far off, and the difference is published rather than left implicit.  This is the
+    # critical value the withdrawn Poisson-binomial null gave.
+    pmf_i = np.array([1.0])
+    for q in miss_probs:
+        pmf_i = np.convolve(pmf_i, [1.0 - q, q])
+    surv_i = 1.0 - np.cumsum(pmf_i)
+    critical_if_intervals_independent = int(np.argmax(surv_i <= alpha))
+
+    # The far tail of the per-configuration law is the only part the Monte Carlo resolves
+    # poorly, so the decision is shown not to depend on it.
+    stability = []
+    for label, scale in (("cells_4_5_zeroed", 0.0), ("cells_4_5_doubled", 2.0),
+                         ("cells_3_4_5_doubled", None)):
+        q = pmf_c.copy()
+        if scale is None:
+            q[3] *= 2.0
+            q[4] *= 2.0
+            q[5] *= 2.0
+        else:
+            q[4] *= scale
+            q[5] *= scale
+        q = q / q.sum()
+        t = np.array([1.0])
+        for _ in range(n_groups):
+            t = np.convolve(t, q)
+        st = 1.0 - np.cumsum(t)
+        stability.append({"perturbation": label,
+                          "critical_miss_count": int(np.argmax(st <= alpha))})
+
     return cells, {
         "n_resolved_intervals": len(miss_probs),
-        "expected_misses": float(sum(miss_probs)),
+        "n_groups": n_groups,
+        "group_size": group_size,
+        "expected_misses": expected,
         "alpha": alpha,
         "critical_miss_count": critical,
         "reject_if_misses_exceed": critical,
         "attained_level": float(surv[critical]),
+        "group_miss_pmf": [float(x) for x in pmf_c],
+        "group_miss_counts": [int(x) for x in mc],
+        "critical_if_intervals_independent": critical_if_intervals_independent,
+        "far_tail_stability": stability,
+        "per_level_miss_probability": [1.0 - achieved_coverage(
+            N_SCALAR, p, *order_statistic_interval(N_SCALAR, p, INTERVAL_CONF,
+                                                   len(QUANTILE_LEVELS)))
+            for p in QUANTILE_LEVELS],
+        "monte_carlo": {
+            "replicates": F2_GROUP_MC_REPLICATES,
+            "rng": "numpy.random.default_rng(%d).multinomial" % F2_GROUP_MC_SEED,
+            "rng_seed": F2_GROUP_MC_SEED,
+            "what_is_simulated":
+                "one configuration's sample of n_scalar draws, as the multinomial cell "
+                "counts it puts into the six intervals the five quantile levels cut (0, "
+                "p1], (p1, p2], ..., (p5, 1). The running sums of those counts are the "
+                "K_k = #{Z_i <= z_pk}, and the interval at level k misses exactly when "
+                "K_k lies outside [lo_k + 1, hi_k]. Nothing about the sampler enters: the "
+                "null is the exact law, so the transform of the draws is Uniform(0,1) by "
+                "construction and only the order statistics matter.",
+        },
         "rule": ("fail F2 iff the observed miss count exceeds critical_miss_count; the null "
-                 "is the Poisson-binomial of the frozen per-cell achieved coverages"),
+                 "is the n_groups-fold convolution of the per-configuration miss-count "
+                 "distribution, which is exact because PROTOCOL.md section 3 gives every "
+                 "configuration its own engine stream"),
+        "why_not_poisson_binomial":
+            "Protocol 2.0.0 and earlier compared the miss count against a Poisson-binomial "
+            "over INDEPENDENT intervals. The 650 intervals were not independent, for two "
+            "reasons of different size. (a) Every configuration of a replicate was driven "
+            "by one mt19937 seeded with the replicate's seed, so the 26 configurations saw "
+            "the same uniforms and their quantile errors co-moved almost exactly; the "
+            "effective number of independent units was about five, not 650. (b) The five "
+            "levels of one configuration are order statistics of one sample and are "
+            "dependent whatever the streams do. Protocol 3.0.0 removes (a) by construction "
+            "-- independent streams per configuration -- and computes (b) exactly instead "
+            "of assuming it away. The statistic, the family alpha and the set of intervals "
+            "counted are unchanged.",
     }
 
 
 def main() -> None:
     cells, f2 = f2_cells()
     protocol = {
-        "protocol_version": "2.0.0",
+        "protocol_version": "3.0.0",
         "amendments": [
+            {"version": "3.0.0",
+             "before_any_data": False,
+             "governs": "the third confirmatory holdout, on seeds 9001-9010",
+             "reason":
+                 "The second holdout, on seeds 8001-8010 under protocol 2.0.0, returned "
+                 "NO-GO on gate G1 and is preserved unmodified in commit e5c9837. Four of "
+                 "the five gates that had failed or stood open on 7001-7010 passed, and "
+                 "both defects amendment 2.0.0 identified are closed: G2 recorded zero "
+                 "oracle disagreements in 14235020 adjudicated attempts, F5 passed jointly "
+                 "over 52 tests, G4 closed bitwise, G5 came in at 0.854x. G1 failed for "
+                 "two reasons, and this amendment answers both. PROTOCOL.md section 8 "
+                 "permits exactly one path after a failure -- identify a concrete defect, "
+                 "fix it, freeze a new implementation hash AND a new protocol document, "
+                 "draw a further disjoint seed block, and rerun -- and this is that "
+                 "document.\n"
+                 "\n"
+                 "(1) IMPLEMENTATION. One avoidable loss, at float kappa = 0.505, seed "
+                 "8005, attempt 157855, seen identically in both standard-library streams. "
+                 "Its largest intended component lay 3.12e-08 natural-log units below "
+                 "log(FLT_MAX) -- about half an ulp -- so the correctly rounded float is "
+                 "finite and the draw is returnable. Two working-precision quantities on "
+                 "the path to it are coarser than that margin: the float log radius, whose "
+                 "error is 3.5e-06 after the division by a = 0.005, and the float order-"
+                 "unity vector g, worth another 3.9e-08. The loader exponentiated one ulp "
+                 "high and returned a non-finite component. Release 2.2.0 draws the same "
+                 "variates in the same order in float -- the sampled law does not change -- "
+                 "and evaluates the deterministic map from those variates to the returned "
+                 "velocity in double, rounding once, where the component is materialized. "
+                 "That puts the resolution of the decision near 1e-14 against a 6e-08 ulp. "
+                 "A double instantiation is unaffected: its accumulator is its working "
+                 "type, and 2.2.0 returns the same bits as 2.1.0 for every double "
+                 "configuration in the matrix, capped and uncapped. The losing draw and "
+                 "34 magnitudes straddling the float representability boundary are frozen "
+                 "as deterministic selftest fixtures, replayed from recorded bit patterns "
+                 "rather than from an engine, so the regression survives any later change "
+                 "of seeds, phase or ladder.\n"
+                 "\n"
+                 "(2) PROTOCOL. F2 compared its miss count against a Poisson-binomial over "
+                 "INDEPENDENT intervals, and the intervals were not independent. Every "
+                 "configuration of a replicate was driven by one mt19937 seeded with the "
+                 "replicate's seed, so all 26 configurations saw the same uniform stream "
+                 "and their quantile errors co-moved: on 8001-8010, seed 8004 gave 103 of "
+                 "130 signed errors positive and seed 8005 gave 31 of 130, and 20 of the "
+                 "23 misses came from those two replicates. The effective number of "
+                 "independent units was about five, not 650. Protocol 3.0.0 removes the "
+                 "coupling rather than modelling it: P1 and P5 give every configuration of "
+                 "a replicate its own declared engine stream, so the 130 configurations "
+                 "are independent by construction. The remaining dependence -- the five "
+                 "levels of one configuration are order statistics of one sample -- is "
+                 "real and is now computed exactly instead of being assumed away. The "
+                 "statistic (the miss count over every resolved interval), the family "
+                 "alpha (0.005) and the set of intervals counted are all unchanged. The "
+                 "critical value moves from 13 to 14 of 650, so the test is not relaxed in "
+                 "any material sense; on the second holdout's own count of 23 it would "
+                 "still have rejected, at p = 4.3e-07. Nothing here was chosen to make a "
+                 "past number pass.\n"
+                 "\n"
+                 "SCOPE is unchanged from 2.0.0: arm64 macOS under both standard "
+                 "libraries, cross-architecture withdrawn. No threshold is relaxed, no "
+                 "cell removed, no family alpha changed, no result excluded. Every change "
+                 "was made and committed before any datum on seeds 9001-9010 existed."},
             {"version": "2.0.0",
              "before_any_data": False,
-             "governs": "the second confirmatory holdout, on seeds 8001-8010",
+             "governs": "the second confirmatory holdout, on seeds 8001-8010 (superseded)",
              "reason":
                  "The first holdout, on seeds 7001-7010 under protocol 1.3.0, returned "
                  "NO-GO. It is preserved unmodified in commit 45d3ef8 and is not reopened. "
@@ -273,9 +458,13 @@ def main() -> None:
         "frozen_before_any_data": True,
         "candidate": {
             "name": "CANDIDATE",
-            "description": "released loader cpp/bi_kappa_distribution.H at version 2.0.0, "
-                           "radius built in the log domain",
-            "version": "2.0.0",
+            "description": "released loader cpp/bi_kappa_distribution.H at version 2.2.0, "
+                           "radius built in the log domain and carried, with the rest of "
+                           "the deterministic map, in the accumulator of "
+                           "bikappa_detail::log_accumulator -- double for a float "
+                           "instantiation, the working type otherwise -- with one rounding "
+                           "at materialization",
+            "version": "2.2.0",
             "log_gamma_primitive": "LOG-ID",
             "log_gamma_citation": "Ahrens, J.H. and Dieter, U. (1974), Computing 12, 223-246",
             "boosted_gamma_primitive": "Marsaglia-Tsang",
@@ -295,21 +484,42 @@ def main() -> None:
             "performance": SEEDS_PERFORMANCE,
             "declared_not_derived": True,
             "derivation_rule":
-                "The highest seed declared anywhere in this repository is 7505 (the "
-                "Experiment 7 selftest fixtures). Round up to the next multiple of 1000, "
-                "which is 8000, and take the next ten integers: 8001-8005 for production "
-                "and 8006-8010 for the performance block. The rule admits exactly one "
+                "The highest seed declared anywhere in this repository is 8010 (the second "
+                "holdout's performance block). Round up to the next multiple of 1000, "
+                "which is 9000, and take the next ten integers: 9001-9005 for production "
+                "and 9006-9010 for the performance block. The rule admits exactly one "
                 "answer, so the block is a consequence of the repository's state and not a "
                 "choice made after seeing a result.",
+            "p1_stream_seed_stride": P1_STREAM_SEED_STRIDE,
+            "p1_stream_seed_rule":
+                "Protocol 3.0.0 only. In phases P1 and P5 the engine of configuration "
+                "(precision, kappa) under replicate seed `base` is seeded with "
+                "base + 10000 * (13 * precision_index + kappa_index), precision_index 0 "
+                "for double and 1 for float and kappa_index the 0-based position in the "
+                "kappa ladder. The 26 configurations of a replicate therefore run on "
+                "independent streams instead of sharing one, which is what family F2's "
+                "global rule requires and what protocol 2.0.0 and earlier did not "
+                "provide. The formula is declared, deterministic and admits exactly one "
+                "answer per configuration; every value it produces is congruent to "
+                "9001-9005 modulo 10000 and so collides with no declared block. It is "
+                "recorded per row as `stream_seed` beside the replicate's `seed`, which "
+                "remains the unit the analysis groups and clusters by. P2, P3, P4 and P6 "
+                "are unchanged: their families decide by Holm, by Simes or by an exact "
+                "per-attempt identity, all of which are valid under arbitrary dependence "
+                "between configurations, so there is nothing for the change to fix there "
+                "and no reason to disturb them.",
             "spent_blocks": {"first_holdout": SEEDS_FIRST_HOLDOUT,
+                             "second_holdout": SEEDS_SECOND_HOLDOUT,
                              "spent_reason":
-                                 "used by the NO-GO holdout preserved in commit 45d3ef8; "
-                                 "PROTOCOL.md section 8 forbids recomputing any result on "
-                                 "them, and they may now serve only as preserved failure "
-                                 "and development evidence"},
+                                 "used by the NO-GO holdouts preserved in commits 45d3ef8 "
+                                 "(7001-7010) and e5c9837 (8001-8010); PROTOCOL.md section "
+                                 "8 forbids recomputing any result on them, and they may "
+                                 "now serve only as preserved failure and development "
+                                 "evidence"},
             "disjoint_from": {"exp1": [1001, 1005], "exp2": [2001, 2005],
                               "exp3": [3001, 3003, 3101], "exp4_exp6": [4001, 4010],
                               "exp7_first_holdout": [7001, 7010],
+                              "exp7_second_holdout": [8001, 8010],
                               "exp7_selftest": [7501, 7505]},
         },
         "matrix": {
@@ -510,11 +720,18 @@ def main() -> None:
                            "governs and is the conservative choice for a gate on an upper "
                            "limit.",
             "F2_informativeness": "misses are counted over every RESOLVED interval, which "
-                                  "is what the frozen Poisson-binomial null was built over. "
-                                  "The informativeness flag is published as a map per "
-                                  "section 5.1 and does not change the count; excluding "
+                                  "is what the frozen null is built over. The "
+                                  "informativeness flag is published as a map per section "
+                                  "5.1 and does not change the count; excluding "
                                   "non-informative cells would make F2 unevaluable against "
                                   "its own frozen null.",
+            "F2_null": "the Poisson-binomial over independent intervals is withdrawn and "
+                       "replaced by the exact convolution over independent CONFIGURATIONS "
+                       "of the per-configuration miss-count law, which is computed rather "
+                       "than assumed. See F2.why_not_poisson_binomial and "
+                       "seeds.p1_stream_seed_rule; the two go together, because the "
+                       "independence the new null needs is supplied by the streams and not "
+                       "by an assumption about them.",
         },
         "power_study": {
             "artifact": "config/power_study.json",

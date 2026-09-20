@@ -1,20 +1,18 @@
 # Experiment 7 — pre-registered confirmatory protocol
 
-**Protocol 3.0.0. Status: frozen before any datum on seeds 9001–9010 existed.** This document
+**Protocol 2.0.0. Status: frozen before any datum on seeds 8001–8010 existed.** This document
 and `config/protocol.json` are committed in a source-only commit. The analysis refuses to run
 unless the SHA-256 of both files matches the values recorded in the run manifest, and every
 decision rule below is evaluated by code that reads `config/protocol.json` rather than by a
 constant written into the analysis.
 
-**This is the third confirmatory holdout.** The first ran on seeds 7001–7010 under protocol
-1.3.0 and returned **NO-GO**; the second ran on 8001–8010 under protocol 2.0.0 and also
-returned **NO-GO**, on gate G1 alone. Both are preserved unmodified, in commits `45d3ef8` and
-`e5c9837`, neither is reopened, and both seed blocks are spent. §8 permits exactly one path
-after a failure — identify a concrete defect, fix it, freeze a new implementation hash *and a
-new protocol document*, draw a further disjoint seed block, and rerun — and §2.7 records the
-two defects the second holdout found, one in the implementation and one in this protocol.
-Nothing in 3.0.0 relaxes a threshold, removes a cell, changes a family's α, or excludes a
-result.
+**This is the second confirmatory holdout.** The first ran on seeds 7001–7010 under protocol
+1.3.0 and returned **NO-GO**. It is preserved unmodified in commit `45d3ef8`, is not reopened,
+and its seed block is spent. §8 permits exactly one path after a failure — identify a concrete
+defect, fix it, freeze a new implementation hash *and a new protocol document*, draw a further
+disjoint seed block, and rerun — and §2.6 records the two defects that were found, one in the
+implementation and one in this protocol. Nothing in 2.0.0 relaxes a threshold, removes a cell,
+changes a family's α, or excludes a result.
 
 ---
 
@@ -49,13 +47,9 @@ different implementation.
 
 ## 2. What is under test
 
-The candidate is the released loader `cpp/bi_kappa_distribution.H` at version **2.2.0**, whose
-radius is built in the log domain and carried, with the rest of the deterministic map from the
-drawn variates to the returned velocity, in the accumulator of §2.7.1 — `double` for a `float`
-instantiation, the working type otherwise — with one rounding where the component is
-materialized.  2.0.0 carried the same construction and the representability defect of §2.6.1;
-2.1.0 corrected that and carried the resolution defect of §2.7.1.  Both are superseded before
-release and neither is the candidate. The comparator is the same file at version 1.0.0, vendored
+The candidate is the released loader `cpp/bi_kappa_distribution.H` at version **2.1.0**, whose
+radius is built in the log domain.  2.0.0 carried the same construction and the representability
+defect of §2.6.1; it is superseded before release and is not the candidate. The comparator is the same file at version 1.0.0, vendored
 unmodified as `src/legacy/bi_kappa_distribution_v1.H` and referred to as **LEGACY**.
 
 Neither the Gamma-ratio construction, log-domain Gamma generation, the small-shape underflow,
@@ -321,9 +315,8 @@ testing the *normalized* coordinate the cap predicate is written in rather than 
 and the two differ by `theta` and by the rotation — up to 2.33× on the C5/C6 geometry. The
 counter now answers the question `n_nonfinite()` documents.
 
-The implementation under test at that point was **2.1.0**. It is superseded in turn by 2.2.0
-under §2.7.1; 2.0.0 and 2.1.0 are both superseded before release, so no two samplers share a
-version string.
+The implementation under test is therefore **2.1.0**. 2.0.0 is superseded before release, so
+no two samplers share a version string.
 
 ### 2.6.2 The protocol defect
 
@@ -421,193 +414,28 @@ remains in G4 is the sharper of the two predictions and the one that is decidabl
 with no tolerance at all. Narrowing the claim does not license ignoring contrary evidence: a
 cross-architecture comparison filed anyway that *disagrees* still fails G4.
 
-## 2.7 Amendment 3.0.0 — what the second holdout found, and what changes
-
-Made **after** the second holdout was read, on the terms §8 states and no others: two concrete
-defects were identified, both are corrected, the implementation hash is new, this document is
-new, and the seed block is new. The second holdout's own record is in commit `e5c9837` and is
-not edited, reinterpreted or reopened.
-
-What it established stands. Four of the five gates that had failed or stood open on 7001–7010
-passed: G2 recorded **0 oracle disagreements in 14 235 020 adjudicated attempts**, against 2
-before; F5 passed jointly over 52 tests, including the three cells whose 1.3.0 nulls had been
-invalid; G4 closed with bitwise cross-standard-library agreement; G5 came in at 0.854× against
-a bound of 2. G1 failed, for two reasons.
-
-### 2.7.1 The implementation defect
-
-One avoidable loss, at **float κ = 0.505, seed 8005, attempt 157855**, seen identically in the
-libc++ and libstdc++ streams — one draw, not two events. Its largest intended component lies
-`3.12e-08` natural-log units below `log(FLT_MAX)`. That is about half an ulp, so the correctly
-rounded `float` is finite and the draw is one the type can hold; the loader returned a
-non-finite component and counted it as a loss.
-
-The cause is resolution, not a wrong comparison. 2.1.0 already decided representability from
-the materialized component rather than from a logarithm, and G2 is clean because the
-classification the loader reached agrees with the oracle's. What it could not do is *resolve*
-the margin. Two working-precision quantities on the path to that component are coarser than
-`3.12e-08`:
-
-- **The `float` log radius.** `log R = (log X1 − log X2)/2` with
-  `log X2 = log Y + (log U)/a`. The division by `a = κ − 1/2 = 0.005` multiplies the error of
-  `log U` by 200, and the result carries about `3.5e-06` — a hundred times the margin.
-- **The `float` order-unity vector.** `g_j = sqrt(κ) θ_j n_j`, formed in `float` from a
-  `float` direction, carries about `3.9e-08` of relative error. That alone is larger than the
-  margin: an ulp of `float` at the overflow threshold is `6.0e-08` relative, so rounding `g`
-  before multiplying by `R` decides the question by a coin toss.
-
-**Release 2.2.0 separates the variates from the map.** The variates — `X1`, `Y`, `U`, and the
-two disc coordinates — are still drawn in `RealType`, from the same engine bits, through the
-same acceptance tests, so the law being sampled does not change. The deterministic function
-that turns those variates into a returned velocity — the logarithms, the sum, `sqrt(κ)`, the
-direction lift, the rotation and the product `R g_j` — is evaluated in the accumulator
-`bikappa_detail::log_accumulator<RealType>`, and the value is rounded to `RealType` exactly
-once, where the component is materialized. For `float` the accumulator is `double`: the
-resolution of the representability decision moves from about `5.3e-06` to about `1.6e-14`,
-against an ulp of `6.0e-08`. For `double` the accumulator *is* `double`, so the arithmetic is
-unchanged and 2.2.0 returns **the same bits as 2.1.0 for every `double` configuration in the
-matrix**, capped and uncapped, with identical attempt and non-finite counts.
-
-One `float` acceptance test moves with it, and it is a correction rather than a side effect:
-the disc rejection `d1² + d2² < 1` needs 49 bits to be exact for two `float` coordinates, so
-the `float` form could accept a point outside the disc or reject one inside it. It is now
-evaluated in the accumulator, where it is exact.
-
-**Two deterministic regressions are frozen with the fix**, in `make selftest`, replayed from
-recorded bit patterns rather than from an engine, so that they survive any later change of
-seeds, of phase or of the ladder:
-
-- the losing draw itself — its five `float` variates as the run recorded them — which must now
-  be returned, with its margin reported; and
-- the boundary it sits on: 32 magnitudes stepping in eighths of an ulp from −2 to +2 ulp of
-  `FLT_MAX`, plus the two points `1e-12` either side of the rounding midpoint, each decided as
-  the hardware's own `float` conversion decides it. The midpoint itself is excluded and the
-  exclusion is part of the rule: it is the one magnitude whose answer comes from
-  round-half-to-even rather than from an inequality, no finite-precision reconstruction of it
-  can be relied on to land on the right side, and an exact tie has probability zero under a
-  continuous law. The same sweep in `double` is stated at `1e-10` relative, which is a
-  thousand times what `double`'s own `eps |log R|` can resolve there and a hundred times finer
-  than the accuracy the protocol requires of the returned radius.
-
-**One consequence is a narrowing and is recorded as one.** For a `float` run the stabilized
-candidate's radius is now the `double` evaluation of the same primitives, which is exactly what
-the paired diagnostic layer's *reference* computes. The paired layer therefore cannot judge the
-`float` candidate's accuracy — the two agree by construction — and no `float` FINITE_BUT_WRONG
-verdict from that layer is evidence of anything. Accuracy at `float` is adjudicated by the
-100-digit oracle alone, which shares no arithmetic with either, and amendment 1.2.0's margin
-rule already sends every attempt within 20 natural-log units of a type limit to it in full. The
-`double` paired layer is unaffected, because there the reference still does not materialize
-`X2` and the candidate still does not share its formation.
-
-### 2.7.2 The protocol defect
-
-F2 compared its miss count against a Poisson–binomial over **independent** intervals. The
-intervals were not independent, for two reasons of very different size.
-
-**The one that mattered is a property of the experiment, not of the statistic.** Every
-configuration of a replicate was driven by one `std::mt19937` seeded with the replicate's seed,
-so all 26 of them — thirteen κ values in two precisions — consumed the same uniform stream, and
-`X1` in particular is a function of the engine alone and is *identical* across the κ ladder at
-a fixed precision. Their quantile errors then co-move almost exactly. On 8001–8010 this is
-visible directly: seed 8004 gave 103 of 130 signed quantile errors positive
-(`p = 1.2e-11`), seed 8005 gave 31 of 130 (`p = 1.8e-09`), and 20 of the 23 misses came from
-those two replicates. The effective number of independent units was about five, not 650, and a
-count statistic compared against a 650-trial null is over-dispersed by roughly that factor.
-The first holdout's 0 misses of 650 — probability about `2e-03` under the same null — is the
-same over-dispersion seen from the other side.
-
-**The second is irreducible and was never modelled at all.** The five levels of one
-configuration are order statistics of one sample, so their miss indicators are dependent
-whatever the streams do.
-
-3.0.0 answers the first by **removing the coupling** rather than by modelling it, and the
-second by **computing it**.
-
-- **P1 and P5 give every configuration of a replicate its own engine stream**, by the declared
-  formula in §3. The 130 configurations are then independent by construction, which is what
-  F2's global rule needs and what no amount of re-specification could have supplied from
-  coupled data. P2, P3, P4 and P6 are untouched: their families decide by Holm, by Simes or by
-  an exact per-attempt identity, every one of which is valid under arbitrary dependence between
-  configurations, so there is nothing there for this to fix and no reason to disturb them.
-  `make selftest` checks that the 130 derived streams are distinct and that none of them is a
-  spent, performance or fixture seed.
-- **The null becomes the 130-fold convolution of the per-configuration miss-count law.** That
-  law is computed, not assumed: an interval at level `p` covers its quantile iff the number of
-  sample points at or below it lies in `[lo+1, hi]`, and under the null the vector of those
-  five counts is the running sum of a multinomial over the six intervals the five levels cut.
-  Nothing about the sampler enters — the null's own probability integral transform is
-  `Uniform(0,1)` by definition — so the law is a property of `(n, the five levels, the five
-  brackets)` and is identical for every configuration. `config/make_protocol.py` evaluates it
-  by Monte Carlo at 2×10⁷ replicates under a recorded seed, publishes the resulting
-  distribution in `config/protocol.json`, and the analysis re-convolves it and refuses to run
-  if the frozen critical value does not come back out.
-
-**What does not change.** The statistic is the same: the number of order-statistic brackets
-that fail to cover their quantile, over every resolved interval. The family α is the same,
-0.005. The set of intervals counted is the same, 650, and the informativeness map still changes
-no count. The per-level miss probabilities are the same analytically computed achieved
-coverages.
-
-**What the change costs the candidate.** The critical value moves from **13 to 14** of 650, and
-the attained level from 0.00464 to 0.00250. The Monte Carlo's marginal miss rates reproduce the
-analytic achieved coverages to `6e-05`, and the critical value is unchanged when the two
-worst-resolved cells of the per-configuration law are zeroed, doubled, or doubled together with
-the cell below them; all four checks are published in `config/protocol.json` under
-`F2.far_tail_stability`. **On the second holdout's own count of 23 the new rule would still
-have rejected, at `p = 4.3e-07`.** The replacement is therefore not a relaxation dressed as a
-correction: it is a design change that supplies the independence the frozen statistic always
-required, and it leaves that statistic able to fail.
-
-### 2.7.3 Scope
-
-Unchanged from §2.6.4: arm64 macOS under both standard libraries, cross-architecture withdrawn
-and published as a limitation.
-
 ## 3. Seeds
 
-**Production seeds: 9001–9005. Performance-block seeds: 9006–9010.** Both blocks are declared
+**Production seeds: 8001–8005. Performance-block seeds: 8006–8010.** Both blocks are declared
 here, in `config/protocol.json`, and in `src/exp7_common.H`, and are disjoint from every seed
 used anywhere else in this repository (exp1 1001–1005, exp2 2001–2005, exp3 3001–3003 and
-3101, exp4 and exp6 4001–4010, the first holdout 7001–7010, the second holdout 8001–8010, the
-Experiment 7 selftest fixtures 7501–7505). Experiment 6 derived five of its performance seeds
-implicitly as `4001 + block`, which is why 4006–4010 appear in its manifest and in no
-declaration; the second block above exists so that no replicate in Experiment 7 is derived
-rather than declared.
+3101, exp4 and exp6 4001–4010, the first holdout 7001–7010, the Experiment 7 selftest fixtures
+7501–7505). Experiment 6 derived five of its performance seeds implicitly as `4001 + block`,
+which is why 4006–4010 appear in its manifest and in no declaration; the second block above
+exists so that no seed in Experiment 7 is derived rather than declared.
 
 **How this block was drawn.** Not by choice. The rule is: take the highest seed declared
-anywhere in this repository — 8010, the second holdout's performance block — round up to the
-next multiple of 1000, which is 9000, and take the next ten integers. The rule admits exactly
-one answer, so the block is a consequence of the repository's state rather than a selection
-made after a result was seen, and it remains disjoint from anything a future experiment adds
-below it. `make selftest` asserts that 7001–7010 and 8001–8010 appear in no block in use, so a
-rerun on a spent block fails before it writes a byte.
+anywhere in this repository — 7505, the selftest fixtures — round up to the next multiple of
+1000, which is 8000, and take the next ten integers. The rule admits exactly one answer, so
+the block is a consequence of the repository's state rather than a selection made after a
+result was seen, and it remains disjoint from anything a future experiment adds below it.
+`make selftest` asserts that 7001–7010 appear in no block in use, so a rerun on the spent
+block fails before it writes a byte.
 
-**Configuration streams in P1 and P5.** Under 3.0.0 the replicate seed is not the engine seed.
-The configuration `(precision, κ)` of replicate `base` runs on
-
-    stream_seed = base + 10000 × (13 × precision_index + kappa_index)
-
-with `precision_index` 0 for `double` and 1 for `float`, and `kappa_index` the 0-based position
-in the ladder of §4. §2.7.2 is why: the 26 configurations of a replicate shared one stream, and
-family F2's global rule is a count statistic whose null is built over independent units. The
-formula is declared, is a formula rather than a table, and admits exactly one answer per
-configuration; every value it produces is congruent to a production seed modulo 10000 and so
-can collide with no block declared anywhere in this repository. Each P1 and P5 row records both
-numbers — `seed`, the replicate, which remains the unit the analysis groups and cluster-
-bootstraps by, and `stream_seed`, the engine the configuration actually ran on — so the
-independence the null assumes is auditable from the raw rows rather than asserted here.
-
-**P2's native replica layer follows P1's**, with the same configuration stream and the same
-`stream_seed` recorded, because the schema predicts that the two reproduce each other exactly
-and that prediction is a live check (`cross_phase_native_agrees`) rather than a description.
-**P2's paired layer, P3, P4 and P6 keep the replicate seed**, for the reason in §2.7.2: their
-families decide by Holm, by Simes or by an exact per-attempt identity, all valid under
-arbitrary dependence between configurations.
-
-**7001–7010 and 8001–8010 are spent.** They carry the two preserved NO-GO holdouts. No result
-may be recomputed on either; they may now serve only as preserved failure evidence and as
-material for diagnosing a defect, which is what §2.6 and §2.7 used them for. If this holdout
-fails too, the recovery path is in §8.
+**7001–7010 are spent.** They carry the preserved NO-GO holdout. No result may be recomputed
+on them; they may now serve only as preserved failure evidence and as development material for
+calibrating a replacement test, which is what §2.6 used them for. If this holdout fails too,
+the recovery path is in §8.
 
 ## 4. Test matrix
 
@@ -620,7 +448,7 @@ Frozen sizes. `N` is intended attempts, never returned samples, except where sta
 | **P3 conditioning** | LEGACY, CANDIDATE, oracle | double kappa ∈ {0.501, 0.505, 0.51, 0.75}; float kappa ∈ {0.55, 0.60, 0.75} | 10^6 × 5 seeds |
 | **P4 loader** | LEGACY, CANDIDATE | C0–C6 of §4.1 | uncapped 10^5 intended × 5 seeds; capped 10^5 **returned** × 5 seeds, all attempts retained |
 | **P5 portability** | CANDIDATE | full P1 ladder on every available environment | 10^6 × 5 seeds |
-| **P6 performance** | LEGACY, CANDIDATE | B0–B4 of §4.2 | 10 timed blocks ≥ 2 s and ≥ 10^6 attempts each, seeds 9006–9010 |
+| **P6 performance** | LEGACY, CANDIDATE | B0–B4 of §4.2 | 10 timed blocks ≥ 2 s and ≥ 10^6 attempts each, seeds 7006–7010 |
 
 The ladder adds **1.25 and 1.49** to Experiment 6's. They exist because that is where the
 rejected primitive's cost diverges, and a ladder that steps over the only region where a
@@ -653,31 +481,20 @@ direction, which for Experiment 6's E1 alone was 0.57 per candidate.
 | family | contents | α_F | global rule |
 |---|---|---:|---|
 | **F1** radial law | Anderson–Darling, KS and Cramér–von Mises on `Z = −log I_W(a, 3/2) ~ Exp(1)`, per configuration (see §2.5: the Beta route on `W` is withdrawn) | 0.010 | Simes global test over all configurations; on rejection, Holm within the family names the configuration |
-| **F2** quantile coverage | every order-statistic interval, all kappa × precision × seed × level | 0.005 | Upper-tail test on the miss count against the 130-fold convolution of the per-configuration miss-count law of §2.7.2, whose per-level marginals are the **analytically computed** achieved coverages. Report count, μ and p; never a ratio |
+| **F2** quantile coverage | every order-statistic interval, all kappa × precision × seed × level | 0.005 | Poisson–binomial upper-tail test on the miss count against Σ(1 − c_i), where each `c_i` is the **analytically computed** achieved coverage. Report count, μ and p; never a ratio |
 | **F3** quantile direction | standardized signed quantile error per (kappa, precision, p), Stouffer-combined over seeds, Holm over cells | 0.010 | null calibrated by parametric Monte Carlo from the exact law at the same n and a, ≥ 2000 replicates, because the null is not symmetric at small a |
 | **F4** upper-tail mass | exceedance counts above `z₀ = −log q₀` for `q₀ ∈ {1e−2, 1e−3, 1e−4}` (exact binomial), and KS of the excesses against Exp(1) | 0.010 | Holm within the family, Simes globally |
 | **F5** loader battery | direction uniformity, rank-based independence, frame invariance, cap law, anisotropy, and — per §2.5, with the nulls corrected in §2.6 — an upper-tail count and an upper-tail excess test on each uncapped cell at each `q₀` | 0.010 | Holm over **all** cells and tests jointly, not per cell |
 | **F6** negative controls | measured power curves | — | reversed: require power ≥ 0.90 at the pre-registered minimum detectable effect |
 | **F7** portability | pairwise environment comparison | 0.005 | equivalence, not identity — see §5.3 |
 
-### 5.1 Why F2 replaces "every interval covers", and what its null is
+### 5.1 Why F2 replaces "every interval covers"
 
 Each interval is an exact binomial order-statistic bracket at 95 % Bonferroni-corrected over
 the five levels, i.e. nominal 99 %. Its achieved coverage is a closed-form function of `n`,
-`p` and the correction, so the marginal miss probability of every interval is known before any
-data exist.
-
-The **joint** law is the part 2.0.0 got wrong, and §2.7.2 says how. The 650 intervals are 130
-configurations of five levels. Under §3 the configurations run on independent streams, so the
-130 group counts are independent; the five levels inside a configuration are order statistics
-of one sample and are not. The null of the total is therefore the 130-fold convolution of the
-per-configuration miss-count law, and that law is computed rather than assumed: an interval at
-level `p` covers iff the count of sample points at or below the quantile lies in `[lo+1, hi]`,
-and under the null the vector of those five counts is the running sum of a multinomial over
-the six intervals the five levels cut. `config/protocol.json` stores the per-cell achieved
-coverages, the per-configuration law, the resulting critical value and the stability checks;
-the analysis reads them, re-convolves, and refuses to run if the critical value does not come
-back out.
+`p` and the correction, so the null distribution of the miss count is known before any data
+exist. `config/protocol.json` stores the per-cell achieved coverages and the resulting
+critical value; the analysis reads them.
 
 **F2 is also declared non-decisive at small shape.** The brackets are on `log R` and their
 width scales as `1/a`: at `kappa = 0.5001` the median width runs from 57 natural-log units at
@@ -771,7 +588,7 @@ resulting bound; the analysis recomputes and prints it.
 
 ## 8. What counts as a holdout failure, and what may follow
 
-Any pre-registered family or gate rule failing at its pre-registered level on seeds 9001–9010
+Any pre-registered family or gate rule failing at its pre-registered level on seeds 7001–7010
 is a holdout failure. No re-pooling, no post-hoc exclusion of out-of-domain or near-limit
 cells, no change to the seeds, the levels, the family membership, or the informativeness
 threshold after the holdout is read.

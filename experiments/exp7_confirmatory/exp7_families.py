@@ -274,32 +274,59 @@ def family_F1(proto: Protocol, cells) -> FamilyResult:
 # ---------------------------------------------------------------------------
 # F2 -- quantile coverage
 # ---------------------------------------------------------------------------
-def family_F2(proto: Protocol, observed_misses: int, n_resolved: int) -> FamilyResult:
-    """Poisson-binomial upper-tail test on the miss count.
+def family_F2(proto: Protocol, observed_misses: int, n_resolved: int,
+              n_groups_seen: int) -> FamilyResult:
+    """Upper-tail test on the miss count, against a null that is exact for these data.
 
-    The null is fixed in the protocol from the analytically computed achieved coverage of
-    every interval, so the critical value existed before the data did.  Neither "every
-    interval covers" (which fails with probability 0.984 under a correct sampler) nor a
-    round 0.9 (which has no power below a tenfold degradation) is used.
+    The statistic is the one protocol 1.x and 2.0.0 used -- the number of order-statistic
+    brackets that fail to cover their quantile, over every resolved interval -- and the
+    family alpha is the one they used.  What changed in 3.0.0 is the null.
+
+    The 650 intervals are 130 configurations of five levels.  Under PROTOCOL.md Sec. 3 each
+    configuration has its own engine stream, so the configurations are independent; the five
+    levels within a configuration are order statistics of one sample and are not, so their
+    joint miss-count law is computed in the protocol rather than assumed.  The null of the
+    total is the 130-fold convolution of that law.  Comparing against a Poisson-binomial
+    over 650 independent intervals -- which is what 2.0.0 did, on data whose 26
+    configurations per replicate shared one mt19937 -- treated about five independent units
+    as 650 and was over-dispersed by roughly that factor.
     """
     alpha = proto.alpha("F2_quantile_coverage")
     spec = proto.get("F2")
     critical = int(spec["critical_miss_count"])
     expected = float(spec["expected_misses"])
     frozen_n = int(spec["n_resolved_intervals"])
+    frozen_groups = int(spec["n_groups"])
     if n_resolved != frozen_n:
         return FamilyResult(
             "F2_quantile_coverage", alpha, False, float(observed_misses), float("nan"),
             f"the run resolved {n_resolved} intervals but the protocol froze {frozen_n}; "
             "the null distribution no longer applies and the family cannot be evaluated "
             "without re-registering it")
-    miss_probs = [1.0 - c["achieved_coverage"] for c in proto.get("F2_cells")
-                  if c.get("resolved")]
-    p = poisson_binomial_sf(miss_probs, observed_misses - 1) if observed_misses > 0 else 1.0
+    if n_groups_seen != frozen_groups:
+        return FamilyResult(
+            "F2_quantile_coverage", alpha, False, float(observed_misses), float("nan"),
+            f"the run produced {n_groups_seen} configurations but the protocol froze "
+            f"{frozen_groups}; the grouped null no longer applies and the family cannot be "
+            "evaluated without re-registering it")
+
+    pmf = np.array([1.0])
+    for _ in range(frozen_groups):
+        pmf = np.convolve(pmf, np.asarray(spec["group_miss_pmf"], dtype=float))
+    surv = 1.0 - np.cumsum(pmf)
+    recomputed = int(np.argmax(surv <= alpha))
+    if recomputed != critical:
+        return FamilyResult(
+            "F2_quantile_coverage", alpha, False, float(observed_misses), float("nan"),
+            f"the frozen critical value is {critical} but the frozen per-configuration law "
+            f"convolves to {recomputed}; config/protocol.json is internally inconsistent")
+
+    p = float(surv[observed_misses - 1]) if observed_misses > 0 else 1.0
     return FamilyResult("F2_quantile_coverage", alpha,
-                        bool(observed_misses <= critical), float(observed_misses), float(p),
-                        f"{observed_misses} misses of {n_resolved} resolved intervals; "
-                        f"expected {expected:.2f}; fail above {critical}")
+                        bool(observed_misses <= critical), float(observed_misses), p,
+                        f"{observed_misses} misses of {n_resolved} resolved intervals in "
+                        f"{n_groups_seen} independently streamed configurations; expected "
+                        f"{expected:.2f}; fail above {critical}")
 
 
 def informative(lo_value: float, hi_value: float, proto: Protocol) -> bool:

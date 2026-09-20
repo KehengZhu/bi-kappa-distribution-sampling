@@ -277,7 +277,7 @@ def figure_fp1(ctx: dict) -> None:
     handles = [Line2D([], [], label="QF  $\\sqrt{X_1/X_2}$ (diagnostic)", **STYLE["QF"]),
                Line2D([], [], label="LEGACY  1.0.0, $\\sqrt{X_1}/\\sqrt{X_2}$",
                       **STYLE["LEGACY"]),
-               Line2D([], [], label="CANDIDATE  2.0.0, log domain", **STYLE["CANDIDATE"]),
+               Line2D([], [], label="CANDIDATE  2.2.0, log domain", **STYLE["CANDIDATE"]),
                Line2D([], [], label="analytic honest floor", **STYLE["floor"]),
                Line2D([], [], color="0.3", marker="v", mfc="none", ls="none", ms=3.6,
                       label="one-sided 95% upper limit\n(no failure observed)"),
@@ -720,7 +720,7 @@ def write_captions(ctx: dict) -> None:
             "Failure envelope and mechanism decomposition of the Gamma-ratio bi-Kappa "
             "radius. Probability that one attempt fails to return a finite three-vector, "
             "against $\\kappa-1/2$, in (a) double and (b) single precision, for the released "
-            "1.0.0 split formation $\\sqrt{X_1}/\\sqrt{X_2}$ (LEGACY), the 2.0.0 log-domain "
+            "1.0.0 split formation $\\sqrt{X_1}/\\sqrt{X_2}$ (LEGACY), the 2.2.0 log-domain "
             "candidate, and the quotient-first formation $\\sqrt{X_1/X_2}$, which is a "
             "diagnostic and carries no claim. An attempt is one draw in the canonical "
             "isotropic, unrotated, uncapped configuration with "
@@ -754,7 +754,7 @@ def write_captions(ctx: dict) -> None:
             "cent cluster-bootstrap percentile intervals over the seed block from 10\\,000 "
             "resamples; the black line marks the target itself.",
         "sfp1_scalar_validation":
-            "Scalar validation of the 2.0.0 candidate. (a, b) Residuals of the empirical CDF "
+            "Scalar validation of the 2.2.0 candidate. (a, b) Residuals of the empirical CDF "
             "of $Z=-\\log I_W(a,3/2)$ from the unit-exponential CDF, where "
             "$W=X_2/(X_1+X_2)\\sim\\mathrm{Beta}(a,3/2)$ and $a=\\kappa-1/2$; $Z$ is the "
             "diagnostic of record because $W$ itself rounds to zero at the smallest shapes "

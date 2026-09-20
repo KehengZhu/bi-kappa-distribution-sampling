@@ -4,7 +4,68 @@ This project follows [Semantic Versioning](https://semver.org/). For a sampler, 
 includes changing which random numbers a given seed produces, even when the API is untouched
 and the sampled law is unchanged — a stored stream is part of what a user depends on.
 
-## 2.1.0 — unreleased
+## 2.2.0 — unreleased
+
+### Fixed — a `float` instantiation resolves the representability boundary
+
+2.1.0 decided representability from the materialized component, which is the right question
+asked of the right number. What it could not do, in `float`, was *resolve* the answer.
+
+`log R` is a stable representation of the radius, not an exact one: its absolute error is
+about `eps |log R|`, and the shape-boosting identity divides one of its two terms by
+`a = kappa − 1/2`, which amplifies the error of `log U` by `1/a` — 200-fold at
+`kappa = 0.505`. In `float` that leaves about `3.5e-06` of error on a quantity whose scale is
+`log(FLT_MAX) = 88.7`. The order-unity vector `g_j = sqrt(kappa) θ_j n_j`, formed in `float`
+from a `float` direction, carries another `3.9e-08`. A `float` ulp at the overflow threshold
+is `6.0e-08` relative, so both are at or beyond the resolution of the decision being made.
+
+A confirmatory run found the consequence: one draw in 14.2 million audited attempts, at
+`float kappa = 0.505`, whose largest intended component lay `3.12e-08` natural-log units —
+about half an ulp — below `FLT_MAX`. The correctly rounded `float` is finite and the type can
+hold the draw; 2.1.0 exponentiated one ulp high and returned `+inf`. Being a genuine
+overflow as far as the arithmetic could tell, it was counted, so no invariant was violated:
+the draw was simply lost where it did not have to be.
+
+2.2.0 separates the variates from the map. The variates — `X1`, `Y`, `U` and the two disc
+coordinates — are still drawn in `RealType`, from the same engine bits, through the same
+acceptance tests, so **the sampled law does not change**. The deterministic function that
+turns them into a returned velocity — the logarithms, the sum, `sqrt(kappa)`, the direction
+lift, the rotation and the product `R g_j` — is evaluated in
+`bikappa_detail::log_accumulator<RealType>::type` and rounded to `RealType` exactly once,
+where the component is materialized.
+
+- **For `float` the accumulator is `double`.** The resolution of the decision moves from
+  about `5.3e-06` to about `1.6e-14`, against an ulp of `6.0e-08`. Returned `float` values
+  change: each is now the correctly rounded value of the double-evaluated intended
+  component, where before it carried the working-precision error of two factors. One
+  acceptance test moves with it, and it is a correction: the disc rejection
+  `d1² + d2² < 1` needs 49 bits to be exact for two `float` coordinates, so the `float` form
+  could accept a point outside the disc or reject one inside it. It is now exact. The
+  `float` random stream therefore changes.
+- **For `double` the accumulator is `double`**, so every widened expression is the 2.1.0
+  expression unchanged. A `double` instantiation of 2.2.0 returns **the same bits as 2.1.0**,
+  with the same attempt and non-finite counts, verified over 200 000 draws at each of
+  `kappa = 0.505` and `0.51` uncapped, `kappa = 2` uncapped, and `kappa = 0.51` under caps 5
+  and 20, under both clang/libc++ and gcc/libstdc++. A `double` consumer has nothing to
+  re-validate.
+
+`cpp/test_suite.H::test_representability_boundary` gains three checks: the losing draw
+itself, replayed from its recorded `float` variates and adjudicated at 120 digits (S5); a
+sweep of 34 magnitudes across the `float` boundary, from −2 to +2 ulp of `FLT_MAX` in eighths
+and 1e-12 either side of the rounding midpoint, each decided as the hardware's own
+conversion decides it (S6); and the accumulator invariant that makes the `double` claim a
+property of the source rather than a measurement (S7). The exact rounding midpoint is
+excluded from the sweep and the exclusion is part of the rule: it is the one magnitude whose
+answer comes from round-half-to-even rather than from an inequality, and an exact tie has
+probability zero under a continuous law.
+
+### Note — accumulator width is a platform property
+
+`log_accumulator<float>::type` is `double` and `log_accumulator<RealType>::type` is
+`RealType` otherwise, including for `long double`, where on the platforms this header is
+tested the two coincide. Nothing in the header assumes an 80-bit or 128-bit `long double`.
+
+## 2.1.0 — unreleased, superseded by 2.2.0 before release
 
 ### Fixed — representability is decided from the component, not from its logarithm
 

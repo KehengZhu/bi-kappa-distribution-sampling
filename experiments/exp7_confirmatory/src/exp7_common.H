@@ -841,8 +841,17 @@ inline double zFromLogR(double log_r, double a)
 // ---------------------------------------------------------------------------
 template <typename T> struct Geometry
 {
+    /// The accumulator release 2.2.0 forms the deterministic map in; `double` for a `float`
+    /// run, and the working type otherwise.  The replica has to use the same one or it is
+    /// no longer a replica.
+    typedef typename bikappa_detail::log_accumulator<T>::type acc_type;
+
     T kappa;
+    /// `sqrt(kappa)` in the working precision, as release 1.0.0 forms it.  The LEGACY
+    /// replica must keep using this one: `(T)sqrt((acc_type)k)` is not `sqrt(k)` in `T`.
     T sqrt_kappa;
+    /// `sqrt(kappa)` in the accumulator, as release 2.2.0 forms it.
+    acc_type sqrt_kappa_acc;
     T theta_perp;
     T theta_par;
     std::array<T, 3> ub;
@@ -853,17 +862,20 @@ template <typename T> struct Geometry
     /// them, so that the replica matches its cost profile and not only its arithmetic.
     /// `log_g_bound` is the rotation-invariant bound
     /// max_j |g_j| <= |g| <= sqrt(kappa) max(theta_perp, theta_par).
-    T log_sqrt_kappa;
-    T log_g_bound;
-    T log_max_finite;
+    acc_type log_sqrt_kappa;
+    acc_type log_g_bound;
+    acc_type log_max_finite;
 
     Geometry(T k, T tperp, T tpar, const std::array<T, 3> &b)
-        : kappa(k), sqrt_kappa(std::sqrt(k)), theta_perp(tperp), theta_par(tpar), ub(b),
+        : kappa(k), sqrt_kappa(std::sqrt(k)),
+          sqrt_kappa_acc(std::sqrt(static_cast<acc_type>(k))), theta_perp(tperp),
+          theta_par(tpar), ub(b),
           identity_rotation(b[0] == T(0) && b[1] == T(0) && b[2] == T(1)),
           rotator(k, tperp, tpar, b, bi_kappa_distribution<T>::no_cap()),
-          log_sqrt_kappa(std::log(std::sqrt(k))),
-          log_g_bound(std::log(std::sqrt(k)) + std::log(std::max(tperp, tpar))),
-          log_max_finite(std::log(std::numeric_limits<T>::max()))
+          log_sqrt_kappa(std::log(std::sqrt(static_cast<acc_type>(k)))),
+          log_g_bound(std::log(std::sqrt(static_cast<acc_type>(k))) +
+                      std::log(static_cast<acc_type>(std::max(tperp, tpar)))),
+          log_max_finite(std::log(static_cast<acc_type>(std::numeric_limits<T>::max())))
     {
     }
 
@@ -883,6 +895,21 @@ template <typename T> struct Geometry
         return n;
     }
 
+    /// The same direction, from the same two working-precision variates, evaluated in the
+    /// accumulator.  This is the stabilized candidate's direction under 2.2.0: the angle
+    /// pair is what was drawn, the trigonometry is part of the deterministic map.
+    static std::array<acc_type, 3> directionAcc(T cos_theta, T phi)
+    {
+        const acc_type ct= static_cast<acc_type>(cos_theta);
+        const acc_type ph= static_cast<acc_type>(phi);
+        const acc_type st= std::sqrt(std::max(acc_type(0), acc_type(1) - ct * ct));
+        std::array<acc_type, 3> n;
+        n[0]= st * std::cos(ph);
+        n[1]= st * std::sin(ph);
+        n[2]= ct;
+        return n;
+    }
+
     /// g = Q(ub) diag(sqrt(kappa) theta_perp, sqrt(kappa) theta_perp, sqrt(kappa) theta_par) n
     std::array<T, 3> gVector(const std::array<T, 3> &n) const
     {
@@ -893,6 +920,23 @@ template <typename T> struct Geometry
         if (identity_rotation)
             return local;
         return rotator.rotate_from_fieldAligned_frame(local, ub);
+    }
+
+    /// `g` in the accumulator, mirroring 2.2.0's `fieldAlignedG` and its widened rotation.
+    std::array<acc_type, 3> gVectorAcc(const std::array<acc_type, 3> &n) const
+    {
+        std::array<acc_type, 3> local;
+        local[0]= sqrt_kappa_acc * static_cast<acc_type>(theta_perp) * n[0];
+        local[1]= sqrt_kappa_acc * static_cast<acc_type>(theta_perp) * n[1];
+        local[2]= sqrt_kappa_acc * static_cast<acc_type>(theta_par) * n[2];
+        if (identity_rotation)
+            return local;
+        std::array<acc_type, 3> uba;
+        uba[0]= static_cast<acc_type>(ub[0]);
+        uba[1]= static_cast<acc_type>(ub[1]);
+        uba[2]= static_cast<acc_type>(ub[2]);
+        return bi_kappa_distribution<T>::template rotateFromFieldAlignedFrameIn<acc_type>(
+            local, uba);
     }
 };
 
@@ -969,36 +1013,66 @@ inline std::vector<double> kappaLadder()
 /// no declaration; both blocks here are written out, and no seed anywhere in this
 /// experiment is computed from another.
 ///
-/// Protocol 2.0.0 governs the SECOND holdout and uses 8001-8010.  The block follows from the
+/// Protocol 3.0.0 governs the THIRD holdout and uses 9001-9010.  The block follows from the
 /// rule in PROTOCOL.md Sec. 3 rather than from a choice: the highest seed declared anywhere
-/// in this repository is 7505, rounded up to the next multiple of 1000 gives 8000, and the
-/// next ten integers are taken.  7001-7010 belong to the first holdout, whose NO-GO result
-/// is preserved in commit 45d3ef8; Sec. 8 forbids recomputing any result on them.
+/// in this repository is 8010, rounded up to the next multiple of 1000 gives 9000, and the
+/// next ten integers are taken.  7001-7010 and 8001-8010 belong to the first and second
+/// holdouts, whose NO-GO results are preserved in commits 45d3ef8 and e5c9837; Sec. 8
+/// forbids recomputing any result on either.
 inline std::vector<unsigned> productionSeeds()
 {
     std::vector<unsigned> s;
-    s.push_back(8001u); s.push_back(8002u); s.push_back(8003u); s.push_back(8004u);
-    s.push_back(8005u);
+    s.push_back(9001u); s.push_back(9002u); s.push_back(9003u); s.push_back(9004u);
+    s.push_back(9005u);
     return s;
 }
 
 inline std::vector<unsigned> performanceSeeds()
 {
     std::vector<unsigned> s;
-    s.push_back(8006u); s.push_back(8007u); s.push_back(8008u); s.push_back(8009u);
-    s.push_back(8010u);
+    s.push_back(9006u); s.push_back(9007u); s.push_back(9008u); s.push_back(9009u);
+    s.push_back(9010u);
     return s;
 }
 
-/// The first holdout's block.  Declared so that a rerun on it is a compile-time-visible
-/// mistake rather than an accident, and so that `spentSeeds()` can be asserted disjoint from
-/// the block actually in use.
+/// Both spent blocks.  Declared so that a rerun on one is a compile-time-visible mistake
+/// rather than an accident, and so that `spentSeeds()` can be asserted disjoint from the
+/// block actually in use.
 inline std::vector<unsigned> spentSeeds()
 {
     std::vector<unsigned> s;
     for (unsigned v= 7001u; v <= 7010u; ++v)
         s.push_back(v);
+    for (unsigned v= 8001u; v <= 8010u; ++v)
+        s.push_back(v);
     return s;
+}
+
+/// The stride between the engine streams of two configurations of the same replicate.
+/// PROTOCOL.md Sec. 3 and `seeds.p1_stream_seed_stride` in config/protocol.json.
+inline unsigned p1StreamSeedStride() { return 10000u; }
+
+/// The engine seed of one P1 or P5 configuration.
+///
+/// Protocol 2.0.0 and earlier seeded every configuration of a replicate with the
+/// replicate's own seed, so all 26 of them -- thirteen kappa values in two precisions --
+/// consumed the same mt19937 stream.  Their quantile errors then co-moved almost exactly,
+/// which is not a defect of the sampler but is a property of the data that family F2's
+/// global rule is not allowed to ignore: it compared a miss count against a null built
+/// over INDEPENDENT intervals, and about five independent units were being counted as 650.
+///
+/// 3.0.0 gives each configuration its own stream instead of modelling the coupling. The
+/// rule is a formula, not a table: it admits exactly one answer per configuration, every
+/// value it produces is congruent to a declared production seed modulo the stride, and it
+/// therefore collides with no block declared anywhere in this repository. P2, P3, P4 and P6
+/// keep the shared stream -- their families decide by Holm, by Simes or by an exact
+/// per-attempt identity, every one of which is valid under arbitrary dependence, so there
+/// is nothing there for this to fix.
+inline unsigned p1StreamSeed(unsigned baseSeed, bool isFloat, int kappaIndex)
+{
+    const int nk= static_cast<int>(kappaLadder().size());
+    const int configIndex= (isFloat ? nk : 0) + kappaIndex;
+    return baseSeed + p1StreamSeedStride() * static_cast<unsigned>(configIndex);
 }
 
 /// Fixture seeds for `make selftest`.  They write no data and no result depends on them,

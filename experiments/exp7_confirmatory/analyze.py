@@ -661,7 +661,7 @@ def analyse_p1(ctx: Context) -> dict:
     alpha_F1 = proto.alpha("F1_radial_law")
 
     columns = ["phase", "tag", "stdlib", "arch", "execution", "layer", "method", "precision",
-               "kappa", "shape_a", "seed", "n_attempted"]
+               "kappa", "shape_a", "seed", "stream_seed", "n_attempted"]
     columns += [f"cat_{c}" for c in CATEGORIES]
     columns += ["n_finite", "n_avoidable", "n_honest", "nonfinite_output",
                 "x2_zero", "x2_subnormal",
@@ -712,6 +712,10 @@ def analyse_p1(ctx: Context) -> dict:
         row = {"phase": "p1", "tag": tag, "stdlib": r.get("stdlib"), "arch": r.get("arch"),
                "execution": r.get("execution"), "layer": "native", "method": method,
                "precision": precision, "kappa": kappa, "shape_a": a, "seed": seed,
+               # PROTOCOL.md Sec. 3: the replicate and the engine it actually ran on.  They
+               # differ in P1 and P5 under 3.0.0, and family F2's null is exact only
+               # because they do.
+               "stream_seed": jint(r, "stream_seed", seed),
                "n_attempted": n, "protocol_sha256": proto.sha256}
         for c in CATEGORIES:
             row[f"cat_{c}"] = jint(r, f"cat_{c}", 0)
@@ -941,7 +945,11 @@ def analyse_p1(ctx: Context) -> dict:
     # against.
     resolved_cells = [c for c in f2_cells if c["resolved"]]
     misses = sum(1 for c in resolved_cells if not c["covered"])
-    fam["F2_quantile_coverage"] = F.family_F2(proto, misses, len(resolved_cells))
+    # The grouping the F2 null is convolved over: one group per independently streamed
+    # configuration, which is one (precision, kappa, seed) under PROTOCOL.md Sec. 3.
+    f2_groups = {(c["precision"], c["kappa"], c["seed"]) for c in resolved_cells}
+    fam["F2_quantile_coverage"] = F.family_F2(proto, misses, len(resolved_cells),
+                                              len(f2_groups))
 
     f3_cells = []
     for (precision, kappa, p), by_seed in sorted(f3_obs.items(),

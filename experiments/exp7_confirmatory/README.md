@@ -7,14 +7,19 @@ R = sqrt(X1) / sqrt(X2),    X1 ~ Ga(3/2, 1),    X2 ~ Ga(a, 1),    a = κ − 1/2
 ```
 
 so as κ → 1/2 the denominator shape goes to zero, `X2` underflows, and draws are lost.
-Version 2.1.0 never forms `X2`: it carries `log X2 = log Y + log(U)/a` with `Y ~ Ga(a+1,1)`,
+Version 2.2.0 never forms `X2`: it carries `log X2 = log Y + log(U)/a` with `Y ~ Ga(a+1,1)`,
 propagates `log R = (log X1 − log X2)/2`, builds the order-unity vector
 `g = Q(b̂) diag(√κ θ) n` **first**, and then materializes each component and decides its
 representability from the component itself. Version 2.0.0 decided it from
 `log|V_j| = log R + log|g_j|` against `log(max())`; that test disagrees with the arithmetic
 it predicts, because `log(max())` is rounded and `exp` of it need not be finite, and the
 first holdout found a draw where it returned three infinities in place of three
-representable numbers and counted none of them. See PROTOCOL.md §2.6.1. Its direction `n` is drawn
+representable numbers and counted none of them. See PROTOCOL.md §2.6.1. Version 2.1.0
+corrected that but still carried `log R` and `g` in the working precision, which in `float`
+is coarser than the margin by which a component just under `FLT_MAX` is representable; the
+second holdout found a draw half an ulp inside the limit that it lost. 2.2.0 draws the same
+variates in `float` and evaluates the map from them to the returned velocity in `double`,
+rounding once. See PROTOCOL.md §2.7.1. Its direction `n` is drawn
 by the rejection method of Marsaglia (1972) — two open-interval uniforms per try, retried
 until the pair falls in the unit disc, then lifted onto the sphere — so the sampler calls no
 library transcendental and consumes a variable number of uniforms per attempt. Experiment 6
@@ -32,7 +37,7 @@ acceptance threshold of its own.
 | name | radius | what runs |
 |---|---|---|
 | **LEGACY** | `sqrt(X1)/sqrt(X2)`, `X2` materialized by `std::gamma_distribution` | `src/legacy/bi_kappa_distribution_v1.H` — the released header exactly as shipped at 1.0.0, vendored unmodified |
-| **CANDIDATE** | `log R = (log X1 − log X2)/2`, carried to the final component test | `cpp/bi_kappa_distribution.H` at 2.0.0 |
+| **CANDIDATE** | `log R = (log X1 − log X2)/2`, carried in the accumulator to the final component test | `cpp/bi_kappa_distribution.H` at 2.2.0 |
 
 `QF` (`sqrt(X1/X2)`, whose intermediate quotient overflows even where its square root is
 representable) survives only as a **third diagnostic column of the paired layer**. It is not
@@ -131,12 +136,22 @@ ladder that steps over the only region where a candidate misbehaves is not a tes
 
 ## Seeds
 
-Production **7001–7005**, performance **7006–7010**. Both blocks are written out as explicit
+Production **9001–9005**, performance **9006–9010**. Both blocks are written out as explicit
 vectors in `src/exp7_common.H`, and the probe compares them — and the kappa ladder — against
-`config/protocol.json` at start-up and refuses to run on any difference. **No seed anywhere
-in this experiment is derived by arithmetic from another.** Experiment 6 obtained five of
-its performance seeds as `4001 + block`, which is why 4006–4010 appear in its manifest and
-in no declaration.
+`config/protocol.json` at start-up and refuses to run on any difference. **No replicate
+anywhere in this experiment is derived by arithmetic from another.** Experiment 6 obtained
+five of its performance seeds as `4001 + block`, which is why 4006–4010 appear in its
+manifest and in no declaration.
+
+Within a replicate, P1 and P5 — and P2's native replica layer, which has to reproduce P1's —
+run each `(precision, κ)` configuration on its own engine, seeded
+`seed + 10000 × (13 × precision_index + κ_index)`. That derivation is declared, in
+PROTOCOL.md §3, in `config/protocol.json` and in `src/exp7_common.H`, and the selftest
+checks that the 130 streams it produces are distinct and that none of them is a spent,
+performance or fixture seed. It exists because family F2 counts interval misses against a
+null built over independent units, and 26 configurations sharing one `mt19937` are not 26
+independent units; see PROTOCOL.md §2.7.2. Both numbers appear on every affected row, as
+`seed` and `stream_seed`.
 
 P6 indexes the declared performance vector by `block mod 5`. The randomization of the
 *method order within a block* is a separate, declared constant that never reaches a variate,
@@ -424,9 +439,9 @@ by the G0–G6 table of `PROTOCOL.md` §6 and links to the decisive source data.
    attempts. Both counts are reported for every stratum, so the coverage is exact.
 
 5. **`make selftest` uses its own declared seed block, 7501–7505.** `PROTOCOL.md` §3
-   declares two blocks and requires that no seed be derived; it does not name a fixture
-   block, and running the selftest's gate-predicate checks on 7001–7005 would read the
-   holdout before the run. The third vector is declared in `src/exp7_common.H` alongside the
+   declares two blocks and requires that no replicate be derived; it does not name a
+   fixture block, and running the selftest's gate-predicate checks on 9001–9005 would read
+   the holdout before the run. The third vector is declared in `src/exp7_common.H` alongside the
    other two, and the probe checks all three for pairwise disjointness at start-up.
 
 6. **x86_64 is not covered here**; gate G4 stays explicitly open with the command to run it

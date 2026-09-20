@@ -4,6 +4,7 @@
 #include <array>
 #include <cmath>
 #include <cstring>
+#include <type_traits>
 #include <functional>
 #include <iostream>
 #include <limits>
@@ -3201,11 +3202,20 @@ static bool test_boundary_fixtures(const BoundaryFixture<T> *fx, int n, const ch
     for (int i= 0; i < n; ++i)
     {
         const BoundaryFixture<T> &f= fx[i];
-        std::array<T, 3> g, v;
+        // Release 2.2.0 hands `materializeComponents` the accumulator of
+        // `bikappa_detail::log_accumulator<T>` -- `double` for a `float` run, the working
+        // type otherwise -- because the one rounding belongs on the product `R g_j` and
+        // not on its two factors.  Widening is exact, so the fixtures below are the same
+        // mathematical inputs they always were and their 100-digit adjudications still
+        // stand; what changes is that the loader can now resolve them.
+        typedef typename bikappa_detail::log_accumulator<T>::type A;
+        std::array<A, 3> g;
+        std::array<T, 3> v;
         for (int j= 0; j < 3; ++j)
-            g[j]= f.g[j];
+            g[j]= static_cast<A>(f.g[j]);
 
-        const bool any= bikappa_detail::materializeComponents<T>(f.log_r, g, v);
+        const bool any=
+            bikappa_detail::materializeComponents<T>(static_cast<A>(f.log_r), g, v);
 
         bool ok= (any == f.any_overflow);
         bool any_nonfinite= false;
@@ -3352,6 +3362,174 @@ static int test_representability_boundary()
                   << " returned draws, n_nonfinite()=" << dist.n_nonfinite()
                   << " (unrepresentable draws the box also rejected, counted on the "
                      "velocity): " << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    // S5: the draw the SECOND confirmatory holdout lost, replayed from its recorded
+    // variates.
+    //
+    // The defect this locks down is resolution, not a wrong comparison.  Release 2.1.0
+    // already decided representability from the materialized component; what it could not
+    // do was resolve the margin.  At `float kappa = 0.505`, seed 8005, attempt 157855, the
+    // largest intended component lies 3.12e-08 natural-log units below `log(FLT_MAX)` --
+    // about half an ulp -- so the correctly rounded `float` is finite and the type can
+    // hold the draw.  Two working-precision quantities on the path to it are coarser than
+    // that margin: `log R = (log X1 - log X2)/2` carries about 3.5e-06 once `log U` has
+    // been divided by `a = 0.005`, and `g_j = sqrt(kappa) n_j` formed in `float` carries
+    // another 3.9e-08, against a `float` ulp of 6.0e-08 at the overflow threshold.  2.1.0
+    // therefore exponentiated one ulp high and returned `+inf` for a returnable draw.
+    //
+    // 2.2.0 draws the same `float` variates in the same order -- the law is unchanged --
+    // and evaluates the deterministic map from them to the returned velocity in the
+    // accumulator, rounding once.  Both halves are asserted: the stabilized formation must
+    // reproduce the 120-digit values below, and the withdrawn working-precision formation
+    // must lose the draw, so that a revert cannot pass this test quietly.
+    //
+    // The five variates are the bit patterns the run recorded.  The expected components
+    // were computed at 120 decimal digits with mpmath from the exact definition
+    // |V_j| = exp(log R + log|g_j|) with log X2 = log Y + log(U)/a, and are the
+    // correctly-rounded `float` of that value.
+    {
+        const unsigned bits_x1= 0x3f128ad2u, bits_y= 0x3f795a38u, bits_u= 0x3ed12d4eu;
+        const unsigned bits_ct= 0xbf0bc1cau, bits_phi= 0x40c530f9u;
+        float x1, y, u, ct, phi;
+        std::memcpy(&x1, &bits_x1, sizeof(float));
+        std::memcpy(&y, &bits_y, sizeof(float));
+        std::memcpy(&u, &bits_u, sizeof(float));
+        std::memcpy(&ct, &bits_ct, sizeof(float));
+        std::memcpy(&phi, &bits_phi, sizeof(float));
+        const float kappa= 0.505f;
+        const float a= kappa - 0.5f;
+
+        // 120-digit adjudication, correctly rounded to float.  The first component is
+        // FLT_MAX itself: the exact magnitude is 0.99999999860 of it.
+        const float expected[3]= {0x1.fffffep+127f, -0x1.f1df00p+124f, -0x1.501214p+127f};
+
+        // --- the stabilized formation, as 2.2.0 performs it ---------------------
+        typedef bikappa_detail::log_accumulator<float>::type A;
+        const A log_x2= std::log(static_cast<A>(y)) +
+                        std::log(static_cast<A>(u)) / static_cast<A>(a);
+        const A log_r= A(0.5) * (std::log(static_cast<A>(x1)) - log_x2);
+        const A st= std::sqrt(A(1) - static_cast<A>(ct) * static_cast<A>(ct));
+        const A sk= std::sqrt(static_cast<A>(kappa));
+        std::array<A, 3> g;
+        g[0]= sk * st * std::cos(static_cast<A>(phi));
+        g[1]= sk * st * std::sin(static_cast<A>(phi));
+        g[2]= sk * static_cast<A>(ct);
+        std::array<float, 3> v;
+        const bool any= bikappa_detail::materializeComponents<float>(log_r, g, v);
+
+        bool ok= !any;
+        for (int j= 0; j < 3; ++j)
+            ok= ok && (v[j] == expected[j]);
+
+        // --- the withdrawn working-precision formation --------------------------
+        const float f_log_x2= std::log(y) + std::log(u) / a;
+        const float f_log_r= 0.5f * (std::log(x1) - f_log_x2);
+        const float f_st= std::sqrt(1.0f - ct * ct);
+        const float f_sk= std::sqrt(kappa);
+        const float f_g0= f_sk * f_st * std::cos(phi);
+        const float f_R= std::exp(f_log_r);
+        const bool withdrawn_lost=
+            !(f_R <= std::numeric_limits<float>::max()) ||
+            !(f_R * std::abs(f_g0) <= std::numeric_limits<float>::max());
+
+        ok= ok && withdrawn_lost;
+        all_ok= all_ok && ok;
+        std::cout << "  S5 holdout-2 draw (float kappa=0.505, seed 8005, attempt 157855): "
+                  << "stabilized returns " << (any ? "non-finite" : "the 120-digit values")
+                  << ", withdrawn form " << (withdrawn_lost ? "loses it" : "also returns it")
+                  << ": " << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    // S6: the float representability boundary, swept.
+    //
+    // S5 is one point on a boundary; this walks across it.  Each target magnitude is built
+    // first, as an exact `double` -- FLT_MAX plus an integer number of eighths of an ulp,
+    // which needs 27 bits of mantissa -- and what the loader must decide is compared
+    // against the hardware's own `float` conversion of that magnitude, never against the
+    // loader's own `exp`.  The rounding midpoint at +4/8 ulp is excluded and the exclusion
+    // is part of the rule: it is the one magnitude whose answer comes from
+    // round-half-to-even rather than from an inequality, no finite-precision
+    // reconstruction of it can be relied on to land on the right side, and an exact tie has
+    // probability zero under a continuous law.  The two points 1e-12 either side of it --
+    // a hundred times the accumulator's resolution, four thousand times finer than an ulp
+    // -- are included instead, and they are what a working-precision `log R` could not
+    // have decided.
+    {
+        const float fmax= std::numeric_limits<float>::max();
+        const double fmaxd= static_cast<double>(fmax);
+        const double ulp= fmaxd - static_cast<double>(std::nextafter(fmax, 0.0f));
+        const double g0= 0.59104243501804303857;   // the S5 draw's largest |g_j|
+        const double g1= -0.071841542754834329151;
+        const double g2= -0.38795312600129426096;
+
+        int checked= 0, bad= 0;
+        for (int i= 0; i <= 34; ++i)
+        {
+            const int j= i - 16;
+            double m;
+            bool expect_finite;
+            if (i <= 32)
+            {
+                if (j == 4)
+                    continue;                       // the exact tie; see above
+                m= fmaxd + static_cast<double>(j) * (ulp / 8.0);
+                expect_finite= std::isfinite(static_cast<float>(m));
+            }
+            else
+            {
+                const double mid= fmaxd + 4.0 * (ulp / 8.0);
+                expect_finite= (i == 33);
+                m= mid * (expect_finite ? (1.0 - 1.0e-12) : (1.0 + 1.0e-12));
+            }
+            const double log_r= std::log(m) - std::log(g0);
+            std::array<double, 3> g;
+            g[0]= g0;
+            g[1]= g1;
+            g[2]= g2;
+            std::array<float, 3> v;
+            const bool over= bikappa_detail::materializeComponents<float>(log_r, g, v);
+            const bool got= !over && std::isfinite(v[0]) && std::isfinite(v[1]) &&
+                            std::isfinite(v[2]);
+            ++checked;
+            if (got != expect_finite)
+                ++bad;
+        }
+        const bool ok= (bad == 0) && (checked == 34);
+        all_ok= all_ok && ok;
+        std::cout << "  S6 float boundary sweep: " << checked
+                  << " magnitudes from -2 to +2 ulp of FLT_MAX and 1e-12 either side of "
+                     "the rounding midpoint, " << bad << " decided against the hardware: "
+                  << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    // S7: the accumulator is the working type for `double` and wider only for `float`.
+    //
+    // This is what makes "a `double` instantiation of 2.2.0 returns the same bits as
+    // 2.1.0" a statement about the source rather than a measurement: with
+    // `log_accumulator<double>::type == double`, every expression 2.2.0 widened is the
+    // expression 2.1.0 evaluated, character for character, so there is no `double`
+    // arithmetic to re-validate.  Only `float` gets a wider accumulator, and it must be
+    // strictly wider or the fix is not there at all.  A digest against the 2.1.0 binary
+    // is not used here: it would depend on the compiler and on `-ffp-contract`, and the
+    // equality it would test is checked once, against both released headers, in the
+    // release record rather than in a portable unit test.
+    {
+        const bool d_is_working=
+            std::is_same<bikappa_detail::log_accumulator<double>::type, double>::value;
+        const bool f_is_double=
+            std::is_same<bikappa_detail::log_accumulator<float>::type, double>::value;
+        const bool wider= std::numeric_limits<
+                              bikappa_detail::log_accumulator<float>::type>::digits >
+                          std::numeric_limits<float>::digits;
+        const bool ok= d_is_working && f_is_double && wider;
+        all_ok= all_ok && ok;
+        std::cout << "  S7 accumulator: double -> double (working type, so the double path "
+                     "is 2.1.0 unchanged), float -> double ("
+                  << std::numeric_limits<
+                         bikappa_detail::log_accumulator<float>::type>::digits
+                  << " bits against " << std::numeric_limits<float>::digits << "): "
+                  << (ok ? "PASS" : "FAIL") << std::endl;
     }
 
     std::cout << "test_representability_boundary: " << (all_ok ? "PASS" : "FAIL")

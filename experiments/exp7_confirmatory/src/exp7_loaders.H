@@ -275,10 +275,13 @@ bool legacyCapAccept(T r, T cos_theta, T phi, const Geometry<T> &geom, T lambda)
 /// replica reproduces what a user actually gets -- including at the boundary, which is the
 /// whole reason the released form no longer compares a logarithm against log(max()).
 template <typename T>
-std::array<T, 3> candidateVectorFromLogRadius(T log_r, const std::array<T, 3> &n,
-                                              const Geometry<T> &geom, bool *any_overflow)
+std::array<T, 3> candidateVectorFromLogRadius(
+    typename Geometry<T>::acc_type log_r,
+    const std::array<typename Geometry<T>::acc_type, 3> &n, const Geometry<T> &geom,
+    bool *any_overflow)
 {
-    const std::array<T, 3> g= geom.gVector(n);
+    typedef typename Geometry<T>::acc_type A;
+    const std::array<A, 3> g= geom.gVectorAcc(n);
 
     // Mirrors the released step 5 exactly, including why it no longer tests a logarithm.
     // `log_max` is a rounded value and `exp` of it need not land below `max()`: in float,
@@ -287,31 +290,36 @@ std::array<T, 3> candidateVectorFromLogRadius(T log_r, const std::array<T, 3> &n
     // every component it should have produced was representable, because |g_j| < 1 pulled
     // each back under the limit.  Comparing the materialized magnitude cannot do that: it
     // is the value that gets returned, so the test and the result agree by construction.
+    // 2.2.0: the radius, the direction and `g` are all in the accumulator, and the one
+    // rounding is the cast below.  A `float` `g_j` carries about 6e-8 of relative error,
+    // which is larger than the margin by which a component just under `FLT_MAX` is
+    // representable, so rounding before the multiply discards draws the type can hold.
+    const A accum_max= std::numeric_limits<A>::max();
     const T max_finite= std::numeric_limits<T>::max();
-    const T r_try= std::exp(log_r);
-    const bool radius_representable= (r_try <= max_finite); // false for inf and for NaN
-    const T R= radius_representable ? r_try : T(0);
+    const A r_try= std::exp(log_r);
+    const bool radius_representable= (r_try <= accum_max); // false for inf and for NaN
+    const A R= radius_representable ? r_try : A(0);
 
     *any_overflow= false;
     std::array<T, 3> v;
     for (int j= 0; j < 3; ++j)
     {
-        if (g[j] == T(0))
+        if (g[j] == A(0))
         {
             v[j]= T(0);
             continue;
         }
-        const T mag= radius_representable
-                         ? R * std::fabs(g[j])
-                         : std::exp(log_r + std::log(std::fabs(g[j])));
+        const A wide= radius_representable ? R * std::fabs(g[j])
+                                           : std::exp(log_r + std::log(std::fabs(g[j])));
+        const T mag= static_cast<T>(wide);
         if (!(mag <= max_finite))
         {
             *any_overflow= true;
-            v[j]= (g[j] < T(0)) ? -std::numeric_limits<T>::infinity()
+            v[j]= (g[j] < A(0)) ? -std::numeric_limits<T>::infinity()
                                 : std::numeric_limits<T>::infinity();
             continue;
         }
-        v[j]= (g[j] < T(0)) ? -mag : mag;
+        v[j]= (g[j] < A(0)) ? -mag : mag;
     }
     return v;
 }
@@ -319,21 +327,25 @@ std::array<T, 3> candidateVectorFromLogRadius(T log_r, const std::array<T, 3> &n
 /// The same, from the paired layer's declared direction primitive.  Release 2.0.0 never
 /// forms an angle, so this overload exists for the paired layer and not for the native one.
 template <typename T>
-std::array<T, 3> candidateVectorFromLogRadius(T log_r, T cos_theta, T phi,
-                                              const Geometry<T> &geom, bool *any_overflow)
+std::array<T, 3> candidateVectorFromLogRadius(typename Geometry<T>::acc_type log_r,
+                                              T cos_theta, T phi, const Geometry<T> &geom,
+                                              bool *any_overflow)
 {
-    return candidateVectorFromLogRadius<T>(log_r, Geometry<T>::direction(cos_theta, phi),
+    return candidateVectorFromLogRadius<T>(log_r, Geometry<T>::directionAcc(cos_theta, phi),
                                            geom, any_overflow);
 }
 
 /// The CANDIDATE cap predicate, in the log domain, in the field-aligned frame.  Exactly the
 /// released test: only the largest |n_j| has to be examined, so it costs one logarithm.
 template <typename T>
-bool candidateCapAcceptLog(T log_r, const std::array<T, 3> &n, const Geometry<T> &geom,
-                           T log_cap, bool *unrepresentable)
+bool candidateCapAcceptLog(typename Geometry<T>::acc_type log_r,
+                           const std::array<typename Geometry<T>::acc_type, 3> &n,
+                           const Geometry<T> &geom, typename Geometry<T>::acc_type log_cap,
+                           bool *unrepresentable)
 {
-    const T max_abs_n= std::max(std::fabs(n[0]), std::max(std::fabs(n[1]), std::fabs(n[2])));
-    const T log_largest= log_r + geom.log_sqrt_kappa + std::log(max_abs_n);
+    typedef typename Geometry<T>::acc_type A;
+    const A max_abs_n= std::max(std::fabs(n[0]), std::max(std::fabs(n[1]), std::fabs(n[2])));
+    const A log_largest= log_r + geom.log_sqrt_kappa + std::log(max_abs_n);
     if (log_largest > log_cap)
     {
         if (unrepresentable)
@@ -345,7 +357,7 @@ bool candidateCapAcceptLog(T log_r, const std::array<T, 3> &n, const Geometry<T>
             // screens on the rotation-invariant bound
             // max_j |g_j| <= |g| <= sqrt(kappa) max(theta_perp, theta_par) and materializes
             // only where that cannot decide it; both steps are reproduced here.
-            if (log_r + geom.log_g_bound > geom.log_max_finite - T(1))
+            if (log_r + geom.log_g_bound > geom.log_max_finite - A(1))
             {
                 bool ov= false;
                 candidateVectorFromLogRadius<T>(log_r, n, geom, &ov);
@@ -365,10 +377,11 @@ bool candidateCapAcceptLog(T log_r, const std::array<T, 3> &n, const Geometry<T>
 
 /// The same, from the paired layer's declared direction primitive.
 template <typename T>
-bool candidateCapAcceptLog(T log_r, T cos_theta, T phi, const Geometry<T> &geom, T log_cap,
+bool candidateCapAcceptLog(typename Geometry<T>::acc_type log_r, T cos_theta, T phi,
+                           const Geometry<T> &geom, typename Geometry<T>::acc_type log_cap,
                            bool *unrepresentable)
 {
-    return candidateCapAcceptLog<T>(log_r, Geometry<T>::direction(cos_theta, phi), geom,
+    return candidateCapAcceptLog<T>(log_r, Geometry<T>::directionAcc(cos_theta, phi), geom,
                                     log_cap, unrepresentable);
 }
 
@@ -468,7 +481,16 @@ PairedResult runPairedAttempt(double kappa, const SharedPrimitives<T> &s,
 
     const T r_qf= std::sqrt(s.x1 / x2);
     const T r_legacy= std::sqrt(s.x1) / std::sqrt(x2);
-    const T log_r_cand= T(0.5) * (s.log_x1 - s.log_x2);
+    // 2.2.0's log radius: the variates are the working-precision ones the run drew, the
+    // sum is formed in the accumulator.  For a `double` run this is `s.log_x1`/`s.log_x2`
+    // unchanged.  For a `float` run it coincides with the reference's radius by
+    // construction, which is why PROTOCOL.md records that the paired layer cannot judge the
+    // stabilized candidate's `float` accuracy and the 100-digit oracle does it instead.
+    typedef typename Geometry<T>::acc_type A;
+    const A log_r_cand=
+        A(0.5) * (std::log(static_cast<A>(s.x1)) -
+                  (std::log(static_cast<A>(s.y)) +
+                   std::log(static_cast<A>(s.u)) / static_cast<A>(shapeFromKappa<T>(kappa))));
 
     const std::array<T, 3> v_qf= legacyVectorFromRadius<T>(r_qf, s.cos_theta, s.phi, geom);
     const std::array<T, 3> v_legacy=
@@ -598,7 +620,7 @@ template <typename T> class CandidateNative
   public:
     explicit CandidateNative(double kappa)
         : m_a(shapeFromKappa<T>(kappa)), m_ncache(T(0)), m_ncached(false), m_lastN(),
-          m_lastX1(T(0)), m_lastLogX2(T(0)), m_lastDiscTries(0)
+          m_lastX1(T(0)), m_lastLogX2(typename Geometry<T>::acc_type(0)), m_lastDiscTries(0)
     {
     }
 
@@ -612,10 +634,11 @@ template <typename T> class CandidateNative
     NativeAttempt<T> attempt(Gen &gen, const Geometry<T> &geom)
     {
         NativeAttempt<T> a;
+        typedef typename Geometry<T>::acc_type A;
         const T x1= bikappa_detail::marsagliaTsangGamma<T, Gen>(T(1.5), gen, m_ncache,
                                                                 m_ncached);
-        const T log_x2= bikappa_detail::logGamma<T, Gen>(m_a, gen, m_ncache, m_ncached);
-        const T log_r= T(0.5) * (std::log(x1) - log_x2);
+        const A log_x2= bikappa_detail::logGamma<T, Gen>(m_a, gen, m_ncache, m_ncached);
+        const A log_r= A(0.5) * (std::log(static_cast<A>(x1)) - log_x2);
 
         // Step 2 of the released operator(), expression for expression: a direction uniform
         // on S^2 by the rejection method of Marsaglia (1972).  The order of the two
@@ -623,19 +646,21 @@ template <typename T> class CandidateNative
         // replica bit-for-bit equal to the class, so none of them may be rearranged -- and
         // the loop is why the attempt's uniform count is variable rather than fixed.
         int tries= 0;
-        T d1, d2, dsq;
+        T d1, d2;
+        A dsq;
         do
         {
             d1= T(2) * bikappa_detail::openCanonical<T, Gen>(gen) - T(1);
             d2= T(2) * bikappa_detail::openCanonical<T, Gen>(gen) - T(1);
-            dsq= d1 * d1 + d2 * d2;
+            dsq= static_cast<A>(d1) * static_cast<A>(d1) +
+                 static_cast<A>(d2) * static_cast<A>(d2);
             ++tries;
-        } while (dsq >= T(1));
-        const T dscale= T(2) * std::sqrt(T(1) - dsq);
-        std::array<T, 3> n;
-        n[0]= d1 * dscale;
-        n[1]= d2 * dscale;
-        n[2]= T(1) - T(2) * dsq;
+        } while (dsq >= A(1));
+        const A dscale= A(2) * std::sqrt(A(1) - dsq);
+        std::array<A, 3> n;
+        n[0]= static_cast<A>(d1) * dscale;
+        n[1]= static_cast<A>(d2) * dscale;
+        n[2]= A(1) - A(2) * dsq;
 
         bool overflow= false;
         a.v= candidateVectorFromLogRadius<T>(log_r, n, geom, &overflow);
@@ -652,20 +677,24 @@ template <typename T> class CandidateNative
     }
 
     T shape() const { return m_a; }
-    /// The unit direction the last attempt actually drew.  There is no last cos(theta) or
-    /// phi to report: 2.0.0 never forms either.
-    const std::array<T, 3> &lastDirection() const { return m_lastN; }
+    /// The unit direction the last attempt actually drew, in the accumulator 2.2.0 forms it
+    /// in.  There is no last cos(theta) or phi to report: 2.x never forms either.
+    const std::array<typename Geometry<T>::acc_type, 3> &lastDirection() const
+    {
+        return m_lastN;
+    }
     /// Disc-rejection tries the last attempt used; 1 whenever the first pair was accepted.
     int lastDiscTries() const { return m_lastDiscTries; }
     T lastX1() const { return m_lastX1; }
-    T lastLogX2() const { return m_lastLogX2; }
+    typename Geometry<T>::acc_type lastLogX2() const { return m_lastLogX2; }
 
   private:
     T m_a;
     T m_ncache;
     bool m_ncached;
-    std::array<T, 3> m_lastN;
-    T m_lastX1, m_lastLogX2;
+    std::array<typename Geometry<T>::acc_type, 3> m_lastN;
+    T m_lastX1;
+    typename Geometry<T>::acc_type m_lastLogX2;
     int m_lastDiscTries;
 };
 

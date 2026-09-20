@@ -423,10 +423,16 @@ static ClassRun<T> runCandidateClass(double kappa, double theta_perp, double the
 
 template <typename T>
 static void emitClassRow(FILE *f, const RunContext &rc, const char *phase, int method,
-                         double kappa, unsigned seed, long long n, const ClassRun<T> &r)
+                         double kappa, unsigned seed, unsigned stream_seed, long long n,
+                         const ClassRun<T> &r)
 {
     emitConfigFields(f, rc, phase, "class", methodName(method), precisionId<T>(), kappa,
                      static_cast<double>(shapeFromKappa<T>(kappa)), seed, n);
+    // `seed` is the replicate, which is the unit the analysis groups and clusters by;
+    // `stream_seed` is the engine this configuration actually ran on.  In P1 and P5 under
+    // protocol 3.0.0 they differ by the declared stride, and both are recorded so that the
+    // independence family F2's null assumes is auditable from the raw rows.
+    std::fprintf(f, ",\"stream_seed\":%u", stream_seed);
     std::fprintf(f,
                  ",\"n_finite\":%lld,\"nonfinite_output\":%lld,\"thrown\":%lld,"
                  "\"n_attempts_reported\":%llu,\"n_nonfinite_reported\":%llu,"
@@ -660,14 +666,14 @@ static void emitScalarSummary(FILE *f, const ScalarSummary &s)
 
 template <typename T>
 static void p1Native(const Options &o, const RunContext &rc, JsonlWriter &w, int method,
-                     double kappa, unsigned seed, long long n)
+                     double kappa, unsigned seed, unsigned stream_seed, long long n)
 {
     const std::array<T, 3> zhat= {{T(0), T(0), T(1)}};
     Geometry<T> geom(static_cast<T>(kappa), T(1), T(1), zhat);
     const double log_ovf= logOverflowThreshold<T>();
     const double a_ref= shapeReference<T>(kappa);
 
-    CountingEngine gen(seed);
+    CountingEngine gen(stream_seed);
     LegacyNative<T> legacy(kappa);
     CandidateNative<T> candidate(kappa);
 
@@ -761,6 +767,7 @@ static void p1Native(const Options &o, const RunContext &rc, JsonlWriter &w, int
 
     emitConfigFields(w.f(), rc, "p1", "native", methodName(method), precisionId<T>(), kappa,
                      a_ref, seed, n);
+    std::fprintf(w.f(), ",\"stream_seed\":%u", stream_seed);
     emitCategories(w.f(), mc);
     std::fprintf(w.f(),
                  ",\"x2_zero\":%lld,\"x2_subnormal\":%lld,\"gamma_variates\":%lld,"
@@ -785,18 +792,22 @@ static void p1ForPrecision(const Options &o, const RunContext &rc, JsonlWriter &
         for (size_t is= 0; is < seeds.size(); ++is)
         {
             const unsigned s= seeds[is];
+            // PROTOCOL.md Sec. 3: one engine stream per configuration, so that the 26
+            // configurations of a replicate are independent and family F2's null holds.
+            const unsigned ss=
+                p1StreamSeed(s, sizeof(T) == sizeof(float), static_cast<int>(ik));
             const ClassRun<T> lg=
                 runLegacyClass<T>(k, 1.0, 1.0, zhat, std::numeric_limits<double>::infinity(),
-                                  s, n, 0);
-            emitClassRow<T>(w.f(), rc, "p1", kMethodLegacy, k, s, n, lg);
+                                  ss, n, 0);
+            emitClassRow<T>(w.f(), rc, "p1", kMethodLegacy, k, s, ss, n, lg);
             w.countLine();
             const ClassRun<T> cd= runCandidateClass<T>(
-                k, 1.0, 1.0, zhat, std::numeric_limits<double>::infinity(), s, n, 0);
-            emitClassRow<T>(w.f(), rc, "p1", kMethodCandidate, k, s, n, cd);
+                k, 1.0, 1.0, zhat, std::numeric_limits<double>::infinity(), ss, n, 0);
+            emitClassRow<T>(w.f(), rc, "p1", kMethodCandidate, k, s, ss, n, cd);
             w.countLine();
 
-            p1Native<T>(o, rc, w, kMethodLegacy, k, s, n);
-            p1Native<T>(o, rc, w, kMethodCandidate, k, s, n);
+            p1Native<T>(o, rc, w, kMethodLegacy, k, s, ss, n);
+            p1Native<T>(o, rc, w, kMethodCandidate, k, s, ss, n);
         }
     }
 }
@@ -951,14 +962,18 @@ static void p2Paired(const Options &o, const RunContext &rc, JsonlWriter &w, dou
 
 template <typename T>
 static void p2Native(const Options &o, const RunContext &rc, JsonlWriter &w, int method,
-                     double kappa, unsigned seed, long long n)
+                     double kappa, unsigned seed, unsigned stream_seed, long long n)
 {
     (void)o;
     const std::array<T, 3> zhat= {{T(0), T(0), T(1)}};
     Geometry<T> geom(static_cast<T>(kappa), T(1), T(1), zhat);
     const double log_ovf= logOverflowThreshold<T>();
 
-    CountingEngine gen(seed);
+    // The same engine as P1's native row for this configuration, so that the cross-phase
+    // equality the schema predicts is still an equality under the per-configuration
+    // streams of PROTOCOL.md Sec. 3.  P2's PAIRED layer keeps the replicate seed: it is a
+    // mechanism decomposition, not a replica of P1, and nothing compares the two.
+    CountingEngine gen(stream_seed);
     LegacyNative<T> legacy(kappa);
     CandidateNative<T> candidate(kappa);
     MethodCounters mc;
@@ -1005,6 +1020,7 @@ static void p2Native(const Options &o, const RunContext &rc, JsonlWriter &w, int
 
     emitConfigFields(w.f(), rc, "p2", "native", methodName(method), precisionId<T>(), kappa,
                      static_cast<double>(shapeFromKappa<T>(kappa)), seed, n);
+    std::fprintf(w.f(), ",\"stream_seed\":%u", stream_seed);
     emitCategories(w.f(), mc);
     std::fprintf(w.f(),
                  ",\"x2_zero\":%lld,\"x2_subnormal\":%lld,\"gamma_variates\":%lld,"
@@ -1037,17 +1053,19 @@ static int phaseP2(const Options &o, const RunContext &rc)
         {
             const double k= kappas[ik];
             const unsigned s= seeds[is];
+            const unsigned ssd= p1StreamSeed(s, false, static_cast<int>(ik));
+            const unsigned ssf= p1StreamSeed(s, true, static_cast<int>(ik));
             if (o.only_precision != "float")
             {
                 p2Paired<double>(o, rc, w, k, s, n, &aw);
-                p2Native<double>(o, rc, w, kMethodLegacy, k, s, n);
-                p2Native<double>(o, rc, w, kMethodCandidate, k, s, n);
+                p2Native<double>(o, rc, w, kMethodLegacy, k, s, ssd, n);
+                p2Native<double>(o, rc, w, kMethodCandidate, k, s, ssd, n);
             }
             if (o.only_precision != "double")
             {
                 p2Paired<float>(o, rc, w, k, s, n, &aw);
-                p2Native<float>(o, rc, w, kMethodLegacy, k, s, n);
-                p2Native<float>(o, rc, w, kMethodCandidate, k, s, n);
+                p2Native<float>(o, rc, w, kMethodLegacy, k, s, ssf, n);
+                p2Native<float>(o, rc, w, kMethodCandidate, k, s, ssf, n);
             }
         }
 
@@ -1476,10 +1494,13 @@ static void p5ForPrecision(const Options &o, const RunContext &rc, JsonlWriter &
     for (size_t ik= 0; ik < kappas.size(); ++ik)
         for (size_t is= 0; is < seeds.size(); ++is)
         {
+            const unsigned ss= p1StreamSeed(seeds[is], sizeof(T) == sizeof(float),
+                                            static_cast<int>(ik));
             const ClassRun<T> cd= runCandidateClass<T>(
-                kappas[ik], 1.0, 1.0, zhat, std::numeric_limits<double>::infinity(),
-                seeds[is], n, 0);
-            emitClassRow<T>(w.f(), rc, "p5", kMethodCandidate, kappas[ik], seeds[is], n, cd);
+                kappas[ik], 1.0, 1.0, zhat, std::numeric_limits<double>::infinity(), ss, n,
+                0);
+            emitClassRow<T>(w.f(), rc, "p5", kMethodCandidate, kappas[ik], seeds[is], ss, n,
+                            cd);
             w.countLine();
         }
 }
@@ -2215,9 +2236,11 @@ static int phaseSelftest(const Options &o)
         check(true, "declared ladder and seed blocks agree with config/protocol.json");
     }
 
-    // 13. The first holdout's seed block is spent.  PROTOCOL.md Sec. 8 forbids recomputing
-    //     any result on 7001-7010, and the cheapest place to enforce that is here, where a
-    //     rerun on them fails before it writes a byte.
+    // 13. Both spent seed blocks stay spent.  PROTOCOL.md Sec. 8 forbids recomputing any
+    //     result on 7001-7010 or 8001-8010, and the cheapest place to enforce that is
+    //     here, where a rerun on them fails before it writes a byte.  The derived P1/P5
+    //     streams are checked against the same blocks, because a derivation that landed on
+    //     a spent seed would reuse it just as effectively as a declaration would.
     {
         const std::vector<unsigned> spent= spentSeeds();
         const std::vector<unsigned> prod= productionSeeds();
@@ -2233,8 +2256,229 @@ static int phaseSelftest(const Options &o)
             for (size_t j= 0; j < fixt.size(); ++j)
                 clash= clash || (spent[i] == fixt[j]);
         }
-        check(!clash && !spent.empty(),
-              "the first holdout's seed block is spent and appears in no block in use");
+        check(!clash && spent.size() == 20,
+              "both holdout seed blocks are spent and appear in no block in use");
+    }
+
+    // 14. The P1/P5 stream derivation.  Family F2's null is exact only if the
+    //     configurations of a replicate really do run on different streams, so the three
+    //     things that could make that false are checked rather than asserted in prose: the
+    //     derived seeds are all distinct, none is a spent seed, and none is a performance
+    //     or fixture seed.
+    {
+        const std::vector<unsigned> prod= productionSeeds();
+        const std::vector<unsigned> perf= performanceSeeds();
+        const std::vector<unsigned> fixt= selftestSeeds();
+        const std::vector<unsigned> spent= spentSeeds();
+        const int nk= static_cast<int>(kappaLadder().size());
+        std::vector<unsigned> derived;
+        for (size_t is= 0; is < prod.size(); ++is)
+            for (int f= 0; f < 2; ++f)
+                for (int ik= 0; ik < nk; ++ik)
+                    derived.push_back(p1StreamSeed(prod[is], f != 0, ik));
+        const size_t expected= prod.size() * 2u * static_cast<size_t>(nk);
+        std::vector<unsigned> sorted= derived;
+        std::sort(sorted.begin(), sorted.end());
+        const bool distinct=
+            std::adjacent_find(sorted.begin(), sorted.end()) == sorted.end();
+        bool collides= false;
+        for (size_t i= 0; i < derived.size(); ++i)
+        {
+            for (size_t j= 0; j < spent.size(); ++j)
+                collides= collides || (derived[i] == spent[j]);
+            for (size_t j= 0; j < perf.size(); ++j)
+                collides= collides || (derived[i] == perf[j]);
+            for (size_t j= 0; j < fixt.size(); ++j)
+                collides= collides || (derived[i] == fixt[j]);
+        }
+        char msg[220];
+        std::snprintf(msg, sizeof(msg),
+                      "P1/P5 stream derivation: %zu configuration streams, all distinct "
+                      "and none a spent, performance or fixture seed",
+                      derived.size());
+        check(derived.size() == expected && distinct && !collides, msg);
+    }
+
+    // 14. The avoidable loss the second holdout found, replayed from frozen bit patterns.
+    //
+    //     Seeds 8001-8010 are spent, so this cannot be a rerun of the configuration; the
+    //     five `float` variates of the losing attempt are written down instead, as the bit
+    //     patterns the run recorded, and the arithmetic under them is replayed directly.
+    //     That makes the regression independent of the engine, of the phase and of the
+    //     ladder: it keeps failing if the stabilization is reverted, whatever else moves.
+    //
+    //     The draw: p2, CANDIDATE, float, kappa = 0.505, seed 8005, attempt 157855, seen
+    //     identically in both standard-library streams.  Its largest intended component
+    //     lies 3.12e-08 natural-log units below `log(FLT_MAX)` -- about half an ulp -- so
+    //     the correctly rounded `float` is finite and the draw is returnable.  Release
+    //     2.1.0 carried `log R` in `float`, whose error at that scale is 3.5e-06 after the
+    //     division by `a = 0.005`, and formed `g` in `float` too, worth another 3.9e-08;
+    //     neither resolves the margin, and the draw came back `(-inf, +inf, +inf)`.
+    {
+        const unsigned bits_x1= 0x3f128ad2u, bits_y= 0x3f795a38u, bits_u= 0x3ed12d4eu;
+        const unsigned bits_ct= 0xbf0bc1cau, bits_phi= 0x40c530f9u;
+        float x1, y, u, ct, phi;
+        std::memcpy(&x1, &bits_x1, sizeof(float));
+        std::memcpy(&y, &bits_y, sizeof(float));
+        std::memcpy(&u, &bits_u, sizeof(float));
+        std::memcpy(&ct, &bits_ct, sizeof(float));
+        std::memcpy(&phi, &bits_phi, sizeof(float));
+
+        const double kappa= 0.505;
+        const std::array<float, 3> zhat= {{0.0f, 0.0f, 1.0f}};
+        Geometry<float> geom(static_cast<float>(kappa), 1.0f, 1.0f, zhat);
+        const float a= shapeFromKappa<float>(kappa);
+
+        SharedPrimitives<float> sp;
+        sp.x1= x1;
+        sp.y= y;
+        sp.u= u;
+        sp.cos_theta= ct;
+        sp.phi= phi;
+        sp.x2= y * std::pow(u, 1.0f / a);
+        sp.log_x1= std::log(x1);
+        sp.log_x2= std::log(y) + std::log(u) / a;
+
+        const double log_ovf= logOverflowThreshold<float>();
+        const Reference ref= makeReference<float>(shapeReference<float>(kappa), sp, geom,
+                                                  log_ovf);
+        const PairedResult pr= runPairedAttempt<float>(kappa, sp, geom, log_ovf);
+
+        const bool ref_says_representable= ref.representable;
+        const bool margin_is_subulp= ref.overflow_margin < 0.0 &&
+                                     ref.overflow_margin > -1.0e-7;
+        const bool candidate_returns_it= pr.finite[kMethodCandidate];
+        const bool not_scored_as_loss= pr.cat[kMethodCandidate] != kCatLogPrimFail;
+
+        char msg[300];
+        std::snprintf(msg, sizeof(msg),
+                      "holdout-2 regression: float kappa=0.505 seed 8005 attempt 157855 "
+                      "(margin %.3g log units below FLT_MAX) is returned, not lost",
+                      ref.overflow_margin);
+        check(ref_says_representable && margin_is_subulp && candidate_returns_it &&
+                  not_scored_as_loss,
+              msg);
+    }
+
+    // 15. The representability boundary itself, swept.
+    //
+    //     The fixture above is one point on a boundary; this walks across it.  For each
+    //     offset the target magnitude is built first, as an exact `double`, and what the
+    //     loader must decide is compared against the hardware's own `float` conversion of
+    //     that magnitude -- not against the loader's `exp`, which would make the check
+    //     circular.  The offsets step in eighths of an ulp of FLT_MAX, so the grid
+    //     straddles the rounding midpoint at +4/8 ulp, where round-to-nearest carries the
+    //     value past the largest finite `float` and IEEE-754 returns an infinity.
+    //
+    //     The geometry is the losing draw's own: the largest |g_j| is 0.591, so the radius
+    //     that puts a component at the limit is well inside the range where `exp` is
+    //     defined and the multiply, not the exponential, decides the answer.
+    {
+        const float fmax= std::numeric_limits<float>::max();
+        const double fmaxd= static_cast<double>(fmax);
+        const double ulp= fmaxd - static_cast<double>(std::nextafter(fmax, 0.0f));
+        const double g0= 0.5910424350180431;   // the recorded draw's largest |g_j|
+        const double g1= -0.071841542754834328;
+        const double g2= -0.38795312600129428;
+
+        // Offsets in eighths of an ulp, plus the two points that bracket the midpoint at
+        // a relative distance of 1e-12 -- a hundred times the accumulator's resolution and
+        // four thousand times finer than an ulp.  The midpoint itself, +4/8 ulp exactly, is
+        // not in the grid: it is the one magnitude whose correct answer depends on the
+        // round-half-to-even rule rather than on an inequality, and no finite-precision
+        // reconstruction of it can be relied on to land on the right side.  A target that
+        // is an exact tie has probability zero under a continuous law, and the two
+        // bracketing points show the boundary is decided correctly to within 1e-12 of it.
+        double targets[36];
+        bool expect[36];
+        int nt= 0;
+        for (int j= -16; j <= 16; ++j)
+        {
+            if (j == 4)
+                continue;
+            targets[nt]= fmaxd + static_cast<double>(j) * (ulp / 8.0);
+            expect[nt]= std::isfinite(static_cast<float>(targets[nt]));
+            ++nt;
+        }
+        const double mid= fmaxd + 4.0 * (ulp / 8.0);
+        targets[nt]= mid * (1.0 - 1.0e-12);
+        expect[nt]= true;
+        ++nt;
+        targets[nt]= mid * (1.0 + 1.0e-12);
+        expect[nt]= false;
+        ++nt;
+
+        bool all_ok= true;
+        int first_bad= 0;
+        double first_bad_target= 0.0;
+        for (int i= 0; i < nt; ++i)
+        {
+            const double log_r= std::log(targets[i]) - std::log(g0);
+            std::array<double, 3> g= {{g0, g1, g2}};
+            std::array<float, 3> v;
+            const bool overflow=
+                bikappa_detail::materializeComponents<float>(log_r, g, v);
+            const bool got_finite= !overflow && std::isfinite(v[0]) &&
+                                   std::isfinite(v[1]) && std::isfinite(v[2]);
+            if (got_finite != expect[i] && all_ok)
+            {
+                all_ok= false;
+                first_bad= i;
+                first_bad_target= targets[i];
+            }
+        }
+        char msg[300];
+        if (all_ok)
+            std::snprintf(msg, sizeof(msg),
+                          "float representability boundary: %d magnitudes from -2 to +2 ulp "
+                          "of FLT_MAX, and 1e-12 either side of the rounding midpoint, "
+                          "decided as the hardware rounds them",
+                          nt);
+        else
+            std::snprintf(msg, sizeof(msg),
+                          "float representability boundary: disagreement at target %d, "
+                          "%.17g (expected %s)",
+                          first_bad, first_bad_target, expect[first_bad] ? "finite" : "inf");
+        check(all_ok, msg);
+    }
+
+    // 16. The same sweep in `double`, at the resolution `double` can actually deliver.
+    //
+    //     A `double` run has no wider accumulator to fall back on, so `log R` carries about
+    //     eps |log R| = 1.6e-13 of relative error on the radius near the overflow threshold
+    //     and the boundary is not resolvable to an ulp -- it is resolvable to about 1e-13,
+    //     which is five orders of magnitude finer than the 1.05e-08 accuracy the protocol
+    //     requires of the returned radius.  The sweep is therefore stated at 1e-10, a
+    //     thousand times the resolution and a hundred times finer than the requirement, and
+    //     the expectation comes from the sign of the offset rather than from any
+    //     recomputation.
+    {
+        const double dmax= std::numeric_limits<double>::max();
+        const double g0= 0.5910424350180431;
+        const double g1= -0.071841542754834328;
+        const double g2= -0.38795312600129428;
+        const double rel[]= {-1.0e-6, -1.0e-8, -1.0e-10, 1.0e-10, 1.0e-8, 1.0e-6};
+
+        bool all_ok= true;
+        for (size_t i= 0; i < sizeof(rel) / sizeof(rel[0]); ++i)
+        {
+            const bool expect_finite= rel[i] < 0.0;
+            // log of the target magnitude, formed additively so that the target itself is
+            // never materialized -- it would overflow for the positive offsets.
+            const double log_m= std::log(dmax) + std::log1p(rel[i]);
+            const double log_r= log_m - std::log(g0);
+            std::array<double, 3> g= {{g0, g1, g2}};
+            std::array<double, 3> v;
+            const bool overflow=
+                bikappa_detail::materializeComponents<double>(log_r, g, v);
+            const bool got_finite= !overflow && std::isfinite(v[0]) &&
+                                   std::isfinite(v[1]) && std::isfinite(v[2]);
+            if (got_finite != expect_finite)
+                all_ok= false;
+        }
+        check(all_ok,
+              "double representability boundary: +/-1e-10, 1e-8 and 1e-6 relative offsets "
+              "from DBL_MAX decided on the correct side");
     }
 
     std::printf("%s: %d failure(s)\n", g_fail ? "SELFTEST FAILED" : "selftest ok", g_fail);

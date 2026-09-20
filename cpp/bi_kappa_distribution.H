@@ -8,10 +8,15 @@
 /// 2.1.0 supersedes 2.0.0, which was never released.  The two differ in which vectors they
 /// return at the representability boundary and in what `n_nonfinite()` counts under a cap,
 /// so they are two samplers and are versioned as two; see CHANGELOG.md.
+///
+/// 2.2.0 carries the log-domain radius of a `float` instantiation in `double` and rounds
+/// once, when the component is materialized.  It returns the same numbers as 2.1.0 in
+/// `double`, bit for bit, and more accurate ones in `float`; see
+/// @ref bikappa_detail::log_accumulator.
 #define BI_KAPPA_VERSION_MAJOR 2
-#define BI_KAPPA_VERSION_MINOR 1
+#define BI_KAPPA_VERSION_MINOR 2
 #define BI_KAPPA_VERSION_PATCH 0
-#define BI_KAPPA_VERSION_STRING "2.1.0"
+#define BI_KAPPA_VERSION_STRING "2.2.0"
 
 #include <array>
 #include <algorithm>
@@ -55,6 +60,47 @@ BI_KAPPA_ALLOW_FAST_MATH to compile anyway (the overflow counters then mean noth
  */
 namespace bikappa_detail
 {
+
+/**
+ * @brief The type in which the log-domain radius is accumulated.
+ *
+ * `log R` is a stable representation of the radius, not an exact one: its absolute error
+ * is about `eps |log R|`, so the *relative* error of the radius it stands for is also about
+ * `eps |log R|`.  Near the top of a type's range `|log R|` is the logarithm of the largest
+ * finite number -- 88.7 in `float`, 709.8 in `double` -- and the shape-boosting identity
+ * divides one of its two terms by `a = kappa - 1/2`, which amplifies the error of `log U` by
+ * `1/a`: 200-fold at `kappa = 0.505`.  In `float` the result is an error of a few parts in
+ * a million on a quantity whose scale is 88.7, which is larger than the gap between
+ * neighbouring `float`s at the overflow threshold.  The radius is then not resolved finely
+ * enough to say which side of the threshold a component near it falls on, and a draw that
+ * is representable can be exponentiated one ulp high and lost.  One such draw appeared in
+ * 14.2 million audited attempts at `float kappa = 0.505`: its largest component lay
+ * 3.1e-08 natural-log units -- about half an ulp -- below `FLT_MAX`, and the `float` log
+ * radius carried 3.5e-06 of error, a hundred times that margin.
+ *
+ * Widening only the accumulator fixes it.  The variates are still drawn in `RealType`, from
+ * the same engine bits, in the same order, so the sampled sequence does not change; what
+ * changes is that the sum `log Y + (log U)/a` and the radius built from it are formed in a
+ * type whose resolution is far finer than the margin being decided, and the value is rounded
+ * to `RealType` exactly once, where the component is materialized.  For `float` that moves
+ * the resolution of `log R` from about 5.3e-06 to about 1.6e-14 and leaves a single rounding
+ * between the mathematics and the returned number.
+ *
+ * For `double` (and for `long double`, where the two coincide on the platforms this header
+ * targets) the accumulator *is* the working type, so the arithmetic is unchanged and a
+ * `double` instantiation of 2.2.0 returns the same bits as 2.1.0.
+ */
+template <typename RealType> struct log_accumulator
+{
+    typedef RealType type;
+};
+
+/// `float` accumulates in `double`: 53 bits against 24, over a range that easily holds
+/// `log(FLT_MAX)` and the largest `float` alike.
+template <> struct log_accumulator<float>
+{
+    typedef double type;
+};
 
 /// Whole bits of entropy the engine delivers per call (32 for `std::mt19937`).
 template <typename GeneratorType> inline int engineBits()
@@ -181,12 +227,18 @@ RealType marsagliaTsangGamma(RealType shape, GeneratorType &gen, RealType &ncach
  * which any velocity component is representable.
  */
 template <typename RealType, typename GeneratorType>
-RealType logGamma(RealType a, GeneratorType &gen, RealType &ncache, bool &ncached)
+typename log_accumulator<RealType>::type logGamma(RealType a, GeneratorType &gen,
+                                                  RealType &ncache, bool &ncached)
 {
+    typedef typename log_accumulator<RealType>::type AccumType;
     const RealType y=
         marsagliaTsangGamma<RealType, GeneratorType>(a + RealType(1.0), gen, ncache, ncached);
     const RealType u= openCanonical<RealType, GeneratorType>(gen);
-    return std::log(y) + std::log(u) / a;
+    // Y, U and the shape are the working-precision values the sampler actually drew and the
+    // caller actually asked for; only the logarithms and the division are widened.  Widening
+    // the shape instead of the variates would change which distribution is sampled.
+    return std::log(static_cast<AccumType>(y)) +
+           std::log(static_cast<AccumType>(u)) / static_cast<AccumType>(a);
 }
 
 /**
@@ -217,41 +269,61 @@ RealType logGamma(RealType a, GeneratorType &gen, RealType &ncache, bool &ncache
  * needed only where `R` alone overflows, which is where the log domain is doing the work
  * anyway and where there is no accuracy left to lose.
  *
- * @param logR   logarithm of the radius.
- * @param g      the order-unity vector, already rotated into the frame the caller returns.
+ * @param logR   logarithm of the radius, in the accumulator type of
+ *               @ref bikappa_detail::log_accumulator.
+ * @param g      the order-unity vector, already rotated into the frame the caller returns,
+ *               in the same accumulator type.  `R` and `g_j` are both order-unity-to-moderate
+ *               quantities whose product spans the whole range of the returned type, so the
+ *               product is where the one rounding belongs: the working-precision `g_j` of a
+ *               `float` run carries about 6e-8 of relative error, which is larger than the
+ *               margin by which a component near `FLT_MAX` is representable, and rounding it
+ *               before the multiply throws away a draw the type can hold.
  * @param point  receives the materialized components, `+/-inf` where one has no
  *               representation, with the sign the mathematics gives it.
  * @return       true iff at least one component had no representation in @c RealType.
  */
 template <typename RealType>
-bool materializeComponents(RealType logR, const std::array<RealType, 3> &g,
+bool materializeComponents(typename log_accumulator<RealType>::type logR,
+                           const std::array<typename log_accumulator<RealType>::type, 3> &g,
                            std::array<RealType, 3> &point)
 {
+    typedef typename log_accumulator<RealType>::type AccumType;
+    const AccumType accumMax= std::numeric_limits<AccumType>::max();
     const RealType maxFinite= std::numeric_limits<RealType>::max();
-    const RealType rTry= std::exp(logR);
-    // `false` for +infinity and for NaN, both of which fail every comparison.
-    const bool radiusRepresentable= (rTry <= maxFinite);
-    const RealType R= radiusRepresentable ? rTry : RealType(0.0);
+    const AccumType rTry= std::exp(logR);
+    // `false` for +infinity and for NaN, both of which fail every comparison.  The test is
+    // in the accumulator, because that is where the product below is formed; a `float` run
+    // reaches this branch only for a radius beyond `exp(709.78)`, far above anything a
+    // `float` component could hold.
+    const bool radiusRepresentable= (rTry <= accumMax);
+    const AccumType R= radiusRepresentable ? rTry : AccumType(0.0);
 
     bool anyOverflow= false;
     for (int j= 0; j < 3; ++j)
     {
-        if (g[j] == RealType(0.0))
+        if (g[j] == AccumType(0.0))
         {
             point[j]= RealType(0.0);
             continue;
         }
-        const RealType mag= radiusRepresentable
-                                ? R * std::abs(g[j])
-                                : std::exp(logR + std::log(std::abs(g[j])));
+        const AccumType absG= std::abs(g[j]);
+        const AccumType wide= radiusRepresentable ? R * absG
+                                                  : std::exp(logR + std::log(absG));
+        // The single rounding.  What decides representability is the number the caller will
+        // receive, which is `wide` rounded to `RealType` -- so a magnitude that lies within
+        // half an ulp of `max()` rounds to `max()` and is returned, and one that rounds past
+        // it becomes an infinity here and is counted.  Deciding from `wide` instead would
+        // discard a draw the type can hold; deciding from a logarithm would do it in both
+        // directions at once.
+        const RealType mag= static_cast<RealType>(wide);
         if (!(mag <= maxFinite))
         {
             anyOverflow= true;
-            point[j]= (g[j] < RealType(0.0)) ? -std::numeric_limits<RealType>::infinity()
-                                             : std::numeric_limits<RealType>::infinity();
+            point[j]= (g[j] < AccumType(0.0)) ? -std::numeric_limits<RealType>::infinity()
+                                              : std::numeric_limits<RealType>::infinity();
             continue;
         }
-        point[j]= (g[j] < RealType(0.0)) ? -mag : mag;
+        point[j]= (g[j] < AccumType(0.0)) ? -mag : mag;
     }
     return anyOverflow;
 }
@@ -313,6 +385,12 @@ template <typename RealType= double> class bi_kappa_distribution
   public:
     using result_type= std::array<RealType, 3>;
     using point_type= result_type;
+
+    /// The type in which the sampler forms `R g` before rounding once; see
+    /// @ref bikappa_detail::log_accumulator.  Identical to @c point_type unless
+    /// @c RealType is @c float.  Internal: no public entry point takes or returns it.
+    using accum_point=
+        std::array<typename bikappa_detail::log_accumulator<RealType>::type, 3>;
 
     /**
      * @brief Parameter class to store distribution parameters
@@ -642,8 +720,11 @@ template <typename RealType= double> class bi_kappa_distribution
     template <typename GeneratorType>
     result_type operator()(GeneratorType &gen, const param_type &params)
     {
+        typedef typename bikappa_detail::log_accumulator<RealType>::type AccumType;
         const RealType kHalf= RealType(0.5);
         const RealType kOne= RealType(1.0);
+        const AccumType kHalfA= AccumType(0.5);
+        const AccumType kOneA= AccumType(1.0);
         const int kMaxCapRejectTries= 1000000;
 
         RealType kappa= params.kappa();
@@ -653,7 +734,10 @@ template <typename RealType= double> class bi_kappa_distribution
         RealType maxNormalizedVelocity= params.max_normalized_velocity();
 
         const RealType a= kappa - kHalf;
-        RealType sqrtKappa= std::sqrt(kappa);
+        // sqrt(kappa) is not a variate; it is part of the deterministic map from the drawn
+        // variates to the returned velocity, so it is formed in the accumulator with
+        // everything else on that path.
+        const AccumType sqrtKappa= std::sqrt(static_cast<AccumType>(kappa));
 
         // Untruncated mode runs the core mapping exactly once; capped mode redraws
         // until the sample falls inside the box.
@@ -681,12 +765,18 @@ template <typename RealType= double> class bi_kappa_distribution
         // branch needs and what the normalized coordinate the cap test is written in cannot
         // give it.  It is finite because define() rejects a non-positive or non-finite
         // theta, so the screen below is never comparing against a NaN.
-        const RealType logMax= capped ? std::log(std::numeric_limits<RealType>::max())
-                                      : RealType(0.0);
-        const RealType logCap= capped ? std::log(maxNormalizedVelocity) : RealType(0.0);
-        const RealType logSqrtKappa= capped ? std::log(sqrtKappa) : RealType(0.0);
-        const RealType logGBound=
-            capped ? logSqrtKappa + std::log(std::max(theta_perp, theta_par)) : RealType(0.0);
+        // All four are formed in the accumulator, so that the screen and the cap predicate
+        // resolve the same margins the radius does.
+        const AccumType logMax=
+            capped ? std::log(static_cast<AccumType>(std::numeric_limits<RealType>::max()))
+                   : AccumType(0.0);
+        const AccumType logCap=
+            capped ? std::log(static_cast<AccumType>(maxNormalizedVelocity)) : AccumType(0.0);
+        const AccumType logSqrtKappa= capped ? std::log(sqrtKappa) : AccumType(0.0);
+        const AccumType logGBound=
+            capped ? logSqrtKappa +
+                         std::log(static_cast<AccumType>(std::max(theta_perp, theta_par)))
+                   : AccumType(0.0);
 
         int tries= 0;
         for (tries= 0; tries < maxTries; ++tries)
@@ -707,10 +797,11 @@ template <typename RealType= double> class bi_kappa_distribution
             const RealType x1=
                 bikappa_detail::marsagliaTsangGamma<RealType, GeneratorType>(
                     RealType(1.5), gen, m_normalCache, m_normalCached);
-            const RealType logX2=
+            const AccumType logX2=
                 bikappa_detail::logGamma<RealType, GeneratorType>(a, gen, m_normalCache,
                                                                   m_normalCached);
-            const RealType logR= kHalf * (std::log(x1) - logX2);
+            const AccumType logR=
+                kHalfA * (std::log(static_cast<AccumType>(x1)) - logX2);
 
             // Step 2: a direction uniform on S^2, by the rejection method of Marsaglia
             // (1972), Ann. Math. Statist. 43(2), 645-646.  Draw a point uniformly in the
@@ -728,22 +819,30 @@ template <typename RealType= double> class bi_kappa_distribution
             // sampler.  The rejection method uses only sqrt, which IEEE-754 requires to be
             // correctly rounded, so the direction is identical under every compiler.  It is
             // also faster here, despite averaging 4/pi = 1.273 attempts per direction.
-            RealType d1, d2, dsq;
+            //
+            // The two coordinates are the variates and are drawn in RealType; the disc test
+            // and the lift are the deterministic part and are evaluated in the accumulator.
+            // For a `float` run that also makes the test exact -- `d1*d1 + d2*d2` of two
+            // `float`s needs 49 bits, which `double` holds and `float` does not, so the
+            // `float` form could accept a point outside the disc or reject one inside it.
+            RealType d1, d2;
+            AccumType dsq;
             do
             {
                 d1= RealType(2.0) *
                     bikappa_detail::openCanonical<RealType, GeneratorType>(gen) - kOne;
                 d2= RealType(2.0) *
                     bikappa_detail::openCanonical<RealType, GeneratorType>(gen) - kOne;
-                dsq= d1 * d1 + d2 * d2;
-            } while (dsq >= kOne);
+                dsq= static_cast<AccumType>(d1) * static_cast<AccumType>(d1) +
+                     static_cast<AccumType>(d2) * static_cast<AccumType>(d2);
+            } while (dsq >= kOneA);
             // dsq == 0 is unreachable: openCanonical never returns exactly 1/2, so neither
             // d1 nor d2 is ever exactly zero.
-            const RealType dscale= RealType(2.0) * std::sqrt(kOne - dsq);
+            const AccumType dscale= AccumType(2.0) * std::sqrt(kOneA - dsq);
 
-            const RealType nx= d1 * dscale;
-            const RealType ny= d2 * dscale;
-            const RealType nz= kOne - RealType(2.0) * dsq;
+            const AccumType nx= static_cast<AccumType>(d1) * dscale;
+            const AccumType ny= static_cast<AccumType>(d2) * dscale;
+            const AccumType nz= kOneA - AccumType(2.0) * dsq;
 
             // Step 3: the cap, tested in the field-aligned frame before anything is
             // exponentiated.  This is the same predicate the linear form applies --
@@ -753,9 +852,9 @@ template <typename RealType= double> class bi_kappa_distribution
             // has to be examined, so this costs one logarithm rather than three.
             if (capped)
             {
-                const RealType maxAbsN=
+                const AccumType maxAbsN=
                     std::max(std::abs(nx), std::max(std::abs(ny), std::abs(nz)));
-                const RealType logLargest= logR + logSqrtKappa + std::log(maxAbsN);
+                const AccumType logLargest= logR + logSqrtKappa + std::log(maxAbsN);
                 if (logLargest > logCap)
                 {
                     // An intended sample that is outside the box and also unrepresentable is
@@ -790,13 +889,14 @@ template <typename RealType= double> class bi_kappa_distribution
                     // kappa = 0.51 and 87 % at double kappa = 0.5001, where most of the law
                     // genuinely lies outside the type.  Where it fires often, it is doing
                     // the work it exists for.
-                    if (logR + logGBound > logMax - kOne)
+                    if (logR + logGBound > logMax - kOneA)
                     {
-                        point_type gRej= fieldAlignedG(sqrtKappa, theta_perp, theta_par,
-                                                       nx, ny, nz);
+                        accum_point gRej= fieldAlignedG(sqrtKappa, theta_perp, theta_par,
+                                                        nx, ny, nz);
                         if (!axisAligned)
                         {
-                            gRej= rotate_from_fieldAligned_frame(gRej, ub);
+                            gRej= rotateFromFieldAlignedFrameIn<AccumType>(
+                                gRej, widen<AccumType>(ub));
                         }
                         point_type scratch;
                         if (bikappa_detail::materializeComponents<RealType>(logR, gRej,
@@ -813,10 +913,10 @@ template <typename RealType= double> class bi_kappa_distribution
             // the representability test meaningful: an orthogonal rotation can spread one
             // over-large local component across three representable global ones, so the test
             // has to be applied to the components that are actually returned.
-            point_type g= fieldAlignedG(sqrtKappa, theta_perp, theta_par, nx, ny, nz);
+            accum_point g= fieldAlignedG(sqrtKappa, theta_perp, theta_par, nx, ny, nz);
             if (!axisAligned)
             {
-                g= rotate_from_fieldAligned_frame(g, ub);
+                g= rotateFromFieldAlignedFrameIn<AccumType>(g, widen<AccumType>(ub));
             }
 
             // Step 5: materialize the components and decide representability from the
@@ -855,25 +955,43 @@ template <typename RealType= double> class bi_kappa_distribution
     // given the parallel direction ub.
     point_type rotate_from_fieldAligned_frame(const point_type &local, const point_type &ub) const
     {
-        const RealType kZero= RealType(0.0);
-        const RealType kOne= RealType(1.0);
+        return rotateFromFieldAlignedFrameIn<RealType>(local, widen<RealType>(ub));
+    }
+
+    /// The same rotation, carried out in @p ValueType.
+    ///
+    /// The basis is a function of `ub` alone, so evaluating it in the accumulator changes
+    /// no decision and no stream -- it only stops the rotation from spending an ulp of the
+    /// returned type before the component is formed.  With `ValueType = RealType` this is
+    /// the released 2.1.0 routine, character for character, which is why a `double`
+    /// instantiation is unaffected.
+    template <typename ValueType>
+    static std::array<ValueType, 3> rotateFromFieldAlignedFrameIn(
+        const std::array<ValueType, 3> &local, const std::array<ValueType, 3> &ub)
+    {
+        typedef std::array<ValueType, 3> vec_type;
+        const ValueType kZero= ValueType(0.0);
+        const ValueType kOne= ValueType(1.0);
 
         // Normalize ub to get e3
-        RealType ubNorm2= ub[0] * ub[0] + ub[1] * ub[1] + ub[2] * ub[2];
-        if (approximatelyEqual(ubNorm2, kZero))
+        ValueType ubNorm2= ub[0] * ub[0] + ub[1] * ub[1] + ub[2] * ub[2];
+        if (approximatelyEqualIn<ValueType>(ubNorm2, kZero))
         {
             throw std::invalid_argument("ub must be a non-zero vector");
         }
 
-        RealType ubNorm= std::sqrt(ubNorm2);
+        ValueType ubNorm= std::sqrt(ubNorm2);
 
-        point_type e3;
+        vec_type e3;
         e3[0]= ub[0] / ubNorm;
         e3[1]= ub[1] / ubNorm;
         e3[2]= ub[2] / ubNorm;
 
         // Build e2 perpendicular to e3
-        point_type e2({kOne, kOne, kOne});
+        vec_type e2;
+        e2[0]= kOne;
+        e2[1]= kOne;
+        e2[2]= kOne;
 
         int maxcomp= 0;
         if (std::abs(e3[1]) > std::abs(e3[maxcomp]))
@@ -885,23 +1003,23 @@ template <typename RealType= double> class bi_kappa_distribution
             maxcomp= 2;
         }
 
-        RealType sum= e3[0] + e3[1] + e3[2];
+        ValueType sum= e3[0] + e3[1] + e3[2];
         e2[maxcomp]= kOne - sum / e3[maxcomp];
 
-        RealType e2Norm2= e2[0] * e2[0] + e2[1] * e2[1] + e2[2] * e2[2];
-        RealType e2Norm= std::sqrt(e2Norm2);
+        ValueType e2Norm2= e2[0] * e2[0] + e2[1] * e2[1] + e2[2] * e2[2];
+        ValueType e2Norm= std::sqrt(e2Norm2);
         e2[0]/= e2Norm;
         e2[1]/= e2Norm;
         e2[2]/= e2Norm;
 
         // e1 = e2 x e3
-        point_type e1;
+        vec_type e1;
         e1[0]= e2[1] * e3[2] - e2[2] * e3[1];
         e1[1]= e2[2] * e3[0] - e2[0] * e3[2];
         e1[2]= e2[0] * e3[1] - e2[1] * e3[0];
 
         // Transform local coordinates to Cartesian coordinates
-        point_type point;
+        vec_type point;
         point[0]= local[0] * e1[0] + local[1] * e2[0] + local[2] * e3[0];
         point[1]= local[0] * e1[1] + local[1] * e2[1] + local[2] * e3[1];
         point[2]= local[0] * e1[2] + local[1] * e2[2] + local[2] * e3[2];
@@ -928,23 +1046,51 @@ template <typename RealType= double> class bi_kappa_distribution
             gen.seed(static_cast<unsigned int>(s));
     }
 
-    /// The order-unity vector in the field-aligned frame, `V = R g` before any rotation.
+    /// The order-unity vector in the field-aligned frame, `V = R g` before any rotation,
+    /// in the accumulator of @ref bikappa_detail::log_accumulator.
+    ///
     /// Shared by step 4 and by the capped branch of step 3, so the vector whose
-    /// representability is counted is the vector that would have been returned.
-    static point_type fieldAlignedG(RealType sqrtKappa, RealType theta_perp,
-                                    RealType theta_par, RealType nx, RealType ny, RealType nz)
+    /// representability is counted is the vector that would have been returned.  The
+    /// direction and the parameters are the working-precision values the sampler drew and
+    /// the caller supplied; only the three products are widened, which is what lets the
+    /// component carry a single rounding.  With `RealType = double` the accumulator is
+    /// `double` and this is the released 2.1.0 expression unchanged.
+    static accum_point fieldAlignedG(
+        typename bikappa_detail::log_accumulator<RealType>::type sqrtKappa,
+        RealType theta_perp, RealType theta_par,
+        typename bikappa_detail::log_accumulator<RealType>::type nx,
+        typename bikappa_detail::log_accumulator<RealType>::type ny,
+        typename bikappa_detail::log_accumulator<RealType>::type nz)
     {
-        point_type g;
-        g[0]= sqrtKappa * theta_perp * nx;
-        g[1]= sqrtKappa * theta_perp * ny;
-        g[2]= sqrtKappa * theta_par * nz;
+        typedef typename bikappa_detail::log_accumulator<RealType>::type A;
+        accum_point g;
+        g[0]= sqrtKappa * static_cast<A>(theta_perp) * nx;
+        g[1]= sqrtKappa * static_cast<A>(theta_perp) * ny;
+        g[2]= sqrtKappa * static_cast<A>(theta_par) * nz;
         return g;
+    }
+
+    /// `ub`, widened componentwise.  Widening is exact, so the rotated basis is the basis
+    /// of the `ub` the caller gave, evaluated more finely -- not a different frame.
+    template <typename ValueType>
+    static std::array<ValueType, 3> widen(const point_type &v)
+    {
+        std::array<ValueType, 3> w;
+        w[0]= static_cast<ValueType>(v[0]);
+        w[1]= static_cast<ValueType>(v[1]);
+        w[2]= static_cast<ValueType>(v[2]);
+        return w;
+    }
+
+    template <typename ValueType> static bool approximatelyEqualIn(ValueType a, ValueType b)
+    {
+        ValueType scale= std::max(std::max(ValueType(1.0), std::abs(a)), std::abs(b));
+        return std::abs(a - b) <= std::numeric_limits<ValueType>::epsilon() * scale;
     }
 
     static bool approximatelyEqual(RealType a, RealType b)
     {
-        RealType scale= std::max({RealType(1.0), std::abs(a), std::abs(b)});
-        return std::abs(a - b) <= std::numeric_limits<RealType>::epsilon() * scale;
+        return approximatelyEqualIn<RealType>(a, b);
     }
 
     /// The cap predicate in linear form: every normalized component inside the box.
