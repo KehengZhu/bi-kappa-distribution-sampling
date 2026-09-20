@@ -283,6 +283,7 @@ def gate_G5(proto: F.Protocol, ev: dict) -> Gate:
 def gate_G6(proto: F.Protocol, ev: dict) -> Gate:
     """Verification that actually verifies, byte-identical regeneration, and an exact-version
     archive identifier."""
+    receipt = ev.get("g6_receipt", "absent")
     for key, what in (("make_verify_exit_code", "`make verify` was never run"),
                       ("make_reverify_identical", "derived artifacts were never regenerated "
                                                   "and compared"),
@@ -291,7 +292,7 @@ def gate_G6(proto: F.Protocol, ev: dict) -> Gate:
                        "the baseline comparison against the previous release was never "
                        "resolved")):
         if ev.get(key) is None:
-            return _missing("G6", what)
+            return _missing("G6", f"{what} (receipt: {receipt})")
     archive = ev.get("archive_identifier")
     protocol_sha = ev.get("protocol_sha256")
     sha_ok = protocol_sha == proto.sha256
@@ -307,8 +308,10 @@ def gate_G6(proto: F.Protocol, ev: dict) -> Gate:
                 f"comparison resolved: {bool(ev['baseline_comparison_resolved'])}; "
                 f"protocol hash matches the frozen document: {sha_ok}; "
                 + (f"archive identifier {archive}" if archive
-                   else "NO exact-version archive identifier yet"),
-                {"archive_identifier": archive, "protocol_sha256_matches": sha_ok})
+                   else "NO exact-version archive identifier yet")
+                + f"; receipt: {receipt}",
+                {"archive_identifier": archive, "protocol_sha256_matches": sha_ok,
+                 "g6_receipt": receipt})
 
 
 # ---------------------------------------------------------------------------

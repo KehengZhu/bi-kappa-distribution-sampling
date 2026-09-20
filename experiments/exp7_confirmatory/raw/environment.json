@@ -1,17 +1,17 @@
 {
   "experiment": "exp7_confirmatory",
-  "generated_utc": "2026-09-20T16:15:50+00:00",
+  "generated_utc": "2026-09-20T20:47:04+00:00",
   "exploratory": false,
   "git": {
-    "commit": "182d6e51a409d60004ffc4f14cc1f38ae34676aa",
+    "commit": "a53f5f6a9b4f6a6c4cc675cac63839fb4cbdd16d",
     "repo_dirty": true,
     "dependencies_clean": true,
     "unclean_dependencies": []
   },
   "dependencies": {
     "../../cpp/bi_kappa_distribution.H": {
-      "sha256": "8f4d6a1e41c2b9d9c0e952a107ea213557759eb1432816bba35ff9fd4e14d1db",
-      "head_sha256": "8f4d6a1e41c2b9d9c0e952a107ea213557759eb1432816bba35ff9fd4e14d1db",
+      "sha256": "d9cb44ca956a00c9d3a82bd9808ab2f51b454c3dd6d7cb4c4c7eb86e78c9a5f0",
+      "head_sha256": "d9cb44ca956a00c9d3a82bd9808ab2f51b454c3dd6d7cb4c4c7eb86e78c9a5f0",
       "state": "clean"
     },
     "src/legacy/bi_kappa_distribution_v1.H": {
@@ -20,13 +20,13 @@
       "state": "clean"
     },
     "src/exp7_common.H": {
-      "sha256": "13ed600f339d5364e8e8f6b8bc3ad38316a5dd16e264372b8309a6c91b8a5504",
-      "head_sha256": "13ed600f339d5364e8e8f6b8bc3ad38316a5dd16e264372b8309a6c91b8a5504",
+      "sha256": "9fe013d693602b6315cf9904f70e54a952b544033481d43c0b2d961ba68c3d4f",
+      "head_sha256": "9fe013d693602b6315cf9904f70e54a952b544033481d43c0b2d961ba68c3d4f",
       "state": "clean"
     },
     "src/exp7_loaders.H": {
-      "sha256": "f8d539a2c543413bf335f5ac760f1631678f3ff55be2cc91b8692672488cb14a",
-      "head_sha256": "f8d539a2c543413bf335f5ac760f1631678f3ff55be2cc91b8692672488cb14a",
+      "sha256": "9b12d116bda44c6d786995d8112e7cd9eff62880e66ec78443a2240a86078a46",
+      "head_sha256": "9b12d116bda44c6d786995d8112e7cd9eff62880e66ec78443a2240a86078a46",
       "state": "clean"
     },
     "src/exp7_digest.H": {
@@ -35,23 +35,23 @@
       "state": "clean"
     },
     "src/exp7_probe.cpp": {
-      "sha256": "e0ba7e9ce2ff07135be9493de21e38a19a9064b940504bfc48c518ec3c042a36",
-      "head_sha256": "e0ba7e9ce2ff07135be9493de21e38a19a9064b940504bfc48c518ec3c042a36",
+      "sha256": "44df0d78cdf5cd4885f1b1c6d3a98e70c9308f3d2dc9ba59f6387b37db5cfedb",
+      "head_sha256": "44df0d78cdf5cd4885f1b1c6d3a98e70c9308f3d2dc9ba59f6387b37db5cfedb",
       "state": "clean"
     },
     "src/exp7_protocol.H": {
-      "sha256": "70e0bbff0bc8bed75291cb5249b3c3688cb2b8f6952658aa83f9f9e9536b2ffc",
-      "head_sha256": "70e0bbff0bc8bed75291cb5249b3c3688cb2b8f6952658aa83f9f9e9536b2ffc",
+      "sha256": "06c3d1c7aa53564db1791bdb779358d5f3a2b0bcccc4bfc82451bcbf337d7774",
+      "head_sha256": "06c3d1c7aa53564db1791bdb779358d5f3a2b0bcccc4bfc82451bcbf337d7774",
       "state": "clean"
     },
     "PROTOCOL.md": {
-      "sha256": "021c0b91ae4ee912c26259d11f23e82e5c81d76fade12e75ca6013c89de34857",
-      "head_sha256": "021c0b91ae4ee912c26259d11f23e82e5c81d76fade12e75ca6013c89de34857",
+      "sha256": "45992ff0ce8f877b58ec7e5e6af4574a45f964c6b53117864dc30bb42756dd7c",
+      "head_sha256": "45992ff0ce8f877b58ec7e5e6af4574a45f964c6b53117864dc30bb42756dd7c",
       "state": "clean"
     },
     "config/protocol.json": {
-      "sha256": "914c5d1d2b6900d872402a545f46a99819038987416d1b882909eb4ca2bafa48",
-      "head_sha256": "914c5d1d2b6900d872402a545f46a99819038987416d1b882909eb4ca2bafa48",
+      "sha256": "c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6",
+      "head_sha256": "c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6",
       "state": "clean"
     },
     "src/exp7_oracle.cpp": {
@@ -70,18 +70,18 @@
       "state": "clean"
     },
     "GNUmakefile": {
-      "sha256": "3daa2a9853836272538c95a19c26464c077e586e6c416b3b0316c5cecdfe72ee",
-      "head_sha256": "3daa2a9853836272538c95a19c26464c077e586e6c416b3b0316c5cecdfe72ee",
+      "sha256": "799e2af4ea9d4e59351662369beb5945f1214d4c716edefefd4f997b532a66c6",
+      "head_sha256": "799e2af4ea9d4e59351662369beb5945f1214d4c716edefefd4f997b532a66c6",
       "state": "clean"
     },
     "analyze.py": {
-      "sha256": "7388b7c12100e437310e03b1d2cb9f4e7320d5160341fb72f11281b973fd1d0d",
-      "head_sha256": "7388b7c12100e437310e03b1d2cb9f4e7320d5160341fb72f11281b973fd1d0d",
+      "sha256": "b9c757af4b64e645bc0091facc28a8f5727ca8b9aba24e1da134cffacb886c14",
+      "head_sha256": "b9c757af4b64e645bc0091facc28a8f5727ca8b9aba24e1da134cffacb886c14",
       "state": "clean"
     },
     "make_figures.py": {
-      "sha256": "0067f4faa80cc9e8baa863bb870920a22c0b0510f5ae065837d83db3e45e6a5e",
-      "head_sha256": "0067f4faa80cc9e8baa863bb870920a22c0b0510f5ae065837d83db3e45e6a5e",
+      "sha256": "46bc5c3cc3fb1fcdac605d4f06498b3e62b36ed6a361270be3352436cd09d30f",
+      "head_sha256": "46bc5c3cc3fb1fcdac605d4f06498b3e62b36ed6a361270be3352436cd09d30f",
       "state": "clean"
     },
     "preflight.py": {
@@ -105,8 +105,8 @@
       "state": "clean"
     },
     "exp7_families.py": {
-      "sha256": "b04996449bd4ed6057b27adf129f8ae8e51ae9087ceaf47f83c7d5ca86e491ce",
-      "head_sha256": "b04996449bd4ed6057b27adf129f8ae8e51ae9087ceaf47f83c7d5ca86e491ce",
+      "sha256": "c8950b3e2bbc08d7958ab0529b2f5745d3861a88a3b4b73aa7c1bc4c19d113a9",
+      "head_sha256": "c8950b3e2bbc08d7958ab0529b2f5745d3861a88a3b4b73aa7c1bc4c19d113a9",
       "state": "clean"
     },
     "exp7_gates.py": {
@@ -120,13 +120,13 @@
       "state": "clean"
     },
     "config/make_protocol.py": {
-      "sha256": "45c2a6c4daefdd315698158c5b7ee1be5421cf3c2313a3244c6a79c84f37e1ac",
-      "head_sha256": "45c2a6c4daefdd315698158c5b7ee1be5421cf3c2313a3244c6a79c84f37e1ac",
+      "sha256": "5eb2c2fe86a0c9cc02202af6fcf6642bfd7bb6868c0b1f18a7fd68180cb017a3",
+      "head_sha256": "5eb2c2fe86a0c9cc02202af6fcf6642bfd7bb6868c0b1f18a7fd68180cb017a3",
       "state": "clean"
     }
   },
   "continuity": {
-    "previous_preflight_utc": "2026-09-20T16:15:07+00:00",
+    "previous_preflight_utc": "2026-09-20T20:37:17+00:00",
     "dependency_hashes_unchanged_since_previous_preflight": true,
     "sampling_dependency_hashes_unchanged_since_previous_preflight": true,
     "note": "Raw draws depend only on the sampling dependencies. If those hashes are unchanged since the preflight a raw file was produced under, that file came from this content, whatever else was edited afterwards."
@@ -187,9 +187,9 @@
       "arch": "arm64",
       "precision": "n/a",
       "rng": "mt19937",
-      "bi_kappa_version": "2.1.0",
-      "protocol_version": "2.0.0",
-      "protocol_sha256": "914c5d1d2b6900d872402a545f46a99819038987416d1b882909eb4ca2bafa48",
+      "bi_kappa_version": "2.2.0",
+      "protocol_version": "3.0.0",
+      "protocol_sha256": "c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6",
       "cxxflags": "-Wall -Wextra -std=c++11 -O2 -ffp-contract=off -I src",
       "rounding_mode": "FE_TONEAREST",
       "flt_eval_method": 0,
@@ -212,9 +212,9 @@
       "arch": "arm64",
       "precision": "n/a",
       "rng": "mt19937",
-      "bi_kappa_version": "2.1.0",
-      "protocol_version": "2.0.0",
-      "protocol_sha256": "914c5d1d2b6900d872402a545f46a99819038987416d1b882909eb4ca2bafa48",
+      "bi_kappa_version": "2.2.0",
+      "protocol_version": "3.0.0",
+      "protocol_sha256": "c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6",
       "cxxflags": "-Wall -Wextra -std=c++11 -O2 -ffp-contract=off -I src",
       "rounding_mode": "FE_TONEAREST",
       "flt_eval_method": 0,
@@ -261,18 +261,18 @@
     "n_conditioning": 1000000,
     "n_loader": 100000,
     "production_seeds": [
-      8001,
-      8002,
-      8003,
-      8004,
-      8005
+      9001,
+      9002,
+      9003,
+      9004,
+      9005
     ],
     "performance_seeds": [
-      8006,
-      8007,
-      8008,
-      8009,
-      8010
+      9006,
+      9007,
+      9008,
+      9009,
+      9010
     ],
     "kappa_ladder": [
       0.5001,
@@ -291,8 +291,8 @@
     ]
   },
   "protocol": {
-    "version": "2.0.0",
-    "sha256": "914c5d1d2b6900d872402a545f46a99819038987416d1b882909eb4ca2bafa48",
+    "version": "3.0.0",
+    "sha256": "c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6",
     "path": "config/protocol.json"
   }
 }
