@@ -31,6 +31,26 @@ import tarfile
 # Fixed epoch for every entry.  Any constant works; what matters is that it is a constant.
 FIXED_MTIME = 1_000_000_000  # 2001-09-09T01:46:40Z
 
+# Directory names `--with-results` never descends into.  The option exists to carry the bulk
+# results of the run being released, and a plain walk of the experiment directory carries
+# more than that: scratch from the verification step, smoke output, caches, and -- the case
+# that produced this list -- a previous holdout's raw tree, set aside on disk when the new
+# run displaced it.  Building the release for holdout 3 swept in 4 GB of holdout 2's
+# binaries, untracked and covered by no checksum manifest in the release, which is both
+# wrong about what the archive contains and fatal to reproducing it elsewhere: nobody else
+# has those files, so nobody else can rebuild the same bytes.
+#
+# Every pruned directory is PRINTED, so what was left out is visible at build time rather
+# than implicit in a name.
+SKIP_DIRS = frozenset({
+    "__pycache__",   # caches
+    ".git",
+    ".reverify",     # scratch from `make reverify`
+    "smoke",         # raw/smoke and results/smoke: never production evidence
+    "raw_full",      # a preserved holdout's displaced raw tree, kept locally only
+    "dist",          # release archives; an archive must not contain its predecessors
+})
+
 
 def run(*args: str, cwd: str | None = None) -> str:
     return subprocess.run(args, cwd=cwd, check=True, capture_output=True,
@@ -91,14 +111,20 @@ def main() -> int:
             print(f"error: {d} is not a directory", file=sys.stderr)
             return 2
         extra = []
+        skipped = []
         for dirpath, dirnames, filenames in os.walk(root):
-            dirnames[:] = sorted(n for n in dirnames if n not in ("__pycache__", ".git"))
+            pruned = sorted(n for n in dirnames if n in SKIP_DIRS)
+            for n in pruned:
+                skipped.append(os.path.relpath(os.path.join(dirpath, n), repo))
+            dirnames[:] = sorted(n for n in dirnames if n not in SKIP_DIRS)
             for fn in sorted(filenames):
                 full = os.path.join(dirpath, fn)
                 rel = os.path.relpath(full, repo)
                 if rel in files or fn.endswith((".part", ".exe", ".pyc")):
                     continue
                 extra.append(rel)
+        for rel in skipped:
+            print(f"skipped     {rel}/ (local-only; see SKIP_DIRS)")
         for rel in sorted(extra):
             with open(os.path.join(repo, rel), "rb") as fh:
                 entries.append((rel, fh.read()))
