@@ -284,6 +284,13 @@ def gate_G6(proto: F.Protocol, ev: dict) -> Gate:
     """Verification that actually verifies, byte-identical regeneration, and an exact-version
     archive identifier."""
     receipt = ev.get("g6_receipt", "absent")
+    # `raw_manifest_verified` is the half of the verification the analysis measures for
+    # itself: raw_checksums.sha256 covers raw/ only, which the analysis reads and never
+    # writes, so checking it is sound and says the analysis consumed the bytes the run
+    # recorded.  It is required, and no receipt can supply it.
+    if ev.get("raw_manifest_verified") is not True:
+        return _missing("G6", "the raw-data checksum manifest did not verify against the "
+                              f"bytes the analysis read (receipt: {receipt})")
     for key, what in (("make_verify_exit_code", "`make verify` was never run"),
                       ("make_reverify_identical", "derived artifacts were never regenerated "
                                                   "and compared"),
@@ -302,6 +309,8 @@ def gate_G6(proto: F.Protocol, ev: dict) -> Gate:
     status = "PASS" if ok else ("OPEN" if (not archive and int(ev["make_verify_exit_code"]) == 0
                                            and ev["make_reverify_identical"]) else "FAIL")
     return Gate("G6", status,
+                f"raw manifest verifies against the bytes read: "
+                f"{bool(ev.get('raw_manifest_verified'))}; "
                 f"make verify exit {ev['make_verify_exit_code']}; derived artifacts "
                 f"regenerate byte-identically: {bool(ev['make_reverify_identical'])}; "
                 f"dependency set clean: {bool(ev['dependencies_clean'])}; baseline "

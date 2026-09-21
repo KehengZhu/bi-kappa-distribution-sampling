@@ -38,6 +38,7 @@ from __future__ import annotations
 import argparse
 import csv
 import hashlib
+import concurrent.futures
 import json
 import math
 import os
@@ -1955,6 +1956,12 @@ def analyse_negative_controls(ctx: Context, p1: dict, p4: dict) -> dict:
     required = float(proto.get("F6", "required_power"))
     effects = [float(x) for x in proto.get("F6", "injection_loss_fractions")]
     n_inj = int(proto.get("F6", "injections_per_effect"))
+    # Warm the two lazily-built module caches before anything runs concurrently.  Both are
+    # deterministic and both are assigned atomically, so a race could only have duplicated
+    # identical work rather than produced a different number -- but building them here
+    # leaves the parallel section with no shared state to touch at all, which is a cheaper
+    # thing to verify than benignness.
+    _direction_moment(0.0)
     q0s = [float(q) for q in proto.get("F5_tail", "q0")]
     f5_names = f5_test_names(q0s)
     nc3_rule = proto.get("corrections", "NC3_effect")
@@ -1990,7 +1997,7 @@ def analyse_negative_controls(ctx: Context, p1: dict, p4: dict) -> dict:
         if nc1_sample is not None:
             lr, nh = nc1_sample
             n_used = lr.size
-            for i in range(n_inj):
+            def _nc1_injection(i):
                 rng = np.random.default_rng(stable_seed("NC1", f"{q:g}", i))
                 # Permute the radii against the directions.  That is the independence null
                 # carrying the cell's own two marginals, it uses every measured draw exactly
@@ -2010,8 +2017,7 @@ def analyse_negative_controls(ctx: Context, p1: dict, p4: dict) -> dict:
                                  n_attempted=lr_i.size, q0s=q0s,
                                  precision=nc1_precision, theta_ratio=nc1_ratio,
                                  ub=nc1_ub)
-                if not F.family_F5(proto, f5_cell(t, "NC1", q)).passed:
-                    det_silent += 1
+                silent = not F.family_F5(proto, f5_cell(t, "NC1", q)).passed
                 # The same injection read as a loss the loader DOES report: the removed
                 # draws are restored to the count member's denominator and to its intended
                 # sample, which is what a loader that notices its own losses would supply.
@@ -2021,8 +2027,12 @@ def analyse_negative_controls(ctx: Context, p1: dict, p4: dict) -> dict:
                                           theta_ratio=nc1_ratio, ub=nc1_ub,
                                           z_intended=S.z_from_log_w(
                                               S.log_w_from_log_r(lr_p), kappa1 - 0.5)))
-                if not F.family_F5(proto, f5_cell(t_rep, "NC1", q)).passed:
-                    det_reported += 1
+                reported = not F.family_F5(proto, f5_cell(t_rep, "NC1", q)).passed
+                return silent, reported
+
+            _nc1 = parallel_injections(_nc1_injection, n_inj)
+            det_silent = sum(r[0] for r in _nc1)
+            det_reported = sum(r[1] for r in _nc1)
         level = (q == 0.0)
         row = _power_row(
             ctx, "NC1_radius_direction_coupling", "level" if level else "loss_fraction", q,
@@ -2067,15 +2077,16 @@ def analyse_negative_controls(ctx: Context, p1: dict, p4: dict) -> dict:
         z = S.z_from_log_w(S.log_w_from_log_r(lr), a)
         z = z[np.isfinite(z)]
         n2 = z.size
-        for i in range(n_inj):
+        def _nc2_injection(i):
             rng = np.random.default_rng(stable_seed("NC2", weak["case"], i))
             zi = z[rng.integers(0, z.size, z.size)] if z.size else z
             a2, p_ad = F.anderson_darling_exp1(zi)
             cell = [{"label": "NC2", "pvalues": [
                 p_ad, ks_pvalue(float(stats.kstest(zi, "expon").statistic), zi.size),
                 cvm_pvalue(float(stats.cramervonmises(zi, "expon").statistic))]}]
-            if not F.family_F1(proto, cell).passed:
-                det2 += 1
+            return not F.family_F1(proto, cell).passed
+
+        det2 = sum(parallel_injections(_nc2_injection, n_inj))
     row2 = _power_row(ctx, "NC2_capped_vs_uncapped_weak_cap", "cap_lambda", cap2,
                       "F1 radial law, Simes over AD/KS/CvM on Z",
                       n_inj if weak is not None else 0, det2, required, True,
@@ -2170,18 +2181,19 @@ def analyse_negative_controls(ctx: Context, p1: dict, p4: dict) -> dict:
             ub3 = worst_row.get("ub") or [0.0, 0.0, 1.0]
             prec3 = worst_row.get("precision") or "double"
             a3 = kappa3 - 0.5
-            for i in range(n_inj):
+            def _nc3_injection(i):
                 rng = np.random.default_rng(stable_seed("NC3", f"{q:.12g}", i))
                 lr_rec, ret, nh_rec, n_att = nc3_replicate(rng, n_used, kappa3, ratio3, ub3,
                                                            prec3, q)
                 if int(np.sum(ret)) < 100:
-                    continue
+                    return False
                 z_int = S.z_from_log_w(S.log_w_from_log_r(lr_rec), a3)
                 t = loader_tests(lr_rec[ret], nh_rec[ret], kappa3, None,
                                  n_attempted=n_att, q0s=q0s, precision=prec3,
                                  theta_ratio=ratio3, ub=ub3, z_intended=z_int)
-                if not F.family_F5(proto, f5_cell(t, "NC3", q)).passed:
-                    det += 1
+                return not F.family_F5(proto, f5_cell(t, "NC3", q)).passed
+
+            det = sum(parallel_injections(_nc3_injection, n_inj))
         row = _power_row(
             ctx, "NC3_survivor_conditioning",
             "level" if kind == "level" else "excess_loss_fraction", q,
@@ -2521,6 +2533,35 @@ def validate_log_q(ctx: Context) -> tuple[float, list[dict]]:
     return float(worst), rows
 
 
+# ---------------------------------------------------------------------------
+# Negative-control injections, run concurrently.
+#
+# The three F6 loops each run `n_inj` injections and count how many the battery rejects.
+# Every injection seeds its own generator from `stable_seed(...)` with the injection index
+# in the key, so no injection reads another's state and the count cannot depend on the
+# order they are evaluated in.  That is what makes this safe: the pool changes when the
+# work happens and nothing else, and the counts are summed from returned results rather
+# than incremented from inside the workers.
+#
+# Threads rather than processes.  The cost is `np.sort` on samples of a few hundred
+# thousand doubles -- each injection sorts one three times over, once inside
+# `anderson_darling_exp1`, once inside `stats.kstest` and once inside
+# `stats.cramervonmises` -- and numpy releases the GIL for a sort that size.  Processes
+# would have to pickle those arrays to every worker to buy the same parallelism.
+INJECTION_WORKERS = min(14, (os.cpu_count() or 4))
+
+
+def parallel_injections(fn, n: int) -> list:
+    """``[fn(0), ..., fn(n-1)]``, evaluated concurrently, returned in index order."""
+    if n <= 1 or INJECTION_WORKERS <= 1:
+        return [fn(i) for i in range(n)]
+    with concurrent.futures.ThreadPoolExecutor(max_workers=INJECTION_WORKERS) as ex:
+        return list(ex.map(fn, range(n)))
+
+
+_VERIFY_MISMATCHES: list = []
+
+
 def verify_checksum_manifest(path: str, base: str) -> int | None:
     """Recompute every hash a checksum manifest lists.
 
@@ -2539,18 +2580,41 @@ def verify_checksum_manifest(path: str, base: str) -> int | None:
             target = os.path.join(base, name)
             if not os.path.exists(target) or sha256_file(target) != digest.strip():
                 bad += 1
+                # A gate that fails must say what failed.  Reporting only a count sent
+                # three passes of this holdout looking for a mismatch that turned out to be
+                # this script's own output, rewritten between the manifest and the check.
+                _VERIFY_MISMATCHES.append(os.path.relpath(target, HERE))
     return 0 if bad == 0 else bad
 
 
 def g6_evidence(ctx: Context, p1: dict, override_path: str | None) -> dict:
     ev: dict = {"protocol_sha256": ctx.proto.sha256}
 
+    # The RAW manifest is verified here, and it is the half of `make verify` that this
+    # script can honestly measure: raw_checksums.sha256 hashes raw/ only, which the
+    # analysis reads and never writes.  Checking it proves the analysis consumed the same
+    # bytes the run recorded, which is worth knowing and is not circular.
     raw_manifest = os.path.join(HERE, "raw", "raw_checksums.sha256")
-    top_manifest = os.path.join(HERE, "checksums.sha256")
-    a = verify_checksum_manifest(raw_manifest, os.path.join(HERE, "raw"))
-    b = verify_checksum_manifest(top_manifest, HERE)
-    ev["make_verify_exit_code"] = None if (a is None or b is None) else int(
-        0 if (a == 0 and b == 0) else 1)
+    raw_bad = verify_checksum_manifest(raw_manifest, os.path.join(HERE, "raw"))
+    ev["raw_manifest_verified"] = None if raw_bad is None else bool(raw_bad == 0)
+    if _VERIFY_MISMATCHES:
+        ev["raw_manifest_mismatches"] = sorted(set(_VERIFY_MISMATCHES))[:20]
+
+    # The TOP manifest is NOT verified here, because this script cannot do it -- not badly,
+    # but at all.  checksums.sha256 hashes results/analysis_report.md and
+    # results/exp7_results.json; run() deletes both at its start so that a failed analysis
+    # cannot leave a stale verdict standing, and writes them at its end.  At the moment
+    # this function executes, both are therefore ABSENT, and a missing file counts as a
+    # mismatch -- so the measurement returns 1 unconditionally, whatever the tree actually
+    # contains.  It is not an ordering problem that a different sequence would fix; it is
+    # unsatisfiable.  The gate's own verdict lives in the file the manifest hashes, which
+    # makes it circular even setting the deletion aside.
+    #
+    # `make verify` is therefore measured where it can be: by shasum, once, after the
+    # analysis has finished writing, and carried in the run-bound receipt.  The receipt
+    # still has to name this run to be read at all, and it still cannot supply
+    # dependencies_clean or baseline_comparison_resolved, which are measured above.
+    ev["make_verify_exit_code"] = None
 
     envjson = os.path.join(HERE, "raw", "environment.json")
     if os.path.exists(envjson):
@@ -2601,7 +2665,10 @@ def g6_evidence(ctx: Context, p1: dict, override_path: str | None) -> dict:
     if os.path.exists(envjson):
         run_commit = env.get("git", {}).get("commit")
 
-    path = override_path or ctx.out("g6_evidence.json")
+    # OUTSIDE results/.  The manifest hashes results/, so a receipt kept there would be
+    # hashed by the very manifest whose verification it reports -- the last self-hashing
+    # link.  It is a post-analysis record about the run, so it sits beside the run.
+    path = override_path or os.path.join(HERE, "g6_evidence.json")
     if not os.path.exists(path):
         ev["g6_receipt"] = "absent"
         return ev
