@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Deterministic verification of the closed-form cap-geometry results in Sec. IV F.
+"""Deterministic verification of the closed-form velocity-bound results.
 
-Every claim Sec. IV F makes about a bounding region is analytic, so it is checked
-here by quadrature rather than by sampling.  No random numbers are used and no
-experiment output is read, which makes this file a self-contained provenance
-record: run it and every printed number in Sec. IV F is either reproduced or the
-script exits non-zero.
+The physical-sphere limit in Appendix A and the component-box results in
+Sec. IV B are analytic, so they are checked here by quadrature rather than by
+sampling.  No random numbers are used and no experiment output is read, which
+makes this file a self-contained provenance record: run it and every generated
+number is either reproduced or the script exits non-zero.
 
 The point of the design is *independence*.  The manuscript derives the wide-cap
 limit of a physical-speed bound by working in the normalized coordinates
@@ -22,10 +22,10 @@ the quantities from a different direction:
   analytic limit as :math:`v_{\\max}` grows.
 * ``box_ratio_vspace`` does the same for the component-wise box, in Cartesian
   velocity coordinates over the unequal-sided rectangular region the released
-  code actually tests, so the exactness claim of Eq. (24) is a numerical result
+  code actually tests, so the exact ratio is a numerical result
   about an anisotropic integral rather than a restatement of a symmetry.
 * ``ellipsoid_acceptance_quad`` integrates the Beta-prime radial density to
-  check the incomplete-beta closed form of Eq. (25).
+  check the incomplete-beta closed form used by the internal comparison.
 * ``box_reject_fraction_vspace`` integrates the bi-Kappa density over the
   literal cube in Cartesian normalized coordinates, so the one-dimensional
   ``E_M`` closed form for the component-wise box is checked against a
@@ -40,8 +40,8 @@ Checks
 2. The limit is a wide-cap asymptote, not a value attained at every finite cap.
 3. At ``kappa = 3/2`` exactly the limit is unity, and the finite-cap ratio
    approaches unity like ``1 / log v_max`` -- so the boundary case is a
-   logarithmically slow bias, not a plateau.  This is the case the first draft of
-   Sec. IV F got wrong by writing ``kappa <= 3/2``.
+   logarithmically slow bias, not a plateau.  This is the case an earlier draft
+   of the deleted main-text subsection got wrong by writing ``kappa <= 3/2``.
 4. For ``kappa > 3/2`` the ratio converges to unity at the ordinary rate.
 5. The component-wise box reproduces the scale-implied ratio exactly, at every
    finite cap and every ``kappa > 1/2``.
@@ -75,7 +75,7 @@ from scipy.special import betainc, beta as beta_fn
 
 
 # --------------------------------------------------------------------------
-# the analytic wide-cap limit quoted in Sec. IV F
+# the analytic wide-cap limit quoted in Appendix A
 # --------------------------------------------------------------------------
 
 def speed_cap_anisotropy_limit(kappa, ratio):
@@ -343,7 +343,7 @@ def cap_for_tv_target(kappa, tv_target, lam_hi=1.0e14):
 # --------------------------------------------------------------------------
 
 # The (kappa, TV target) pair the manuscript's cap-width statement is made at.
-# Sec. IV F's point is that at the heavy-tailed end the cap needed to bring the
+# Sec. IV B shows that at the heavy-tailed end the cap needed to bring the
 # capped law within a negligible total-variation distance of the target is
 # impractically wide; 10^-3 is the negligibility threshold fixed in Experiment 2
 # before any result was looked at.  ``make_manuscript_assets.py`` imports this
@@ -402,7 +402,7 @@ def main():
         check(f"{tag}: the limit is not unity",
               abs(lim - 1.0) > 0.02, f"limit={lim:.6f}")
         if expect is not None:
-            check(f"{tag}: limit equals the value quoted in Sec. IV F",
+            check(f"{tag}: limit equals the value quoted in Appendix A",
                   close(lim, expect, 5.0e-6), f"{lim:.6f} vs {expect:.6f}")
 
     print("   the plateau closes continuously as kappa -> 3/2 from below, "
@@ -526,7 +526,7 @@ def main():
         for f in FAILURES:
             print(f"  - {f}")
         return 1
-    print("all cap-geometry checks passed")
+    print("all velocity-bound checks passed")
     return 0
 
 

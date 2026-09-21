@@ -66,18 +66,13 @@ C_HIST = "0.72"
 C_KAPPA = "#1f4e9c"
 C_MAXW = "#c1272d"
 
-# The single (kappa, theta_par/theta_perp) pair Sec. IV F uses to illustrate the
+# The single (kappa, theta_par/theta_perp) pair Appendix A uses to illustrate the
 # physical-speed cap's wide-cap anisotropy bias.  kappa = 0.75 is the low-kappa
 # case already carried through Secs. IV and VI, and 2 is the anisotropy of every
 # capped experiment, so the example costs the reader no new parameters.
 SPEED_CAP_EXAMPLE = (0.75, 2.0)
 
-# (kappa, lambda) pairs whose 99.9th-percentile deficit is quoted against the
-# rejected fraction in Sec. IV C.  Both cases are carried so the section can
-# lead with either without a pipeline change.
-TAIL_AMPLIFICATION_CASES = {"LowKappa": (1.5, 50.0), "FiniteVar": (2.0, 20.0)}
-
-# The (kappa, TV target) pair Sec. IV F uses to state how wide a component-wise
+# The (kappa, TV target) pair Sec. IV B uses to state how wide a component-wise
 # cap would have to be before the capped conditional law is within a negligible
 # total-variation distance of the intended one.  kappa = 0.75 is the same
 # low-kappa case; 10^-3 is the negligibility threshold Experiment 2 fixed before
@@ -287,8 +282,7 @@ def capped_summary(exp2_dir):
     """Block-A capped runs, keyed by (kappa, lambda).
 
     Everything the cap figure and table need lives in ``summary``: the analytic
-    rejected fraction (which *is* the TV distance), the tail-quantile ratios,
-    and the azimuthal anisotropy.
+    rejected fraction (which *is* the TV distance) and the tail-quantile ratios.
     """
     res = load_json(exp2_dir, "exp2_results.json")
     table = {}
@@ -304,12 +298,12 @@ def capped_summary(exp2_dir):
 
 def figure_cap(exp2_dir):
     _, table, kappas, lams, i999 = capped_summary(exp2_dir)
-    qtab = atab = table
+    qtab = table
 
     cmap = plt.get_cmap("viridis")
     colors = {k: cmap(t) for k, t in zip(kappas, np.linspace(0.05, 0.85, len(kappas)))}
 
-    fig, axes = plt.subplots(1, 3, figsize=(7.1, 2.5))
+    fig, axes = plt.subplots(1, 2, figsize=(7.1, 2.5))
 
     ax = axes[0]
     for k in kappas:
@@ -333,16 +327,6 @@ def figure_cap(exp2_dir):
     ax.set_xlabel(r"cap $\lambda$")
     ax.set_ylabel(r"$q_{99.9}(|v|)$ ratio, capped / uncapped")
     ax.set_ylim(-0.03, 1.08)
-
-    ax = axes[2]
-    for k in kappas:
-        xs = [l for l in lams if (k, l) in atab]
-        ys = [abs(atab[(k, l)]["azimuth_a4_z"]["mean"]) for l in xs]
-        ax.semilogx(xs, ys, "o-", ms=3, color=colors[k])
-    ax.axhline(3.0, color="0.4", ls=":", lw=0.8)
-    ax.text(3.2, 3.4, r"$3\sigma$", fontsize=6, color="0.3")
-    ax.set_xlabel(r"cap $\lambda$")
-    ax.set_ylabel(r"azimuthal anisotropy $|z_4|$")
 
     fig.tight_layout(pad=0.4)
     path = os.path.join(OUT_FIG, "cap-characterization.pdf")
@@ -486,10 +470,10 @@ def table_cap(exp2_dir):
     print(f"  wrote {path}")
 
 
-def macro_speed_cap_limit(exp2_dir):
-    """Sec. IV F's two bounding-region numbers, as LaTeX macros.
+def macro_speed_cap_limit():
+    """Appendix A and Sec. IV B velocity-bound numbers, as LaTeX macros.
 
-    Sec. IV F states the wide-cap limit as an equation and illustrates it with a
+    Appendix A states the wide-cap limit as an equation and illustrates it with a
     single value; it deliberately does not tabulate the (kappa, anisotropy) grid,
     because a sweep would present the bounding geometry as a study in its own
     right rather than as the analytic caution it is.  The number is emitted here
@@ -525,16 +509,6 @@ def macro_speed_cap_limit(exp2_dir):
         fh.write(f"\\newcommand{{\\TVThreshKappa}}{{{tv_kappa:g}}}\n")
         fh.write(f"\\newcommand{{\\TVThreshTarget}}{{{_math_sci(tv_target)}}}\n")
 
-        # Sec. IV C contrasts the quantile deficit a cap induces against the
-        # mass it removes.  Both inputs are measured, so the ratio is emitted
-        # here rather than typed into the prose -- the rule that the corrected
-        # \TVThreshLambda exists to enforce.
-        _, table, _, _, i999 = capped_summary(exp2_dir)
-        for name, (k, lam_amp) in TAIL_AMPLIFICATION_CASES.items():
-            rec = table[(k, lam_amp)]
-            deficit = 1.0 - rec["q_speed_ratio"]["mean"][i999]
-            amp = deficit / rec["reject_fraction_analytic"]
-            fh.write(f"\\newcommand{{\\TailAmp{name}}}{{{amp:.0f}}}\n")
     print(f"  wrote {path}")
     return value, lam
 
@@ -605,11 +579,11 @@ def main() -> int:
     os.makedirs(OUT_FIG, exist_ok=True)
     os.makedirs(OUT_TAB, exist_ok=True)
 
-    # The cap-geometry claims of Sec. IV F are analytic, so they are checked
+    # The Appendix A and Sec. IV B velocity-bound claims are analytic, so they are checked
     # before anything is written.  A drift between the closed forms in the
     # manuscript and independent quadrature must stop asset generation rather
     # than quietly emit a wrong number.
-    print("cap-geometry closed forms (Sec. IV F):")
+    print("velocity-bound closed forms (Appendix A and Sec. IV B):")
     if verify_cap_geometry.main() != 0:
         print("cap-geometry verification failed; no assets written",
               file=sys.stderr)
@@ -630,7 +604,7 @@ def main() -> int:
     table_validation(exp1)
     audit = table_moments(exp1)
     table_cap(exp2)
-    geom, tv_lam = macro_speed_cap_limit(exp2)
+    geom, tv_lam = macro_speed_cap_limit()
     table_performance(exp3)
     table_precision(exp4)
 
