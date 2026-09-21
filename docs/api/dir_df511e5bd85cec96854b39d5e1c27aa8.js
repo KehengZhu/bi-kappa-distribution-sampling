@@ -6,5 +6,6 @@ var dir_df511e5bd85cec96854b39d5e1c27aa8 =
     [ "general_position_generator.H", "general__position__generator_8_h.html", "general__position__generator_8_h" ],
     [ "general_velocity_generator.H", "general__velocity__generator_8_h.html", "general__velocity__generator_8_h" ],
     [ "main.cpp", "main_8cpp.html", "main_8cpp" ],
+    [ "test_main.cpp", "test__main_8cpp.html", "test__main_8cpp" ],
     [ "test_suite.H", "test__suite_8_h.html", "test__suite_8_h" ]
 ];

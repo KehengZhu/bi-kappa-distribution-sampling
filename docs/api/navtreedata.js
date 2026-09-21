@@ -54,7 +54,7 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "annotated.html",
-"namespacesphere__sampling__bias.html#af88030dbef0b37db5a1eba26632c730d"
+"namespacebikappa__validate.html#ad155c8c56670b4607f5dedba4214496a"
 ];
 
 const SYNCONMSG = 'click to disable panel synchronization';

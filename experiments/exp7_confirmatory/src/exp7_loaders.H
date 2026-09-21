@@ -1,0 +1,817 @@
+// Experiment 7 - the two radius formations under test, and the loaders built on them.
+//
+// Strict C++11.
+//
+// Two methods, and nothing else:
+//
+//   LEGACY     the shipped 1.0.0 loader.  R = sqrt(X1)/sqrt(X2) with X2 materialized by
+//              std::gamma_distribution, the unit direction multiplied by R, the thermal
+//              scaling applied, and the rotation last.
+//   CANDIDATE  the released 2.1.0 loader.  log X2 = log Y + log(U)/a with Y ~ Ga(a+1,1)
+//              (Ahrens-Dieter shape boosting), log R = (log X1 - log X2)/2, the order-unity
+//              vector g = Q(ub) diag(sqrt(kappa) theta) n built first, and each component
+//              then materialized and its representability decided from the component -- not
+//              from log|V_j| against a rounded log(max()), which is the defect 2.1.0
+//              corrects.  The direction n comes from the rejection method of Marsaglia
+//              (1972): two open-interval uniforms per try, retried until the pair falls in
+//              the unit disc, then lifted onto the sphere.  It uses sqrt and no library
+//              transcendental, and it consumes a variable number of uniforms per attempt.
+//
+// QF (`sqrt(X1/X2)`, the pre-1.0 formation whose intermediate quotient overflows even where
+// its square root is representable) survives only as a third *diagnostic column of the
+// paired layer*.  It is not a method, it is never run natively, and no claim rests on it; it
+// is kept because it costs one square root per attempt and it is the only way to show that
+// the 1.0.0 split form was itself already a repair.
+//
+// Two layers live here and must never be conflated:
+//
+//   PAIRED DIAGNOSTIC LAYER (runPairedAttempt)
+//       LEGACY, CANDIDATE and QF all receive the *same* declared primitives
+//       (x1, y, u, cos_theta, phi), so one mathematical attempt can be followed through
+//       every formation and "was this draw recoverable?" is decided per draw instead of by
+//       comparing histograms.  What the layer compares is the three RADIUS formations on
+//       one mathematical draw; the direction is a shared nuisance parameter, and all three
+//       columns are handed the identical one.
+//
+//       This is a mechanism experiment.  It is NOT a draw-by-draw reconstruction of either
+//       native path's direction sampling, and cannot be one: release 1.0.0 draws cos(theta)
+//       and phi through std::uniform_real_distribution, while release 2.0.0 draws no angle
+//       at all.  The layer therefore declares its own direction primitive and says so, and
+//       (cos_theta, phi) is that declaration -- the representation the audit record, the
+//       100-digit oracle and the analysis reader are all written against.  README.md,
+//       "The paired layer's declared direction", records the choice and the alternative.
+//
+//       One consequence is stated rather than left implicit: that primitive reaches the
+//       vector through sin(phi) and cos(phi) of one argument, which a compiler is free to
+//       fuse into a combined routine whose sine differs by an ulp.  This layer's per-draw
+//       numbers are therefore a function of the compiler as well as of the source text.
+//       The portability claim rests on the released class -- P5, and P1's class rows --
+//       and not on this layer.
+//
+//   NATIVE LAYER (legacyNativeAttempt / candidateNativeAttempt)
+//       Each method runs its own real implementation end to end, against its own
+//       primitives.  This is what a user receives.  It cannot separate avoidable from
+//       honest loss on a draw whose denominator materialized as zero, because the intended
+//       value is then unknowable from the output alone.  That separation is what the paired
+//       layer is for.  `make selftest` checks each native replica against the released class
+//       it stands for, bit for bit, which is what licenses using the replica wherever an
+//       intermediate has to be observable.
+
+#ifndef EXP7_LOADERS_H
+#define EXP7_LOADERS_H
+
+#include "exp7_common.H"
+
+#include <cmath>
+#include <cstdint>
+#include <limits>
+#include <random>
+
+namespace exp7
+{
+
+enum Method
+{
+    kMethodLegacy= 0,
+    kMethodCandidate= 1,
+    kMethodQF= 2, ///< paired-layer diagnostic column only; never a native method
+    kNumMethods= 3
+};
+
+inline const char *methodName(int m)
+{
+    switch (m)
+    {
+    case kMethodLegacy: return "LEGACY";
+    case kMethodCandidate: return "CANDIDATE";
+    case kMethodQF: return "QF";
+    default: return "unknown";
+    }
+}
+
+/// True for the two methods the protocol puts under test.  QF is excluded everywhere a
+/// verdict is formed.
+inline bool isTestedMethod(int m) { return m == kMethodLegacy || m == kMethodCandidate; }
+
+// ---------------------------------------------------------------------------
+// The declared primitives of one paired attempt.
+//
+// Drawn with the candidate's own primitives from bikappa_detail, so that the paired layer's
+// verdicts are a property of the arithmetic rather than of the standard library that ran
+// it.  x2 is the product form y * u^(1/a) -- what a library-backed Gamma(a) call would
+// materialize, and what underflows.
+// ---------------------------------------------------------------------------
+template <typename T> struct SharedPrimitives
+{
+    T x1;
+    T y;
+    T u;
+    T cos_theta;
+    T phi;
+    T x2;     ///< the product form y * u^(1/a)
+    T log_x1; ///< working-precision log
+    T log_x2; ///< working-precision log via the identity; finite when the draw exists
+};
+
+template <typename T, typename Gen>
+SharedPrimitives<T> drawShared(T a, Gen &gen, T &ncache, bool &ncached)
+{
+    SharedPrimitives<T> s;
+    s.x1= bikappa_detail::marsagliaTsangGamma<T, Gen>(T(1.5), gen, ncache, ncached);
+    s.y= bikappa_detail::marsagliaTsangGamma<T, Gen>(a + T(1), gen, ncache, ncached);
+    s.u= bikappa_detail::openCanonical<T, Gen>(gen);
+    s.x2= s.y * std::pow(s.u, T(1) / a);
+    s.log_x1= std::log(s.x1);
+    s.log_x2= std::log(s.y) + std::log(s.u) / a;
+    s.cos_theta= T(2) * bikappa_detail::openCanonical<T, Gen>(gen) - T(1);
+    s.phi= T(2) * piValue<T>() * bikappa_detail::openCanonical<T, Gen>(gen);
+    return s;
+}
+
+// ---------------------------------------------------------------------------
+// The intended sample, evaluated in double from the recorded primitives.
+//
+// This is the reference against which every working-precision formation is judged.  It is a
+// *reference*, not an oracle: for a float run it is over thirty bits more accurate than the
+// thing it judges, and for a double run it shares the type but not the formation -- the
+// reference never materializes X2, so it is unaffected by the underflow that degrades the
+// legacy radius, and its own error is about eps |log R|, which is 1.6e-13 at the double
+// overflow threshold against a 1.05e-8 accuracy threshold.  Draws that land near a
+// representability threshold are nevertheless sent to the independent 100-digit oracle
+// rather than being decided here.
+// ---------------------------------------------------------------------------
+struct Reference
+{
+    double log_x1;
+    double log_x2;
+    double log_r;
+    double log_w;             ///< log W, W = X2/(X1+X2) ~ Beta(a, 3/2)
+    double g[3];              ///< order-unity vector: V = R g, already rotated
+    double log_component[3];  ///< log |V_j|
+    double max_log_component;
+    double log_speed;         ///< log |V|
+    double log_local_max;     ///< log of the largest *local*-frame component
+    bool representable;       ///< every returned component is representable in the run type
+    bool local_representable; ///< the pre-rotation local vector is representable
+    bool near_limit;          ///< within the protocol margin of the overflow threshold
+    double overflow_margin;   ///< max_log_component - log_ovf, in natural-log units
+};
+
+template <typename T>
+Reference makeReference(double a, const SharedPrimitives<T> &s, const Geometry<T> &geom,
+                        double log_ovf)
+{
+    Reference r;
+    r.log_x1= std::log(static_cast<double>(s.x1));
+    r.log_x2= std::log(static_cast<double>(s.y)) + std::log(static_cast<double>(s.u)) / a;
+    r.log_r= 0.5 * (r.log_x1 - r.log_x2);
+    r.log_w= logWFromLogR(r.log_r);
+
+    // Geometry in double, from the same two uniforms.
+    const double ct= static_cast<double>(s.cos_theta);
+    const double st= std::sqrt(std::max(0.0, 1.0 - ct * ct));
+    const double ph= static_cast<double>(s.phi);
+    const double n[3]= {st * std::cos(ph), st * std::sin(ph), ct};
+    const double sk= std::sqrt(static_cast<double>(geom.kappa));
+    const double tp= static_cast<double>(geom.theta_perp);
+    const double tq= static_cast<double>(geom.theta_par);
+    const double local[3]= {sk * tp * n[0], sk * tp * n[1], sk * tq * n[2]};
+
+    double loc_max= -std::numeric_limits<double>::infinity();
+    for (int j= 0; j < 3; ++j)
+    {
+        const double lv= r.log_r + std::log(std::fabs(local[j]));
+        if (lv > loc_max)
+            loc_max= lv;
+    }
+    r.log_local_max= loc_max;
+
+    if (geom.identity_rotation)
+    {
+        for (int j= 0; j < 3; ++j)
+            r.g[j]= local[j];
+    }
+    else
+    {
+        // Same basis construction as the released header, evaluated in double.
+        std::array<double, 3> loc3;
+        loc3[0]= local[0];
+        loc3[1]= local[1];
+        loc3[2]= local[2];
+        std::array<double, 3> ubd;
+        ubd[0]= static_cast<double>(geom.ub[0]);
+        ubd[1]= static_cast<double>(geom.ub[1]);
+        ubd[2]= static_cast<double>(geom.ub[2]);
+        bi_kappa_distribution<double> rotD(static_cast<double>(geom.kappa), tp, tq, ubd,
+                                           bi_kappa_distribution<double>::no_cap());
+        const std::array<double, 3> gg= rotD.rotate_from_fieldAligned_frame(loc3, ubd);
+        for (int j= 0; j < 3; ++j)
+            r.g[j]= gg[j];
+    }
+
+    double mx= -std::numeric_limits<double>::infinity();
+    for (int j= 0; j < 3; ++j)
+    {
+        r.log_component[j]= r.log_r + std::log(std::fabs(r.g[j]));
+        if (r.log_component[j] > mx)
+            mx= r.log_component[j];
+    }
+    r.max_log_component= mx;
+
+    const double gnorm= std::sqrt(r.g[0] * r.g[0] + r.g[1] * r.g[1] + r.g[2] * r.g[2]);
+    r.log_speed= r.log_r + std::log(gnorm);
+
+    r.representable= (mx < log_ovf);
+    r.local_representable= (loc_max < log_ovf);
+    r.overflow_margin= mx - log_ovf;
+    const double band= oracleBandLogUnits();
+    r.near_limit= std::fabs(mx - log_ovf) <= band || std::fabs(loc_max - log_ovf) <= band;
+    return r;
+}
+
+// ---------------------------------------------------------------------------
+// LEGACY vector construction from a materialized radius.
+//
+// Deliberately identical in operation order to bikappa_v1::bi_kappa_distribution's
+// operator(): the unit direction is multiplied by the radius first, the thermal scaling is
+// applied second, and the rotation comes last.  That order is what makes a rotated
+// configuration lose draws whose *returned* components are representable, so it must not be
+// "improved" here.
+// ---------------------------------------------------------------------------
+template <typename T>
+std::array<T, 3> legacyVectorFromRadius(T r, T cos_theta, T phi, const Geometry<T> &geom)
+{
+    const T sin_theta= std::sqrt(std::max(T(0), T(1) - cos_theta * cos_theta));
+    const T ux= r * sin_theta * std::cos(phi);
+    const T uy= r * sin_theta * std::sin(phi);
+    const T uz= r * cos_theta;
+
+    std::array<T, 3> p;
+    p[0]= geom.sqrt_kappa * geom.theta_perp * ux;
+    p[1]= geom.sqrt_kappa * geom.theta_perp * uy;
+    p[2]= geom.sqrt_kappa * geom.theta_par * uz;
+    if (geom.identity_rotation)
+        return p;
+    return geom.rotator.rotate_from_fieldAligned_frame(p, geom.ub);
+}
+
+/// The LEGACY cap predicate, applied where LEGACY applies it: to the pre-rotation local
+/// vector, in linear arithmetic, after the radius has been materialized.
+template <typename T>
+bool legacyCapAccept(T r, T cos_theta, T phi, const Geometry<T> &geom, T lambda)
+{
+    const std::array<T, 3> n= Geometry<T>::direction(cos_theta, phi);
+    const T p0= geom.sqrt_kappa * geom.theta_perp * (r * n[0]);
+    const T p1= geom.sqrt_kappa * geom.theta_perp * (r * n[1]);
+    const T p2= geom.sqrt_kappa * geom.theta_par * (r * n[2]);
+    return std::fabs(p0) / geom.theta_perp <= lambda &&
+           std::fabs(p1) / geom.theta_perp <= lambda &&
+           std::fabs(p2) / geom.theta_par <= lambda;
+}
+
+/// CANDIDATE vector construction, reproducing bi_kappa_distribution 2.0.0 step for step:
+/// build the order-unity vector first, then materialize each component and decide its
+/// representability from the component itself.  The predicate is the released one, so the
+/// replica reproduces what a user actually gets -- including at the boundary, which is the
+/// whole reason the released form no longer compares a logarithm against log(max()).
+template <typename T>
+std::array<T, 3> candidateVectorFromLogRadius(
+    typename Geometry<T>::acc_type log_r,
+    const std::array<typename Geometry<T>::acc_type, 3> &n, const Geometry<T> &geom,
+    bool *any_overflow)
+{
+    typedef typename Geometry<T>::acc_type A;
+    const std::array<A, 3> g= geom.gVectorAcc(n);
+
+    // Mirrors the released step 5 exactly, including why it no longer tests a logarithm.
+    // `log_max` is a rounded value and `exp` of it need not land below `max()`: in float,
+    // `exp(log(FLT_MAX))` is +infinity.  A draw at `log_r == log_max` therefore passed the
+    // old `log_r <= log_max` test and then overflowed when it was exponentiated -- while
+    // every component it should have produced was representable, because |g_j| < 1 pulled
+    // each back under the limit.  Comparing the materialized magnitude cannot do that: it
+    // is the value that gets returned, so the test and the result agree by construction.
+    // 2.2.0: the radius, the direction and `g` are all in the accumulator, and the one
+    // rounding is the cast below.  A `float` `g_j` carries about 6e-8 of relative error,
+    // which is larger than the margin by which a component just under `FLT_MAX` is
+    // representable, so rounding before the multiply discards draws the type can hold.
+    const A accum_max= std::numeric_limits<A>::max();
+    const T max_finite= std::numeric_limits<T>::max();
+    const A r_try= std::exp(log_r);
+    const bool radius_representable= (r_try <= accum_max); // false for inf and for NaN
+    const A R= radius_representable ? r_try : A(0);
+
+    *any_overflow= false;
+    std::array<T, 3> v;
+    for (int j= 0; j < 3; ++j)
+    {
+        if (g[j] == A(0))
+        {
+            v[j]= T(0);
+            continue;
+        }
+        const A wide= radius_representable ? R * std::fabs(g[j])
+                                           : std::exp(log_r + std::log(std::fabs(g[j])));
+        const T mag= static_cast<T>(wide);
+        if (!(mag <= max_finite))
+        {
+            *any_overflow= true;
+            v[j]= (g[j] < A(0)) ? -std::numeric_limits<T>::infinity()
+                                : std::numeric_limits<T>::infinity();
+            continue;
+        }
+        v[j]= (g[j] < A(0)) ? -mag : mag;
+    }
+    return v;
+}
+
+/// The same, from the paired layer's declared direction primitive.  Release 2.0.0 never
+/// forms an angle, so this overload exists for the paired layer and not for the native one.
+template <typename T>
+std::array<T, 3> candidateVectorFromLogRadius(typename Geometry<T>::acc_type log_r,
+                                              T cos_theta, T phi, const Geometry<T> &geom,
+                                              bool *any_overflow)
+{
+    return candidateVectorFromLogRadius<T>(log_r, Geometry<T>::directionAcc(cos_theta, phi),
+                                           geom, any_overflow);
+}
+
+/// The CANDIDATE cap predicate, in the log domain, in the field-aligned frame.  Exactly the
+/// released test: only the largest |n_j| has to be examined, so it costs one logarithm.
+template <typename T>
+bool candidateCapAcceptLog(typename Geometry<T>::acc_type log_r,
+                           const std::array<typename Geometry<T>::acc_type, 3> &n,
+                           const Geometry<T> &geom, typename Geometry<T>::acc_type log_cap,
+                           bool *unrepresentable)
+{
+    typedef typename Geometry<T>::acc_type A;
+    const A max_abs_n= std::max(std::fabs(n[0]), std::max(std::fabs(n[1]), std::fabs(n[2])));
+    const A log_largest= log_r + geom.log_sqrt_kappa + std::log(max_abs_n);
+    if (log_largest > log_cap)
+    {
+        if (unrepresentable)
+        {
+            // Mirrors the released capped branch, which counts the representability of the
+            // VELOCITY the caller would have received -- not of `log_largest`, which is the
+            // normalized coordinate the cap predicate is written in and understates the
+            // largest component whenever theta_par and theta_perp differ.  The released form
+            // screens on the rotation-invariant bound
+            // max_j |g_j| <= |g| <= sqrt(kappa) max(theta_perp, theta_par) and materializes
+            // only where that cannot decide it; both steps are reproduced here.
+            if (log_r + geom.log_g_bound > geom.log_max_finite - A(1))
+            {
+                bool ov= false;
+                candidateVectorFromLogRadius<T>(log_r, n, geom, &ov);
+                *unrepresentable= ov;
+            }
+            else
+            {
+                *unrepresentable= false;
+            }
+        }
+        return false;
+    }
+    if (unrepresentable)
+        *unrepresentable= false;
+    return true;
+}
+
+/// The same, from the paired layer's declared direction primitive.
+template <typename T>
+bool candidateCapAcceptLog(typename Geometry<T>::acc_type log_r, T cos_theta, T phi,
+                           const Geometry<T> &geom, typename Geometry<T>::acc_type log_cap,
+                           bool *unrepresentable)
+{
+    return candidateCapAcceptLog<T>(log_r, Geometry<T>::directionAcc(cos_theta, phi), geom,
+                                    log_cap, unrepresentable);
+}
+
+// ---------------------------------------------------------------------------
+// Verdicts
+// ---------------------------------------------------------------------------
+template <typename T> bool allFiniteT(const std::array<T, 3> &v)
+{
+    for (int j= 0; j < 3; ++j)
+        if (!std::isfinite(v[j]))
+            return false;
+    return true;
+}
+
+/// Relative error of a formation's radius against the reference, evaluated in the log domain
+/// so that nothing overflows: |r/R - 1| = |expm1(log r - log R)|.  Returns NaN when the
+/// comparison is not defined, and 1 when the two are more than a factor of e apart, which is
+/// beyond any accuracy threshold and would otherwise overflow expm1.
+inline double relativeRadiusError(double log_r_method, double log_r_ref)
+{
+    if (!(log_r_method == log_r_method) || !(log_r_ref == log_r_ref))
+        return std::numeric_limits<double>::quiet_NaN();
+    if (log_r_method == std::numeric_limits<double>::infinity() ||
+        log_r_method == -std::numeric_limits<double>::infinity() ||
+        log_r_ref == std::numeric_limits<double>::infinity() ||
+        log_r_ref == -std::numeric_limits<double>::infinity())
+        return std::numeric_limits<double>::quiet_NaN();
+    const double d= log_r_method - log_r_ref;
+    if (d > 1.0 || d < -1.0)
+        return 1.0;
+    return std::fabs(std::expm1(d));
+}
+
+/// Terminal category for one method on one attempt.  Exactly one category is returned; the
+/// overlapping descriptive flags live separately.
+///
+/// `rel_err` is the relative radius error against the reference, NaN where it is not
+/// defined, and `max_rel_err` the type's FINITE_BUT_WRONG threshold from the protocol.  A
+/// finite return is a success only when it is also accurate: amendment 1.1.0 exists because
+/// Experiment 6's classifier scored `method_finite ? finite : honest_overflow` and so
+/// recorded a fabricated number as a success.
+inline int classifyTerminal(int method, bool method_finite, bool ref_representable,
+                            double rel_err, double max_rel_err, uint32_t flags)
+{
+    if (!ref_representable)
+        return method_finite ? kCatOverflowReturnedFinite : kCatHonestOverflow;
+    if (method_finite)
+    {
+        if (rel_err == rel_err && rel_err > max_rel_err)
+            return kCatFiniteButWrong;
+        return kCatFinite;
+    }
+    if (method == kMethodCandidate)
+        return kCatLogPrimFail;
+    if (flags & kFlagX2Zero)
+        return kCatDenomZero;
+    return (method == kMethodQF) ? kCatQuotientLoss : kCatLegacyLoss;
+}
+
+// ---------------------------------------------------------------------------
+// One paired attempt: the same mathematical draw pushed through all three formations.
+// ---------------------------------------------------------------------------
+struct PairedResult
+{
+    Reference ref;
+    uint32_t flags;
+    int cat[kNumMethods];
+    bool finite[kNumMethods];
+    double rel_err[kNumMethods]; ///< |r_method / R_ref - 1|, NaN where not comparable
+    double log_r_method[kNumMethods];
+};
+
+template <typename T>
+PairedResult runPairedAttempt(double kappa, const SharedPrimitives<T> &s,
+                              const Geometry<T> &geom, double log_ovf)
+{
+    PairedResult pr;
+    pr.flags= 0u;
+
+    const T x2= s.x2;
+    if (x2 == T(0))
+        pr.flags|= kFlagX2Zero;
+    else if (std::fabs(x2) < std::numeric_limits<T>::min())
+        pr.flags|= kFlagX2Subnormal;
+
+    // The shape must be the one the run actually used: kappa - 1/2 formed in the working
+    // precision, then widened.  Forming it in double instead shifts log X2 by roughly 0.03
+    // at float kappa = 0.5001, which is enough to move draws across the representability
+    // threshold and mis-split avoidable from honest loss.
+    pr.ref= makeReference<T>(shapeReference<T>(kappa), s, geom, log_ovf);
+    if (!pr.ref.representable)
+        pr.flags|= kFlagHonestOverflowRef;
+    if (pr.ref.near_limit)
+        pr.flags|= kFlagNearLimit;
+    if (pr.ref.representable && !pr.ref.local_representable)
+        pr.flags|= kFlagRotationRecoverable;
+
+    const T r_qf= std::sqrt(s.x1 / x2);
+    const T r_legacy= std::sqrt(s.x1) / std::sqrt(x2);
+    // 2.2.0's log radius: the variates are the working-precision ones the run drew, the
+    // sum is formed in the accumulator.  For a `double` run this is `s.log_x1`/`s.log_x2`
+    // unchanged.  For a `float` run it coincides with the reference's radius by
+    // construction, which is why PROTOCOL.md records that the paired layer cannot judge the
+    // stabilized candidate's `float` accuracy and the 100-digit oracle does it instead.
+    typedef typename Geometry<T>::acc_type A;
+    const A log_r_cand=
+        A(0.5) * (std::log(static_cast<A>(s.x1)) -
+                  (std::log(static_cast<A>(s.y)) +
+                   std::log(static_cast<A>(s.u)) / static_cast<A>(shapeFromKappa<T>(kappa))));
+
+    const std::array<T, 3> v_qf= legacyVectorFromRadius<T>(r_qf, s.cos_theta, s.phi, geom);
+    const std::array<T, 3> v_legacy=
+        legacyVectorFromRadius<T>(r_legacy, s.cos_theta, s.phi, geom);
+    bool cand_overflow= false;
+    const std::array<T, 3> v_cand= candidateVectorFromLogRadius<T>(log_r_cand, s.cos_theta,
+                                                                   s.phi, geom, &cand_overflow);
+
+    pr.finite[kMethodQF]= allFiniteT<T>(v_qf);
+    pr.finite[kMethodLegacy]= allFiniteT<T>(v_legacy);
+    pr.finite[kMethodCandidate]= !cand_overflow && allFiniteT<T>(v_cand);
+
+    if (!std::isfinite(r_qf))
+        pr.flags|= kFlagQfNonFinite;
+    if (!std::isfinite(r_legacy))
+        pr.flags|= kFlagLegacyNonFinite;
+    if (!(log_r_cand == log_r_cand))
+        pr.flags|= kFlagCandidateNonFinite;
+
+    pr.log_r_method[kMethodQF]=
+        (std::isfinite(r_qf) && r_qf > T(0)) ? std::log(static_cast<double>(r_qf))
+                                             : std::numeric_limits<double>::quiet_NaN();
+    pr.log_r_method[kMethodLegacy]=
+        (std::isfinite(r_legacy) && r_legacy > T(0))
+            ? std::log(static_cast<double>(r_legacy))
+            : std::numeric_limits<double>::quiet_NaN();
+    pr.log_r_method[kMethodCandidate]= static_cast<double>(log_r_cand);
+
+    const double max_rel= maxRelErrorFor<T>();
+    for (int m= 0; m < kNumMethods; ++m)
+    {
+        pr.rel_err[m]= relativeRadiusError(pr.log_r_method[m], pr.ref.log_r);
+        pr.cat[m]= classifyTerminal(m, pr.finite[m], pr.ref.representable, pr.rel_err[m],
+                                    max_rel, pr.flags);
+    }
+    if (pr.cat[kMethodLegacy] == kCatFinite)
+        pr.flags|= kFlagLegacySuccess;
+    if (pr.cat[kMethodCandidate] == kCatFinite)
+        pr.flags|= kFlagCandidateSuccess;
+    return pr;
+}
+
+// ---------------------------------------------------------------------------
+// Native layer.
+//
+// Each of these reproduces one released class exactly, so that the intermediates the class
+// hides -- the materialized denominator, the carried log radius, the variate counts -- are
+// observable.  `make selftest` compares each against the class it stands for, component by
+// component, over a run that reaches every branch.
+// ---------------------------------------------------------------------------
+
+/// What one native attempt produced, beyond the returned vector.
+template <typename T> struct NativeAttempt
+{
+    std::array<T, 3> v;
+    T x2;        ///< materialized denominator (LEGACY only; 0 for CANDIDATE, which never forms it)
+    double log_r; ///< the radius the method carried or materialized, widened; +-inf/NaN possible
+    bool finite;
+    bool overflow; ///< the method itself detected an unrepresentable component
+    /// Top-level uniform variates this attempt consumed, reported rather than assumed.
+    /// LEGACY always draws two, one per angle.  CANDIDATE draws one for the boosting
+    /// identity plus two per try of the direction's disc rejection, so its count is not a
+    /// constant and a caller that hard-codes one desynchronizes from the stream.
+    int uniform_variates;
+};
+
+/// LEGACY, reproducing bikappa_v1::bi_kappa_distribution<T>::operator() including its
+/// param-override Gamma call and its pre-rotation cap test.
+template <typename T> class LegacyNative
+{
+  public:
+    explicit LegacyNative(double kappa)
+        : m_gX1(T(1.5), T(1)), m_gX2(T(1), T(1)), m_uCos(T(-1), T(1)),
+          m_uPhi(T(0), T(2) * piValue<T>()),
+          m_px2(shapeFromKappa<T>(kappa), T(1)), m_lastCos(T(0)), m_lastPhi(T(0)),
+          m_lastX1(T(0)), m_lastR(T(0))
+    {
+    }
+
+    template <typename Gen>
+    NativeAttempt<T> attempt(Gen &gen, const Geometry<T> &geom)
+    {
+        NativeAttempt<T> a;
+        const T x1= m_gX1(gen);
+        const T x2= m_gX2(gen, m_px2);
+        const T r= std::sqrt(x1) / std::sqrt(x2);
+        const T ct= m_uCos(gen);
+        const T ph= m_uPhi(gen);
+        a.v= legacyVectorFromRadius<T>(r, ct, ph, geom);
+        a.x2= x2;
+        a.log_r= (std::isfinite(r) && r > T(0))
+                     ? std::log(static_cast<double>(r))
+                     : (r == std::numeric_limits<T>::infinity()
+                            ? std::numeric_limits<double>::infinity()
+                            : (r == T(0) ? -std::numeric_limits<double>::infinity()
+                                         : std::numeric_limits<double>::quiet_NaN()));
+        a.finite= allFiniteT<T>(a.v);
+        a.overflow= !a.finite;
+        a.uniform_variates= 2;
+        m_lastCos= ct;
+        m_lastPhi= ph;
+        m_lastX1= x1;
+        m_lastR= r;
+        return a;
+    }
+
+    T lastCosTheta() const { return m_lastCos; }
+    T lastPhi() const { return m_lastPhi; }
+    T lastX1() const { return m_lastX1; }
+    T lastRadius() const { return m_lastR; }
+
+  private:
+    std::gamma_distribution<T> m_gX1;
+    std::gamma_distribution<T> m_gX2;
+    std::uniform_real_distribution<T> m_uCos;
+    std::uniform_real_distribution<T> m_uPhi;
+    typename std::gamma_distribution<T>::param_type m_px2;
+    T m_lastCos, m_lastPhi, m_lastX1, m_lastR;
+};
+
+/// CANDIDATE, reproducing bi_kappa_distribution<T>::operator() including the normal cache
+/// the two Gamma calls share.  The cache is the reason this cannot be a free function: a
+/// reseeded stream must start with `cached = false`, which is what 2.0.0's seed() now does
+/// and 1.x did not.
+template <typename T> class CandidateNative
+{
+  public:
+    explicit CandidateNative(double kappa)
+        : m_a(shapeFromKappa<T>(kappa)), m_ncache(T(0)), m_ncached(false), m_lastN(),
+          m_lastX1(T(0)), m_lastLogX2(typename Geometry<T>::acc_type(0)), m_lastDiscTries(0)
+    {
+    }
+
+    void reset()
+    {
+        m_ncache= T(0);
+        m_ncached= false;
+    }
+
+    template <typename Gen>
+    NativeAttempt<T> attempt(Gen &gen, const Geometry<T> &geom)
+    {
+        NativeAttempt<T> a;
+        typedef typename Geometry<T>::acc_type A;
+        const T x1= bikappa_detail::marsagliaTsangGamma<T, Gen>(T(1.5), gen, m_ncache,
+                                                                m_ncached);
+        const A log_x2= bikappa_detail::logGamma<T, Gen>(m_a, gen, m_ncache, m_ncached);
+        const A log_r= A(0.5) * (std::log(static_cast<A>(x1)) - log_x2);
+
+        // Step 2 of the released operator(), expression for expression: a direction uniform
+        // on S^2 by the rejection method of Marsaglia (1972).  The order of the two
+        // openCanonical calls, the acceptance test `dsq >= 1` and the lift are what make the
+        // replica bit-for-bit equal to the class, so none of them may be rearranged -- and
+        // the loop is why the attempt's uniform count is variable rather than fixed.
+        int tries= 0;
+        T d1, d2;
+        A dsq;
+        do
+        {
+            d1= T(2) * bikappa_detail::openCanonical<T, Gen>(gen) - T(1);
+            d2= T(2) * bikappa_detail::openCanonical<T, Gen>(gen) - T(1);
+            dsq= static_cast<A>(d1) * static_cast<A>(d1) +
+                 static_cast<A>(d2) * static_cast<A>(d2);
+            ++tries;
+        } while (dsq >= A(1));
+        const A dscale= A(2) * std::sqrt(A(1) - dsq);
+        std::array<A, 3> n;
+        n[0]= static_cast<A>(d1) * dscale;
+        n[1]= static_cast<A>(d2) * dscale;
+        n[2]= A(1) - A(2) * dsq;
+
+        bool overflow= false;
+        a.v= candidateVectorFromLogRadius<T>(log_r, n, geom, &overflow);
+        a.x2= T(0);
+        a.log_r= static_cast<double>(log_r);
+        a.overflow= overflow;
+        a.finite= !overflow && allFiniteT<T>(a.v);
+        a.uniform_variates= 1 + 2 * tries;
+        m_lastN= n;
+        m_lastX1= x1;
+        m_lastLogX2= log_x2;
+        m_lastDiscTries= tries;
+        return a;
+    }
+
+    T shape() const { return m_a; }
+    /// The unit direction the last attempt actually drew, in the accumulator 2.2.0 forms it
+    /// in.  There is no last cos(theta) or phi to report: 2.x never forms either.
+    const std::array<typename Geometry<T>::acc_type, 3> &lastDirection() const
+    {
+        return m_lastN;
+    }
+    /// Disc-rejection tries the last attempt used; 1 whenever the first pair was accepted.
+    int lastDiscTries() const { return m_lastDiscTries; }
+    T lastX1() const { return m_lastX1; }
+    typename Geometry<T>::acc_type lastLogX2() const { return m_lastLogX2; }
+
+  private:
+    T m_a;
+    T m_ncache;
+    bool m_ncached;
+    std::array<typename Geometry<T>::acc_type, 3> m_lastN;
+    T m_lastX1;
+    typename Geometry<T>::acc_type m_lastLogX2;
+    int m_lastDiscTries;
+};
+
+// ---------------------------------------------------------------------------
+// Counters
+// ---------------------------------------------------------------------------
+struct MethodCounters
+{
+    long long cat[kNumCategories];
+    long long nonfinite_output;
+    double max_finite_log_component;
+    /// Accuracy of the returned radius against the reference, on draws where the comparison
+    /// is defined.  Never pooled across precisions: every row that carries these also
+    /// carries its `precision` field, as amendment 1.1.0 requires.
+    long long n_rel_err;
+    double sum_rel_err;
+    double max_rel_err;
+
+    MethodCounters()
+        : nonfinite_output(0),
+          max_finite_log_component(-std::numeric_limits<double>::infinity()), n_rel_err(0),
+          sum_rel_err(0.0), max_rel_err(0.0)
+    {
+        for (int i= 0; i < kNumCategories; ++i)
+            cat[i]= 0;
+    }
+
+    void observe(int category, bool finite, double rel_err, double ref_max_log_component)
+    {
+        ++cat[category];
+        if (!finite)
+            ++nonfinite_output;
+        else if (ref_max_log_component > max_finite_log_component)
+            max_finite_log_component= ref_max_log_component;
+        if (rel_err == rel_err)
+        {
+            ++n_rel_err;
+            sum_rel_err+= rel_err;
+            if (rel_err > max_rel_err)
+                max_rel_err= rel_err;
+        }
+    }
+
+    long long total() const
+    {
+        long long t= 0;
+        for (int i= 0; i < kNumCategories; ++i)
+            t+= cat[i];
+        return t;
+    }
+    long long avoidable() const
+    {
+        long long t= 0;
+        for (int i= 0; i < kNumCategories; ++i)
+            if (isAvoidable(i))
+                t+= cat[i];
+        return t;
+    }
+    long long honest() const
+    {
+        long long t= 0;
+        for (int i= 0; i < kNumCategories; ++i)
+            if (isHonest(i))
+                t+= cat[i];
+        return t;
+    }
+    /// N = finite + avoidable + honest, with cap rejection and exhaustion excluded because
+    /// they are not attempts of an uncapped run.
+    bool accountingHolds(long long n) const
+    {
+        return total() == n && cat[kCatFinite] + avoidable() + honest() == n;
+    }
+};
+
+struct AttemptCounters
+{
+    long long n;
+    long long x2_zero;
+    long long x2_subnormal;
+    long long ref_nonrepresentable;
+    long long rotation_recoverable;
+    long long near_limit;
+    long long audited;
+    double max_log_r_ref;
+    long long stratum_total[kNumAuditStrata];
+    long long stratum_audited[kNumAuditStrata];
+    /// Amendment 1.2.0 requires the decision-relevance margin to be *asserted in working
+    /// precision* for every attempt the run calls unambiguous, rather than merely implied by
+    /// the stratum it was put in.  These three record that assertion: how many were made,
+    /// how many failed (which must be zero), and the smallest margin any of them cleared.
+    long long margin_assertions;
+    long long margin_assertion_failures;
+    double min_unambiguous_margin;
+
+    AttemptCounters()
+        : n(0), x2_zero(0), x2_subnormal(0), ref_nonrepresentable(0), rotation_recoverable(0),
+          near_limit(0), audited(0), max_log_r_ref(-std::numeric_limits<double>::infinity()),
+          margin_assertions(0), margin_assertion_failures(0),
+          min_unambiguous_margin(std::numeric_limits<double>::infinity())
+    {
+        for (int i= 0; i < kNumAuditStrata; ++i)
+        {
+            stratum_total[i]= 0;
+            stratum_audited[i]= 0;
+        }
+    }
+};
+
+struct VariateCounts
+{
+    long long gamma;
+    long long uniform;
+    long long engine_calls;
+
+    VariateCounts() : gamma(0), uniform(0), engine_calls(0) {}
+};
+
+} // namespace exp7
+
+#endif // EXP7_LOADERS_H

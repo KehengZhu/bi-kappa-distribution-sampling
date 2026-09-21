@@ -31,7 +31,7 @@ mermaid.initialize({ startOnLoad: true, theme: theme });
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">bi-kappa
+   <div id="projectname">bi-kappa<span id="projectnumber">&#160;2.0.0</span>
    </div>
    <div id="projectbrief">Monte Carlo particle samplers for plasma velocity and position distributions</div>
   </td>
@@ -135,7 +135,106 @@ Classes</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Bi-Kappa distribution class for sampling 3D velocity vectors.  <a href="classbi__kappa__distribution.html#details">More...</a><br /></td></tr>
 <tr class="memitem:bi_5Fkappa_5Fdistribution_3C_20RealType_20_3E_3A_3Aparam_5Ftype" id="r_bi_5Fkappa_5Fdistribution_3C_20RealType_20_3E_3A_3Aparam_5Ftype"><td class="memItemLeft">class &#160;</td><td class="memItemRight"><a class="el" href="classbi__kappa__distribution_1_1param__type.html">bi_kappa_distribution&lt; RealType &gt;::param_type</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parameter class to store distribution parameters.  <a href="classbi__kappa__distribution_1_1param__type.html#details">More...</a><br /></td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 id="header-namespaces" class="groupheader"><a id="namespaces" name="namespaces"></a>
+Namespaces</h2></td></tr>
+<tr class="memitem:bikappa_5Fdetail" id="r_bikappa_5Fdetail"><td class="memItemLeft">namespace &#160;</td><td class="memItemRight"><a class="el" href="namespacebikappa__detail.html">bikappa_detail</a></td></tr>
+<tr class="memdesc:namespacebikappa__detail"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sampling primitives used to build the bi-Kappa radius. <br /></td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 id="header-define-members" class="groupheader"><a id="define-members" name="define-members"></a>
+Macros</h2></td></tr>
+<tr class="memitem:a072a411bef8c1b73f52385714babdeff" id="r_a072a411bef8c1b73f52385714babdeff"><td class="memItemLeft">#define&#160;</td><td class="memItemRight"><a class="el" href="#a072a411bef8c1b73f52385714babdeff">BI_KAPPA_VERSION_MAJOR</a>&#160;&#160;&#160;2</td></tr>
+<tr class="memdesc:a072a411bef8c1b73f52385714babdeff"><td class="mdescLeft">&#160;</td><td class="mdescRight">Release version of this header.  <br /></td></tr>
+<tr class="memitem:ab01206b40f62a73e361294ca58101147" id="r_ab01206b40f62a73e361294ca58101147"><td class="memItemLeft">#define&#160;</td><td class="memItemRight"><a class="el" href="#ab01206b40f62a73e361294ca58101147">BI_KAPPA_VERSION_MINOR</a>&#160;&#160;&#160;0</td></tr>
+<tr class="memitem:a87f2a2db0f5d64e03ee24238646657ef" id="r_a87f2a2db0f5d64e03ee24238646657ef"><td class="memItemLeft">#define&#160;</td><td class="memItemRight"><a class="el" href="#a87f2a2db0f5d64e03ee24238646657ef">BI_KAPPA_VERSION_PATCH</a>&#160;&#160;&#160;0</td></tr>
+<tr class="memitem:abd74c73d3e30c1f0587c0fbd1abe7ac5" id="r_abd74c73d3e30c1f0587c0fbd1abe7ac5"><td class="memItemLeft">#define&#160;</td><td class="memItemRight"><a class="el" href="#abd74c73d3e30c1f0587c0fbd1abe7ac5">BI_KAPPA_VERSION_STRING</a>&#160;&#160;&#160;&quot;2.0.0&quot;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 id="header-func-members" class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:a6bdc9e9068ebd6ff7cdb96841d773e76" id="r_a6bdc9e9068ebd6ff7cdb96841d773e76"><td class="memTemplParams" colspan="2">template&lt;typename GeneratorType&gt; </td></tr>
+<tr class="memitem:a6bdc9e9068ebd6ff7cdb96841d773e76 template"><td class="memItemLeft">int&#160;</td><td class="memItemRight"><a class="el" href="namespacebikappa__detail.html#a6bdc9e9068ebd6ff7cdb96841d773e76">bikappa_detail::engineBits</a> ()</td></tr>
+<tr class="memdesc:a6bdc9e9068ebd6ff7cdb96841d773e76"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whole bits of entropy the engine delivers per call (32 for <span class="tt">std::mt19937</span>).  <br /></td></tr>
+<tr class="memitem:a580cf46d81ec60c2d6ef06af942d4814" id="r_a580cf46d81ec60c2d6ef06af942d4814"><td class="memTemplParams" colspan="2">template&lt;typename RealType, typename GeneratorType&gt; </td></tr>
+<tr class="memitem:a580cf46d81ec60c2d6ef06af942d4814 template"><td class="memItemLeft">RealType&#160;</td><td class="memItemRight"><a class="el" href="namespacebikappa__detail.html#a580cf46d81ec60c2d6ef06af942d4814">bikappa_detail::openCanonical</a> (GeneratorType &amp;gen)</td></tr>
+<tr class="memdesc:a580cf46d81ec60c2d6ef06af942d4814"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uniform on the <b>open</b> interval (0,1), by an explicit mapping from engine bits.  <br /></td></tr>
+<tr class="memitem:a9390e7d740c746600426f622a1087a8b" id="r_a9390e7d740c746600426f622a1087a8b"><td class="memTemplParams" colspan="2">template&lt;typename RealType, typename GeneratorType&gt; </td></tr>
+<tr class="memitem:a9390e7d740c746600426f622a1087a8b template"><td class="memItemLeft">RealType&#160;</td><td class="memItemRight"><a class="el" href="namespacebikappa__detail.html#a9390e7d740c746600426f622a1087a8b">bikappa_detail::polarNormal</a> (GeneratorType &amp;gen, RealType &amp;cache, bool &amp;cached)</td></tr>
+<tr class="memdesc:a9390e7d740c746600426f622a1087a8b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Standard normal by the Marsaglia polar method.  <br /></td></tr>
+<tr class="memitem:a4c63751621048bea878caeb2f82e3beb" id="r_a4c63751621048bea878caeb2f82e3beb"><td class="memTemplParams" colspan="2">template&lt;typename RealType, typename GeneratorType&gt; </td></tr>
+<tr class="memitem:a4c63751621048bea878caeb2f82e3beb template"><td class="memItemLeft">RealType&#160;</td><td class="memItemRight"><a class="el" href="namespacebikappa__detail.html#a4c63751621048bea878caeb2f82e3beb">bikappa_detail::marsagliaTsangGamma</a> (RealType shape, GeneratorType &amp;gen, RealType &amp;ncache, bool &amp;ncached)</td></tr>
+<tr class="memdesc:a4c63751621048bea878caeb2f82e3beb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gamma(shape, 1) for shape &gt;= 1, by Marsaglia and Tsang (2000), ACM TOMS 26(3), 363-372.  <br /></td></tr>
+<tr class="memitem:a51cd3d2b9c15648ce909ebd1d7b3471b" id="r_a51cd3d2b9c15648ce909ebd1d7b3471b"><td class="memTemplParams" colspan="2">template&lt;typename RealType, typename GeneratorType&gt; </td></tr>
+<tr class="memitem:a51cd3d2b9c15648ce909ebd1d7b3471b template"><td class="memItemLeft">RealType&#160;</td><td class="memItemRight"><a class="el" href="namespacebikappa__detail.html#a51cd3d2b9c15648ce909ebd1d7b3471b">bikappa_detail::logGamma</a> (RealType a, GeneratorType &amp;gen, RealType &amp;ncache, bool &amp;ncached)</td></tr>
+<tr class="memdesc:a51cd3d2b9c15648ce909ebd1d7b3471b"><td class="mdescLeft">&#160;</td><td class="mdescRight"><span class="tt">log X</span> for <span class="tt">X ~ Gamma(a, 1)</span>, for every <span class="tt">a &gt; 0</span>, without ever forming <span class="tt">X</span>.  <br /></td></tr>
 </table>
+<a name="doc-define-members" id="doc-define-members"></a><h2 id="header-doc-define-members" class="groupheader">Macro Definition Documentation</h2>
+<a id="a072a411bef8c1b73f52385714babdeff" name="a072a411bef8c1b73f52385714babdeff"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a072a411bef8c1b73f52385714babdeff">&#9670;&#160;</a></span>BI_KAPPA_VERSION_MAJOR</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define BI_KAPPA_VERSION_MAJOR&#160;&#160;&#160;2</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Release version of this header. </p>
+<p>A consumer that vendors the file can test these to tell which sampler it has; 2.0.0 is the first release whose radius is built in the log domain, and its random stream differs from 1.x for every seed. </p>
+
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00007">7</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+
+</div>
+</div>
+<a id="ab01206b40f62a73e361294ca58101147" name="ab01206b40f62a73e361294ca58101147"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab01206b40f62a73e361294ca58101147">&#9670;&#160;</a></span>BI_KAPPA_VERSION_MINOR</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define BI_KAPPA_VERSION_MINOR&#160;&#160;&#160;0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00008">8</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+
+</div>
+</div>
+<a id="a87f2a2db0f5d64e03ee24238646657ef" name="a87f2a2db0f5d64e03ee24238646657ef"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a87f2a2db0f5d64e03ee24238646657ef">&#9670;&#160;</a></span>BI_KAPPA_VERSION_PATCH</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define BI_KAPPA_VERSION_PATCH&#160;&#160;&#160;0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00009">9</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+
+</div>
+</div>
+<a id="abd74c73d3e30c1f0587c0fbd1abe7ac5" name="abd74c73d3e30c1f0587c0fbd1abe7ac5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abd74c73d3e30c1f0587c0fbd1abe7ac5">&#9670;&#160;</a></span>BI_KAPPA_VERSION_STRING</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define BI_KAPPA_VERSION_STRING&#160;&#160;&#160;&quot;2.0.0&quot;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00010">10</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <div id="page-nav" class="page-nav-panel">

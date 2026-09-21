@@ -12,7 +12,7 @@ var searchData=
   ['distribution_9',['Custom speed-squared distribution',['../usage.html#usage_velocity',1,'']]],
   ['distribution_5ftype_10',['distribution_type',['../classbi__kappa__distribution_1_1param__type.html#abb07c81aabdf4e0fde2bab115cf83c58',1,'bi_kappa_distribution::param_type::distribution_type'],['../classbi__maxwellian__distribution_1_1param__type.html#aa937ba6267b0ae7dd758b068bdf24c1f',1,'bi_maxwellian_distribution::param_type::distribution_type']]],
   ['do_20i_20want_11',['Which one do I want?',['../choosing.html#choosing_table',1,'']]],
-  ['documentation_12',['Documentation',['../index.html#autotoc_md8',1,'']]],
+  ['documentation_12',['Documentation',['../index.html#autotoc_md9',1,'']]],
   ['does_20and_20how_20to_20select_20it_13',['The velocity cap: what it does and how to select it',['../usage.html#usage_bikappa_cap',1,'']]],
-  ['draw_14',['draw',['../namespacelowkappa__risk__audit.html#aaea6b39e240a1418f685402c25d24616',1,'lowkappa_risk_audit']]]
+  ['draw_14',['draw',['../namespacelowkappa__risk__audit.html#aaea6b39e240a1418f685402c25d24616',1,'lowkappa_risk_audit.draw()'],['../namespacetest__bikappa__validate.html#afd68d57230914a91406d6846898a138e',1,'test_bikappa_validate.draw()']]]
 ];

@@ -1,0 +1,53 @@
+{
+  "n_per_configuration": 1000000,
+  "rng_seed": 20260919,
+  "protocol_sha256": "d7ff35f5fbd0aa34ca4ea4cdfe0546a2aa0891012ddbd4e74078693d8dedf63a",
+  "alpha_F1": 0.01,
+  "alpha_F4": 0.01,
+  "level": {
+    "ad": 0.0095,
+    "ks": 0.0085,
+    "cvm": 0.011,
+    "F1": 0.0085,
+    "F4": 0.0055,
+    "n": 50000,
+    "replicates": 2000,
+    "ad_pvalue_uniformity_p": 0.2542665322469503
+  },
+  "power": {
+    "1e-02": {
+      "ad": 1.0,
+      "ks": 1.0,
+      "cvm": 1.0,
+      "F1": 1.0,
+      "F4": 1.0
+    },
+    "1e-03": {
+      "ad": 0.995,
+      "ks": 0.145,
+      "cvm": 0.215,
+      "F1": 0.93,
+      "F4": 1.0
+    },
+    "1e-04": {
+      "ad": 0.01,
+      "ks": 0.0,
+      "cvm": 0.01,
+      "F1": 0.005,
+      "F4": 1.0
+    },
+    "1e-05": {
+      "ad": 0.015,
+      "ks": 0.01,
+      "cvm": 0.01,
+      "F1": 0.01,
+      "F4": 0.07
+    }
+  },
+  "replicates_power": 200,
+  "required_power": 0.9,
+  "minimum_detectable_loss_fraction": {
+    "F1": 0.001,
+    "F4": 0.0001
+  }
+}

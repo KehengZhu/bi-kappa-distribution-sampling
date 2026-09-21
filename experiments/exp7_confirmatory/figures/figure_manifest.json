@@ -1,0 +1,115 @@
+[
+  {
+    "core_conclusion": "The log-domain candidate removes the avoidable finite-precision loss of the released 1.0.0 Gamma-ratio loader and sits on the analytic representability floor, which no formation can go below.",
+    "figure": "fp1_failure_envelope",
+    "formats": [
+      "pdf",
+      "svg",
+      "png@600dpi"
+    ],
+    "height_mm": 78,
+    "interval_definition": "two-sided 95% Clopper-Pearson; a zero count is the one-sided 95% upper limit 1 - 0.05^(1/N), drawn as a downward triangle and never as zero; the floor is a closed form and carries no interval",
+    "panels": 2,
+    "protocol_sha256": "c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6",
+    "script_sha256": "46bc5c3cc3fb1fcdac605d4f06498b3e62b36ed6a361270be3352436cd09d30f",
+    "source_csv_sha256s": {
+      "failure_envelope.csv": "3d9758ee85069f0f749bcd64011f959bfd36b5c70bfcbe3bb647f71809118284",
+      "honest_floor.csv": "9d490dc2f4ad77dfef8de51695c621eb207d87b1b38c8e7dbf65893a93043c46"
+    },
+    "source_csvs": [
+      "failure_envelope.csv",
+      "honest_floor.csv"
+    ],
+    "width_mm": 183.0
+  },
+  {
+    "core_conclusion": "Released-path failure is concentrated in the intended tail, so conditioning on a returned vector changes tail observables; the candidate returns the representable tail and leaves the honest overflow visible instead of hiding it.",
+    "figure": "fp2_conditioning_tail",
+    "formats": [
+      "pdf",
+      "svg",
+      "png@600dpi"
+    ],
+    "height_mm": 118,
+    "interval_definition": "95% Clopper-Pearson for per-bin success rates (one-sided 95% upper limits where a bin saw no success); 99% cluster-bootstrap percentile intervals over seeds, 10000 resamples, for the tail ratios",
+    "panels": 4,
+    "protocol_sha256": "c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6",
+    "script_sha256": "46bc5c3cc3fb1fcdac605d4f06498b3e62b36ed6a361270be3352436cd09d30f",
+    "source_csv_sha256s": {
+      "conditioning_bins.csv": "a9961d3c94bf88cafdd58098bf7936265c2007df0ff52f3607535ce5c1bd89ea",
+      "tail_metrics.csv": "e6e4bdd9a70799f31381ea6fb784face910b2b0d3b0f3c6ace9a455e0976e2ae"
+    },
+    "source_csvs": [
+      "conditioning_bins.csv",
+      "tail_metrics.csv"
+    ],
+    "width_mm": 183.0
+  },
+  {
+    "core_conclusion": "The candidate samples the intended radial law on a stable scale across the whole frozen ladder, including the shapes where the order-statistic brackets are too wide to be evidence and the upper-tail statistic carries the certification.",
+    "figure": "sfp1_scalar_validation",
+    "formats": [
+      "pdf",
+      "svg",
+      "png@600dpi"
+    ],
+    "height_mm": 118,
+    "interval_definition": "dotted lines are simultaneous Kolmogorov bands at the frozen F1 level; quantile brackets are exact binomial order-statistic intervals, Bonferroni-corrected over the five levels",
+    "panels": 4,
+    "protocol_sha256": "c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6",
+    "script_sha256": "46bc5c3cc3fb1fcdac605d4f06498b3e62b36ed6a361270be3352436cd09d30f",
+    "source_csv_sha256s": {
+      "scalar_ecdf.csv": "95f5261de1821083292e411c0b9c7d4f5b822f018922030c022517a0b49a4074",
+      "scalar_validation.csv": "d5a40c9a9021a81db52b31903824b0091f2afe515c6b279ddefd133919f11794"
+    },
+    "source_csvs": [
+      "scalar_ecdf.csv",
+      "scalar_validation.csv"
+    ],
+    "width_mm": 183.0
+  },
+  {
+    "core_conclusion": "The candidate stays correct after direction sampling, anisotropic scaling, rotation into an arbitrary field frame and cap conditioning; every cell whose statistics ran on a radius-filtered subsample is marked conditional with its loss fraction.",
+    "figure": "sfp2_loader_validation",
+    "formats": [
+      "pdf",
+      "svg",
+      "png@600dpi"
+    ],
+    "height_mm": 104,
+    "interval_definition": "Holm-corrected jointly over all cells and tests at the frozen F5 familywise alpha; a conditional cell cannot support the fidelity claim on its own",
+    "panels": 1,
+    "protocol_sha256": "c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6",
+    "script_sha256": "46bc5c3cc3fb1fcdac605d4f06498b3e62b36ed6a361270be3352436cd09d30f",
+    "source_csv_sha256s": {
+      "loader_validation.csv": "f8d38ec3000e225e8796fecf964afd1c27cf890738de3c4aa7388ada0838b3a2"
+    },
+    "source_csvs": [
+      "loader_validation.csv"
+    ],
+    "width_mm": 183.0
+  },
+  {
+    "core_conclusion": "Within one architecture the candidate's output is bit-for-bit independent of the standard library while the comparator's is not, and the mitigation costs less than the pre-registered bound; the architectures that were not available are shown as absent rather than as passing.",
+    "figure": "sfp3_portability_cost",
+    "formats": [
+      "pdf",
+      "svg",
+      "png@600dpi"
+    ],
+    "height_mm": 84,
+    "interval_definition": "99% cluster-bootstrap percentile interval over seeds, 10000 resamples, for the paired blockwise time ratio; the bitwise comparison is exact and has no interval",
+    "panels": 2,
+    "protocol_sha256": "c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6",
+    "script_sha256": "46bc5c3cc3fb1fcdac605d4f06498b3e62b36ed6a361270be3352436cd09d30f",
+    "source_csv_sha256s": {
+      "performance.csv": "d64c136583b80e61254c427ae7c19f6b1aea03a313dde5da9f83fe349db489d3",
+      "portability.csv": "ead809c7dfaaacac08d1b2921729bf8aff60180db49d507603b2df4ce9698b16"
+    },
+    "source_csvs": [
+      "portability.csv",
+      "performance.csv"
+    ],
+    "width_mm": 183.0
+  }
+]

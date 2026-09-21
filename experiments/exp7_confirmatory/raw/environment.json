@@ -1,0 +1,298 @@
+{
+  "experiment": "exp7_confirmatory",
+  "generated_utc": "2026-09-20T20:47:04+00:00",
+  "exploratory": false,
+  "git": {
+    "commit": "a53f5f6a9b4f6a6c4cc675cac63839fb4cbdd16d",
+    "repo_dirty": true,
+    "dependencies_clean": true,
+    "unclean_dependencies": []
+  },
+  "dependencies": {
+    "../../cpp/bi_kappa_distribution.H": {
+      "sha256": "d9cb44ca956a00c9d3a82bd9808ab2f51b454c3dd6d7cb4c4c7eb86e78c9a5f0",
+      "head_sha256": "d9cb44ca956a00c9d3a82bd9808ab2f51b454c3dd6d7cb4c4c7eb86e78c9a5f0",
+      "state": "clean"
+    },
+    "src/legacy/bi_kappa_distribution_v1.H": {
+      "sha256": "291c836ac08469008e9c4e715198c6e4b83555bc02ceb181e7a96e3dac69c21f",
+      "head_sha256": "291c836ac08469008e9c4e715198c6e4b83555bc02ceb181e7a96e3dac69c21f",
+      "state": "clean"
+    },
+    "src/exp7_common.H": {
+      "sha256": "9fe013d693602b6315cf9904f70e54a952b544033481d43c0b2d961ba68c3d4f",
+      "head_sha256": "9fe013d693602b6315cf9904f70e54a952b544033481d43c0b2d961ba68c3d4f",
+      "state": "clean"
+    },
+    "src/exp7_loaders.H": {
+      "sha256": "9b12d116bda44c6d786995d8112e7cd9eff62880e66ec78443a2240a86078a46",
+      "head_sha256": "9b12d116bda44c6d786995d8112e7cd9eff62880e66ec78443a2240a86078a46",
+      "state": "clean"
+    },
+    "src/exp7_digest.H": {
+      "sha256": "8624f89a4de765f40f30df81029a1a7740fb1a4cded76ad22941c904a7875578",
+      "head_sha256": "8624f89a4de765f40f30df81029a1a7740fb1a4cded76ad22941c904a7875578",
+      "state": "clean"
+    },
+    "src/exp7_probe.cpp": {
+      "sha256": "44df0d78cdf5cd4885f1b1c6d3a98e70c9308f3d2dc9ba59f6387b37db5cfedb",
+      "head_sha256": "44df0d78cdf5cd4885f1b1c6d3a98e70c9308f3d2dc9ba59f6387b37db5cfedb",
+      "state": "clean"
+    },
+    "src/exp7_protocol.H": {
+      "sha256": "06c3d1c7aa53564db1791bdb779358d5f3a2b0bcccc4bfc82451bcbf337d7774",
+      "head_sha256": "06c3d1c7aa53564db1791bdb779358d5f3a2b0bcccc4bfc82451bcbf337d7774",
+      "state": "clean"
+    },
+    "PROTOCOL.md": {
+      "sha256": "45992ff0ce8f877b58ec7e5e6af4574a45f964c6b53117864dc30bb42756dd7c",
+      "head_sha256": "45992ff0ce8f877b58ec7e5e6af4574a45f964c6b53117864dc30bb42756dd7c",
+      "state": "clean"
+    },
+    "config/protocol.json": {
+      "sha256": "c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6",
+      "head_sha256": "c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6",
+      "state": "clean"
+    },
+    "src/exp7_oracle.cpp": {
+      "sha256": "73b3111818422dde81e048d3f2638192d5b02ef45ceee23f2456e9b4e857d13c",
+      "head_sha256": "73b3111818422dde81e048d3f2638192d5b02ef45ceee23f2456e9b4e857d13c",
+      "state": "clean"
+    },
+    "src/gen_protocol_header.py": {
+      "sha256": "b202e9931261e33b0b4a61cd2d9597e2e2556aa294b3789577c939a1c033aa72",
+      "head_sha256": "b202e9931261e33b0b4a61cd2d9597e2e2556aa294b3789577c939a1c033aa72",
+      "state": "clean"
+    },
+    "src/check_legacy.py": {
+      "sha256": "2e522762c53bb731bb24df26b8d682d89bdc8b7d7c08fd86e9b4ad18c90192d5",
+      "head_sha256": "2e522762c53bb731bb24df26b8d682d89bdc8b7d7c08fd86e9b4ad18c90192d5",
+      "state": "clean"
+    },
+    "GNUmakefile": {
+      "sha256": "799e2af4ea9d4e59351662369beb5945f1214d4c716edefefd4f997b532a66c6",
+      "head_sha256": "799e2af4ea9d4e59351662369beb5945f1214d4c716edefefd4f997b532a66c6",
+      "state": "clean"
+    },
+    "analyze.py": {
+      "sha256": "b9c757af4b64e645bc0091facc28a8f5727ca8b9aba24e1da134cffacb886c14",
+      "head_sha256": "b9c757af4b64e645bc0091facc28a8f5727ca8b9aba24e1da134cffacb886c14",
+      "state": "clean"
+    },
+    "make_figures.py": {
+      "sha256": "46bc5c3cc3fb1fcdac605d4f06498b3e62b36ed6a361270be3352436cd09d30f",
+      "head_sha256": "46bc5c3cc3fb1fcdac605d4f06498b3e62b36ed6a361270be3352436cd09d30f",
+      "state": "clean"
+    },
+    "preflight.py": {
+      "sha256": "ff60fcb30030cf299516cd71299b3cf4ce2fd48c858ea85e37ac7e374ba9fb0c",
+      "head_sha256": "ff60fcb30030cf299516cd71299b3cf4ce2fd48c858ea85e37ac7e374ba9fb0c",
+      "state": "clean"
+    },
+    "exp7_stats.py": {
+      "sha256": "df4d0df9dfd8ce72bc3971bdc37e0b2b8afca596654a7db9c5f726a7c976e21a",
+      "head_sha256": "df4d0df9dfd8ce72bc3971bdc37e0b2b8afca596654a7db9c5f726a7c976e21a",
+      "state": "clean"
+    },
+    "exp7_io.py": {
+      "sha256": "4fed3570ba6ebae8a92c0f412aeaded2fb5d14ab958e501eb82023f007ebad15",
+      "head_sha256": "4fed3570ba6ebae8a92c0f412aeaded2fb5d14ab958e501eb82023f007ebad15",
+      "state": "clean"
+    },
+    "exp7_censoring.py": {
+      "sha256": "ec88e90d7170baa9ba83429e29a70eac3670b84be988dc999ae09ee51b25380c",
+      "head_sha256": "ec88e90d7170baa9ba83429e29a70eac3670b84be988dc999ae09ee51b25380c",
+      "state": "clean"
+    },
+    "exp7_families.py": {
+      "sha256": "c8950b3e2bbc08d7958ab0529b2f5745d3861a88a3b4b73aa7c1bc4c19d113a9",
+      "head_sha256": "c8950b3e2bbc08d7958ab0529b2f5745d3861a88a3b4b73aa7c1bc4c19d113a9",
+      "state": "clean"
+    },
+    "exp7_gates.py": {
+      "sha256": "c149b2cdb0b626ff8ffca873d7e070d35b87795e694a5a7b8dcb15c1f224645a",
+      "head_sha256": "c149b2cdb0b626ff8ffca873d7e070d35b87795e694a5a7b8dcb15c1f224645a",
+      "state": "clean"
+    },
+    "exp7_portability.py": {
+      "sha256": "3df7ff069a37f435014bb60fb0086b982418a880c5782e4858d6df80d62d06fc",
+      "head_sha256": "3df7ff069a37f435014bb60fb0086b982418a880c5782e4858d6df80d62d06fc",
+      "state": "clean"
+    },
+    "config/make_protocol.py": {
+      "sha256": "5eb2c2fe86a0c9cc02202af6fcf6642bfd7bb6868c0b1f18a7fd68180cb017a3",
+      "head_sha256": "5eb2c2fe86a0c9cc02202af6fcf6642bfd7bb6868c0b1f18a7fd68180cb017a3",
+      "state": "clean"
+    }
+  },
+  "continuity": {
+    "previous_preflight_utc": "2026-09-20T20:37:17+00:00",
+    "dependency_hashes_unchanged_since_previous_preflight": true,
+    "sampling_dependency_hashes_unchanged_since_previous_preflight": true,
+    "note": "Raw draws depend only on the sampling dependencies. If those hashes are unchanged since the preflight a raw file was produced under, that file came from this content, whatever else was edited afterwards."
+  },
+  "sampling_dependencies": [
+    "../../cpp/bi_kappa_distribution.H",
+    "src/legacy/bi_kappa_distribution_v1.H",
+    "src/exp7_common.H",
+    "src/exp7_loaders.H",
+    "src/exp7_digest.H",
+    "src/exp7_probe.cpp",
+    "src/exp7_protocol.H",
+    "PROTOCOL.md",
+    "config/protocol.json"
+  ],
+  "analysis_dependencies": [
+    "src/exp7_oracle.cpp",
+    "src/gen_protocol_header.py",
+    "src/check_legacy.py",
+    "GNUmakefile",
+    "analyze.py",
+    "make_figures.py",
+    "preflight.py",
+    "exp7_stats.py",
+    "exp7_io.py",
+    "exp7_censoring.py",
+    "exp7_families.py",
+    "exp7_gates.py",
+    "exp7_portability.py",
+    "config/make_protocol.py"
+  ],
+  "platform": {
+    "platform": "macOS-26.7-arm64-arm-64bit",
+    "machine": "arm64",
+    "processor": "Apple M4 Max",
+    "cpu_count": 16,
+    "system": "Darwin",
+    "release": "25.6.0",
+    "python": "3.12.11",
+    "locale": "C/C.UTF-8/C/C/C/C"
+  },
+  "toolchains": {
+    "clang": [
+      "Apple clang version 21.0.0 (clang-2100.3.34.2)",
+      "Target: arm64-apple-darwin25.6.0"
+    ],
+    "gcc": [
+      "g++-15 (Homebrew GCC 15.2.0_1) 15.2.0"
+    ],
+    "cxxflags": "-Wall -Wextra -std=c++11 -O2 -ffp-contract=off",
+    "oracle_flags": "-Wall -Wextra -std=c++14 -O2 -ffp-contract=off",
+    "boost": "1_92"
+  },
+  "floating_point": {
+    "libcxx": {
+      "compiler": "clang 21.0.0 (clang-2100.3.34.2)",
+      "stdlib": "libc++",
+      "arch": "arm64",
+      "precision": "n/a",
+      "rng": "mt19937",
+      "bi_kappa_version": "2.2.0",
+      "protocol_version": "3.0.0",
+      "protocol_sha256": "c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6",
+      "cxxflags": "-Wall -Wextra -std=c++11 -O2 -ffp-contract=off -I src",
+      "rounding_mode": "FE_TONEAREST",
+      "flt_eval_method": 0,
+      "double_subnormals_flushed": false,
+      "float_subnormals_flushed": false,
+      "sizeof_long_double": 8,
+      "fp_contract": "fma available; built with -ffp-contract=off",
+      "log_overflow_threshold_double": 709.782712893384,
+      "log_overflow_threshold_float": 88.72283908187067,
+      "log_max_double": 709.782712893384,
+      "log_max_float": 88.72283935546875,
+      "max_rel_error_double": 1.0536712127723509e-08,
+      "max_rel_error_float": 0.000244140625,
+      "mt19937_min": 0,
+      "mt19937_max": 4294967295
+    },
+    "libstdcxx": {
+      "compiler": "gcc 15.2.0",
+      "stdlib": "libstdc++",
+      "arch": "arm64",
+      "precision": "n/a",
+      "rng": "mt19937",
+      "bi_kappa_version": "2.2.0",
+      "protocol_version": "3.0.0",
+      "protocol_sha256": "c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6",
+      "cxxflags": "-Wall -Wextra -std=c++11 -O2 -ffp-contract=off -I src",
+      "rounding_mode": "FE_TONEAREST",
+      "flt_eval_method": 0,
+      "double_subnormals_flushed": false,
+      "float_subnormals_flushed": false,
+      "sizeof_long_double": 8,
+      "fp_contract": "fma available; built with -ffp-contract=off",
+      "log_overflow_threshold_double": 709.782712893384,
+      "log_overflow_threshold_float": 88.72283908187067,
+      "log_max_double": 709.782712893384,
+      "log_max_float": 88.72283935546875,
+      "max_rel_error_double": 1.0536712127723509e-08,
+      "max_rel_error_float": 0.000244140625,
+      "mt19937_min": 0,
+      "mt19937_max": 4294967295
+    }
+  },
+  "python_packages": {
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "matplotlib": "3.11.2",
+    "pandas": "3.0.6",
+    "mpmath": "1.4.1"
+  },
+  "commands": {
+    "selftest": "make selftest",
+    "preflight": "make preflight",
+    "pilot": "make pilot",
+    "baseline": "make baseline",
+    "mechanism": "make mechanism",
+    "oracle": "make oracle",
+    "conditioning": "make conditioning",
+    "loader": "make loader",
+    "portability": "make portability",
+    "performance": "make performance",
+    "analyze": "make analyze",
+    "figures": "make figures",
+    "checksums": "make checksums",
+    "verify": "make verify"
+  },
+  "frozen_sizes": {
+    "n_scalar": 1000000,
+    "n_mechanism": 1000000,
+    "n_conditioning": 1000000,
+    "n_loader": 100000,
+    "production_seeds": [
+      9001,
+      9002,
+      9003,
+      9004,
+      9005
+    ],
+    "performance_seeds": [
+      9006,
+      9007,
+      9008,
+      9009,
+      9010
+    ],
+    "kappa_ladder": [
+      0.5001,
+      0.501,
+      0.505,
+      0.51,
+      0.55,
+      0.6,
+      0.75,
+      1.0,
+      1.25,
+      1.49,
+      1.5,
+      2.0,
+      5.0
+    ]
+  },
+  "protocol": {
+    "version": "3.0.0",
+    "sha256": "c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6",
+    "path": "config/protocol.json"
+  }
+}

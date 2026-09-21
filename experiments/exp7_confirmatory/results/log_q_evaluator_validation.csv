@@ -1,0 +1,14 @@
+shape_a,log_w_min,log_w_max,points,max_abs_log_q_error,worst_at_log_w,tolerance,pass,oracle,protocol_sha256
+0.0001,-40.0,-20.0,41,1.6978606021123e-15,-34.5,1e-10,true,mpmath.betainc at 60 decimal digits,c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6
+0.001,-40.0,-20.0,41,6.38378239159465e-16,-36.0,1e-10,true,mpmath.betainc at 60 decimal digits,c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6
+0.005,-40.0,-20.0,41,4.163336342344337e-16,-37.0,1e-10,true,mpmath.betainc at 60 decimal digits,c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6
+0.01,-40.0,-20.0,41,1.1102230246251565e-15,-39.5,1e-10,true,mpmath.betainc at 60 decimal digits,c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6
+0.05,-40.0,-20.0,41,1.9984014443252818e-15,-30.0,1e-10,true,mpmath.betainc at 60 decimal digits,c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6
+0.1,-40.0,-20.0,41,4.440892098500626e-15,-30.0,1e-10,true,mpmath.betainc at 60 decimal digits,c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6
+0.25,-40.0,-20.0,41,9.769962616701378e-15,-30.0,1e-10,true,mpmath.betainc at 60 decimal digits,c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6
+0.5,-40.0,-20.0,41,1.5987211554602254e-14,-30.0,1e-10,true,mpmath.betainc at 60 decimal digits,c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6
+0.75,-40.0,-20.0,41,2.1316282072803006e-14,-30.0,1e-10,true,mpmath.betainc at 60 decimal digits,c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6
+0.99,-40.0,-20.0,41,2.4868995751603507e-14,-30.0,1e-10,true,mpmath.betainc at 60 decimal digits,c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6
+1.0,-40.0,-20.0,41,2.1316282072803006e-14,-30.0,1e-10,true,mpmath.betainc at 60 decimal digits,c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6
+1.5,-40.0,-20.0,41,2.1316282072803006e-14,-30.0,1e-10,true,mpmath.betainc at 60 decimal digits,c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6
+4.5,-40.0,-20.0,41,2.842170943040401e-14,-30.5,1e-10,true,mpmath.betainc at 60 decimal digits,c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6

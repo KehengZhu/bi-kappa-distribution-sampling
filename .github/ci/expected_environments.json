@@ -1,0 +1,49 @@
+[
+  {
+    "env_id": "macos-arm64",
+    "arch": "arm64",
+    "os": "macos",
+    "runner": "development host",
+    "tags": [
+      "libcxx",
+      "libstdcxx"
+    ],
+    "in_scope_protocol_2_0_0": true,
+    "note": "the supported environment: both standard libraries on one architecture, which is where the candidate's sharpest portability prediction lives -- within 2.x the stream is a function of the engine alone, so libc++ and libstdc++ must agree bitwise, with no tolerance"
+  },
+  {
+    "env_id": "linux-x86_64",
+    "arch": "x86_64",
+    "os": "ubuntu-latest",
+    "runner": "ubuntu-latest",
+    "tags": [
+      "libcxx",
+      "libstdcxx"
+    ],
+    "note": "out of scope under protocol 2.0.0: acceptance is limited to the supported environment (arm64 macOS, both standard libraries) and the cross-architecture claim is withdrawn. This row is kept so that what a broader claim would require stays visible and is reported as not run rather than silently dropped. carries the cross-architecture half of G4; the only native x86_64 this project can reach",
+    "in_scope_protocol_2_0_0": false
+  },
+  {
+    "env_id": "linux-arm64",
+    "arch": "arm64",
+    "os": "ubuntu-24.04-arm",
+    "runner": "ubuntu-24.04-arm",
+    "tags": [
+      "libcxx",
+      "libstdcxx"
+    ],
+    "note": "out of scope under protocol 2.0.0: acceptance is limited to the supported environment (arm64 macOS, both standard libraries) and the cross-architecture claim is withdrawn. This row is kept so that what a broader claim would require stays visible and is reported as not run rather than silently dropped. runner label availability depends on the account; the job is continue-on-error and this environment is reported missing rather than assumed",
+    "in_scope_protocol_2_0_0": false
+  },
+  {
+    "env_id": "macos-arm64",
+    "arch": "arm64",
+    "os": "macos-latest",
+    "runner": "macos-latest",
+    "tags": [
+      "libcxx"
+    ],
+    "note": "out of scope under protocol 2.0.0: acceptance is limited to the supported environment (arm64 macOS, both standard libraries) and the cross-architecture claim is withdrawn. This row is kept so that what a broader claim would require stays visible and is reported as not run rather than silently dropped. macOS ships no libstdc++ toolchain, so this environment contributes one standard library; a hand run on the development host can add an environment_libstdcxx.json from Homebrew GCC to the same bundle",
+    "in_scope_protocol_2_0_0": false
+  }
+]

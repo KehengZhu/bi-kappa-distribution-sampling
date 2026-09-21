@@ -97,9 +97,34 @@ you add more of them — it will wander. That is a property of the distribution 
 a bug in the sampler. Below `kappa = 1.5`, use quantiles rather than moments to characterize what
 you loaded.
 
-**Operating range.** Sampling remains accurate down to about `kappa = 0.55` in `double` and
-`kappa = 0.75` in `float`. Closer to `0.5` the internal Gamma variate has a shape parameter
-approaching zero and finite precision starts to bite.
+**Operating range.** There are two separate limits here and releases before 2.0.0 conflated
+them.
+
+The first is arithmetic and was avoidable. The radius is `R = sqrt(X1)/sqrt(X2)` with
+`X2 ~ Gamma(kappa - 1/2, 1)`, so as `kappa` approaches `1/2` the denominator's shape
+approaches zero and `X2` underflows to exactly zero long before the mathematical variate is
+negligible. Release 1.0.0 lost those draws — 2.4 % of them at `kappa = 0.505` in `double` —
+which is why its documented range was `kappa >= 0.55` in `double` and `>= 0.75` in `float`.
+Release 2.0.0 never forms `X2`; it carries `log X2` and decides representability in the log
+domain, and that mode is gone.
+
+The second is a property of the floating-point type and cannot be removed by any sampler.
+Sufficiently near `kappa = 1/2` the bi-Kappa law puts non-zero probability outside every
+finite range, and those velocities exist as mathematics without existing as numbers. The
+probability is exactly
+
+    P(overflow) = [Gamma(3/2+a) / (Gamma(3/2) Gamma(a+1))] * MAX^(-2a)
+                  * E[(sqrt(kappa) max_j |n_j|)^(2a)],        a = kappa - 1/2
+
+for the isotropic, unrotated case. It falls away extremely fast: in `double` it is 8.3e-4 at
+`kappa = 0.505`, 6.8e-7 at `0.51`, and 1.5e-31 at `0.55`; in `float`, 1.4e-4 at `0.55`,
+1.9e-8 at `0.60` and 5.3e-20 at `0.75`. Such draws are returned with non-finite components
+and counted by n_nonfinite(), which is the honest answer rather than a silent redraw.
+
+So for practical purposes `double` is unrestricted above `kappa = 0.51` and `float` above
+`kappa = 0.6`; below that, expect a measurable fraction of non-finite returns, know that it
+is the type's limit and not the sampler's, and check the counter. The derivation and its
+empirical check are in `experiments/exp7_confirmatory/config/honest_floor.md`.
 
 \section params_cap The velocity cap
 

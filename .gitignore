@@ -103,6 +103,14 @@ CLAUDE.md
 #
 # Keep these patterns file-specific.  Do not broaden to `!experiments/**`.
 # ---------------------------------------------------------------------------
+# Smoke output is a rehearsal, never evidence.  The generic rules above do not reach
+# `raw/smoke/**/*.jsonl`, and the whitelists below would pull `results/smoke/*.csv` in, so
+# both are excluded explicitly and before those whitelists.  Experiment 6 swept its smoke
+# streams into `make oracle` and `make checksums`, which is how a rehearsal ends up inside a
+# production manifest.
+experiments/*/raw/smoke/
+experiments/*/results/smoke/
+
 !experiments/*/raw/manifest.csv
 !experiments/*/raw/checksums.sha256
 !experiments/*/results/*.pdf

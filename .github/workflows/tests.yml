@@ -1,0 +1,116 @@
+# The released library's own test suite, built and run on every toolchain the loader
+# claims to support.
+#
+# Version 2.0.0 implements its Gamma, normal and uniform primitives in the header instead
+# of taking them from <random>, so that the sampled sequence is a function of the engine
+# rather than of the standard library.  That claim is only worth as much as the set of
+# libraries it has actually been compiled and run against, which is why both Linux
+# standard libraries appear here rather than one.
+#
+# The header is a C++11 header-only reference implementation, so the strict-C++11 syntax
+# check is a separate step: it has to fail on its own terms, not be masked by whatever
+# relaxations the test suite's build happens to allow.
+#
+# Dependency: `make -C cpp test` is added by the library agent.  This workflow assumes the
+# target exists, builds the suite with $(CXX) and returns non-zero on any failure.
+
+name: tests
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  suite:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    # One toolchain's failure must not hide another's result.
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-x86_64 gcc/libstdc++
+            os: ubuntu-latest
+            cxx: g++
+            stdlib: libstdc++
+            apt: ""
+            experimental: false
+          - name: linux-x86_64 clang/libc++
+            os: ubuntu-latest
+            cxx: clang++ -stdlib=libc++
+            stdlib: libc++
+            apt: libc++-dev libc++abi-dev
+            experimental: false
+          # ubuntu-24.04-arm is a GitHub-hosted arm64 label whose availability depends on
+          # the account's plan and on the repository being public.  It is marked
+          # experimental so that an unavailable label costs this workflow nothing; see
+          # results/portability_remote.md, which records the environment as pending rather
+          # than as passing.
+          - name: linux-arm64 gcc/libstdc++
+            os: ubuntu-24.04-arm
+            cxx: g++
+            stdlib: libstdc++
+            apt: ""
+            experimental: true
+          - name: linux-arm64 clang/libc++
+            os: ubuntu-24.04-arm
+            cxx: clang++ -stdlib=libc++
+            stdlib: libc++
+            apt: libc++-dev libc++abi-dev
+            experimental: true
+          - name: macos-arm64 apple-clang/libc++
+            os: macos-latest
+            cxx: clang++
+            stdlib: libc++
+            apt: ""
+            experimental: false
+
+    steps:
+      - name: check out the repository
+        uses: actions/checkout@v4
+
+      - name: install the standard library packages this toolchain needs
+        if: matrix.apt != ''
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ${{ matrix.apt }}
+
+      - name: record the toolchain
+        run: |
+          set -euo pipefail
+          ${{ matrix.cxx }} --version
+          echo "target triple: $(${{ matrix.cxx }} -dumpmachine)"
+          echo "uname: $(uname -srm)"
+
+      - name: build and run the test suite
+        run: make -C cpp test CXX="${{ matrix.cxx }}"
+
+      # Every header has to stand on its own as strict C++11: a consumer vendors one file,
+      # not the build system around it.  -pedantic-errors is what makes this a test rather
+      # than a formality -- without it a GNU extension compiles silently under both
+      # compilers used here and fails for someone else.
+      - name: strict C++11 syntax check, every header on its own
+        run: |
+          set -uo pipefail
+          status=0
+          for header in cpp/*.H; do
+            printf '%-48s ' "$header"
+            if ${{ matrix.cxx }} -fsyntax-only -std=c++11 -pedantic-errors \
+                 -Wall -Wextra -x c++ "$header"; then
+              echo ok
+            else
+              echo FAILED
+              status=1
+            fi
+          done
+          exit $status

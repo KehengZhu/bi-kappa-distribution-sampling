@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['upper_5fbounds_0',['upper_bounds',['../classgeneral__generators_1_1_general_position_generator.html#a42b21f0a360a9101001579483d7f63da',1,'general_generators::GeneralPositionGenerator']]]
+  ['rng_0',['rng',['../namespacesphere__sampling__bias.html#af6ee1e3d4a60d80705ae2c37c4fe5af3',1,'sphere_sampling_bias']]]
 ];
