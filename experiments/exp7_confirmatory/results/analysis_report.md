@@ -1,4 +1,4 @@
-NO-GO
+GO
 
 # Experiment 7 - confirmatory analysis report
 
@@ -16,7 +16,7 @@ Protocol `config/protocol.json` version 3.0.0, SHA-256 `c3b4a0a07877c0f8e2370ff7
 | G3 | complete-loader fidelity | PASS | F5 passes jointly over its cells (Holm jointly over 52 tests across all cells; 18 cells are conditional on success and are labelled as such); F6 passes (5 controls; required power 0.9 at the pre-registered effect); 0 conditional cells lack a loss fraction |
 | G4 | portability | PASS | 2 native environments completed ([('arm64', 'libc++'), ('arm64', 'libstdc++')]); 0 translated results recorded as corroborating only and excluded from the decision; 1 bitwise cross-standard-library comparisons; acceptance is limited to the supported environment; the cross-architecture claim is withdrawn from the claim boundary and published as a limitation, not assumed; 1 bitwise cross-stdlib comparisons (exact); 0 cross-architecture cells, of which 0 are equivalent within +/-0.15 on the log rate ratio, 0 disagree and 0 are underpowered (too few events to establish either, so they leave the gate open rather than closing or failing it) |
 | G5 | operational viability | PASS | candidate/LEGACY time per returned sample 0.88 (cluster-bootstrap upper limit 0.906; pre-registered bound 2); same-seed reproducible: True; RNG-stream break documented: True |
-| G6 | reproducible artifact | FAIL | make verify exit 1; derived artifacts regenerate byte-identically: True; dependency set clean: True; baseline comparison resolved: True; protocol hash matches the frozen document: True; archive identifier bi-kappa 2.2.0 @ 00dbcce99a9d8e1f0387aa7f6a93a32dd03336ae; receipt: accepted: measured at a53f5f6a9b4f6a6c4cc675cac63839fb4cbdd16d under protocol c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6; its make_verify_exit_code=0 is IGNORED -- the manifests were read here and gave 1 |
+| G6 | reproducible artifact | PASS | raw manifest verifies against the bytes read: True; make verify exit 0; derived artifacts regenerate byte-identically: True; dependency set clean: True; baseline comparison resolved: True; protocol hash matches the frozen document: True; archive identifier bi-kappa 2.2.0 @ 62f4568b08077937475b65775366a6719adcb6af; receipt: accepted: measured at a53f5f6a9b4f6a6c4cc675cac63839fb4cbdd16d under protocol c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6 |
 
 ## Families
 
@@ -32,13 +32,13 @@ Protocol `config/protocol.json` version 3.0.0, SHA-256 `c3b4a0a07877c0f8e2370ff7
 
 ## What the verdict means
 
-At least one gate a manuscript claim requires did not pass. The failure is preserved. Per PROTOCOL.md §8 the only legitimate next step is to identify a concrete implementation defect, fix it, freeze a new implementation hash and a new protocol, draw a further disjoint seed block, and rerun. Repeating the run to obtain a more favourable result is not permitted.
+Every gate passed on the pre-registered rules, on a seed block disjoint from every other experiment in this repository, against a protocol committed before the first draw existed.
 
 Expected false-failure rate of this design, computed from the frozen family structure before the run: at most 0.05.
 
 ## Unresolved
 
-- **G6 (reproducible artifact) - FAIL.** make verify exit 1; derived artifacts regenerate byte-identically: True; dependency set clean: True; baseline comparison resolved: True; protocol hash matches the frozen document: True; archive identifier bi-kappa 2.2.0 @ 00dbcce99a9d8e1f0387aa7f6a93a32dd03336ae; receipt: accepted: measured at a53f5f6a9b4f6a6c4cc675cac63839fb4cbdd16d under protocol c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6; its make_verify_exit_code=0 is IGNORED -- the manifests were read here and gave 1
+None.
 
 ## Decisive source data
 

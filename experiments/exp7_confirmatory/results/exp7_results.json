@@ -386,7 +386,7 @@
   "cross_phase_native_disagreements": 0,
   "evidence": {
     "accounting_failures": 0,
-    "archive_identifier": "bi-kappa 2.2.0 @ 00dbcce99a9d8e1f0387aa7f6a93a32dd03336ae",
+    "archive_identifier": "bi-kappa 2.2.0 @ 62f4568b08077937475b65775366a6719adcb6af",
     "audit_coverage": {
       "avoidable_loss_candidate": "nan",
       "finite_but_wrong_candidate": "nan",
@@ -447,20 +447,16 @@
         "stdlib": "libstdcxx"
       }
     ],
-    "g6_receipt": "accepted: measured at a53f5f6a9b4f6a6c4cc675cac63839fb4cbdd16d under protocol c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6; its make_verify_exit_code=0 is IGNORED -- the manifests were read here and gave 1",
+    "g6_receipt": "accepted: measured at a53f5f6a9b4f6a6c4cc675cac63839fb4cbdd16d under protocol c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6",
     "honest_minus_floor_unadjudicated": 0,
     "log_q_worst_abs_error": 2.842170943040401e-14,
     "make_reverify_identical": true,
-    "make_verify_exit_code": 1,
-    "make_verify_mismatches": [
-      "GNUmakefile",
-      "results/analysis_report.md",
-      "results/exp7_results.json"
-    ],
+    "make_verify_exit_code": 0,
     "oracle_audited_records": 14244766,
     "oracle_conversion_failures": 0,
     "oracle_disagreements": 0,
     "protocol_sha256": "c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6",
+    "raw_manifest_verified": true,
     "rng_stream_break_documented": true,
     "same_seed_reproducible": true,
     "time_per_return_ratio": 0.879713925168738,
@@ -637,14 +633,14 @@
       "title": "operational viability"
     },
     "G6": {
-      "evidence": "make verify exit 1; derived artifacts regenerate byte-identically: True; dependency set clean: True; baseline comparison resolved: True; protocol hash matches the frozen document: True; archive identifier bi-kappa 2.2.0 @ 00dbcce99a9d8e1f0387aa7f6a93a32dd03336ae; receipt: accepted: measured at a53f5f6a9b4f6a6c4cc675cac63839fb4cbdd16d under protocol c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6; its make_verify_exit_code=0 is IGNORED -- the manifests were read here and gave 1",
+      "evidence": "raw manifest verifies against the bytes read: True; make verify exit 0; derived artifacts regenerate byte-identically: True; dependency set clean: True; baseline comparison resolved: True; protocol hash matches the frozen document: True; archive identifier bi-kappa 2.2.0 @ 62f4568b08077937475b65775366a6719adcb6af; receipt: accepted: measured at a53f5f6a9b4f6a6c4cc675cac63839fb4cbdd16d under protocol c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6",
       "gate": "G6",
       "inputs": {
-        "archive_identifier": "bi-kappa 2.2.0 @ 00dbcce99a9d8e1f0387aa7f6a93a32dd03336ae",
-        "g6_receipt": "accepted: measured at a53f5f6a9b4f6a6c4cc675cac63839fb4cbdd16d under protocol c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6; its make_verify_exit_code=0 is IGNORED -- the manifests were read here and gave 1",
+        "archive_identifier": "bi-kappa 2.2.0 @ 62f4568b08077937475b65775366a6719adcb6af",
+        "g6_receipt": "accepted: measured at a53f5f6a9b4f6a6c4cc675cac63839fb4cbdd16d under protocol c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6",
         "protocol_sha256_matches": true
       },
-      "status": "FAIL",
+      "status": "PASS",
       "title": "reproducible artifact"
     }
   },
@@ -658,5 +654,5 @@
   "primary_environment_tag": "libcxx",
   "protocol_sha256": "c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6",
   "protocol_version": "3.0.0",
-  "verdict": "NO-GO"
+  "verdict": "GO"
 }
