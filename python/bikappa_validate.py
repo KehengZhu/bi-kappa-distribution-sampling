@@ -28,7 +28,8 @@ theta^2 = 2[(kappa-3/2)/kappa](k_B T/m) is defined only for kappa > 3/2 and is
 
 What the tests establish, and what they do not
 ----------------------------------------------
-The radial, directional and independence tests together pin down the
+The cell-count test of the accompanying paper (Sec. VI B) and the radial,
+directional and independence tests below together pin down the
 three-dimensional law, because a spherically symmetric density is determined by
 its radial law plus a uniform, radius-independent direction.  They are
 distribution-free and use no moments, so they remain valid on
@@ -59,7 +60,7 @@ import os
 import sys
 
 import numpy as np
-from scipy import stats
+from scipy import special, stats
 
 __all__ = ["validate_sample", "format_report", "load_sample"]
 
@@ -67,8 +68,34 @@ __all__ = ["validate_sample", "format_report", "load_sample"]
 # error shows up first and where Cartesian marginals are least sensitive.
 QUANTILE_PROBES = (0.5, 0.9, 0.99, 0.999)
 
+# Direction cells for the joint-direction and independence tests.  The solid-angle
+# element is d(cos Theta) d(Phi), so equal intervals of cos(Theta) crossed with
+# equal intervals of Phi give cells of equal solid angle.  Binning both angles is
+# what makes the independence test cover the whole direction: with cos(Theta)
+# alone, a dependence between radius and azimuth would pass unseen.
 N_RADIAL_BINS = 4
-N_COS_BINS = 10
+N_COS_BINS = 5
+N_PHI_BINS = 8
+
+# The accompanying paper's test (Sec. VI B): Pearson's chi^2 over cells of equal
+# probability under the target -- N_SHELLS radius shells bounded by the exact
+# deciles of R, crossed with the equal-solid-angle direction cells above.  Every
+# one of the N_SHELLS * 40 cells then has probability 1/400.
+N_SHELLS = 10
+MIN_EXPECTED_PER_CELL = 5.0
+
+
+def log_shell_edges(kappa: float) -> np.ndarray:
+    """log of the radii splitting R into N_SHELLS shells of equal probability.
+
+    P(T <= t) = P(W >= 1/(1+t)) with W = 1/(1+T) ~ Beta(kappa-1/2, 3/2), so the
+    edge at cumulative probability q has W_q = Beta.ppf(1-q) and
+    R_q^2 = (1-W_q)/W_q.  Comparing log R with these edges needs no bounded
+    transform of R, so nothing underflows however large R is.
+    """
+    q = np.arange(1, N_SHELLS) / N_SHELLS
+    w = stats.beta.ppf(1.0 - q, kappa - 0.5, 1.5)
+    return 0.5 * (np.log1p(-w) - np.log(w))
 
 
 # ----------------------------------------------------------------------------
@@ -225,19 +252,38 @@ def validate_sample(v,
     pvalues: dict = {}
 
     # --- 1. radial law -----------------------------------------------------
-    # W = 1/(1+T) ~ Beta(kappa-1/2, 3/2), computed from log R so that T is never
-    # materialized.  The complementary variable Y = T/(1+T) carries identical
-    # information in exact arithmetic but piles its mass against 1.0, where
-    # doubles have no relative resolution left; at kappa = 0.55 that alone makes
-    # a KS test fail on a perfectly good sample.  The orientation is not
-    # cosmetic.
+    # W = 1/(1+T) ~ Beta(kappa-1/2, 3/2), formed without materializing T.  The
+    # complementary variable Y = T/(1+T) carries identical information in exact
+    # arithmetic but piles its mass against 1.0, where doubles have no relative
+    # resolution left; at kappa = 0.55 that alone makes a KS test fail on a
+    # perfectly good sample.  The orientation is not cosmetic.
+    #
+    # For R > 1 the form (1/R)^2 / (1 + (1/R)^2) keeps W resolvable down to the
+    # subnormal range, R up to about 6e161.  (2.2.0 used 1/(1 + exp(2 log R)),
+    # which returns W = 0 already for R > 1.3e154.)
     with np.errstate(over="ignore", divide="ignore", under="ignore"):
-        logR = np.log(R)
-        W = 1.0 / (1.0 + np.exp(2.0 * logR))       # = expit(-2 log R)
-        W = np.where(R == 0.0, 1.0, W)
+        small = R <= 1.0
+        W = np.empty_like(R)
+        W[small] = 1.0 / (1.0 + R[small] ** 2)
+        inv2 = (1.0 / R[~small]) ** 2
+        W[~small] = inv2 / (1.0 + inv2)
 
-    ks_radial = stats.kstest(W, "beta", args=(b, 1.5))
-    cvm_radial = stats.cramervonmises(W, "beta", args=(b, 1.5))
+    # The radial tests run on the probability integral transform F_W(W), which
+    # is U(0,1) under the target.  Where W underflows to 0 its CDF is still
+    # resolvable: for W -> 0, F_W(W) = W^b / (b B(b, 3/2)) (1 + O(W)), and
+    # log W = -2 log R to within a relative 1/R^2.  Near kappa = 1/2 these draws
+    # carry a measurable share of the probability (about 6e-4 at kappa = 0.51),
+    # so mapping them all to F = 0 displaces them and fails an exact sample of a
+    # few million draws.
+    with np.errstate(divide="ignore"):
+        U = stats.beta.cdf(W, b, 1.5)
+        under = W <= 0.0
+        U[under] = np.exp(-2.0 * b * np.log(R[under])
+                          - np.log(b) - special.betaln(b, 1.5))
+    n_w_underflow = int(under.sum())
+
+    ks_radial = stats.kstest(U, "uniform")
+    cvm_radial = stats.cramervonmises(U, "uniform")
     pvalues["radial_ks"] = float(ks_radial.pvalue)
     pvalues["radial_cvm"] = float(cvm_radial.pvalue)
     report["tests"]["radial_law"] = {
@@ -246,9 +292,11 @@ def validate_sample(v,
         "ks_pvalue": float(ks_radial.pvalue),
         "cvm_statistic": float(cvm_radial.statistic),
         "cvm_pvalue": float(cvm_radial.pvalue),
+        "n_w_underflow": n_w_underflow,
         "description": ("scaled radius R = |v| in normalized coordinates against "
-                        "T = R^2 ~ BetaPrime(3/2, kappa-1/2), tested through "
-                        "W = 1/(1+T) ~ Beta(kappa-1/2, 3/2)"),
+                        "T = R^2 ~ BetaPrime(3/2, kappa-1/2), tested through the "
+                        "CDF of W = 1/(1+T) ~ Beta(kappa-1/2, 3/2); draws whose W "
+                        "underflows use the small-W expansion of that CDF"),
     }
 
     # --- 2. directional uniformity ----------------------------------------
@@ -256,24 +304,70 @@ def validate_sample(v,
     phi = np.arctan2(u[:, 1], u[:, 0])
     ks_cos = stats.kstest(cos_theta, "uniform", args=(-1.0, 2.0))
     ks_phi = stats.kstest(phi, "uniform", args=(-np.pi, 2.0 * np.pi))
+
+    # Equal-solid-angle direction cells, shared with the independence test.
+    r_edges = np.quantile(R, np.linspace(0.0, 1.0, N_RADIAL_BINS + 1))
+    r_bin = np.clip(np.searchsorted(r_edges[1:-1], R, side="right"), 0, N_RADIAL_BINS - 1)
+    c_bin = np.clip(np.floor((cos_theta + 1.0) / 2.0 * N_COS_BINS).astype(int),
+                    0, N_COS_BINS - 1)
+    p_bin = np.clip(np.floor((phi + np.pi) / (2.0 * np.pi) * N_PHI_BINS).astype(int),
+                    0, N_PHI_BINS - 1)
+    table = np.zeros((N_RADIAL_BINS, N_COS_BINS * N_PHI_BINS))
+    np.add.at(table, (r_bin, c_bin * N_PHI_BINS + p_bin), 1.0)
+    # The two KS tests check each angle on its own; uniform marginals make the
+    # direction uniform on the sphere only if the angles are also independent.
+    # Equal occupancy of the cells, summed over radius, tests the joint law.
+    cells = stats.chisquare(table.sum(axis=0))
+
+    # The paper's cell-count test: radius shells x direction cells, and the shells
+    # alone.  Skipped, with a note, when a cell would expect fewer than
+    # MIN_EXPECTED_PER_CELL draws, where the chi^2 approximation is poor.
+    n_cells = N_SHELLS * N_COS_BINS * N_PHI_BINS
+    if n / n_cells >= MIN_EXPECTED_PER_CELL:
+        with np.errstate(divide="ignore"):
+            shell = np.searchsorted(log_shell_edges(kappa), np.log(R), side="right")
+        cell_counts = np.zeros((N_SHELLS, N_COS_BINS * N_PHI_BINS))
+        np.add.at(cell_counts, (shell, c_bin * N_PHI_BINS + p_bin), 1.0)
+        cells_radius = stats.chisquare(cell_counts.sum(axis=1))
+        cells_all = stats.chisquare(cell_counts.ravel())
+        pvalues["cells_radius"] = float(cells_radius.pvalue)
+        pvalues["cells_all"] = float(cells_all.pvalue)
+        report["tests"]["cells"] = {
+            "radius_pvalue": float(cells_radius.pvalue),
+            "all_pvalue": float(cells_all.pvalue),
+            "expected_per_cell": n / n_cells,
+            "min_count": int(cell_counts.min()),
+            "description": (f"Pearson chi^2 against equal occupancy of {N_SHELLS} "
+                            "equal-probability radius shells x "
+                            f"{N_COS_BINS * N_PHI_BINS} equal-solid-angle direction "
+                            "cells; 'radius' uses the shells alone"),
+        }
+    else:
+        report["notes"].append(
+            f"cell-count test skipped: {n} draws give fewer than "
+            f"{MIN_EXPECTED_PER_CELL:g} expected per cell over {n_cells} cells")
+
     pvalues["cos_theta"] = float(ks_cos.pvalue)
     pvalues["phi"] = float(ks_phi.pvalue)
+    pvalues["direction_cells"] = float(cells.pvalue)
     report["tests"]["direction"] = {
         "cos_theta_sqrtn_D": float(ks_cos.statistic * math.sqrt(n)),
         "cos_theta_pvalue": float(ks_cos.pvalue),
         "phi_sqrtn_D": float(ks_phi.statistic * math.sqrt(n)),
         "phi_pvalue": float(ks_phi.pvalue),
         "critical_sqrtn_D": ks_crit,
-        "description": "cos(Theta) ~ U(-1,1) and Phi ~ U(-pi,pi) about bhat",
+        "cells_chi2_pvalue": float(cells.pvalue),
+        "description": ("cos(Theta) ~ U(-1,1) and Phi ~ U(-pi,pi) about bhat, and "
+                        f"equal occupancy of {N_COS_BINS * N_PHI_BINS} equal-solid-angle "
+                        f"cells ({N_COS_BINS} cos(Theta) x {N_PHI_BINS} Phi intervals)"),
     }
 
     # --- 3. radius-direction independence ----------------------------------
-    r_edges = np.quantile(R, np.linspace(0.0, 1.0, N_RADIAL_BINS + 1))
-    r_edges[0], r_edges[-1] = -np.inf, np.inf
-    c_edges = np.linspace(-1.0, 1.0, N_COS_BINS + 1)
-    c_edges[0], c_edges[-1] = -np.inf, np.inf
-    table = np.histogram2d(R, cos_theta, bins=[r_edges, c_edges])[0]
-    chi2 = stats.chi2_contingency(table)
+    # A direction cell that no draw reaches has no expected count and would stop
+    # chi2_contingency; drop it here.  An empty cell already fails the
+    # equal-occupancy test above, so nothing is hidden.
+    occupied = table.sum(axis=0) > 0
+    chi2 = stats.chi2_contingency(table[:, occupied])
     inner = cos_theta[R <= r_edges[1]]
     outer = cos_theta[R > r_edges[-2]]
     ks_io = stats.ks_2samp(inner, outer)
@@ -281,10 +375,12 @@ def validate_sample(v,
     pvalues["independence_inner_outer"] = float(ks_io.pvalue)
     report["tests"]["independence"] = {
         "chi2_pvalue": float(chi2.pvalue),
+        "chi2_dof": int(chi2.dof),
+        "min_cell_count": int(table.min()),
         "inner_outer_ks_pvalue": float(ks_io.pvalue),
-        "description": ("chi^2 contingency over radial quartiles x direction-cosine "
-                        "deciles, plus a two-sample KS of cos(Theta) between the "
-                        "innermost and outermost radial quartiles"),
+        "description": ("chi^2 contingency over radial quartiles x the equal-solid-"
+                        "angle direction cells, plus a two-sample KS of cos(Theta) "
+                        "between the innermost and outermost radial quartiles"),
     }
 
     # --- 4. moment-free anisotropy ratio -----------------------------------
@@ -402,6 +498,11 @@ def format_report(report: dict) -> str:
         out.append(f"  {name:32s} {stat:>14s}  {'PASS' if ok else 'FAIL'}")
 
     fam = report["family"]["tests"]
+    if "cells" in t:
+        line("cells: radius shells",
+             f"p={t['cells']['radius_pvalue']:.3f}", not fam["cells_radius"]["rejected_at_alpha"])
+        line("cells: radius x direction",
+             f"p={t['cells']['all_pvalue']:.3f}", not fam["cells_all"]["rejected_at_alpha"])
     line("radial law (sqrt(n) D)",
          f"{t['radial_law']['statistic_sqrtn_D']:.3f}", not fam["radial_ks"]["rejected_at_alpha"])
     line("radial law (Cramer-von Mises)",
@@ -410,6 +511,9 @@ def format_report(report: dict) -> str:
          f"{t['direction']['cos_theta_sqrtn_D']:.3f}", not fam["cos_theta"]["rejected_at_alpha"])
     line("direction Phi",
          f"{t['direction']['phi_sqrtn_D']:.3f}", not fam["phi"]["rejected_at_alpha"])
+    line("direction, equal-area cells",
+         f"p={t['direction']['cells_chi2_pvalue']:.3f}",
+         not fam["direction_cells"]["rejected_at_alpha"])
     line("radius-direction independence",
          f"p={t['independence']['chi2_pvalue']:.3f}",
          not fam["independence_chi2"]["rejected_at_alpha"])

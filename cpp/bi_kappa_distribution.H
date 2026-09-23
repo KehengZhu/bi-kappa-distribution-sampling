@@ -15,8 +15,8 @@
 /// @ref bikappa_detail::log_accumulator.
 #define BI_KAPPA_VERSION_MAJOR 2
 #define BI_KAPPA_VERSION_MINOR 2
-#define BI_KAPPA_VERSION_PATCH 0
-#define BI_KAPPA_VERSION_STRING "2.2.0"
+#define BI_KAPPA_VERSION_PATCH 1
+#define BI_KAPPA_VERSION_STRING "2.2.1"
 
 #include <array>
 #include <algorithm>

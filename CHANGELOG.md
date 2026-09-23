@@ -4,7 +4,63 @@ This project follows [Semantic Versioning](https://semver.org/). For a sampler, 
 includes changing which random numbers a given seed produces, even when the API is untouched
 and the sampled law is unchanged — a stored stream is part of what a user depends on.
 
-## 2.2.0 — unreleased
+## 2.2.1 — unreleased
+
+Python validator only. The C++ samplers are unchanged apart from the version macros, and return
+the same numbers as 2.2.0 for every seed.
+
+### Fixed — `bikappa_validate` failed exact samples near kappa = 1/2
+
+The radial test works through `W = 1/(1+R^2) ~ Beta(kappa-1/2, 3/2)`. 2.2.0 formed it as
+`1/(1 + exp(2 log R))`, which returns `W = 0` for `R > 1.3e154`, and then compared the zeros
+against the beta distribution as if they sat at `F_W = 0`. Near kappa = 1/2 those draws are not
+rare: at kappa = 0.51 about `6e-4` of the probability lies where `W` underflows. Displacing that
+mass fails an exact sample of a few million draws — `sqrt(n) D = 2.33` at `n = 8e6`, against a
+1% critical value of 1.63.
+
+2.2.1 forms `W` as `(1/R)^2 / (1 + (1/R)^2)` for `R > 1`, which stays resolvable up to about
+`R = 6e161`, runs the radial KS and Cramér–von Mises tests on the probability integral transform
+`F_W(W)`, and evaluates that transform for draws whose `W` still underflows from the small-`W`
+expansion `F_W(W) = W^b / (b B(b, 3/2)) (1 + O(W))` with `log W = -2 log R`. This is the
+treatment the manuscript's validation analysis already used. The report gains
+`radial_law.n_w_underflow`.
+
+### Added — the paper's cell-count test
+
+`validate_sample` now runs the test the accompanying paper reports (Sec. VI B): Pearson's chi^2
+over cells of equal probability under the target. Ten radius shells bounded by the exact deciles
+of `R`, computed from `W = 1/(1+T) ~ Beta(kappa-1/2, 3/2)` and compared in `log R`, are crossed
+with the 40 equal-solid-angle direction cells described below, so each of the 400 cells has
+probability 1/400. The report gains `tests.cells` with `radius_pvalue` (the shells alone, which
+tests the radial law) and `all_pvalue` (all 400 cells, which tests the radius, the direction and
+their independence together); both join the Holm–Bonferroni family as `cells_radius` and
+`cells_all`. The test is skipped, with a note, when fewer than 5 draws are expected per cell
+(`n < 2000`). Comparing `log R` with the shell edges forms no bounded transform, so this test has
+no underflow at any radius.
+
+### Changed — the direction tests cover both angles
+
+2.2.0 tested independence of radius and direction with a chi^2 contingency over radial quartiles
+and ten intervals of `cos Θ`, so a dependence between the radius and the azimuth `Φ` could not
+fail it; and it tested the direction only through the separate KS tests of `cos Θ` and `Φ`, which
+two uniform but mutually dependent angles pass.
+
+2.2.1 bins the direction into 40 cells of equal solid angle — five equal intervals of `cos Θ`
+by eight of `Φ`, equal in area because `dΩ = −d(cos Θ) dΦ` — and uses them twice:
+
+- `direction.cells_chi2_pvalue` (family key `direction_cells`): chi^2 test that the 40 cells are
+  equally occupied, which tests the joint law of the two angles;
+- `independence.chi2_pvalue`: chi^2 contingency of radial quartiles × the 40 cells (117 degrees of
+  freedom), which now covers both angles. Unoccupied direction cells are dropped from this table,
+  since an empty cell already fails the occupancy test.
+
+The Holm–Bonferroni family gains one member, so each test's threshold at a given `alpha` is
+slightly stricter than in 2.2.0. New negative controls in `test_bikappa_validate.py` pair sorted
+radii with sorted azimuths (caught by the independence test) and set `Φ = π cos Θ` (caught only by
+the cell test); a positive control draws an exact kappa = 0.51 sample of `8e6` with the radius
+formed in logs and requires it to pass.
+
+## 2.2.0 — 2026-09-19
 
 ### Fixed — a `float` instantiation resolves the representability boundary
 
