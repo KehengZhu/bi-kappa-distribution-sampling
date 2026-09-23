@@ -8,7 +8,7 @@ drift between the evidence and the paper.
 
 Sources, and the reviewer comment each answers:
 
-  exp1  raw/*.bin + results/exp1_results.json  -> Figs. 2-4, Tables III-IV   R1.3, R1.5, R1.6
+  exp1  raw/*.bin + results/exp1_results.json  -> marginal figure, validation and moment tables   R1.3, R1.5, R1.6
   exp2  results/exp2_results.json              -> Fig. 5, Table V            R1.1, R1.2
   exp3  results/exp3_results.json              -> Table VI                   R1.4
   exp4  results/exp4_results.json              -> Table VII                  R1.3
@@ -99,16 +99,6 @@ def bikappa_marginal_pdf(s, kappa):
     return np.exp(logn) / np.sqrt(kappa) * (1.0 + s**2 / kappa) ** (-kappa)
 
 
-def bikappa_marginal_ppf(p, kappa):
-    """Quantile function of the normalised marginal.
-
-    It is a scaled Student-t: with ``nu = 2 kappa - 1``, ``s = T_nu sqrt(kappa/nu)``.
-    Using the library t quantile avoids inverting a heavy-tailed CDF numerically.
-    """
-    nu = 2.0 * kappa - 1.0
-    return stats.t.ppf(p, df=nu) * np.sqrt(kappa / nu)
-
-
 def maxwellian_marginal_pdf(s):
     """Normalised bi-Maxwellian marginal, the kappa -> infinity limit."""
     return np.exp(-(s**2)) / np.sqrt(np.pi)
@@ -164,110 +154,68 @@ def block_a_rows(rows, kappa):
 # --------------------------------------------------------------------------
 
 def figure_marginals(exp1_dir):
-    rows = load_manifest(exp1_dir)
-    kappas = [2.0, 5.0, 10.0]
-    thetas = [1.0, 1.0, 2.0]          # theta_perp, theta_perp, theta_par
-    labels = [r"$v_x/\theta_\perp$", r"$v_y/\theta_\perp$", r"$v_\parallel/\theta_\parallel$"]
+    """One single-column figure: the three normalised components against the
+    exact marginal and the bi-Maxwellian limit, on a logarithmic density axis.
 
-    half = 5.0
-    fig, axes = plt.subplots(3, 3, figsize=(7.1, 5.6), sharex=True, sharey=True)
+    In s = v_i/theta_i all three components share one marginal, so overlaying
+    them tests the anisotropic rescaling; the logarithmic axis shows the
+    suprathermal tail, where the bi-Kappa and bi-Maxwellian laws differ, rather
+    than only the core.  kappa = 1 has no finite variance; kappa = 2 and 10
+    carry the approach to the bi-Maxwellian limit.
+    """
+    rows = load_manifest(exp1_dir)
+    kappas = [1.0, 2.0, 10.0]
+    thetas = [1.0, 1.0, 2.0]          # theta_perp, theta_perp, theta_par
+    comps = [
+        (r"$v_{\perp1}/\theta_\perp$", "o", "0.15"),
+        (r"$v_{\perp2}/\theta_\perp$", "s", "0.45"),
+        (r"$v_\parallel/\theta_\parallel$", "^", "0.70"),
+    ]
+
+    half = 6.0
+    bins = np.linspace(-half, half, 49)
+    width = bins[1] - bins[0]
+    centers = 0.5 * (bins[1:] + bins[:-1])
+    grid = np.linspace(-half, half, 800)
+
+    fig, axes = plt.subplots(3, 1, figsize=(3.4, 4.4), sharex=True, sharey=True)
     meta = {}
 
     for i, kappa in enumerate(kappas):
+        ax = axes[i]
         sel = block_a_rows(rows, kappa)
         v = load_runs(exp1_dir, sel)
         n_total = v.shape[0]
         meta[kappa] = {"n_total": n_total, "seeds": [int(r["seed"]) for r in sel]}
 
-        for j, th in enumerate(thetas):
-            ax = axes[i, j]
-            s = v[:, j] / th
-            # Display window, disclosed in the caption.  The histogram is
-            # normalised by the FULL sample size, so the bars are the true
-            # probability density restricted to the window, not a density
-            # renormalised over the visible subset.
-            bins = np.linspace(-half, half, 101)
-            counts, edges = np.histogram(s, bins=bins)
-            width = edges[1] - edges[0]
+        ax.plot(grid, bikappa_marginal_pdf(grid, kappa), color=C_KAPPA,
+                label="bi-Kappa marginal", zorder=2)
+        ax.plot(grid, maxwellian_marginal_pdf(grid), color=C_MAXW,
+                ls="--", label="bi-Maxwellian limit", zorder=1)
+        for j, (lab, mk, col) in enumerate(comps):
+            s = v[:, j] / thetas[j]
+            # Normalised by the FULL sample size, so the markers are the
+            # probability density itself, not a density renormalised over
+            # the displayed window.  Empty bins are not drawn.
+            counts, _ = np.histogram(s, bins=bins)
             dens = counts / (n_total * width)
-            centers = 0.5 * (edges[1:] + edges[:-1])
+            keep = counts > 0
+            ax.plot(centers[keep], dens[keep], mk, ms=2.4, mfc="none", mew=0.6,
+                    color=col, label=lab, zorder=3)
 
-            ax.bar(centers, dens, width=width, color=C_HIST,
-                   edgecolor="none", label="sample histogram", zorder=1)
-            grid = np.linspace(-half, half, 800)
-            ax.plot(grid, bikappa_marginal_pdf(grid, kappa), color=C_KAPPA,
-                    label="bi-Kappa marginal", zorder=3)
-            ax.plot(grid, maxwellian_marginal_pdf(grid), color=C_MAXW,
-                    ls="--", label="bi-Maxwellian limit", zorder=2)
+        ax.set_yscale("log")
+        ax.set_xlim(-half, half)
+        ax.set_ylim(1e-6, 1.0)
+        ax.set_ylabel("Probability density")
+        ax.text(0.03, 0.93, rf"$\kappa={kappa:g}$", transform=ax.transAxes,
+                va="top", ha="left")
+    axes[-1].set_xlabel(r"$v_i/\theta_i$ (dimensionless)")
 
-            ax.set_xlim(-half, half)
-            ax.set_ylim(0.0, 0.62)
-            if j == 0:
-                ax.set_ylabel("Probability density\n(dimensionless)")
-                ax.text(0.03, 0.93, rf"$\kappa={kappa:g}$", transform=ax.transAxes,
-                        va="top", ha="left")
-            if i == 2:
-                ax.set_xlabel(labels[j])
-
-    handles, lab = axes[0, 0].get_legend_handles_labels()
-    fig.legend(handles, lab, frameon=False, ncol=3,
-               loc="upper center", bbox_to_anchor=(0.5, 1.02))
-    fig.tight_layout(pad=0.4, rect=(0, 0, 1, 0.965))
+    handles, lab = axes[0].get_legend_handles_labels()
+    fig.legend(handles, lab, frameon=False, ncol=2, fontsize=6.5,
+               loc="upper center", bbox_to_anchor=(0.55, 1.06))
+    fig.tight_layout(pad=0.4, rect=(0, 0, 1, 0.95))
     path = os.path.join(OUT_FIG, "validation-marginals.pdf")
-    fig.savefig(path)
-    plt.close(fig)
-    print(f"  wrote {path}")
-    return meta
-
-
-# --------------------------------------------------------------------------
-# Figure: quantile-quantile against the exact marginals  (R1.3, R1.6)
-# --------------------------------------------------------------------------
-
-def figure_qq(exp1_dir):
-    rows = load_manifest(exp1_dir)
-    kappas = [2.0, 5.0]
-    thetas = [1.0, 1.0, 2.0]
-    labels = [r"$v_x/\theta_\perp$", r"$v_y/\theta_\perp$", r"$v_\parallel/\theta_\parallel$"]
-
-    fig, axes = plt.subplots(2, 3, figsize=(7.1, 4.8))
-    meta = {}
-
-    for i, kappa in enumerate(kappas):
-        sel = block_a_rows(rows, kappa)
-        # One seed only: a Q-Q plot of 5x10^5 points is unreadable, and pooling
-        # the replicates would hide seed-to-seed spread rather than show it.
-        v = load_runs(exp1_dir, sel[:1])
-        n = v.shape[0]
-        meta[kappa] = {"n": n, "seed": int(sel[0]["seed"])}
-
-        # Thin to a fixed number of plotting positions, evenly in probability.
-        m = 2000
-        probs = (np.arange(m) + 0.5) / m
-        theo = bikappa_marginal_ppf(probs, kappa)
-        ref = stats.norm.ppf(probs, scale=1.0 / np.sqrt(2.0))
-        lim = float(np.max(np.abs(theo)) * 1.05)
-
-        for j, th in enumerate(thetas):
-            ax = axes[i, j]
-            emp = np.quantile(v[:, j] / th, probs)
-
-            ax.plot([-lim, lim], [-lim, lim], color="0.35", lw=0.7, zorder=1)
-            ax.plot(theo, ref, ls="--", color=C_MAXW, lw=0.9, zorder=2,
-                    label="bi-Maxwellian quantiles")
-            ax.plot(theo, emp, ".", ms=1.6, color=C_KAPPA, zorder=3,
-                    label="sample vs bi-Kappa")
-            ax.set_xlim(-lim, lim)
-            ax.set_ylim(-lim, lim)
-            ax.set_aspect("equal", adjustable="box")
-            ax.set_xlabel("theoretical " + labels[j])
-            if j == 0:
-                ax.set_ylabel(rf"$\kappa={kappa:g}$" + "\nsample quantile")
-            if i == 0 and j == 0:
-                ax.legend(frameon=False, loc="upper left", markerscale=4)
-
-    fig.tight_layout(pad=0.4)
-    path = os.path.join(OUT_FIG, "validation-qq.pdf")
     fig.savefig(path)
     plt.close(fig)
     print(f"  wrote {path}")
@@ -367,20 +315,20 @@ def sci(x, nd=1):
 
 
 def table_validation(exp1_dir):
-    """Table III -- the Experiment 1 validation summary (R1.3)."""
+    """The Experiment 1 cell-count test (R1.3): chi^2 p-values over equal-probability cells.
+
+    One row per kappa, the five replicate runs pooled.  "Radius" sums the cells over
+    direction and tests the radial law alone; "all cells" tests the radius, the direction
+    and their independence together.
+    """
     res = load_json(exp1_dir, "exp1_results.json")
     rows = [r for r in res["summary"] if r["block"] == "A"]
     lines = []
     for rec in sorted(rows, key=lambda r: float(r["kappa"])):
         k = float(rec["kappa"])
         lines.append(
-            f"${k:g}$ & {rec['total_nonfinite']} & "
-            f"{fmt(rec['radial_ks_sqrtn']['mean'])} $\\pm$ {fmt(rec['radial_ks_sqrtn']['sd'])} & "
-            f"{fmt(rec['radial_cvm_stat']['mean'])} & "
-            f"{fmt(rec['cos_theta_ks_sqrtn']['mean'])} & "
-            f"{fmt(rec['phi_ks_sqrtn']['mean'])} & "
-            f"{fmt(rec['independence_chi2_pvalue']['mean'])} & "
-            f"{fmt(rec['mad_ratio_par_perp']['mean'], 4)} \\\\"
+            f"${k:g}$ & {fmt(rec['cells_pooled_radius_pvalue'])} & "
+            f"{fmt(rec['cells_pooled_all_pvalue'])} \\\\"
         )
     body = "\n".join(lines)
     path = os.path.join(OUT_TAB, "validation-summary.tex")
@@ -404,30 +352,22 @@ def table_moments(exp1_dir):
     for kappa in (2.0, 5.0, 10.0):
         sel = block_a_rows(rows, kappa)
         theta_perp, theta_par = 1.0, 2.0
-        per_seed = {"vx": [], "vy": [], "vperp": [], "vz": []}
+        per_seed = {"vx": [], "vy": [], "vz": []}
         for r in sel:
             v = load_runs(exp1_dir, [r])
-            vperp = np.hypot(v[:, 0], v[:, 1])
             per_seed["vx"].append(np.var(v[:, 0], ddof=1))
             per_seed["vy"].append(np.var(v[:, 1], ddof=1))
-            per_seed["vperp"].append(np.var(vperp, ddof=1))
             per_seed["vz"].append(np.var(v[:, 2], ddof=1))
 
         second = kappa / (2.0 * kappa - 3.0)
         theory = {
             "vx": theta_perp**2 * second,
             "vy": theta_perp**2 * second,
-            # Var(V_perp) for the speed V_perp = sqrt(vx^2+vy^2):
-            #   E[V_perp^2] = 2 theta_perp^2 kappa/(2 kappa - 3)
-            #   E[V_perp]   = sqrt(pi kappa) theta_perp Gamma(kappa-1)/(2 Gamma(kappa-1/2))
-            "vperp": (2.0 * theta_perp**2 * second
-                      - np.pi * theta_perp**2 * kappa
-                      * np.exp(2.0 * (gammaln(kappa - 1.0) - gammaln(kappa - 0.5))) / 4.0),
             "vz": theta_par**2 * second,
         }
-        names = {"vx": "$v_x$", "vy": "$v_y$", "vperp": "$v_\\perp$", "vz": "$v_z$"}
+        names = {"vx": "$V_{\\perp1}$", "vy": "$V_{\\perp2}$", "vz": "$V_\\parallel$"}
         audit[kappa] = {}
-        for key in ("vx", "vy", "vperp", "vz"):
+        for key in ("vx", "vy", "vz"):
             vals = np.array(per_seed[key])
             mean, sd = vals.mean(), vals.std(ddof=1)
             rel = 100.0 * (mean - theory[key]) / theory[key]
@@ -597,7 +537,6 @@ def main() -> int:
 
     print("figures:")
     m1 = figure_marginals(exp1)
-    m2 = figure_qq(exp1)
     figure_cap(exp2)
 
     print("tables:")
@@ -611,8 +550,6 @@ def main() -> int:
     print("\nprovenance for the captions:")
     for k, v in m1.items():
         print(f"  marginals kappa={k:g}: N={v['n_total']}, seeds={v['seeds']}")
-    for k, v in m2.items():
-        print(f"  qq kappa={k:g}: N={v['n']}, seed={v['seed']}")
     print(f"\nspeed-cap anisotropy limit at kappa={SPEED_CAP_EXAMPLE[0]:g}, "
           f"theta_par/theta_perp={SPEED_CAP_EXAMPLE[1]:g}: {geom:.6f}")
     print(f"cap width reaching TV = {TV_TARGET_EXAMPLE[1]:g} at "

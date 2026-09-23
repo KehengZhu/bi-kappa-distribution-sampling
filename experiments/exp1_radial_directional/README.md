@@ -42,11 +42,20 @@ is recorded in `results/exp1_results.json`.
 
 ## Diagnostics
 
+- **Cell-count test (the one the manuscript reports)** — Pearson χ² against equal occupancy of
+  400 cells: 10 radius shells bounded by the exact deciles of `R`, crossed with 40
+  equal-solid-angle direction cells. Each cell has probability 1/400 under the target. Reported
+  per configuration with the five replicates pooled (1250 expected per cell), for the shells alone
+  (radial law) and for all 400 cells (radius, direction and independence together).
 - **Radial law** — KS and Cramér–von Mises against the exact law, plus quantile probes at
   p = 0.5, 0.9, 0.99, 0.999 compared in `log R`.
-- **Directional uniformity** — KS of `cos Θ` against U(−1,1) and of `Φ` against U(−π,π).
-- **Radial–direction independence** — χ² contingency over radial quartiles × direction-cosine
-  deciles, plus a two-sample KS of `cos Θ` between the innermost and outermost radial quartiles.
+- **Directional uniformity** — KS of `cos Θ` against U(−1,1) and of `Φ` against U(−π,π), plus a
+  χ² test that 40 equal-solid-angle direction cells (5 intervals of `cos Θ` × 8 of `Φ`) are
+  equally occupied. The two KS tests check the angles separately; the cell test checks the joint
+  direction law.
+- **Radial–direction independence** — χ² contingency over radial quartiles × the same 40 direction
+  cells, so that a dependence of either angle on the radius is tested, plus a two-sample KS of
+  `cos Θ` between the innermost and outermost radial quartiles.
 - **Anisotropy alignment** — ratio of median absolute deviations `MAD(v∥)/MAD(v⊥)`, which needs
   no moments and therefore works at every κ.
 - **Frame invariance** — the recovered normalized radius is compared draw by draw against the
@@ -66,7 +75,7 @@ and `Y = T/(1+T) ~ Beta(3/2, κ−1/2)` are exact bijections of `T` and carry id
 information in exact arithmetic. In doubles they do not: for small `κ−1/2` the mass of `Y`
 piles up against 1, where no relative resolution remains, and 16% of `Y` values at κ = 0.55
 round to exactly 1.0. A KS test on `Y` then measures rounding rather than the sampler, and
-reports a spurious `√n·D = 51.8`. The same data tested on `W` gives 0.751 — a clean pass.
+reports a spurious `√n·D = 51.9`. The same data tested on `W` gives 0.889 — a clean pass.
 `W` is the correct bounded diagnostic; see `results/exp1_table.md`.
 
 This supersedes the recommendation in `docs/revision/planning/reviewer_response_matrix.md`
