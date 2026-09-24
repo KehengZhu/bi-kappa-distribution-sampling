@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-"""Assemble the machine-readable environment record for one Experiment 7 P5 toolchain.
+"""Assemble the machine-readable environment record for one P5 (portability) toolchain.
 
-PROTOCOL.md 5.3 decides G4 by comparing counters across standard libraries and rates
-across architectures.  Both comparisons are meaningless without the arithmetic the
-numbers came from, and the plan (E5, item 3) lists what has to be on file: compiler,
-standard-library version, target triple, optimization flags, floating-point contraction,
-rounding mode, and FTZ/DAZ state.  This script writes exactly that, merging three
-sources:
+PROTOCOL.md 5.3 compares counters across standard libraries and rates across
+architectures.  Both comparisons are meaningless without the arithmetic the numbers came
+from, so the record states the compiler, standard-library version, target triple,
+optimization flags, floating-point contraction, rounding mode, and FTZ/DAZ state.  This
+script writes exactly that, merging three sources:
 
   * ``env_probe`` -- what only a compiled program can see (rounding mode, subnormal
     flushing, LDBL_MANT_DIG, the exact overflow thresholds, the standard-library version

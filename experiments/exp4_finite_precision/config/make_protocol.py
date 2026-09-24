@@ -2,7 +2,7 @@
 """Emit ``config/protocol.json``, the machine-readable half of ``PROTOCOL.md``.
 
 Everything the analysis is allowed to decide with is computed here and frozen, before any
-Experiment 7 data exists.  In particular the per-cell *achieved* coverage of every quantile
+production data exists.  In particular the per-cell *achieved* coverage of every quantile
 interval is a closed-form function of ``(n, p, correction)``, so the null distribution of the
 F2 miss count -- and therefore its critical value -- is known in advance rather than being
 chosen once the misses have been counted.
@@ -22,13 +22,13 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 # --- frozen matrix ---------------------------------------------------------------------
 KAPPA_LADDER = [0.5001, 0.501, 0.505, 0.51, 0.55, 0.60, 0.75, 1.0, 1.25, 1.49, 1.5, 2.0, 5.0]
 PRECISIONS = ["float", "double"]
-# Seed block for the SECOND holdout, drawn by the rule stated in PROTOCOL.md section 3 and
-# not by choice: take the highest seed declared anywhere in this repository (7505, the
-# Experiment 7 selftest fixtures), round up to the next multiple of 1000 (8000), and take the
-# next ten integers.  The rule admits exactly one answer, so no seed was selected after any
-# result was seen, and the block is disjoint from every other by construction.  The first
-# holdout's block, 7001-7010, is spent: PROTOCOL.md section 8 forbids reusing it, and its
-# NO-GO result is preserved in commit 45d3ef8.
+# Seed blocks.  7001-7010 and 8001-8010 were used by earlier runs of this experiment under
+# protocol versions 1.3.0 and 2.0.0 and are not reused; they are listed so that the selftest
+# can check that no block in use overlaps them.  The production and performance blocks,
+# 9001-9010, follow the rule stated in PROTOCOL.md section 3: take the highest seed declared
+# anywhere in this repository, round up to the next multiple of 1000, and take the next ten
+# integers.  The rule admits exactly one answer, so the block is disjoint from every other
+# by construction.
 SEEDS_FIRST_HOLDOUT = [7001, 7002, 7003, 7004, 7005, 7006, 7007, 7008, 7009, 7010]
 SEEDS_SECOND_HOLDOUT = [8001, 8002, 8003, 8004, 8005, 8006, 8007, 8008, 8009, 8010]
 SEEDS_PRODUCTION = [9001, 9002, 9003, 9004, 9005]
@@ -74,37 +74,35 @@ LOG_Q_ORACLE_TOL = 1e-10
 # sampler from a badly wrong one, so it is declared non-informative in advance.
 INFORMATIVE_WIDTH_LOG_UNITS = 1.0
 
-# A returned value can be finite and still be wrong.  Experiment 6 had no category for that:
-# its classifier scored any finite return as a success even when the intended draw was not
-# representable, which is exactly the regime where the legacy form is worst -- its own oracle
-# measured up to 0.48 relative error on the surviving radius once the denominator went
-# subnormal.  A draw is declared FINITE_BUT_WRONG when its returned radius has lost more than
-# half of the significand of its type, i.e. relative error against the arbitrary-precision
-# oracle above 2^-(digits/2): 1.5e-8 in double, 2.4e-4 in float.  Stating it in bits rather
+# A returned value can be finite and still be wrong.  A classifier that scores every finite
+# return as a success misses the regime where the direct (legacy) calculation is worst: once
+# its denominator is subnormal, the surviving radius has been measured at up to 0.48
+# relative error.  A draw is declared FINITE_BUT_WRONG when its returned radius has lost more
+# than half of the significand of its type, i.e. relative error against the
+# arbitrary-precision oracle above 2^-(digits/2): 1.05e-8 in double, 2.44e-4 in float.  Stating it in bits rather
 # than as an absolute number makes it type-aware and leaves the log path a wide margin -- its
 # own error is about eps*|log R|, which is 1.5e-13 at the double overflow threshold and
 # 5.3e-6 at the float one.
 ACCURACY_MAX_REL_ERROR_BITS_LOST_FRACTION = 0.5
 
-# G5 acceptability bound on candidate/LEGACY time per returned sample.
+# Upper bound on candidate/LEGACY time per returned sample (acceptance criterion gates.G5).
 PERFORMANCE_BOUND = 2.0
-# G4 equivalence margin on the log rate ratio between architectures.
+# Equivalence margin on the log rate ratio between architectures (gates.G4).
 PORTABILITY_LOG_RATIO_MARGIN = 0.15
-# The environments acceptance is limited to under protocol 2.0.0.  Both must be present,
-# native and complete for G4 to close; see gates.G4.cross_arch_withdrawn_reason.
+# The environments the portability criterion (gates.G4) covers.  Both must be present,
+# native and complete for it to pass; see gates.G4.cross_arch_withdrawn_reason.
 SUPPORTED_ENVIRONMENTS = [
     {"arch": "arm64", "os": "macOS", "stdlib": "libc++", "tag": "libcxx"},
     {"arch": "arm64", "os": "macOS", "stdlib": "libstdc++", "tag": "libstdcxx"},
 ]
-# F6 required power at the pre-registered minimum detectable effect.
+# F6 required power at the declared minimum detectable effect.
 NC_REQUIRED_POWER = 0.90
 NC_INJECTION_LOSS_FRACTIONS = [1e-3, 1e-4]
 NC_INJECTIONS = 200
-# NC3's effect under protocol 2.0.0 is conditioning IN EXCESS of the representability floor,
-# measured as a fraction of attempts removed from among the draws the type would have allowed
-# back.  These are pre-registered from the development calibration in
-# docs/revision/experiments/f5_tail_calibration.md, on simulated cells only, before any
-# second-holdout datum existed.
+# NC3's effect is conditioning IN EXCESS of the representability floor, measured as a
+# fraction of attempts removed from among the draws the type would have allowed back.  The
+# fractions were fixed from a calibration on simulated cells only, before the production
+# data existed.
 NC3_EXCESS_LOSS_FRACTIONS = [1e-3, 1e-4]
 
 
@@ -205,7 +203,7 @@ def f2_cells() -> tuple[list[dict], dict]:
 
     # Independence across the five levels of one configuration is NOT assumed; it is also
     # not far off, and the difference is published rather than left implicit.  This is the
-    # critical value the withdrawn Poisson-binomial null gave.
+    # critical value a Poisson-binomial null over independent intervals gives.
     pmf_i = np.array([1.0])
     for q in miss_probs:
         pmf_i = np.convolve(pmf_i, [1.0 - q, q])
@@ -746,12 +744,12 @@ def main() -> None:
                    "cross_arch_rule": "two one-sided tests on the log rate ratio",
                    "log_ratio_margin": PORTABILITY_LOG_RATIO_MARGIN,
                    "translated_execution_excluded": True,
-                   # Protocol 2.0.0 narrows G4 to the environment this work supports.  The
-                   # cross-architecture claim is WITHDRAWN, not assumed: it is removed from
-                   # the claim boundary in section 9 and published as a limitation. What
-                   # remains is the sharper of the two tests and the one that is decidable
-                   # here -- bitwise equality of the two standard libraries on the supported
-                   # architecture, which is a prediction with no tolerance at all.
+                   # The portability criterion covers the supported environment only.  No
+                   # cross-architecture claim is made: it is outside the claim boundary of
+                   # section 9 and is published as a limitation.  What remains is the sharper
+                   # of the two tests and the one that can be decided on this hardware --
+                   # bitwise equality of the two standard libraries on the supported
+                   # architecture, a prediction with no tolerance at all.
                    "scope": "single_architecture",
                    "cross_arch_in_scope": False,
                    "cross_arch_withdrawn_reason":

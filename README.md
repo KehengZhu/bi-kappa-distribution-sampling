@@ -166,7 +166,7 @@ that directory.
 |---|---|---|
 | `experiments/exp1_radial_directional` | Tables III and IV, Figs. 4 and 5 | `make cells tail moments marginals` |
 | `experiments/exp2_cap_characterization` | Table II, Fig. 3 | `make run`, then `uv run --project ../../python python exp2_analyze.py` |
-| `experiments/exp4_finite_precision` | Fig. 2 | the run sequence in its README, ending with `make analyze figures` |
+| `experiments/exp4_finite_precision` | Fig. 2 | `make figures` redraws it from the committed results; the full study (protocol, sampling, analysis) is in the GitHub repository, see its README |
 | `experiments/exp3_benchmark` | not shown (speed comparison with two other samplers) | `make run`, then `uv run --project ../../python python exp3_analyze.py` |
 
 `paper/figures/make_manuscript_assets.py` regenerates the paper's figures and tables from the

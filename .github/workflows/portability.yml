@@ -1,19 +1,21 @@
-# Experiment 7, phase P5 -- the evidence gate G4 is decided on.
+# Finite-precision experiment (experiments/exp4_finite_precision), phase P5 -- the evidence
+# its portability criterion (gates.G4 in config/protocol.json) is decided on.
 #
-# Why this workflow exists at all.  PROTOCOL.md 5.3 makes two portability claims and tests
+# Why this workflow exists.  PROTOCOL.md 5.3 makes two portability claims and tests
 # them differently: on one architecture the candidate's stream is a function of the engine
 # alone, so libc++ and libstdc++ must agree BITWISE; across architectures log, exp and pow
 # are not correctly rounded and the libm implementations differ, so only the rates are
-# predicted to agree, within a pre-registered equivalence margin.  The second claim needs
+# predicted to agree, within a declared equivalence margin.  The second claim needs
 # real x86_64 hardware.  The development host is arm64 macOS; Rosetta 2 and Docker/Rosetta
 # can execute x86_64 there, but PROTOCOL.md 5.3 records translated execution as
 # corroborating evidence only and excludes it from the F7 decision.  Hosted runners are
 # therefore the only native x86_64 this project has.
 #
 # Cost.  The full scalar envelope is a minute of single-core work, so the frozen sizes run
-# unreduced: 10^6 attempts x 5 seeds (7001-7005) over the whole kappa ladder.  Nothing here
-# shrinks a sample to fit a runner.  The bulky per-draw binaries stay on the runner; G4
-# needs counter rows and an environment record, and that is all that is uploaded.
+# unreduced: 10^6 attempts x 5 seeds (9001-9005) over the whole kappa ladder.  Nothing here
+# shrinks a sample to fit a runner.  The bulky per-draw binaries stay on the runner; the
+# portability decision needs counter rows and an environment record, and that is all that
+# is uploaded.
 #
 # What an unavailable environment means.  Not a pass.  The final job fails when an expected
 # environment is missing, and results/portability_remote.md carries the exact command to
@@ -63,8 +65,8 @@ jobs:
           # ubuntu-24.04-arm is a GitHub-hosted arm64 label whose availability depends on
           # the account's plan and on the repository being public.  It is provided and
           # marked experimental rather than assumed: if the label is not served, this leg
-          # fails or never starts, the final job reports arm64 Linux as missing, and G4
-          # stays open with a command in results/portability_remote.md.
+          # fails or never starts, the final job reports arm64 Linux as missing, and the
+          # portability criterion stays open with a command in results/portability_remote.md.
           - env_id: linux-arm64
             os: ubuntu-24.04-arm
             arch: arm64
@@ -136,7 +138,8 @@ jobs:
           record_one libcxx "${{ matrix.cxx_libcxx }}"
           record_one libstdcxx "${{ matrix.cxx_libstdcxx }}"
 
-      # Counter rows only.  The per-draw binaries G4 does not need stay on the runner.
+      # Counter rows only.  The per-draw binaries, which the decision does not need, stay on
+      # the runner.
       - name: collect the counter rows
         run: |
           set -euo pipefail
@@ -206,7 +209,7 @@ jobs:
           pattern: portability-*
 
       # Presence and shape only -- no statistic is computed here.  Its purpose is that a
-      # missing environment cannot end as a green check.  The environments G4 requires are
+      # missing environment cannot end as a green check.  The required environments are
       # read from .github/ci/expected_environments.json, the same file the hand-run recipe
       # in results/portability_remote.md points at, so that what is expected is stated in
       # one place rather than inferred from whatever turned up.
@@ -230,10 +233,10 @@ jobs:
       - name: install uv
         run: python -m pip install --disable-pip-version-check uv
 
-      # The two things G4 tests, both decided by the experiment's own analysis against
+      # The two portability tests, both decided by the experiment's own analysis against
       # config/protocol.json.  Neither rule is reimplemented here.
       #
-      # Contract with analyze.py (owned by the analysis agent):
+      # Contract with analyze.py:
       #   analyze.py --portability-ingest <EVIDENCE_DIR>
       # <EVIDENCE_DIR> holds one subdirectory per artifact, named portability-<env_id>,
       # each containing environment_<tag>.json, portability_<tag>.jsonl, run.log and
@@ -249,7 +252,7 @@ jobs:
       #       configurations, comparing zero-count cells by the exact conditional test;
       #   (c) ignore every record whose "execution" is not "native";
       #   (d) write results/portability.csv and a machine-readable verdict; and
-      #   (e) exit non-zero unless G4 closes.
+      #   (e) exit non-zero unless the portability criterion passes.
       - name: F7 tests and the G4 verdict
         id: ingest
         continue-on-error: true

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Verify a release archive from a fresh extraction, with nothing borrowed from this tree.
 
-This is the check gate G6 actually requires. Running `make verify` in the tree that produced
-the artifacts proves only that the bytes on disk are the bytes that were hashed; it says
-nothing about whether someone who downloads the archive can reproduce anything. So the
+This is the check the reproducibility criterion of the finite-precision experiment
+(`gates.G6` in its config/protocol.json) requires. Running `make verify` in the tree that
+produced the artifacts proves only that the bytes on disk are the bytes that were hashed;
+it says nothing about whether someone who downloads the archive can reproduce anything. So the
 archive is extracted into a scratch directory, the build is done there, and every command
 runs with that directory as its root.
 

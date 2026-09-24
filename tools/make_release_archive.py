@@ -33,12 +33,10 @@ FIXED_MTIME = 1_000_000_000  # 2001-09-09T01:46:40Z
 
 # Directory names `--with-results` never descends into.  The option exists to carry the bulk
 # results of the run being released, and a plain walk of the experiment directory carries
-# more than that: scratch from the verification step, smoke output, caches, and -- the case
-# that produced this list -- a previous holdout's raw tree, set aside on disk when the new
-# run displaced it.  Building the release for holdout 3 swept in 4 GB of holdout 2's
-# binaries, untracked and covered by no checksum manifest in the release, which is both
-# wrong about what the archive contains and fatal to reproducing it elsewhere: nobody else
-# has those files, so nobody else can rebuild the same bytes.
+# more than that: scratch from the verification step, smoke output, caches, and the raw tree
+# of an earlier run kept on disk beside the current one.  Such files are untracked and
+# covered by no checksum manifest in the release, so including them would misstate what the
+# archive contains and make it impossible to rebuild the same bytes elsewhere.
 #
 # Every pruned directory is PRINTED, so what was left out is visible at build time rather
 # than implicit in a name.
@@ -47,7 +45,7 @@ SKIP_DIRS = frozenset({
     ".git",
     ".reverify",     # scratch from `make reverify`
     "smoke",         # raw/smoke and results/smoke: never production evidence
-    "raw_full",      # a preserved holdout's displaced raw tree, kept locally only
+    "raw_full",      # an earlier run's raw tree, kept locally only
     "dist",          # release archives; an archive must not contain its predecessors
 })
 

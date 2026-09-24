@@ -1,8 +1,9 @@
-# Experiment 7 - pre-registered confirmatory test of the log-domain bi-Kappa loader.
+# Experiment 4 - finite-precision losses of the direct (LEGACY) and the stabilized
+# (CANDIDATE) radius calculation of the bi-Kappa loader.
 #
-# The same source is built once per standard library, because one of the claims under test
-# is that it no longer matters which one ran it: within version 2.0.0 the stream is a
-# function of the engine alone, so the two builds must agree byte for byte.
+# The same source is built once per standard library.  Within the 2.x line the stabilized
+# loader's random stream is a function of the engine alone, so the two builds must agree
+# byte for byte.
 #
 #   make cxx11-check    the sampling sources compile as strict C++11 under both compilers
 #   make selftest       accounting identity, replica-vs-class equality, error paths, digests
@@ -14,10 +15,9 @@
 #   make p3             conditioning: per-attempt intended state vs success
 #   make p4             complete anisotropic, rotated, capped 3-D loader, C0-C6
 #   make p5             portability: CANDIDATE, full ladder, one tagged environment
-#   make p6             performance: timed blocks, B0-B4, seeds 7006-7010
-#   make  why two builds of the candidate can still differ (see below)
-#   make oracle         adjudicate every audit stream at 100 decimal digits
-#   make analyze        results/*.csv, results/analysis_report.md, the gate table
+#   make p6             performance: timed blocks, B0-B4, seeds 9006-9010
+#   make oracle         recompute every recorded attempt at 100 decimal digits
+#   make analyze        results/*.csv, results/analysis_report.md, the acceptance-criteria table
 #   make figures        figures/*.{pdf,svg,png}
 #   make checksums      write both checksum manifests
 #   make verify         re-check every checksum manifest
@@ -27,14 +27,13 @@
 #   make preflight && make selftest && make p1 p2 p3 p4 p5 p6 && make oracle && \
 #   make analyze figures && make checksums && make verify
 #
-# Every simulation target depends on `preflight`.  In Experiment 6 preflight was a
-# prerequisite of nothing, so a dirty tree ran to completion and only the manifest said so.
+# Every simulation target depends on `preflight`, so a run with uncommitted changes to a
+# source file stops before it writes any data.
 #
 # Every simulation target accepts SMOKE=1, which shrinks the run and diverts *everything* it
 # writes -- data, manifest and all -- under raw/smoke/.  SMOKE is forwarded to analyze and
-# figures.  In Experiment 6 smoke output leaked into `make oracle`, `make checksums` and the
-# production manifest; here nothing outside raw/smoke/ is touched by a smoke run, and the
-# production targets never look inside it.
+# figures.  A smoke run touches nothing outside raw/smoke/ and results/smoke/, and the
+# production targets never look inside either.
 
 CXX_LIBCXX    := clang++
 CXX_LIBSTDCXX := $(shell command -v g++-15 || command -v g++-14 || command -v g++-13)
@@ -55,13 +54,10 @@ CXXFLAGS      := $(BASE_FLAGS) -DEXP7_CXXFLAGS='"$(BASE_FLAGS)"'
 # a contracting build differs from a non-contracting one by an ulp or two on a fraction of
 # the components.  Pinning it keeps the stream a property of the source text.
 #
-# An earlier revision of this experiment carried a third, diagnostic build to locate a
-# cross-compiler difference: clang fused the `sin(phi)`/`cos(phi)` pair in the released
-# sampler into Darwin's `__sincos_stret`, whose sine differs from the standalone `sin` by an
-# ulp on about one argument in a thousand, while GCC called the two separately.  The released
-# header now draws its direction by a rejection method that uses no trigonometry at all, so
-# the difference no longer exists and the diagnostic has been removed rather than kept as a
-# permanently passing control.
+# The released header draws its direction by a rejection method that uses no trigonometry.
+# A `sin(phi)`/`cos(phi)` pair would make the two builds differ: clang fuses it into
+# Darwin's `__sincos_stret`, whose sine differs from the standalone `sin` by an ulp on about
+# one argument in a thousand, while GCC calls the two functions separately.
 
 PY            := uv run --project ../../python python
 
@@ -134,7 +130,7 @@ cxx11-check: $(GENERATED)
 	@echo "  strict C++11: ok"
 
 # ---------------------------------------------------------------------------
-# Gates that run before any data exists
+# Checks that run before any data exists
 # ---------------------------------------------------------------------------
 selftest: $(TARGETS) cxx11-check
 	@for b in $(TARGETS); do echo "== $$b"; ./$$b selftest || exit 1; done
@@ -178,8 +174,7 @@ define RUN_PHASE
 	@# Drop this phase's manifest rows before rewriting them.  The probe appends, so a
 	@# re-run would otherwise keep the old rows beside the new ones and every total taken
 	@# over the manifest would double-count.  Production rows are written once, from a
-	@# clean tree; a smoke phase is re-run constantly and accumulated 111 rows into 327
-	@# doing it.  `phase` is column 3.
+	@# clean tree; a smoke phase is usually re-run many times.  `phase` is column 3.
 	@if [ -f $(RAWROOT)/manifest.csv ]; then \
 	  head -1 $(RAWROOT)/manifest.csv > $(RAWROOT)/manifest.keep; \
 	  awk -F, 'NR>1 && $$3 != "$(1)"' $(RAWROOT)/manifest.csv >> $(RAWROOT)/manifest.keep; \
@@ -212,12 +207,11 @@ p6: $(TARGETS) preflight
 	$(call RUN_PHASE,p6,0,$(SEEDS_PROD))
 
 # ---------------------------------------------------------------------------
-# Adjudication
+# Recomputation at 100 digits
 #
-# Every audit stream the probe produced, re-derived at 100 decimal digits by a program that
-# shares no arithmetic with it.  A single disagreement fails the target -- Experiment 6's
-# equivalent ended in `|| echo`, so a disagreement printed a line and the target still
-# succeeded.  Smoke streams are adjudicated only under SMOKE=1 and never alongside
+# Every attempt the probe recorded is recomputed at 100 decimal digits by a program that
+# shares no arithmetic with the probe.  A single disagreement or conversion failure makes
+# the target fail.  Smoke streams are recomputed only under SMOKE=1 and never alongside
 # production ones.
 # ---------------------------------------------------------------------------
 # ORACLE_JOBS shards each audit stream across processes.  Sharding is a scheduling device
@@ -261,8 +255,8 @@ oracle: exp7_oracle.exe
 	exit $$rc
 
 # ---------------------------------------------------------------------------
-# Analysis.  Written by a separate agent against results/schema.md; the targets below only
-# invoke it, and forward SMOKE so that a smoke run can be taken end to end.
+# Analysis.  analyze.py reads the raw records in the formats results/schema.md defines; the
+# targets below invoke it and forward SMOKE so that a smoke run can be taken end to end.
 # ---------------------------------------------------------------------------
 analyze:
 	$(PY) analyze.py $(SMOKEARG)
@@ -278,11 +272,9 @@ checksums:
 	   \( -name '*.bin' -o -name '*.jsonl' -o -name 'manifest.csv' \) -print | sort | \
 	   xargs shasum -a 256 > raw_checksums.sha256 && \
 	   echo "  wrote raw/raw_checksums.sha256 ($$(wc -l < raw_checksums.sha256) files)"
-	@# `results/smoke/` is pruned for the same reason `raw/smoke/` is: a smoke run is
-	@# re-run constantly and its output is not production evidence.  Without the prune the
-	@# second manifest swept it in, so `make verify` would later fail on a smoke re-run --
-	@# the production targets are supposed never to look inside a smoke tree, and this one
-	@# did.
+	@# `results/smoke/` is pruned for the same reason as `raw/smoke/`: smoke output is not
+	@# part of the production record, and hashing it would make `make verify` fail after
+	@# every smoke re-run.
 	@find config results figures src PROTOCOL.md GNUmakefile README.md preflight.py \
 	   raw/environment.json raw/manifest.csv raw/raw_checksums.sha256 \
 	   \( -path './results/smoke' -o -path 'results/smoke' \) -prune -o \
@@ -302,24 +294,19 @@ verify:
 	else echo "  checksums.sha256 missing"; fail=1; fi; \
 	exit $$fail
 
-# Gate G6 requires that every derived artifact regenerate byte for byte from the same raw
-# data.  This target does exactly that: it re-runs the analysis and the figures into a
-# scratch tree and diffs.  It never touches raw/.
-# What is compared, and what merely reported.  `results/` -- the CSVs, the JSON and the
-# report -- must regenerate byte for byte: they are the scientific tables, they are
-# naturally deterministic, and a difference there is a real finding.  `figure_manifest.json`
-# must match exactly too, because it carries each figure's data provenance.  The RENDERED
-# bytes of the PDF, SVG and PNG are diffed and reported but do NOT fail the target: no
-# claim in the paper rests on a rendered byte, and gating on one would make the release
-# hostage to a matplotlib or font-stack upgrade.  They do reproduce here, measured; that is
-# worth knowing and not worth requiring.
+# reverify checks that every derived artifact regenerates byte for byte from the same raw
+# data.  It copies results/ and figures/ to .reverify/, re-runs the analysis and the
+# figures in place, and diffs the new files against the copies.  It never touches raw/.
 #
-# `figures/` is compared at all -- which it was not before -- for this reason:  The target
-# regenerates both and used to diff only the first, so a figure that did not reproduce --
-# an embedded timestamp, a hash-ordered element id, a font path -- would have gone
-# unnoticed by the one check whose whole job is to notice, while silently invalidating the
-# checksum manifest that hashes it.  G6 asks that EVERY derived artifact regenerate byte
-# for byte; both directories are derived artifacts, so both are diffed.
+# `results/` -- the CSVs, the JSON and the report -- must regenerate byte for byte: they are
+# the scientific tables, they are deterministic, and a difference there is a real finding.
+# `figure_manifest.json` must match exactly too, because it records each figure's source
+# data.  The rendered bytes of the PDF, SVG and PNG files are diffed and reported but do
+# not fail the target: no result rests on a rendered byte, and requiring one would tie the
+# release to a particular matplotlib and font stack.  On the machine that produced the
+# committed files they also reproduce byte for byte.  Comparing them at all means that a
+# figure that stops reproducing -- an embedded timestamp, a hash-ordered element id, a font
+# path -- is reported, rather than silently invalidating checksums.sha256, which hashes it.
 reverify:
 	@rm -rf .reverify && mkdir -p .reverify
 	@cp -R results .reverify/results_before

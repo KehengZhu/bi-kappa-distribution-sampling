@@ -1,17 +1,16 @@
-"""Experiment 6 preflight: record the environment, and refuse a dirty production run.
+"""Preflight: record the environment, and refuse a production run from a dirty tree.
 
 Run with:  uv run --project ../../python python preflight.py [--allow-dirty]
 
-Experiment 4's saved result records a dirty tree whose runtime state cannot be
-reconstructed from the commit it names, which is why its numbers are a historical baseline
-rather than reproducible evidence.  This script exists so that Experiment 6 cannot repeat
-that.  It writes ``raw/environment.json`` and exits non-zero unless every file whose
-content determines a result is tracked in git and identical to its committed object.
+A result is reproducible only if the sources that produced it can be recovered from the
+commit it names.  This script writes ``raw/environment.json`` and exits non-zero unless
+every file whose content determines a result is tracked in git and identical to its
+committed object.
 
 "Dirty" is deliberately narrower than ``git status``: unrelated edits elsewhere in the
-working tree do not affect what this experiment computes, and the plan requires them to be
-preserved rather than stashed.  What must be clean is the dependency set below.  The
-overall repository state is recorded either way, honestly, in ``git.repo_dirty``.
+working tree do not affect what this experiment computes, and they are left in place rather
+than stashed.  What must be clean is the dependency set below.  The overall repository
+state is recorded either way, in ``git.repo_dirty``.
 """
 
 from __future__ import annotations
@@ -246,11 +245,9 @@ def main() -> int:
             "checksums": "make checksums",
             "verify": "make verify",
         },
-        # Read from the frozen protocol rather than mirrored here.  Experiment 6 kept the
-        # seed block in six places -- the probe, preflight, a config file, the analysis
-        # prose, the README and the plan -- and its performance phase then derived five more
-        # by arithmetic, so 4006-4010 appear in its manifest and in no declaration at all.
-        # One source, hashed, is the fix.
+        # Read from the frozen protocol rather than mirrored here, so that the seed blocks
+        # and sizes have one declaration, which is hashed.  A copy kept here could drift
+        # from the one the probe and the analysis use.
         "frozen_sizes": {
             "n_scalar": PROTOCOL["matrix"]["n_scalar"],
             "n_mechanism": PROTOCOL["matrix"]["n_mechanism"],

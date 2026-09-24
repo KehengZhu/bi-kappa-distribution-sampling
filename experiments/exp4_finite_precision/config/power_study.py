@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Pre-registration power study for the frozen families of ``PROTOCOL.md`` §5.
+"""Power study for the frozen families of ``PROTOCOL.md`` §5.
 
-Run and committed **before any Experiment 7 data existed**, from simulated draws only.  It
-changes no decision rule; it states what the frozen rules can and cannot detect, which is a
-thing a reader is entitled to know before being shown a result that says "no defect found".
+Computed from simulated draws only, before the production data existed.  It changes no
+decision rule; it states what the frozen rules can and cannot detect.
 
 Two questions:
 
@@ -14,9 +13,8 @@ Two questions:
    is used to certify *absent* in the candidate, so its power against it at the frozen sample
    size is what decides whether "the candidate passes" means anything.
 
-The answer, in one line: the bulk-weighted statistics are blind below a 1e-3 loss fraction,
-and the F4 exceedance tests are not.  Experiment 6 had no F4, which is why its radial battery
-detected conditioning only above roughly 1e-3 -- and the cells it certified sat below that.
+The bulk-weighted statistics have no power below a loss fraction of 1e-3; the F4
+exceedance tests keep it down to 1e-4.
 """
 from __future__ import annotations
 

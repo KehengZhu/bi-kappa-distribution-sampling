@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Coverage bookkeeping for Experiment 7's G4 evidence.  Not a statistical test.
+"""Coverage bookkeeping for the portability evidence of the finite-precision experiment.
 
-PROTOCOL.md 5.3 and 6 say the same thing twice: an environment that did not run leaves
-G4 *open*, is never recorded as a pass, and is never replaced by a zero.  A green CI
-check is read as a pass, so this script exists to make a run that is missing an
-environment fail rather than succeed quietly.
+Not a statistical test.  PROTOCOL.md 5.3 and 6 require that an environment that did not
+run leaves the portability criterion (``gates.G4`` in ``config/protocol.json``) *open*:
+it is never recorded as a pass and never replaced by a zero.  A green CI check is read
+as a pass, so this script makes a run that is missing an environment fail rather than
+succeed quietly.
 
 It answers only questions of presence and shape -- is the counter file there, is it
 non-empty, does its environment record say the run was native, were the frozen sizes and
@@ -151,7 +152,8 @@ def check_pair(art_dir, tag, frozen, required=True):
     if d_key is None:
         # Not fatal here.  PROTOCOL.md 5.3 predicts bitwise equality of the counters *and*
         # of the returned vectors; without a per-row digest the cross-stdlib test can only
-        # reach the counters, and whether that is enough to close G4 is analyze.py's call.
+        # reach the counters, and whether that is enough for the portability criterion is
+        # decided by analyze.py.
         out["sample_digest_present"] = False
     else:
         out["sample_digest_present"] = True
@@ -207,8 +209,8 @@ def main():
     # Which comparisons the evidence on hand could support.  Counted per usable pair
     # rather than per complete environment: a toolchain that ran natively and cleanly is
     # available to analyze.py whether or not a sibling toolchain in the same environment
-    # failed.  This is a statement about the evidence, not about the gate -- gate_state
-    # below still turns on completeness.
+    # failed.  This is a statement about the evidence, not about the criterion --
+    # gate_state below still turns on completeness.
     archs = {}
     for e in results:
         for p in e["pairs"]:

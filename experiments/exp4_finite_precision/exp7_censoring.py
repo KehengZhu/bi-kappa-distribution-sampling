@@ -2,26 +2,23 @@
 
 Why this module exists
 ----------------------
-Amendment 1.3.0 gave the F5 loader battery an upper-tail statistic, because a battery
-certifying a heavy-tailed law had nothing in it that looked at the tail.  Both of its
-members were stated against the *untruncated* law:
+Family F5, the loader battery, has two upper-tail members.  Stated against the
+*untruncated* law they would be
 
   * the COUNT above ``z0 = -log q0`` against ``Binomial(n_attempted, q0)``, and
   * a Kolmogorov-Smirnov test of the excesses ``Z - z0`` against ``Exp(1)``.
 
-Neither null is the one the data obey, and the first holdout failed a correct candidate on
-both.  The reason is the same in each case, and it is not a defect of the statistics: near
-``kappa = 1/2`` the bi-Kappa law puts non-zero probability outside every finite
-floating-point range, so the loader cannot return the far tail.  It is *right* not to.
+Neither null is the one the returned draws obey.  Near ``kappa = 1/2`` the bi-Kappa law puts
+non-zero probability outside every finite floating-point range, so the loader cannot return
+the far tail, and it is *right* not to.
 
-The excess member was the worse of the two.  Honest overflow removes exactly the largest
-draws, so the surviving excesses are right-censored, and a Kolmogorov-Smirnov test against an
+The excess member is affected most.  Unavoidable overflow removes exactly the largest draws,
+so the surviving excesses are right-censored, and a Kolmogorov-Smirnov test against an
 uncensored ``Exp(1)`` rejects with probability approaching one.  Measured over 2000
-replicates of a perfectly correct loader at the frozen production size, the frozen member's
-rejection rate was **1.000** on cases C3 and C4 against a nominal 0.010.  The count member
-had the same problem in a milder form, and amendment 1.3.0 had already patched around it
-with a side condition -- ``count_member_requires_q0_above_honest_floor`` -- that declared the
-member "not applicable" wherever it would have misfired.
+replicates of a perfectly correct loader at the production sample size, that form of the
+member rejected with rate **1.000** on cases C3 and C4 against a nominal 0.010.  The count
+member has the same problem in a milder form: computed from the returned draws, it cannot
+separate the overflowed attempts above ``z0`` from those merely above the overflow threshold.
 
 The censoring is also **direction-dependent**, which is what makes a single cutoff
 insufficient.  A draw is returned iff every component is representable,
@@ -34,16 +31,15 @@ returnable is a property of its own direction, not of the cell.  A cutoff inferr
 cell's total overflow rate -- ``z_f = -log f`` -- is the average of that boundary, not the
 boundary.
 
-What replaces them
-------------------
+The two members
+---------------
 **Member 1, the count.**  The probe records ``log_r_ref``, the radius the attempt carried,
 for *every* attempt, the overflowed ones included (``src/exp7_probe.cpp``, pushed
 unconditionally; an uncapped cell runs its core mapping once per attempt, so its record count
 equals its attempt count).  The intended ``Z`` of every attempt is therefore already on disk,
 uncensored.  Against that sample the count above ``z0`` is ``Binomial(n_attempted, q0)``
-**exactly**, at every threshold and in every uncapped cell.  The frozen null is recovered as
-it was written, and the side condition it needed is no longer needed: the observability
-problem is solved by data that was always there rather than by declining to test.
+**exactly**, at every threshold and in every uncapped cell, with no applicability
+condition on ``q0``.
 
 **Member 2, the excess.**  The count member reads the law the loader *intended*.  The
 fidelity claim is about the population it *returned*, so the excess member stays on the
@@ -60,18 +56,17 @@ Its probability integral transform
 
 is i.i.d. ``Uniform(0,1)`` under the null, and the member is a Kolmogorov-Smirnov test of it.
 
-This is not a different test.  Where no attempt can overflow, ``C_i`` is effectively infinite,
-``U_i`` reduces to ``1 - exp(-(Z_i - z0))``, and because a Kolmogorov-Smirnov statistic is
-invariant under a common monotone transform of the data and the null CDF, the number it
-returns is *identical* to the frozen member's.  Measured on case C0, the two agree to
-1.1e-16.  The replacement equals the frozen test wherever the frozen test was valid, and is
-defined where it was not.  It is also the construction the protocol already uses for the
-capped cells, whose accepted radius is truncated at a direction-dependent bound in exactly
-the same way (``loader_tests``' cap-law member).
+Where no attempt can overflow, ``C_i`` is effectively infinite, ``U_i`` reduces to
+``1 - exp(-(Z_i - z0))``, and because a Kolmogorov-Smirnov statistic is invariant under a
+common monotone transform of the data and the null CDF, the number it returns is
+*identical* to that of the uncensored test.  Measured on case C0, the two agree to 1.1e-16.
+The construction is the one the protocol uses for the capped cells, whose accepted radius
+is truncated at a direction-dependent bound in exactly the same way (``loader_tests``'
+cap-law member).
 
 Neither member needs quadrature, a grid, or any numerical integration: both are per-draw
-arithmetic in the frozen ``Z`` transform, whose evaluator gate G0 validates against an
-arbitrary-precision incomplete beta.
+arithmetic in the frozen ``Z`` transform, whose evaluator the primary-source check of the
+protocol validates against an arbitrary-precision incomplete beta.
 """
 
 from __future__ import annotations

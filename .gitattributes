@@ -4,3 +4,24 @@
 .github/workflows/portability.yml  export-ignore
 tools/                             export-ignore
 .gitattributes                     export-ignore
+
+
+# The finite-precision study: the release archive keeps what reproduces Fig. 2 of the paper
+# from the committed results; the protocol, the analysis and the run records stay in the
+# repository only.  Directories are excluded whole; results/ and figures/ file by file.
+experiments/exp4_finite_precision/config/                         export-ignore
+experiments/exp4_finite_precision/src/                            export-ignore
+experiments/exp4_finite_precision/raw/                            export-ignore
+experiments/exp4_finite_precision/PROTOCOL.md                     export-ignore
+experiments/exp4_finite_precision/checksums.sha256                export-ignore
+experiments/exp4_finite_precision/g6_evidence.json                export-ignore
+experiments/exp4_finite_precision/preflight.py                    export-ignore
+experiments/exp4_finite_precision/analyze.py                      export-ignore
+experiments/exp4_finite_precision/exp7_*.py                       export-ignore
+experiments/exp4_finite_precision/results/*                       export-ignore
+experiments/exp4_finite_precision/results/failure_envelope.csv    -export-ignore
+experiments/exp4_finite_precision/results/source_data_README.md   -export-ignore
+experiments/exp4_finite_precision/figures/*                       export-ignore
+experiments/exp4_finite_precision/figures/fp1_failure_envelope.*  -export-ignore
+experiments/exp4_finite_precision/figures/captions.md             -export-ignore
+experiments/exp4_finite_precision/figures/figure_manifest.json    -export-ignore

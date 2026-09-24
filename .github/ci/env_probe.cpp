@@ -1,6 +1,7 @@
-// Experiment 7, P5 portability - the floating-point environment the run executes in.
+// Finite-precision experiment, phase P5 (portability) - the floating-point environment the
+// run executes in.
 //
-// PROTOCOL.md 5.3 decides G4 on two claims: bitwise equality of the candidate's stream
+// PROTOCOL.md 5.3 tests two claims: bitwise equality of the candidate's stream
 // across standard libraries on one architecture, and equality of rates across
 // architectures.  Neither claim can be read without knowing the arithmetic the numbers
 // were produced by, so every environment records it rather than assuming it.  What is
@@ -105,7 +106,7 @@ const char *archId()
 
 /// A real x rounds to infinity in type T exactly when |x| >= (2 - 2^-p) 2^emax, which is
 /// half an ulp above the largest finite value.  That threshold, not max(), is what decides
-/// honest overflow, so it is the number the environment record has to carry.
+/// unavoidable overflow, so it is the number the environment record has to carry.
 template <typename T> double logOverflowThreshold()
 {
     const int p= std::numeric_limits<T>::digits;
