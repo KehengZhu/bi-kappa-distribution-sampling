@@ -14,7 +14,8 @@
  *
  * The sampled value is w = |V|^2, so the speed is |V| = sqrt(w) and the
  * direction is isotropic in 3D. (For a distribution originally posed in energy,
- * w = |V|^2 = 2E/m, so the mass drops out of this generator entirely.)
+ * w = |V|^2 = 2E/m, so the mass drops out of this generator entirely.)  If
+ * speed_sq_min == speed_sq_max, every sample has the single speed sqrt(speed_sq_min).
  *
  * @code{.cpp}
  * auto gW = [](double w){ return std::exp(-0.5 * w); };  // any positive g(w), w = |v|^2
@@ -61,22 +62,24 @@ template <typename RealType= double> class general_velocity_generator
      *                and non-negative wherever it is evaluated, and positive
      *                somewhere in range.
      * @param speed_sq_min  Lower end of the sampled w range, >= 0.
-     * @param speed_sq_max  Upper end, > @p speed_sq_min.  This is a **hard
+     * @param speed_sq_max  Upper end, >= @p speed_sq_min.  This is a **hard
      *                support**: speeds beyond sqrt(speed_sq_max) are never
-     *                produced, so choose it to cover the tail you care about.
+     *                produced, so choose it to cover the tail you care about.  If it
+     *                equals @p speed_sq_min, every sample has the speed
+     *                sqrt(speed_sq_min) and @p speed_sq_pdf is not evaluated.
      * @param probe_points  Grid points used once to estimate max g(w), which
      *                becomes the rejection envelope (plus a 5% margin).  If g has
      *                a peak narrow enough to fall between probes, the envelope is
      *                too low and the sampled distribution is **silently wrong**;
-     *                raise this until pdfUpperBound() stops increasing.  Must be > 1.
+     *                raise this until pdfUpperBound() stops increasing.  Must be >= 64.
      * @param max_reject_tries  Candidate draws one sample may consume before
      *                operator() throws.  Must be > 0.  Exhausting it usually means
      *                g is tiny over most of [min,max]; narrowing the range fixes it
      *                better than raising this.
      *
      * @throws std::invalid_argument on a null callable, a negative @p speed_sq_min,
-     *         @p speed_sq_min >= @p speed_sq_max, a non-positive knob, or a g that
-     *         is nowhere positive in range.
+     *         @p speed_sq_max < @p speed_sq_min, @p probe_points < 64, a
+     *         non-positive @p max_reject_tries, or a g that is nowhere positive in range.
      *
      * @see \ref params_rejection for how the envelope works, \ref choosing to
      *      compare samplers.
@@ -94,13 +97,16 @@ template <typename RealType= double> class general_velocity_generator
         {
             throw std::invalid_argument("speed_sq_min must be non-negative (w = |v|^2 >= 0)");
         }
-        if (!(speed_sq_min < speed_sq_max))
+        if (!(speed_sq_min <= speed_sq_max))
         {
-            throw std::invalid_argument("speed_sq_min must be strictly less than speed_sq_max");
+            throw std::invalid_argument("speed_sq_max must not be less than speed_sq_min");
         }
-        if (probe_points <= 1)
+        if (probe_points < kMinProbePoints)
         {
-            throw std::invalid_argument("probe_points must be positive");
+            // An envelope estimated from a handful of probes can miss the peak of g and
+            // bias the samples silently.  The floor also rejects a pre-2.0 call
+            // define(f, E_min, E_max, mass), whose mass would land here.
+            throw std::invalid_argument("probe_points must be at least 64");
         }
         if (max_reject_tries <= 0)
         {
@@ -123,21 +129,31 @@ template <typename RealType= double> class general_velocity_generator
         m_distPhi.param(typename std::uniform_real_distribution<RealType>::param_type(
             RealType(0.0), RealType(2.0) * piValue()));
 
-        m_pdfUpperBound= estimatePdfUpperBound(probe_points);
-        if (m_pdfUpperBound <= RealType(0.0))
+        // A single-valued range needs no envelope: every sample has w = speed_sq_min.
+        if (speed_sq_min < speed_sq_max)
         {
-            throw std::invalid_argument(
-                "speed_sq_pdf must be positive somewhere within [speed_sq_min, speed_sq_max]");
-        }
+            m_pdfUpperBound= estimatePdfUpperBound(probe_points);
+            if (m_pdfUpperBound <= RealType(0.0))
+            {
+                throw std::invalid_argument(
+                    "speed_sq_pdf must be positive somewhere within [speed_sq_min, speed_sq_max]");
+            }
 
-        m_distAccept.param(typename std::uniform_real_distribution<RealType>::param_type(
-            RealType(0.0), m_pdfUpperBound));
+            m_distAccept.param(typename std::uniform_real_distribution<RealType>::param_type(
+                RealType(0.0), m_pdfUpperBound));
+        }
 
         reset();
         m_isDefined= true;
     }
 
-    void seed(int s) { applySeed(m_gen, s); }
+    /// Reseed the internal engine and discard any variate cached from before, so that
+    /// seed(s) followed by n draws gives the same values however many draws came first.
+    void seed(int s)
+    {
+        applySeed(m_gen, s);
+        reset();
+    }
 
     void reset()
     {
@@ -220,6 +236,10 @@ template <typename RealType= double> class general_velocity_generator
 
     template <typename GeneratorType> RealType sampleSpeedSq(GeneratorType &gen)
     {
+        if (!(m_speedSqMin < m_speedSqMax))
+        {
+            return m_speedSqMin;
+        }
         int tries= 0;
         for (tries= 0; tries < m_maxRejectTries; ++tries)
         {
@@ -245,6 +265,8 @@ template <typename RealType= double> class general_velocity_generator
     }
 
     static RealType piValue() { return RealType(3.14159265358979323846264338327950288L); }
+
+    static const int kMinProbePoints= 64;
 
     speed_sq_pdf_function m_speedSqPdf;
     RealType m_speedSqMin;

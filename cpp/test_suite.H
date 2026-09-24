@@ -723,6 +723,44 @@ static int test_define_general_velocity()
                   << std::endl;
     }
 
+    // D5: speed_sq_min == speed_sq_max gives the single speed sqrt(speed_sq_min)
+    {
+        general_velocity_generator<TestReal> vgen;
+        vgen.define(speedSqPdf, TestReal(4.0), TestReal(4.0));
+        vgen.seed(5005);
+        bool ok= true;
+        for (int i= 0; i < 1000; ++i)
+        {
+            const auto v= vgen();
+            const TestReal speed= std::sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+            if (std::abs(speed - TestReal(2.0)) > TestReal(1e-5))
+                ok= false;
+        }
+        all_ok= all_ok && ok;
+        std::cout << "  D5 speed_sq_min == speed_sq_max gives |v| = sqrt(speed_sq_min): "
+                  << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    // D6: probe_points below 64 throws, and so does a pre-2.0 call
+    // define(f, E_min, E_max, mass) whose mass lands in probe_points
+    {
+        int threw= 0;
+        try { general_velocity_generator<TestReal> vgen;
+            vgen.define(speedSqPdf, TestReal(0.0), TestReal(20.0), 63); }
+        catch (const std::invalid_argument &) { ++threw; } catch (...) {}
+        try { general_velocity_generator<TestReal> vgen;
+            vgen.define(speedSqPdf, TestReal(0.0), TestReal(20.0), TestReal(4.0)); }
+        catch (const std::invalid_argument &) { ++threw; } catch (...) {}
+        bool accepted= true;
+        try { general_velocity_generator<TestReal> vgen;
+            vgen.define(speedSqPdf, TestReal(0.0), TestReal(20.0), 64); }
+        catch (...) { accepted= false; }
+        const bool ok= (threw == 2) && accepted;
+        all_ok= all_ok && ok;
+        std::cout << "  D6 probe_points < 64 throws, 64 is accepted: " << (ok ? "PASS" : "FAIL")
+                  << std::endl;
+    }
+
     std::cout << "test_define_general_velocity: " << (all_ok ? "PASS" : "FAIL") << std::endl;
     return all_ok ? 0 : 1;
 }
@@ -1420,7 +1458,7 @@ static int test_define_field_aligned()
     // E1: invalid arguments throw std::invalid_argument.
     {
         int threw= 0;
-        int expected= 5;
+        int expected= 7;
         // zero B
         try { field_aligned_velocity_generator<TestReal> f;
             f.define(speedSqPdf, TestReal(0.0), TestReal(1.0), TestReal(1.0),
@@ -1431,10 +1469,21 @@ static int test_define_field_aligned()
             f.define(speedSqPdf, TestReal(0.0), TestReal(1.0), TestReal(0.0),
                      F3({TestReal(0.0), TestReal(0.0), TestReal(1.0)}), +1); }
         catch (const std::invalid_argument &) { ++threw; } catch (...) {}
-        // speed_sq_min >= speed_sq_max
+        // speed_sq_max < speed_sq_min
         try { field_aligned_velocity_generator<TestReal> f;
-            f.define(speedSqPdf, TestReal(1.0), TestReal(1.0), TestReal(1.0),
+            f.define(speedSqPdf, TestReal(2.0), TestReal(1.0), TestReal(1.0),
                      F3({TestReal(0.0), TestReal(0.0), TestReal(1.0)}), +1); }
+        catch (const std::invalid_argument &) { ++threw; } catch (...) {}
+        // probe_points < 64
+        try { field_aligned_velocity_generator<TestReal> f;
+            f.define(speedSqPdf, TestReal(0.0), TestReal(1.0), TestReal(1.0),
+                     F3({TestReal(0.0), TestReal(0.0), TestReal(1.0)}), +1, 63); }
+        catch (const std::invalid_argument &) { ++threw; } catch (...) {}
+        // non-positive perpendicular cap
+        try { field_aligned_velocity_generator<TestReal> f;
+            f.define(speedSqPdf, TestReal(0.0), TestReal(1.0), TestReal(1.0),
+                     F3({TestReal(0.0), TestReal(0.0), TestReal(1.0)}), +1, 1024, 100000,
+                     TestReal(0.0)); }
         catch (const std::invalid_argument &) { ++threw; } catch (...) {}
         // speed_sq_min < 0
         try { field_aligned_velocity_generator<TestReal> f;
@@ -1451,6 +1500,65 @@ static int test_define_field_aligned()
         all_ok= all_ok && ok;
         std::cout << "  E1 invalid args throw (" << threw << "/" << expected << "): "
                   << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    // E2: speed_sq_min == speed_sq_max gives the single parallel speed
+    {
+        const F3 B= {TestReal(1.0), TestReal(2.0), TestReal(2.0)};   // |B| = 3
+        field_aligned_velocity_generator<TestReal> f;
+        f.define(speedSqPdf, TestReal(9.0), TestReal(9.0), TestReal(1.0), B, -1);
+        f.seed(5006);
+        bool ok= true;
+        for (int i= 0; i < 1000; ++i)
+        {
+            const auto v= f();
+            const TestReal vpar= (v[0] * B[0] + v[1] * B[1] + v[2] * B[2]) / TestReal(3.0);
+            if (std::abs(vpar + TestReal(3.0)) > TestReal(1e-4))
+                ok= false;
+        }
+        all_ok= all_ok && ok;
+        std::cout << "  E2 speed_sq_min == speed_sq_max gives v_par = sign*sqrt(speed_sq_min): "
+                  << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    // E3: the perpendicular cap is enforced, defaults to 20, and no_cap() removes it
+    {
+        const F3 zhat= {TestReal(0.0), TestReal(0.0), TestReal(1.0)};
+        const TestReal theta_perp= TestReal(2.0), cap= TestReal(0.5);
+        field_aligned_velocity_generator<TestReal> f;
+        f.define(speedSqPdf, TestReal(0.0), TestReal(20.0), theta_perp, zhat, +1, 1024,
+                 100000, cap);
+        f.seed(5007);
+        // The cap acts on the field-aligned components, so project onto the class's
+        // own perpendicular basis, obtained by rotating the local unit vectors.
+        const F3 e1= f.rotate_from_fieldAligned_frame(F3({TestReal(1.0), TestReal(0.0),
+                                                          TestReal(0.0)}), zhat);
+        const F3 e2= f.rotate_from_fieldAligned_frame(F3({TestReal(0.0), TestReal(1.0),
+                                                          TestReal(0.0)}), zhat);
+        const TestReal tol= TestReal(1e-5);
+        int outside= 0;
+        for (int i= 0; i < 20000; ++i)
+        {
+            const auto v= f();
+            const TestReal p1= v[0] * e1[0] + v[1] * e1[1] + v[2] * e1[2];
+            const TestReal p2= v[0] * e2[0] + v[1] * e2[1] + v[2] * e2[2];
+            if (std::abs(p1) > cap * theta_perp + tol || std::abs(p2) > cap * theta_perp + tol)
+                ++outside;
+        }
+        field_aligned_velocity_generator<TestReal> dflt;
+        dflt.define(speedSqPdf, TestReal(0.0), TestReal(20.0), theta_perp, zhat, +1);
+        bool no_cap_ok= true;
+        try { field_aligned_velocity_generator<TestReal> u;
+            u.define(speedSqPdf, TestReal(0.0), TestReal(20.0), theta_perp, zhat, +1, 1024,
+                     100000, field_aligned_velocity_generator<TestReal>::no_cap());
+            (void)u(); }
+        catch (...) { no_cap_ok= false; }
+        const bool ok= (outside == 0) && dflt.max_normalized_velocity() == TestReal(20.0) &&
+                       no_cap_ok;
+        all_ok= all_ok && ok;
+        std::cout << "  E3 perpendicular cap enforced (" << outside
+                  << " outside), default 20, no_cap() accepted: " << (ok ? "PASS" : "FAIL")
+                  << std::endl;
     }
 
     std::cout << "test_define_field_aligned: " << (all_ok ? "PASS" : "FAIL") << std::endl;
@@ -1473,7 +1581,7 @@ static int test_define_field_aligned()
 // where the final radius R is comfortably representable.  Taking the roots first
 // halves the exponent before the division and keeps those draws.
 //
-// Measured effect (experiments/exp4_precision, 5e6 draws per configuration,
+// Measured effect (an earlier finite-precision study, 5e6 draws per configuration,
 // identical variates through both formations, libc++ and libstdc++ agreeing to
 // within seed noise):
 //
@@ -1514,8 +1622,8 @@ static int test_radius_formation()
     }
 
     // ---- A2: the released sampler is clean in double at kappa >= 0.55 ----
-    // Experiment 4 measures exactly zero non-finite draws over 5e6 draws per
-    // configuration for double at every kappa >= 0.55, on both standard
+    // The finite-precision study measured exactly zero non-finite draws over 5e6
+    // draws per configuration for double at every kappa >= 0.55, on both standard
     // libraries.  Any regression here means the formation was changed back.
     {
         const int n= 200000;
@@ -1695,12 +1803,9 @@ static int test_no_cap_semantics()
                   << " violations): " << (ok ? "PASS" : "FAIL") << std::endl;
     }
 
-    // ---- B5: the DEFAULT is uncapped, on every construction path ----------
-    // This is the regression guard for the default flip.  A silently capped
-    // default means a caller who omits the argument samples the conditional
-    // box law while believing they sampled bi-Kappa -- which at kappa <= 3/2
-    // is neither a good approximation nor even axisymmetric about B
-    // (Experiment 2), and which hides non-finite draws (Experiment 4).
+    // ---- B5: the DEFAULT cap is 20, on every construction path -----------
+    // Release 1.0.0 capped at 20 thermal speeds when the argument was omitted, and
+    // code written against it must keep sampling the same distribution.
     {
         bi_kappa_distribution<double> dflt;                          // default ctor
         bi_kappa_distribution<double> ctor(2.0, 1.0, 2.0);           // value ctor
@@ -1710,40 +1815,44 @@ static int test_no_cap_semantics()
         seeded.define(bi_kappa_distribution<double>::param_type(2.0, 1.0, 2.0), 7);
         bi_kappa_distribution<double>::param_type p;                 // param_type default
 
-        const bool ok= !dflt.param().capped() && !ctor.param().capped() &&
-                       !defined.param().capped() && !seeded.param().capped() &&
-                       !p.capped();
+        const double c= 20.0;
+        const bool ok= dflt.max_normalized_velocity() == c && ctor.max_normalized_velocity() == c &&
+                       defined.max_normalized_velocity() == c &&
+                       seeded.max_normalized_velocity() == c && p.max_normalized_velocity() == c;
         all_ok= all_ok && ok;
-        std::cout << "  B5 default is uncapped on every construction path: "
+        std::cout << "  B5 default cap is 20 on every construction path: "
                   << (ok ? "PASS" : "FAIL") << std::endl;
     }
 
-    // ---- B6: a defaulted sampler really produces untruncated draws --------
-    // B5 checks the reported flag; this checks the behaviour behind it.
+    // ---- B6: a defaulted sampler really applies the cap of 20 -------------
+    // B5 checks the reported value; this checks the behaviour behind it.  At
+    // kappa = 0.75 about 10% of the uncapped draws lie outside the box.
     {
         const int n= 200000;
-        bi_kappa_distribution<double> dist(1.0, 1.0, 1.0);   // cap omitted
+        bi_kappa_distribution<double> dist(0.75, 1.0, 1.0);  // cap omitted
         dist.seed(4002);
-        int beyond= 0;
+        int beyond5= 0, outside= 0;
         for (int i= 0; i < n; ++i)
         {
             const auto v= dist();
             if (std::abs(v[0]) > 5.0 || std::abs(v[1]) > 5.0 || std::abs(v[2]) > 5.0)
-                ++beyond;
+                ++beyond5;
+            if (std::abs(v[0]) > 20.0 || std::abs(v[1]) > 20.0 || std::abs(v[2]) > 20.0)
+                ++outside;
         }
-        const bool ok= (beyond > 0);
+        const bool ok= (beyond5 > 0) && (outside == 0);
         all_ok= all_ok && ok;
-        std::cout << "  B6 defaulted sampler draws exceed the box (" << beyond << "/" << n
-                  << " beyond 5): " << (ok ? "PASS" : "FAIL") << std::endl;
+        std::cout << "  B6 defaulted sampler stays inside the box of 20 (" << outside
+                  << " outside, " << beyond5 << "/" << n << " beyond 5): "
+                  << (ok ? "PASS" : "FAIL") << std::endl;
     }
 
-    // ---- B7: omitting the cap is identical to naming no_cap() -------------
+    // ---- B7: omitting the cap is identical to naming a cap of 20 ----------
     // Same seed, so the two must agree draw for draw, not just in law.
     {
         const int n= 20000;
         bi_kappa_distribution<double> omitted(1.5, 1.0, 2.0);
-        bi_kappa_distribution<double> named(1.5, 1.0, 2.0, {0.0, 0.0, 1.0},
-                                            bi_kappa_distribution<double>::no_cap());
+        bi_kappa_distribution<double> named(1.5, 1.0, 2.0, {0.0, 0.0, 1.0}, 20.0);
         omitted.seed(4004);
         named.seed(4004);
         int mismatches= 0;
@@ -1756,18 +1865,20 @@ static int test_no_cap_semantics()
         }
         const bool ok= (mismatches == 0);
         all_ok= all_ok && ok;
-        std::cout << "  B7 omitted cap == explicit no_cap() bitwise (" << mismatches
+        std::cout << "  B7 omitted cap == explicit cap 20 bitwise (" << mismatches
                   << " mismatches): " << (ok ? "PASS" : "FAIL") << std::endl;
     }
 
     // ---- B8: the two target laws are measurably different ------------------
     // Guards against a future "simplification" that quietly makes the cap a
     // no-op.  At kappa = 0.75, lambda = 3 the cap rejects ~55% of attempts
-    // (Experiment 2), so the capped sample's spread must be visibly smaller.
+    // (experiments/exp2_cap_characterization), so the capped sample's spread must be
+    // visibly smaller.
     {
         const int n= 50000;
         const double kappa= 0.75, lambda= 3.0;
-        bi_kappa_distribution<double> uncapped(kappa, 1.0, 1.0);
+        bi_kappa_distribution<double> uncapped(kappa, 1.0, 1.0, {0.0, 0.0, 1.0},
+                                               bi_kappa_distribution<double>::no_cap());
         bi_kappa_distribution<double> capped(kappa, 1.0, 1.0, {0.0, 0.0, 1.0}, lambda);
         uncapped.seed(4005);
         capped.seed(4005);
@@ -1841,7 +1952,7 @@ static int test_no_cap_semantics_bimaxwellian()
                   << std::endl;
     }
 
-    // ---- M3: the DEFAULT is uncapped, on every construction path ----------
+    // ---- M3: the DEFAULT cap is 20, on every construction path -----------
     {
         BM dflt;                              // default ctor
         BM ctor(1.0, 2.0);                    // value ctor
@@ -1851,16 +1962,18 @@ static int test_no_cap_semantics_bimaxwellian()
         seeded.define(BM::param_type(1.0, 2.0), 7);
         BM::param_type p;                     // param_type default
 
-        const bool ok= !dflt.param().capped() && !ctor.param().capped() &&
-                       !defined.param().capped() && !seeded.param().capped() &&
-                       !p.capped();
+        const double c= 20.0;
+        const bool ok= dflt.max_normalized_velocity() == c && ctor.max_normalized_velocity() == c &&
+                       defined.max_normalized_velocity() == c &&
+                       seeded.max_normalized_velocity() == c && p.max_normalized_velocity() == c;
         all_ok= all_ok && ok;
-        std::cout << "  M3 default is uncapped on every construction path: "
+        std::cout << "  M3 default cap is 20 on every construction path: "
                   << (ok ? "PASS" : "FAIL") << std::endl;
     }
 
-    // ---- M4: a defaulted sampler really produces untruncated draws --------
-    // M3 checks the reported flag; this checks the behaviour behind it.
+    // ---- M4: a defaulted sampler draws beyond one thermal speed -----------
+    // A cap of 20 removes a negligible part of a bi-Maxwellian, so the draws must
+    // still spread well beyond one thermal speed.
     {
         const int n= 20000;
         BM dist(1.0, 1.0);                    // cap omitted
@@ -1874,7 +1987,7 @@ static int test_no_cap_semantics_bimaxwellian()
         }
         const bool ok= (beyond > 0);
         all_ok= all_ok && ok;
-        std::cout << "  M4 defaulted sampler draws exceed the box (" << beyond << "/" << n
+        std::cout << "  M4 defaulted sampler draws beyond one thermal speed (" << beyond << "/" << n
                   << " beyond 1): " << (ok ? "PASS" : "FAIL") << std::endl;
     }
 
@@ -1900,11 +2013,11 @@ static int test_no_cap_semantics_bimaxwellian()
                   << " violations): " << (ok ? "PASS" : "FAIL") << std::endl;
     }
 
-    // ---- M6: omitting the cap is identical to naming no_cap() -------------
+    // ---- M6: omitting the cap is identical to naming a cap of 20 ----------
     {
         const int n= 20000;
         BM omitted(1.0, 2.0);
-        BM named(1.0, 2.0, {0.0, 0.0, 1.0}, BM::no_cap());
+        BM named(1.0, 2.0, {0.0, 0.0, 1.0}, 20.0);
         omitted.seed(4104);
         named.seed(4104);
         int mismatches= 0;
@@ -1917,8 +2030,48 @@ static int test_no_cap_semantics_bimaxwellian()
         }
         const bool ok= (mismatches == 0);
         all_ok= all_ok && ok;
-        std::cout << "  M6 omitted cap == explicit no_cap() bitwise (" << mismatches
+        std::cout << "  M6 omitted cap == explicit cap 20 bitwise (" << mismatches
                   << " mismatches): " << (ok ? "PASS" : "FAIL") << std::endl;
+    }
+
+    // ---- M6b: seed(s) after n draws reproduces the stream of a fresh seed(s) ----
+    // std::normal_distribution caches the second variate of each pair and a sample uses
+    // three, so before seed() also called reset() an odd number of earlier draws left a
+    // stale variate that shifted the reseeded stream.
+    {
+        bool ok= true;
+        BM fresh(1.0, 2.0);
+        fresh.seed(4105);
+        const auto ref0= fresh();
+        const auto ref1= fresh();
+        for (int n= 1; n <= 8; ++n)
+        {
+            BM used(1.0, 2.0);
+            used.seed(999);
+            for (int i= 0; i < n; ++i)
+                (void)used();
+            used.seed(4105);
+            if (used() != ref0 || used() != ref1)
+                ok= false;
+        }
+        typedef field_aligned_velocity_generator<double> FA;
+        auto g= [](double w) { return std::exp(-w); };
+        FA fa_fresh(g, 0.0, 10.0, 1.0, {0.0, 0.0, 1.0}, +1);
+        fa_fresh.seed(4106);
+        const auto fa_ref= fa_fresh();
+        for (int n= 1; n <= 8; ++n)
+        {
+            FA fa(g, 0.0, 10.0, 1.0, {0.0, 0.0, 1.0}, +1);
+            fa.seed(999);
+            for (int i= 0; i < n; ++i)
+                (void)fa();
+            fa.seed(4106);
+            if (fa() != fa_ref)
+                ok= false;
+        }
+        all_ok= all_ok && ok;
+        std::cout << "  M6b seed(s) after n = 1..8 draws reproduces a fresh seed(s), "
+                  << "bi-Maxwellian and field-aligned: " << (ok ? "PASS" : "FAIL") << std::endl;
     }
 
     // ---- M7: 0 is rejected rather than read as "no cap" -------------------
@@ -2273,7 +2426,8 @@ static int test_log_radius_no_regression()
     // ---- M2: the stream has not drifted -------------------------------------
     {
         const bool fma= test_fp_contraction_enabled();
-        bi_kappa_distribution<double> dist(2.0, 1.0, 2.0, {0.0, 0.0, 1.0});
+        bi_kappa_distribution<double> dist(2.0, 1.0, 2.0, {0.0, 0.0, 1.0},
+                                           bi_kappa_distribution<double>::no_cap());
         dist.seed(20030410);
         int mismatch_no_fma= 0, mismatch_fma= 0;
         unsigned long long got[16][3];
@@ -2393,7 +2547,8 @@ static long long test_count_nonfinite(double kappa, double theta, int seed, long
 {
     bi_kappa_distribution<RealType> dist(
         static_cast<RealType>(kappa), static_cast<RealType>(theta),
-        static_cast<RealType>(theta));
+        static_cast<RealType>(theta), {RealType(0.0), RealType(0.0), RealType(1.0)},
+        bi_kappa_distribution<RealType>::no_cap());
     dist.seed(seed);
     long long bad= 0;
     for (long long i= 0; i < n; ++i)
@@ -2539,7 +2694,8 @@ static int test_overflow_observability()
     // ---- O1: the counter equals what the caller can see ---------------------
     {
         const long long n= 200000;
-        bi_kappa_distribution<double> dist(0.505, 1.0, 1.0);
+        bi_kappa_distribution<double> dist(0.505, 1.0, 1.0, {0.0, 0.0, 1.0},
+                                           bi_kappa_distribution<double>::no_cap());
         dist.seed(90040);
         long long seen= 0;
         for (long long i= 0; i < n; ++i)
@@ -2590,7 +2746,8 @@ static int test_overflow_observability()
         const bi_kappa_distribution<double>::point_type z_hat= {0.0, 0.0, 1.0};
         for (int path= 0; path < 6; ++path)
         {
-            bi_kappa_distribution<double> dist(0.505, 1.0, 1.0);
+            bi_kappa_distribution<double> dist(0.505, 1.0, 1.0, {0.0, 0.0, 1.0},
+                                           bi_kappa_distribution<double>::no_cap());
             dist.seed(90042 + path);
             test_dirty_counters(dist);
             if (dist.n_attempts() == 0ULL || dist.n_nonfinite() == 0ULL)
@@ -2802,12 +2959,11 @@ static int test_log_cap_semantics()
                   << violations << " violations): " << (ok ? "PASS" : "FAIL") << std::endl;
     }
 
-    // ---- Q3: omitting the cap is bitwise identical to no_cap() (the B7 guard) ----
+    // ---- Q3: omitting the cap is bitwise identical to a cap of 20 (the B7 guard) ----
     {
         const long long n= 20000;
         bi_kappa_distribution<double> omitted(1.5, 1.0, 2.0);
-        bi_kappa_distribution<double> named(1.5, 1.0, 2.0, {0.0, 0.0, 1.0},
-                                            bi_kappa_distribution<double>::no_cap());
+        bi_kappa_distribution<double> named(1.5, 1.0, 2.0, {0.0, 0.0, 1.0}, 20.0);
         omitted.seed(90062);
         named.seed(90062);
         long long mismatches= 0;
@@ -2820,7 +2976,7 @@ static int test_log_cap_semantics()
         }
         const bool ok= (mismatches == 0);
         all_ok= all_ok && ok;
-        std::cout << "  Q3 omitted cap == explicit no_cap() bitwise over " << n << " draws ("
+        std::cout << "  Q3 omitted cap == explicit cap 20 bitwise over " << n << " draws ("
                   << mismatches << " mismatches): " << (ok ? "PASS" : "FAIL") << std::endl;
     }
 
@@ -2866,7 +3022,8 @@ static int test_log_rotation_stability()
         const bi_kappa_distribution<double>::point_type ub= {1.0, 1.0, 1.0};
         const std::array<long double, 3> ub_ld= {1.0L, 1.0L, 1.0L};
 
-        bi_kappa_distribution<double> dist(kappa, theta_perp, theta_par, ub);
+        bi_kappa_distribution<double> dist(kappa, theta_perp, theta_par, ub,
+                                           bi_kappa_distribution<double>::no_cap());
         bi_kappa_distribution<long double> rot_ld(2.0L, 1.0L, 1.0L);
         std::mt19937 gen_sampler(90070u), gen_replay(90070u);
         test_replay_state st;
@@ -2885,7 +3042,7 @@ static int test_log_rotation_stability()
 
             // Predict from the rule the loader implements: materialize each component and
             // ask whether it is finite.  Predicting from `log R + log|g_j| >= log(max())`
-            // instead -- as this test did before 2.1.0 -- is predicting from a withdrawn
+            // instead -- as this test did before 2.1.0 -- is predicting from a previous
             // rule, and the two disagree exactly at the boundary, which is the only place
             // this check has anything to say.
             bool predicted_finite= true;
@@ -2974,7 +3131,8 @@ static int test_log_rotation_stability()
         test_overflow_floor(kappa, theta_perp, theta_par, ub_q, log_max, &p_overflow,
                             &p_rescued);
 
-        bi_kappa_distribution<double> dist(kappa, theta_perp, theta_par, ub);
+        bi_kappa_distribution<double> dist(kappa, theta_perp, theta_par, ub,
+                                           bi_kappa_distribution<double>::no_cap());
         std::mt19937 gen_sampler(90075u), gen_replay(90075u);
         test_replay_state st;
         long long rescued= 0, rescued_lost= 0;
@@ -3030,7 +3188,7 @@ static int test_log_rotation_stability()
 // test_representability_boundary
 //
 // Deterministic fixtures at the representability boundary, built from the failure
-// preserved in experiments/exp7_confirmatory/raw/oracle_disagreements.jsonl and from
+// preserved in experiments/exp4_finite_precision/raw/oracle_disagreements.jsonl and from
 // the neighbourhood of that boundary in both precisions.
 //
 // The defect these lock down.  Before the fix, the loader decided representability by
@@ -3144,12 +3302,12 @@ static const BoundaryFixture<double> kDoubleBoundaryFixtures[]= {
 };
 #undef INFV
 
-/// The withdrawn step 5, kept verbatim so the regression can show it failing.  This is
+/// The previous step 5, kept verbatim so the regression can show it failing.  This is
 /// the code that shipped in 2.0.0: the radius is called representable when its LOGARITHM
 /// is at most log(max()), and the fast path then multiplies without looking at what it
 /// produced.
 template <typename T>
-static bool test_withdrawn_step5(T log_r, const T g[3], T out[3])
+static bool test_previous_step5(T log_r, const T g[3], T out[3])
 {
     const T log_max= std::log(std::numeric_limits<T>::max());
     const T log_g_bound= std::log(std::max(std::max(std::abs(g[0]), std::abs(g[1])),
@@ -3194,10 +3352,10 @@ template <typename T> static double test_component_tolerance(T log_r, T g)
 
 template <typename T>
 static bool test_boundary_fixtures(const BoundaryFixture<T> *fx, int n, const char *label,
-                                   bool expect_withdrawn_to_fail)
+                                   bool expect_previous_to_fail)
 {
     bool all_ok= true;
-    int withdrawn_failures= 0;
+    int previous_failures= 0;
     double worst_rel= 0.0;
     for (int i= 0; i < n; ++i)
     {
@@ -3253,9 +3411,9 @@ static bool test_boundary_fixtures(const BoundaryFixture<T> *fx, int n, const ch
         if (any != any_nonfinite)
             ok= false;
 
-        // 5. the withdrawn predicate, on the same fixture
+        // 5. the previous predicate, on the same fixture
         T old_out[3];
-        const bool old_any= test_withdrawn_step5<T>(f.log_r, f.g, old_out);
+        const bool old_any= test_previous_step5<T>(f.log_r, f.g, old_out);
         bool old_matches= (old_any == f.any_overflow);
         for (int j= 0; j < 3; ++j)
         {
@@ -3265,20 +3423,20 @@ static bool test_boundary_fixtures(const BoundaryFixture<T> *fx, int n, const ch
                 old_matches= false;
         }
         if (!old_matches)
-            ++withdrawn_failures;
+            ++previous_failures;
 
         all_ok= all_ok && ok;
         std::cout << "  " << label << " " << f.name << ": corrected "
-                  << (ok ? "PASS" : "FAIL") << ", withdrawn form "
+                  << (ok ? "PASS" : "FAIL") << ", previous form "
                   << (old_matches ? "agrees" : "DISAGREES with the 100-digit value")
                   << std::endl;
     }
     std::cout << "  " << label << ": worst relative deviation from the 100-digit value "
-              << worst_rel << "; the withdrawn form misclassified " << withdrawn_failures
+              << worst_rel << "; the previous form misclassified " << previous_failures
               << " of " << n << " fixtures" << std::endl;
-    if (expect_withdrawn_to_fail && withdrawn_failures == 0)
+    if (expect_previous_to_fail && previous_failures == 0)
     {
-        std::cout << "  " << label << ": the regression has no teeth -- the withdrawn form "
+        std::cout << "  " << label << ": the regression has no teeth -- the previous form "
                      "passes every fixture: FAIL" << std::endl;
         all_ok= false;
     }
@@ -3291,7 +3449,7 @@ static int test_representability_boundary()
     std::cout << "\n--- test_representability_boundary ---" << std::endl;
 
     // S1/S2: the fixtures.  `float` is where this libm's log(max()) rounds up, so the
-    // withdrawn form is required to fail there; `double` rounds the other way on this
+    // previous form is required to fail there; `double` rounds the other way on this
     // host, so it is not required to fail and the fixtures assert the contract only.
     all_ok&= test_boundary_fixtures<float>(
         kFloatBoundaryFixtures,
@@ -3304,11 +3462,12 @@ static int test_representability_boundary()
 
     // S3: the whole class, uncapped, at a configuration that reaches the boundary often.
     // n_nonfinite() must equal the number of non-finite returns exactly -- the count the
-    // withdrawn fast path could not keep, because it never looked.
+    // previous fast path could not keep, because it never looked.
     {
         const long long n= 4000000;
         bi_kappa_distribution<float> dist;
-        dist.define(0.55f, 1.0f, 2.0f, std::array<float, 3>({1.0f, 2.0f, 3.0f}));
+        dist.define(0.55f, 1.0f, 2.0f, std::array<float, 3>({1.0f, 2.0f, 3.0f}),
+                    bi_kappa_distribution<float>::no_cap());
         dist.seed(20260920);
         long long nonfinite_returns= 0;
         for (long long i= 0; i < n; ++i)
@@ -3364,8 +3523,8 @@ static int test_representability_boundary()
                      "velocity): " << (ok ? "PASS" : "FAIL") << std::endl;
     }
 
-    // S5: the draw the SECOND confirmatory holdout lost, replayed from its recorded
-    // variates.
+    // S5: a draw that release 2.1.0 lost in float at kappa = 0.505, replayed from its
+    // recorded variates.
     //
     // The defect this locks down is resolution, not a wrong comparison.  Release 2.1.0
     // already decided representability from the materialized component; what it could not
@@ -3381,7 +3540,7 @@ static int test_representability_boundary()
     // 2.2.0 draws the same `float` variates in the same order -- the law is unchanged --
     // and evaluates the deterministic map from them to the returned velocity in the
     // accumulator, rounding once.  Both halves are asserted: the stabilized formation must
-    // reproduce the 120-digit values below, and the withdrawn working-precision formation
+    // reproduce the 120-digit values below, and the previous working-precision formation
     // must lose the draw, so that a revert cannot pass this test quietly.
     //
     // The five variates are the bit patterns the run recorded.  The expected components
@@ -3422,22 +3581,22 @@ static int test_representability_boundary()
         for (int j= 0; j < 3; ++j)
             ok= ok && (v[j] == expected[j]);
 
-        // --- the withdrawn working-precision formation --------------------------
+        // --- the previous working-precision formation --------------------------
         const float f_log_x2= std::log(y) + std::log(u) / a;
         const float f_log_r= 0.5f * (std::log(x1) - f_log_x2);
         const float f_st= std::sqrt(1.0f - ct * ct);
         const float f_sk= std::sqrt(kappa);
         const float f_g0= f_sk * f_st * std::cos(phi);
         const float f_R= std::exp(f_log_r);
-        const bool withdrawn_lost=
+        const bool previous_lost=
             !(f_R <= std::numeric_limits<float>::max()) ||
             !(f_R * std::abs(f_g0) <= std::numeric_limits<float>::max());
 
-        ok= ok && withdrawn_lost;
+        ok= ok && previous_lost;
         all_ok= all_ok && ok;
-        std::cout << "  S5 holdout-2 draw (float kappa=0.505, seed 8005, attempt 157855): "
+        std::cout << "  S5 recorded draw (float kappa=0.505, seed 8005, attempt 157855): "
                   << "stabilized returns " << (any ? "non-finite" : "the 120-digit values")
-                  << ", withdrawn form " << (withdrawn_lost ? "loses it" : "also returns it")
+                  << ", previous form " << (previous_lost ? "loses it" : "also returns it")
                   << ": " << (ok ? "PASS" : "FAIL") << std::endl;
     }
 
@@ -3541,7 +3700,7 @@ static int test_representability_boundary()
 // run_all_tests – call this from main()
 // Returns 0 if all tests pass, 1 if any test fails.
 // ================================================================
-static int run_all_tests()
+inline int run_all_tests()
 {
     int result= 0;
     result|= test_transform();

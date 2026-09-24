@@ -17,10 +17,12 @@
  * distribution g(w_par); the parallel speed is |v_par| = sqrt(w_par) and its
  * direction is set by a fixed sign (+1 along B, -1 opposite B). (For a
  * distribution originally posed in energy, w_par = v_par^2 = 2E_par/m, so the
- * mass drops out.) The two perpendicular components are independent Gaussians
- * with N(0, theta_perp^2/2), i.e. a Maxwellian with thermal speed theta_perp
- * (same convention as bi_maxwellian_distribution). The result is returned in
- * the global (lab) frame.
+ * mass drops out.)  If speed_sq_min == speed_sq_max, every sample has the single
+ * parallel speed sqrt(speed_sq_min).  The two perpendicular components are
+ * independent Gaussians with N(0, theta_perp^2/2), i.e. a Maxwellian with thermal
+ * speed theta_perp (same convention as bi_maxwellian_distribution), each capped at
+ * max_normalized_velocity thermal speeds (default 20, as in
+ * bi_maxwellian_distribution).  The result is returned in the global (lab) frame.
  *
  * @code{.cpp}
  * auto gW = [](double w){ return std::exp(-0.5 * w); }; // any positive g(w), w = v_par^2
@@ -44,7 +46,8 @@ template <typename RealType= double> class field_aligned_velocity_generator
         : m_speedSqPdf(), m_speedSqMin(RealType(0.0)), m_speedSqMax(RealType(1.0)),
           m_thetaPerp(RealType(1.0)),
           m_ub(point_type({RealType(0.0), RealType(0.0), RealType(1.0)})),
-          m_parallelSign(RealType(1.0)), m_maxRejectTries(100000),
+          m_parallelSign(RealType(1.0)), m_maxNormalizedVelocity(RealType(20.0)),
+          m_maxRejectTries(100000),
           m_pdfUpperBound(RealType(0.0)), m_isDefined(false), m_gen(std::random_device{}()),
           m_distSpeedSq(RealType(0.0), RealType(1.0)), m_distAccept(RealType(0.0), RealType(1.0)),
           m_standardNormal(RealType(0.0), RealType(1.0))
@@ -54,12 +57,16 @@ template <typename RealType= double> class field_aligned_velocity_generator
     field_aligned_velocity_generator(speed_sq_pdf_function speed_sq_pdf, RealType speed_sq_min,
                                      RealType speed_sq_max, RealType theta_perp, point_type ub,
                                      int parallel_sign, int probe_points= 1024,
-                                     int max_reject_tries= 100000)
+                                     int max_reject_tries= 100000,
+                                     RealType max_normalized_velocity= RealType(20.0))
         : field_aligned_velocity_generator()
     {
         define(speed_sq_pdf, speed_sq_min, speed_sq_max, theta_perp, ub, parallel_sign,
-               probe_points, max_reject_tries);
+               probe_points, max_reject_tries, max_normalized_velocity);
     }
+
+    /// Value of @p max_normalized_velocity that removes the perpendicular cap.
+    static constexpr RealType no_cap() { return std::numeric_limits<RealType>::infinity(); }
 
     /**
      * @brief Configure the sampler: user-supplied law along the field, Maxwellian
@@ -69,7 +76,9 @@ template <typename RealType= double> class field_aligned_velocity_generator
      *                is v_par squared, not v_par.  Need not be normalized; must be
      *                finite, non-negative, and positive somewhere in range.
      * @param speed_sq_min  Lower end of the sampled v_par^2, >= 0.
-     * @param speed_sq_max  Upper end, > @p speed_sq_min.  A hard support.
+     * @param speed_sq_max  Upper end, >= @p speed_sq_min.  A hard support.  If it
+     *                equals @p speed_sq_min, every sample has the parallel speed
+     *                sqrt(speed_sq_min) and @p speed_sq_pdf is not evaluated.
      * @param theta_perp  Thermal speed of the two perpendicular components, > 0.
      *                Each is N(0, theta_perp^2/2), the same convention as
      *                bi_maxwellian_distribution.
@@ -82,19 +91,24 @@ template <typename RealType= double> class field_aligned_velocity_generator
      *                For the symmetric case draw the sign yourself, or use
      *                bi_maxwellian_distribution / bi_kappa_distribution.
      * @param probe_points  Envelope-estimation grid; see \ref params_rejection for
-     *                the silent-bias failure mode.  Must be > 1.
+     *                the silent-bias failure mode.  Must be >= 64.
      * @param max_reject_tries  Candidate draws per sample before operator() throws.
+     *                Must be > 0.
+     * @param max_normalized_velocity  Cap on each perpendicular component in units of
+     *                theta_perp: a pair with |v_perp_i| > cap*theta_perp is redrawn.
+     *                Default 20, as in bi_maxwellian_distribution; no_cap() removes it.
      *                Must be > 0.
      *
      * @throws std::invalid_argument on a null callable, a bad range, a non-positive
-     *         @p theta_perp, a zero @p ub, a @p parallel_sign other than ±1, or a
-     *         non-positive knob.
+     *         @p theta_perp, a zero @p ub, a @p parallel_sign other than ±1,
+     *         @p probe_points < 64, or a non-positive @p max_reject_tries or cap.
      *
      * @see \ref parameters for the full table, \ref usage_field_aligned for a recipe.
      */
     void define(speed_sq_pdf_function speed_sq_pdf, RealType speed_sq_min, RealType speed_sq_max,
                 RealType theta_perp, point_type ub, int parallel_sign,
-                int probe_points= 1024, int max_reject_tries= 100000)
+                int probe_points= 1024, int max_reject_tries= 100000,
+                RealType max_normalized_velocity= RealType(20.0))
     {
         m_isDefined= false;
 
@@ -106,9 +120,9 @@ template <typename RealType= double> class field_aligned_velocity_generator
         {
             throw std::invalid_argument("speed_sq_min must be non-negative (w = v_par^2 >= 0)");
         }
-        if (!(speed_sq_min < speed_sq_max))
+        if (!(speed_sq_min <= speed_sq_max))
         {
-            throw std::invalid_argument("speed_sq_min must be strictly less than speed_sq_max");
+            throw std::invalid_argument("speed_sq_max must not be less than speed_sq_min");
         }
         if (theta_perp <= RealType(0.0))
         {
@@ -118,13 +132,19 @@ template <typename RealType= double> class field_aligned_velocity_generator
         {
             throw std::invalid_argument("parallel_sign must be exactly +1 or -1");
         }
-        if (probe_points <= 1)
+        if (probe_points < kMinProbePoints)
         {
-            throw std::invalid_argument("probe_points must be positive");
+            // Too few probes can miss the peak of g and bias the samples silently.
+            throw std::invalid_argument("probe_points must be at least 64");
         }
         if (max_reject_tries <= 0)
         {
             throw std::invalid_argument("max_reject_tries must be positive");
+        }
+        if (!(max_normalized_velocity > RealType(0.0)))
+        {
+            throw std::invalid_argument(
+                "max_normalized_velocity must be positive, or no_cap() for no perpendicular cap");
         }
 
         RealType ubNorm2= ub[0] * ub[0] + ub[1] * ub[1] + ub[2] * ub[2];
@@ -139,6 +159,7 @@ template <typename RealType= double> class field_aligned_velocity_generator
         m_thetaPerp= theta_perp;
         m_ub= ub;
         m_parallelSign= static_cast<RealType>(parallel_sign);
+        m_maxNormalizedVelocity= max_normalized_velocity;
         m_maxRejectTries= max_reject_tries;
         m_pdfUpperBound= RealType(0.0);
 
@@ -148,21 +169,31 @@ template <typename RealType= double> class field_aligned_velocity_generator
             typename std::uniform_real_distribution<RealType>::param_type(RealType(0.0),
                                                                            RealType(1.0)));
 
-        m_pdfUpperBound= estimatePdfUpperBound(probe_points);
-        if (m_pdfUpperBound <= RealType(0.0))
+        // A single-valued range needs no envelope: every sample has w = speed_sq_min.
+        if (speed_sq_min < speed_sq_max)
         {
-            throw std::invalid_argument(
-                "speed_sq_pdf must be positive somewhere within [speed_sq_min, speed_sq_max]");
-        }
+            m_pdfUpperBound= estimatePdfUpperBound(probe_points);
+            if (m_pdfUpperBound <= RealType(0.0))
+            {
+                throw std::invalid_argument(
+                    "speed_sq_pdf must be positive somewhere within [speed_sq_min, speed_sq_max]");
+            }
 
-        m_distAccept.param(typename std::uniform_real_distribution<RealType>::param_type(
-            RealType(0.0), m_pdfUpperBound));
+            m_distAccept.param(typename std::uniform_real_distribution<RealType>::param_type(
+                RealType(0.0), m_pdfUpperBound));
+        }
 
         reset();
         m_isDefined= true;
     }
 
-    void seed(int s) { applySeed(m_gen, s); }
+    /// Reseed the internal engine and discard any variate cached from before, so that
+    /// seed(s) followed by n draws gives the same values however many draws came first.
+    void seed(int s)
+    {
+        applySeed(m_gen, s);
+        reset();
+    }
 
     void reset()
     {
@@ -184,9 +215,23 @@ template <typename RealType= double> class field_aligned_velocity_generator
         // Parallel: v_par^2 -> signed speed along B.
         RealType vPar= m_parallelSign * std::sqrt(sampleSpeedSq(gen));
 
-        // Perpendicular: 2D Maxwellian, N(0, theta_perp^2/2) per component.
-        RealType vPerp1= m_thetaPerp * sigmaScale * m_standardNormal(gen);
-        RealType vPerp2= m_thetaPerp * sigmaScale * m_standardNormal(gen);
+        // Perpendicular: 2D Maxwellian, N(0, theta_perp^2/2) per component, with the
+        // pair redrawn while either component exceeds the cap.
+        RealType vPerp1= RealType(0.0), vPerp2= RealType(0.0);
+        const RealType perpMax= m_maxNormalizedVelocity * m_thetaPerp;
+        int tries= 0;
+        for (tries= 0; tries < m_maxRejectTries; ++tries)
+        {
+            vPerp1= m_thetaPerp * sigmaScale * m_standardNormal(gen);
+            vPerp2= m_thetaPerp * sigmaScale * m_standardNormal(gen);
+            if (std::abs(vPerp1) <= perpMax && std::abs(vPerp2) <= perpMax)
+                break;
+        }
+        if (tries == m_maxRejectTries)
+        {
+            throw std::runtime_error("failed to sample the perpendicular components under "
+                                     "max_normalized_velocity: exceeded max_reject_tries");
+        }
 
         // Field-aligned frame: (perp1 -> e1, perp2 -> e2, par -> e3 = B/|B|).
         point_type local;
@@ -206,6 +251,7 @@ template <typename RealType= double> class field_aligned_velocity_generator
     RealType thetaPerp() const { return m_thetaPerp; }
     point_type ub() const { return m_ub; }
     RealType parallelSign() const { return m_parallelSign; }
+    RealType max_normalized_velocity() const { return m_maxNormalizedVelocity; }
     RealType pdfUpperBound() const { return m_pdfUpperBound; }
 
     // ====================================================================
@@ -301,6 +347,10 @@ template <typename RealType= double> class field_aligned_velocity_generator
 
     template <typename GeneratorType> RealType sampleSpeedSq(GeneratorType &gen)
     {
+        if (!(m_speedSqMin < m_speedSqMax))
+        {
+            return m_speedSqMin;
+        }
         int tries= 0;
         for (tries= 0; tries < m_maxRejectTries; ++tries)
         {
@@ -325,6 +375,8 @@ template <typename RealType= double> class field_aligned_velocity_generator
             gen.seed(static_cast<unsigned int>(s));
     }
 
+    static const int kMinProbePoints= 64;
+
     static bool approximatelyEqual(RealType a, RealType b)
     {
         RealType scale= std::max({RealType(1.0), std::abs(a), std::abs(b)});
@@ -337,6 +389,7 @@ template <typename RealType= double> class field_aligned_velocity_generator
     RealType m_thetaPerp;
     point_type m_ub;
     RealType m_parallelSign;
+    RealType m_maxNormalizedVelocity;
     int m_maxRejectTries;
     RealType m_pdfUpperBound;
     bool m_isDefined;

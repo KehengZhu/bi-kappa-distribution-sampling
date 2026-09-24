@@ -11,27 +11,21 @@ typedef double Real;
 #include "general_position_generator.H"
 #include "general_velocity_generator.H"
 #include "field_aligned_velocity_generator.H"
-#include "test_suite.H"
 
 int main()
 {
     const Real kappa = 2.0;
     const Real theta_perp = 1.0;
     const Real theta_par = 2.0;
-    const int n_particle = 200000;
-
-    if (run_all_tests() != 0)
-    {
-        return 1;
-    }
-    std::cout << std::endl;
+    // Short worked examples of the five samplers; each writes its samples to a text file
+    // (vx vy vz per line) that python/visualize_samples.ipynb plots.  The regression suite
+    // is separate: `make test`.
+    const int n_particle = 50000;
 
     std::cout << "=== Example 1: BiKappaDistribution ===" << std::endl;
-    // Uncapped, so these samples follow the bi-Kappa distribution itself.  no_cap() is
-    // the default; it is named explicitly here because a seed has to be passed as the
-    // sixth argument, and because the target law is the point of the example.  A finite
-    // cap would instead sample the bi-Kappa law conditioned on a component-wise box --
-    // a different distribution, and not axisymmetric about B.
+    // no_cap(): these samples follow the bi-Kappa distribution itself.  Omitting the fifth
+    // argument applies the default cap of 20 thermal speeds (as in release 1.0.0), which
+    // samples the bi-Kappa distribution conditioned on that component-wise box.
     bi_kappa_distribution<Real> biKappa;
     biKappa.define(kappa, theta_perp, theta_par, {0,0,1},
                    bi_kappa_distribution<Real>::no_cap(), 20030410);
@@ -45,8 +39,7 @@ int main()
     }
 
     std::cout << "\n=== Example 2: BiMaxwellianDistribution ===" << std::endl;
-    // Uncapped, as above: no_cap() is the default here too, and is named because the
-    // seed follows it as the fifth argument.
+    // no_cap(), as above; the default is again a cap of 20 thermal speeds.
     bi_maxwellian_distribution<Real> biMaxwell;
     biMaxwell.define(theta_perp, theta_par, {0,0,1},
                      bi_maxwellian_distribution<Real>::no_cap(), 20030410);

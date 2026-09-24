@@ -144,7 +144,13 @@ template <typename RealType= double> class general_position_generator
         m_isDefined= true;
     }
 
-    void seed(int s) { applySeed(m_gen, s); }
+    /// Reseed the internal engine and discard any variate cached from before, so that
+    /// seed(s) followed by n draws gives the same values however many draws came first.
+    void seed(int s)
+    {
+        applySeed(m_gen, s);
+        reset();
+    }
 
     void reset()
     {

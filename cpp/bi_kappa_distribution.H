@@ -26,16 +26,16 @@
 #include <stdexcept>
 
 // This sampler decides what it may return by materializing a value and asking whether it is
-// finite.  `-ffast-math` (and `-ffinite-math-only` alone) licenses a compiler to assume no
-// infinity or NaN ever occurs, and so to fold `mag <= max()` to `true` -- which would return
-// an overflowed component as if it were a number AND leave n_nonfinite() reading zero: the
-// exact failure this file is built to prevent, with no symptom.  Refusing to compile is the
-// only safe response, because there is nothing to check at run time once the check is gone.
-// Define BI_KAPPA_ALLOW_FAST_MATH to override, and do not trust the counters if you do.
+// finite, and no_cap() is +infinity.  `-ffast-math` (which defines __FAST_MATH__) licenses a
+// compiler to assume that no infinity or NaN occurs, and so to fold `mag <= max()` to `true`:
+// an overflowed component could then be returned as if it were a number, n_nonfinite() would
+// read zero, and no_cap() would not be reliable.  A finite cap (the default of 20) still
+// rejects such draws, because it compares against a finite bound.  The header therefore
+// compiles under fast-math but says so; define BI_KAPPA_ALLOW_FAST_MATH to silence the note.
 #if defined(__FAST_MATH__) && !defined(BI_KAPPA_ALLOW_FAST_MATH)
-#error "bi_kappa_distribution.H requires IEEE-754 infinity semantics: -ffast-math / \
--ffinite-math-only would silently disable its representability test. Define \
-BI_KAPPA_ALLOW_FAST_MATH to compile anyway (the overflow counters then mean nothing)."
+#pragma message("bi_kappa_distribution.H: compiled with -ffast-math; no_cap() and the overflow " \
+                "counters are unreliable in this mode. Define BI_KAPPA_ALLOW_FAST_MATH to " \
+                "silence this note.")
 #endif
 
 /**
@@ -74,7 +74,7 @@ namespace bikappa_detail
  * neighbouring `float`s at the overflow threshold.  The radius is then not resolved finely
  * enough to say which side of the threshold a component near it falls on, and a draw that
  * is representable can be exponentiated one ulp high and lost.  One such draw appeared in
- * 14.2 million audited attempts at `float kappa = 0.505`: its largest component lay
+ * 14.2 million attempts at `float kappa = 0.505`: its largest component lay
  * 3.1e-08 natural-log units -- about half an ulp -- below `FLT_MAX`, and the `float` log
  * radius carried 3.5e-06 of error, a hundred times that margin.
  *
@@ -255,13 +255,13 @@ typename log_accumulator<RealType>::type logGamma(RealType a, GeneratorType &gen
  *    draw whose `log R` equals `log(FLT_MAX)` bit for bit therefore passes a
  *    `log R <= logMax` test, and `exp(log R)` then overflows -- while every component it
  *    should have produced is perfectly representable, because `|g_j| < 1` pulls each of them
- *    back under the limit.  A confirmatory run found exactly such a draw in 14.2 million
- *    audited attempts, at `float kappa = 0.51`: `log R` was `0x1.62e43p+6`, identical to
+ *    back under the limit.  One such draw occurred in 14.2 million attempts at
+ *    `float kappa = 0.51`: `log R` was `0x1.62e43p+6`, identical to
  *    `log(FLT_MAX)`, the largest component's logarithm was 88.151 against a limit of 88.723,
  *    and the loader returned `(-inf, +inf, +inf)` -- and, the overflow never having been
  *    detected, counted nothing.
  *  - The same rounding in the other direction makes a logarithmic test discard a draw that
- *    *is* representable, which is an avoidable loss rather than an honest one.
+ *    *is* representable, which is an avoidable loss.
  *
  * Comparing the materialized magnitude against `max()` cannot have either defect: it is the
  * number that will be returned, so the test and the result agree by construction.  It is
@@ -342,10 +342,11 @@ bool materializeComponents(typename log_accumulator<RealType>::type logR,
  * auto v = dist();                          // {vx, vy, vz}, global frame
  * @endcode
  *
- * @note **The cap is off by default**, so the default target law is the bi-Kappa
- * distribution itself.  Passing a finite `max_normalized_velocity` opts in to a
- * *different*, bounded target: the bi-Kappa law conditioned on the component-wise
- * box.  See no_cap() and param_type::capped().
+ * @note **The cap defaults to 20 thermal speeds**, as in release 1.0.0, so the default
+ * target is the bi-Kappa law conditioned on the component-wise box
+ * `|v_i|/theta_i <= 20`.  Pass no_cap() to sample the bi-Kappa distribution itself.
+ * At kappa <= 3/2 a cap of 20 removes an appreciable part of the tail; see
+ * \ref usage_bikappa_cap, no_cap() and param_type::capped().
  *
  * @note **The radius is built in the logarithmic domain.**  `R = sqrt(X1)/sqrt(X2)` with
  * `X2 ~ Gamma(kappa - 1/2, 1)`, so as `kappa -> 1/2` the denominator's shape goes to zero
@@ -400,22 +401,21 @@ template <typename RealType= double> class bi_kappa_distribution
       public:
         using distribution_type= bi_kappa_distribution<RealType>;
 
-        // The cap defaults to +infinity, i.e. off -- the same value no_cap() returns.
-        // It is spelled out here rather than as no_cap() because the enclosing class is
-        // still incomplete while this nested default argument is parsed.
+        // The cap defaults to 20 thermal speeds, as in release 1.0.0, so that code written
+        // against 1.0.0 samples the same distribution.  Pass no_cap() (= +infinity) for the
+        // uncapped distribution.
         param_type(RealType kappa= RealType(2.0), RealType theta_perp= RealType(1.0),
                    RealType theta_par= RealType(1.0),
                    point_type ub= point_type({RealType(0.0), RealType(0.0), RealType(1.0)}),
-                   RealType max_normalized_velocity=
-                       std::numeric_limits<RealType>::infinity())
+                   RealType max_normalized_velocity= RealType(20.0))
             : m_kappa(kappa), m_theta_perp(theta_perp), m_theta_par(theta_par), m_ub(ub),
               m_maxNormalizedVelocity(max_normalized_velocity)
         {
             // Each test is written so that NaN fails it.  `x <= 0.5` is false for a NaN,
             // so the natural spelling admits one, and a NaN parameter then propagates into
             // log R, where it can no longer be told from an unrepresentable velocity: the
-            // sampler would report a non-finite draw and count it as honest overflow, which
-            // it is not.  Rejecting the parameter is the only point at which the two are
+            // sampler would report a non-finite draw and count it as an overflow, which it
+            // is not.  Rejecting the parameter is the only point at which the two are
             // still distinguishable.
             if (!(m_kappa > RealType(0.5)))
             {
@@ -484,23 +484,20 @@ template <typename RealType= double> class bi_kappa_distribution
         RealType m_maxNormalizedVelocity;
     };
 
-    /// Sentinel selecting the untruncated sampler, and **the default**.  In this
-    /// mode the draw uses a fixed sequence of high-level variates with no outer
-    /// acceptance-rejection loop, and the sampled law is the full bi-Kappa
-    /// distribution.
+    /// Sentinel selecting the untruncated sampler.  In this mode the draw uses a
+    /// fixed sequence of high-level variates with no outer acceptance-rejection
+    /// loop, and the sampled law is the full bi-Kappa distribution.
     ///
-    /// Naming it explicitly is equivalent to omitting the argument, and is worth
-    /// doing where the target law matters to a reader:
+    /// It must be passed explicitly, because the default cap is 20 (release 1.0.0):
     ///
     ///     bi_kappa_distribution<double> d(2.0, 1.0, 2.0, {0,0,1},
     ///                                     bi_kappa_distribution<double>::no_cap());
     ///
     /// With a finite cap the sampled law is instead that distribution conditioned
     /// on all normalized components lying inside the component-wise box -- a
-    /// different, bounded law with its own normalization.  That is opt-in: it is
-    /// never selected by default, because at kappa <= 3/2 no practical cap value
-    /// is a good approximation to the bi-Kappa law and the conditioned law is not
-    /// even axisymmetric about B.
+    /// different, bounded law with its own normalization.  At kappa <= 3/2 no
+    /// practical cap value is a good approximation to the bi-Kappa law, and the
+    /// conditioned law is not even axisymmetric about B.
     ///
     /// The cap is tested in the field-aligned frame, before the rotation into the
     /// global frame, so the returned components are *not* individually bounded by
@@ -527,7 +524,7 @@ template <typename RealType= double> class bi_kappa_distribution
                                    RealType theta_par= RealType(1.0),
                                    point_type ub= point_type({RealType(0.0), RealType(0.0),
                                                               RealType(1.0)}),
-                                   RealType max_normalized_velocity= no_cap())
+                                   RealType max_normalized_velocity= RealType(20.0))
         : m_params(kappa, theta_perp, theta_par, ub, max_normalized_velocity),
           m_gen(std::random_device{}()), m_normalCache(RealType(0.0)), m_normalCached(false),
           m_attempts(0), m_nonfinite(0)
@@ -569,9 +566,9 @@ template <typename RealType= double> class bi_kappa_distribution
      *                Need not be normalized; must be non-zero.  Samples are drawn
      *                in the field-aligned frame and rotated into the global frame
      *                before return.
-     * @param max_normalized_velocity  Velocity cap in thermal speeds, or no_cap()
-     *                (the default) for the untruncated bi-Kappa law.  A finite
-     *                value selects a *different*, bounded target law -- see
+     * @param max_normalized_velocity  Velocity cap in thermal speeds (default 20, as in
+     *                release 1.0.0), or no_cap() for the untruncated bi-Kappa law.  A
+     *                finite value selects a *different*, bounded target law -- see
      *                \ref usage_bikappa_cap.  Must be > 0; passing 0 to mean
      *                "no cap" throws.
      *
@@ -590,7 +587,7 @@ template <typename RealType= double> class bi_kappa_distribution
     void define(RealType kappa, RealType theta_perp= RealType(1.0),
                 RealType theta_par= RealType(1.0),
                 point_type ub= point_type({RealType(0.0), RealType(0.0), RealType(1.0)}),
-                RealType max_normalized_velocity= no_cap())
+                RealType max_normalized_velocity= RealType(20.0))
     {
         define(param_type(kappa, theta_perp, theta_par, ub, max_normalized_velocity));
     }
@@ -691,8 +688,8 @@ template <typename RealType= double> class bi_kappa_distribution
     ///
     /// Sufficiently near kappa = 1/2 the bi-Kappa law puts non-zero probability outside
     /// every finite floating-point range, so such draws exist as mathematics and cannot be
-    /// returned as numbers.  Untruncated mode returns them as non-finite components -- the
-    /// honest answer, and unchanged from earlier releases -- and counts them here.  Capped
+    /// returned as numbers.  Untruncated mode returns them as non-finite components, as
+    /// earlier releases did, and counts them here.  Capped
     /// mode rejects them, as it rejects anything outside the box, and still counts them
     /// here, so that a caller can tell "the box rejected a representable sample" from "the
     /// box rejected a sample that could not have been returned at all".  In both modes the
@@ -859,15 +856,14 @@ template <typename RealType= double> class bi_kappa_distribution
                 {
                     // An intended sample that is outside the box and also unrepresentable is
                     // still counted, so a caller can tell the two apart.  Two things have to
-                    // be right here, and the released 2.0.0 form had neither.
+                    // be right here.
                     //
                     // *What* is tested.  Representability is a property of the velocity
                     // `R g_j`, not of the normalized coordinate `sqrt(kappa) R |n_j|` the cap
                     // test just used: the two differ by `theta` and by the rotation.  The
                     // ratio is bounded by `sqrt(3) max(theta_perp, theta_par)/min(...)`,
                     // since `|w|/sqrt(3) <= max_j |w_j| <= |w|` -- at
-                    // `theta_par/theta_perp = 2` that is 3.46, and 2.33 is the largest value
-                    // the C5/C6 geometry actually reaches.  The rotation concentrates the
+                    // `theta_par/theta_perp = 2` that is 3.46.  The rotation concentrates the
                     // largest component as readily as it spreads it, which is why the bound
                     // is not simply the theta ratio.  The counter must answer the question
                     // n_nonfinite() documents, which is about the velocity.
@@ -930,7 +926,7 @@ template <typename RealType= double> class bi_kappa_distribution
 
             if (anyOverflow)
             {
-                // Honest overflow: the intended velocity has no representation in RealType.
+                // True overflow: the intended velocity has no representation in RealType.
                 // No formation can rescue it, so it is returned as a non-finite vector and
                 // counted, never silently redrawn.  In capped mode this is unreachable for
                 // every cap a caller would write: an accepted draw has
@@ -963,7 +959,7 @@ template <typename RealType= double> class bi_kappa_distribution
     /// The basis is a function of `ub` alone, so evaluating it in the accumulator changes
     /// no decision and no stream -- it only stops the rotation from spending an ulp of the
     /// returned type before the component is formed.  With `ValueType = RealType` this is
-    /// the released 2.1.0 routine, character for character, which is why a `double`
+    /// the rotation used before the wider accumulator was introduced, so a `double`
     /// instantiation is unaffected.
     template <typename ValueType>
     static std::array<ValueType, 3> rotateFromFieldAlignedFrameIn(
@@ -1054,7 +1050,7 @@ template <typename RealType= double> class bi_kappa_distribution
     /// direction and the parameters are the working-precision values the sampler drew and
     /// the caller supplied; only the three products are widened, which is what lets the
     /// component carry a single rounding.  With `RealType = double` the accumulator is
-    /// `double` and this is the released 2.1.0 expression unchanged.
+    /// `double` and this is the earlier expression unchanged.
     static accum_point fieldAlignedG(
         typename bikappa_detail::log_accumulator<RealType>::type sqrtKappa,
         RealType theta_perp, RealType theta_par,
@@ -1091,25 +1087,6 @@ template <typename RealType= double> class bi_kappa_distribution
     static bool approximatelyEqual(RealType a, RealType b)
     {
         return approximatelyEqualIn<RealType>(a, b);
-    }
-
-    /// The cap predicate in linear form: every normalized component inside the box.
-    ///
-    /// The sampler itself no longer calls this -- it applies the algebraically identical
-    /// test `sqrt(kappa) R |n_j| <= lambda` in the log domain, before exponentiating, so that
-    /// a sample far outside the box is rejected rather than overflowed first and rejected
-    /// afterwards.  The linear form is kept because it is the published definition of the
-    /// capped law, it is what `experiments/exp2_cap_characterization` transcribes, and a
-    /// regression test checks that the two predicates accept exactly the same set wherever
-    /// both are representable.
-    static bool withinNormalizedVelocityCap(const point_type &point, RealType theta_perp,
-                                            RealType theta_par, RealType max_normalized_velocity)
-    {
-        RealType norm_x= std::abs(point[0]) / theta_perp;
-        RealType norm_y= std::abs(point[1]) / theta_perp;
-        RealType norm_z= std::abs(point[2]) / theta_par;
-        return norm_x <= max_normalized_velocity && norm_y <= max_normalized_velocity &&
-               norm_z <= max_normalized_velocity;
     }
 
     param_type m_params;

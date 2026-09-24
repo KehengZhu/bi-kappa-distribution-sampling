@@ -20,11 +20,10 @@
  * auto v = dist();                    // {vx, vy, vz}, global frame
  * @endcode
  *
- * @note **The cap is off by default**, so the default target law is the
- * bi-Maxwellian distribution itself.  Passing a finite `max_normalized_velocity`
- * opts in to a *different*, bounded target: the bi-Maxwellian law conditioned on
- * the component-wise box.  See no_cap() and param_type::capped().  This matches
- * bi_kappa_distribution; both samplers default to the law they are named after.
+ * @note **The cap defaults to 20 thermal speeds**, as in release 1.0.0 and as in
+ * bi_kappa_distribution.  For a bi-Maxwellian the probability beyond it is
+ * negligible.  Pass no_cap() to sample the bi-Maxwellian distribution itself; see
+ * no_cap() and param_type::capped().
  *
  * @see \ref usage for more recipes (seeding, external RNG, reconfiguration).
  */
@@ -39,13 +38,12 @@ template <typename RealType= double> class bi_maxwellian_distribution
       public:
         using distribution_type= bi_maxwellian_distribution<RealType>;
 
-        // The cap defaults to +infinity, i.e. off -- the same value no_cap() returns.
-        // It is spelled out here rather than as no_cap() because the enclosing class is
-        // still incomplete while this nested default argument is parsed.
+        // The cap defaults to 20 thermal speeds, as in release 1.0.0, so that code written
+        // against 1.0.0 samples the same distribution.  Pass no_cap() (= +infinity) for the
+        // uncapped distribution.
         param_type(RealType theta_perp= RealType(1.0), RealType theta_par= RealType(1.0),
                    point_type ub= point_type({RealType(0.0), RealType(0.0), RealType(1.0)}),
-                   RealType max_normalized_velocity=
-                       std::numeric_limits<RealType>::infinity())
+                   RealType max_normalized_velocity= RealType(20.0))
             : m_theta_perp(theta_perp), m_theta_par(theta_par), m_ub(ub),
               m_maxNormalizedVelocity(max_normalized_velocity)
         {
@@ -89,12 +87,11 @@ template <typename RealType= double> class bi_maxwellian_distribution
         RealType m_maxNormalizedVelocity;
     };
 
-    /// Sentinel selecting the untruncated sampler, and **the default**.  In this
-    /// mode each draw is three Gaussians with no outer acceptance-rejection loop,
-    /// and the sampled law is the full bi-Maxwellian distribution.
+    /// Sentinel selecting the untruncated sampler.  In this mode each draw is three
+    /// Gaussians with no outer acceptance-rejection loop, and the sampled law is the
+    /// full bi-Maxwellian distribution.
     ///
-    /// Naming it explicitly is equivalent to omitting the argument, and is worth
-    /// doing where the target law matters to a reader:
+    /// It must be passed explicitly, because the default cap is 20 (release 1.0.0):
     ///
     ///     bi_maxwellian_distribution<double> d(1.0, 2.0, {0,0,1},
     ///                                          bi_maxwellian_distribution<double>::no_cap());
@@ -121,7 +118,7 @@ template <typename RealType= double> class bi_maxwellian_distribution
     explicit bi_maxwellian_distribution(RealType theta_perp, RealType theta_par= RealType(1.0),
                                         point_type ub= point_type({RealType(0.0), RealType(0.0),
                                                                    RealType(1.0)}),
-                                        RealType max_normalized_velocity= no_cap())
+                                        RealType max_normalized_velocity= RealType(20.0))
         : m_params(theta_perp, theta_par, ub, max_normalized_velocity),
           m_gen(std::random_device{}()), m_standardNormal(RealType(0.0), RealType(1.0))
     {
@@ -155,9 +152,9 @@ template <typename RealType= double> class bi_maxwellian_distribution
      * @param theta_par   Thermal speed along @p ub, > 0.
      * @param ub      Magnetic-field direction {bx,by,bz} in the global frame.
      *                Need not be normalized; must be non-zero.
-     * @param max_normalized_velocity  Velocity cap in thermal speeds, or no_cap()
-     *                (the default) for the untruncated bi-Maxwellian law.  A finite
-     *                value selects a *different*, bounded target law -- see
+     * @param max_normalized_velocity  Velocity cap in thermal speeds (default 20, as in
+     *                release 1.0.0), or no_cap() for the untruncated bi-Maxwellian law.  A
+     *                finite value selects a *different*, bounded target law -- see
      *                \ref usage_bikappa_cap.  Must be > 0; passing 0 to mean
      *                "no cap" throws.
      *
@@ -172,7 +169,7 @@ template <typename RealType= double> class bi_maxwellian_distribution
      */
     void define(RealType theta_perp, RealType theta_par= RealType(1.0),
                 point_type ub= point_type({RealType(0.0), RealType(0.0), RealType(1.0)}),
-                RealType max_normalized_velocity= no_cap())
+                RealType max_normalized_velocity= RealType(20.0))
     {
         define(param_type(theta_perp, theta_par, ub, max_normalized_velocity));
     }
@@ -227,7 +224,13 @@ template <typename RealType= double> class bi_maxwellian_distribution
     // ====================================================================
     // Random engine control
     // ====================================================================
-    void seed(int s) { applySeed(m_gen, s); }
+    /// Reseed the internal engine and discard any variate cached from before, so that
+    /// seed(s) followed by n draws gives the same values however many draws came first.
+    void seed(int s)
+    {
+        applySeed(m_gen, s);
+        reset();
+    }
 
     void reset() { m_standardNormal.reset(); }
 
