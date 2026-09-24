@@ -31,7 +31,7 @@ mermaid.initialize({ startOnLoad: true, theme: theme });
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">bi-kappa<span id="projectnumber">&#160;2.0.0</span>
+   <div id="projectname">bi-kappa<span id="projectnumber">&#160;2.2.1</span>
    </div>
    <div id="projectbrief">Monte Carlo particle samplers for plasma velocity and position distributions</div>
   </td>
@@ -133,7 +133,7 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:a53f853526684eeb2cb98d0d2adc28a90" id="r_a53f853526684eeb2cb98d0d2adc28a90"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a53f853526684eeb2cb98d0d2adc28a90">speed_sq_min</a> = speed_sq_min</td></tr>
 <tr class="memitem:a2ece22d170339f79b9baf4c57aaf2aa1" id="r_a2ece22d170339f79b9baf4c57aaf2aa1"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a2ece22d170339f79b9baf4c57aaf2aa1">speed_sq_max</a> = speed_sq_max</td></tr>
 <tr class="memitem:a018eda951a34d6a0426d971210806f1a" id="r_a018eda951a34d6a0426d971210806f1a"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a018eda951a34d6a0426d971210806f1a">max_reject_tries</a> = max_reject_tries</td></tr>
-<tr class="memitem:a920ddca0a73e6a4e84038c2d4d386592" id="r_a920ddca0a73e6a4e84038c2d4d386592"><td class="memItemLeft">float&#160;</td><td class="memItemRight"><a class="el" href="#a920ddca0a73e6a4e84038c2d4d386592">pdf_upper_bound</a> = self._estimate_pdf_upper_bound(probe_points)</td></tr>
+<tr class="memitem:a369fafab6b980575339f8dff0415ca72" id="r_a369fafab6b980575339f8dff0415ca72"><td class="memItemLeft">tuple&#160;</td><td class="memItemRight"><a class="el" href="#a369fafab6b980575339f8dff0415ca72">pdf_upper_bound</a></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pro-methods" class="groupheader"><a id="pro-methods" name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
@@ -144,8 +144,9 @@ Protected Member Functions</h2></td></tr>
 
 The speed is |v| = sqrt(w); the direction is isotropic in 3D. (For a
 distribution originally posed in energy, w = |v|^2 = 2E/m, so the mass drops
-out of this generator entirely.)</pre> 
-<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00005">5</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
+out of this generator entirely.)  If speed_sq_min == speed_sq_max, every sample has
+the single speed sqrt(speed_sq_min).</pre> 
+<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00008">8</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
 </div><a name="doc-constructors" id="doc-constructors"></a><h2 id="header-doc-constructors" class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a09370c519319ce5894bb1b314a74573f" name="a09370c519319ce5894bb1b314a74573f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a09370c519319ce5894bb1b314a74573f">&#9670;&#160;</a></span>__init__()</h2>
@@ -186,7 +187,7 @@ out of this generator entirely.)</pre>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00012">12</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00016">16</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
 
 </div>
 </div>
@@ -210,9 +211,9 @@ out of this generator entirely.)</pre>
       </table>
 </div><div class="memdoc">
 <pre class="fragment">Generate a random 3D velocity vector.</pre> 
-<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00041">41</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00050">50</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
 
-<p class="reference">References <a class="el" href="general__generators_8py_source.html#l00032">sample_speed_sq()</a>.</p>
+<p class="reference">References <a class="el" href="general__generators_8py_source.html#l00039">sample_speed_sq()</a>.</p>
 
 </div>
 </div>
@@ -242,10 +243,10 @@ out of this generator entirely.)</pre>
   </tr>
 </table>
 </div><div class="memdoc">
-<pre class="fragment">Estimate the maximum value of the speed-squared PDF in the given range.</pre> 
-<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00026">26</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
+<pre class="fragment">Estimate the maximum value of the speed-squared PDF, with a 5% margin.</pre> 
+<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00033">33</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
 
-<p class="reference">References <a class="el" href="general__generators_8py_source.html#l00020">speed_sq_max</a>, <a class="el" href="general__generators_8py_source.html#l00019">speed_sq_min</a>, and <a class="el" href="general__generators_8py_source.html#l00018">speed_sq_pdf</a>.</p>
+<p class="reference">References <a class="el" href="general__generators_8py_source.html#l00026">speed_sq_max</a>, <a class="el" href="general__generators_8py_source.html#l00025">speed_sq_min</a>, and <a class="el" href="general__generators_8py_source.html#l00024">speed_sq_pdf</a>.</p>
 
 </div>
 </div>
@@ -268,11 +269,11 @@ out of this generator entirely.)</pre>
       </table>
 </div><div class="memdoc">
 <pre class="fragment">Sample w = |v|^2 using rejection sampling.</pre> 
-<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00032">32</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00039">39</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
 
-<p class="reference">References <a class="el" href="general__generators_8py_source.html#l00021">max_reject_tries</a>, <a class="el" href="general__generators_8py_source.html#l00024">pdf_upper_bound</a>, <a class="el" href="general__generators_8py_source.html#l00020">speed_sq_max</a>, <a class="el" href="general__generators_8py_source.html#l00019">speed_sq_min</a>, and <a class="el" href="general__generators_8py_source.html#l00018">speed_sq_pdf</a>.</p>
+<p class="reference">References <a class="el" href="general__generators_8py_source.html#l00027">max_reject_tries</a>, <a class="el" href="general__generators_8py_source.html#l00030">pdf_upper_bound</a>, <a class="el" href="general__generators_8py_source.html#l00026">speed_sq_max</a>, <a class="el" href="general__generators_8py_source.html#l00025">speed_sq_min</a>, and <a class="el" href="general__generators_8py_source.html#l00024">speed_sq_pdf</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00157">general_generators.FieldAlignedVelocityGenerator.__call__()</a>, and <a class="el" href="general__generators_8py_source.html#l00041">__call__()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00178">general_generators.FieldAlignedVelocityGenerator.__call__()</a>, and <a class="el" href="general__generators_8py_source.html#l00050">__call__()</a>.</p>
 
 </div>
 </div>
@@ -289,27 +290,29 @@ out of this generator entirely.)</pre>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00021">21</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00027">27</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00080">general_generators.GeneralPositionGenerator.__call__()</a>, <a class="el" href="general__generators_8py_source.html#l00148">general_generators.FieldAlignedVelocityGenerator.sample_speed_sq()</a>, and <a class="el" href="general__generators_8py_source.html#l00032">sample_speed_sq()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00178">general_generators.FieldAlignedVelocityGenerator.__call__()</a>, <a class="el" href="general__generators_8py_source.html#l00089">general_generators.GeneralPositionGenerator.__call__()</a>, <a class="el" href="general__generators_8py_source.html#l00167">general_generators.FieldAlignedVelocityGenerator.sample_speed_sq()</a>, and <a class="el" href="general__generators_8py_source.html#l00039">sample_speed_sq()</a>.</p>
 
 </div>
 </div>
-<a id="a920ddca0a73e6a4e84038c2d4d386592" name="a920ddca0a73e6a4e84038c2d4d386592"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a920ddca0a73e6a4e84038c2d4d386592">&#9670;&#160;</a></span>pdf_upper_bound</h2>
+<a id="a369fafab6b980575339f8dff0415ca72" name="a369fafab6b980575339f8dff0415ca72"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a369fafab6b980575339f8dff0415ca72">&#9670;&#160;</a></span>pdf_upper_bound</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">float general_generators.GeneralVelocityGenerator.pdf_upper_bound = self._estimate_pdf_upper_bound(probe_points)</td>
+          <td class="memname">tuple general_generators.GeneralVelocityGenerator.pdf_upper_bound</td>
         </tr>
       </table>
 </div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">=  (self._estimate_pdf_upper_bound(probe_points)</div>
+<div class="line">                                <span class="keywordflow">if</span> speed_sq_min &lt; speed_sq_max <span class="keywordflow">else</span> 0.0)</div>
+</div><!-- fragment -->
+<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00030">30</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00024">24</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
-
-<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00148">general_generators.FieldAlignedVelocityGenerator.sample_speed_sq()</a>, and <a class="el" href="general__generators_8py_source.html#l00032">sample_speed_sq()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00167">general_generators.FieldAlignedVelocityGenerator.sample_speed_sq()</a>, and <a class="el" href="general__generators_8py_source.html#l00039">sample_speed_sq()</a>.</p>
 
 </div>
 </div>
@@ -325,9 +328,9 @@ out of this generator entirely.)</pre>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00020">20</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00026">26</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00143">general_generators.FieldAlignedVelocityGenerator._estimate_pdf_upper_bound()</a>, <a class="el" href="general__generators_8py_source.html#l00026">_estimate_pdf_upper_bound()</a>, <a class="el" href="general__generators_8py_source.html#l00148">general_generators.FieldAlignedVelocityGenerator.sample_speed_sq()</a>, and <a class="el" href="general__generators_8py_source.html#l00032">sample_speed_sq()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00162">general_generators.FieldAlignedVelocityGenerator._estimate_pdf_upper_bound()</a>, <a class="el" href="general__generators_8py_source.html#l00033">_estimate_pdf_upper_bound()</a>, <a class="el" href="general__generators_8py_source.html#l00167">general_generators.FieldAlignedVelocityGenerator.sample_speed_sq()</a>, and <a class="el" href="general__generators_8py_source.html#l00039">sample_speed_sq()</a>.</p>
 
 </div>
 </div>
@@ -343,9 +346,9 @@ out of this generator entirely.)</pre>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00019">19</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00025">25</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00143">general_generators.FieldAlignedVelocityGenerator._estimate_pdf_upper_bound()</a>, <a class="el" href="general__generators_8py_source.html#l00026">_estimate_pdf_upper_bound()</a>, <a class="el" href="general__generators_8py_source.html#l00148">general_generators.FieldAlignedVelocityGenerator.sample_speed_sq()</a>, and <a class="el" href="general__generators_8py_source.html#l00032">sample_speed_sq()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00162">general_generators.FieldAlignedVelocityGenerator._estimate_pdf_upper_bound()</a>, <a class="el" href="general__generators_8py_source.html#l00033">_estimate_pdf_upper_bound()</a>, <a class="el" href="general__generators_8py_source.html#l00167">general_generators.FieldAlignedVelocityGenerator.sample_speed_sq()</a>, and <a class="el" href="general__generators_8py_source.html#l00039">sample_speed_sq()</a>.</p>
 
 </div>
 </div>
@@ -361,9 +364,9 @@ out of this generator entirely.)</pre>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00018">18</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00024">24</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00143">general_generators.FieldAlignedVelocityGenerator._estimate_pdf_upper_bound()</a>, <a class="el" href="general__generators_8py_source.html#l00026">_estimate_pdf_upper_bound()</a>, <a class="el" href="general__generators_8py_source.html#l00148">general_generators.FieldAlignedVelocityGenerator.sample_speed_sq()</a>, and <a class="el" href="general__generators_8py_source.html#l00032">sample_speed_sq()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00162">general_generators.FieldAlignedVelocityGenerator._estimate_pdf_upper_bound()</a>, <a class="el" href="general__generators_8py_source.html#l00033">_estimate_pdf_upper_bound()</a>, <a class="el" href="general__generators_8py_source.html#l00167">general_generators.FieldAlignedVelocityGenerator.sample_speed_sq()</a>, and <a class="el" href="general__generators_8py_source.html#l00039">sample_speed_sq()</a>.</p>
 
 </div>
 </div>

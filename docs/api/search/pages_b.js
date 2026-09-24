@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['max_5freject_5ftries_0',['Rejection-sampler knobs: &lt;span class=&quot;tt&quot;&gt;probe_points&lt;/span&gt;, &lt;span class=&quot;tt&quot;&gt;max_reject_tries&lt;/span&gt;',['../parameters.html#params_rejection',1,'']]],
-  ['maxwellian_20velocity_20samples_1',['Bi-Maxwellian velocity samples',['../usage.html#usage_bimaxwell',1,'']]]
+  ['kappa_201_202_0',['kappa 1 2',['../parameters.html#params_precision',1,'Finite precision near kappa = 1/2'],['../usage.html#usage_overflow',1,'Overflow near kappa = 1/2']]],
+  ['kappa_20distribution_20sampling_1',['bi-kappa-distribution-sampling',['../index.html',1,'']]],
+  ['kappa_20velocities_2',['Bi-Kappa velocities',['../usage.html#usage_bikappa',1,'']]]
 ];

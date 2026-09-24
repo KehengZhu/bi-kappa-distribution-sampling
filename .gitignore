@@ -14,9 +14,7 @@ wheels/
 .pytest_cache/
 .mypy_cache/
 
-# Generic result/output files
-# In-flight writes: every experiment job writes to <name>.part and renames atomically,
-# so a .part file is by definition an incomplete artifact and must never be committed.
+# Generic result/output files (*.part: incomplete writes of the experiment scripts)
 *.part
 *.out
 *.log
@@ -80,55 +78,21 @@ paper/overleaf
 DISTRIBUTION_NOTES.md
 CLAUDE.md
 
-# ---------------------------------------------------------------------------
-# Experiment provenance exceptions (R1.2 reproducibility)
-#
-# The generic *.csv / *.pdf / *.txt rules above are deliberately kept, but a
-# small, enumerated set of experiment artifacts must be tracked or the reported
-# numbers are not reproducible.  Four tiers, and only three of them are tracked:
-#
-#   source/config        exp*_*.cpp, exp*_*.py, GNUmakefile, README.md
-#                        -> already tracked; no rule needed
-#   manifest/provenance  raw/manifest.csv, raw/checksums.sha256, env.json
-#                        -> whitelisted below
-#   compact summaries    results/*.json, results/*.md
-#                        -> already tracked; no rule needed
-#   manuscript figures   results/*.pdf  (vector, canonical)
-#                        -> whitelisted below
-#
-# NOT tracked, on purpose:
-#   raw/*.bin            bulk draws, ~300 MB, regenerable via `make run`
-#   results/*.png        raster preview of the canonical .pdf, regenerable
-#   exp*_*.exe           build output
-#
-# Keep these patterns file-specific.  Do not broaden to `!experiments/**`.
-# ---------------------------------------------------------------------------
-# Smoke output is a rehearsal, never evidence.  The generic rules above do not reach
-# `raw/smoke/**/*.jsonl`, and the whitelists below would pull `results/smoke/*.csv` in, so
-# both are excluded explicitly and before those whitelists.  Experiment 6 swept its smoke
-# streams into `make oracle` and `make checksums`, which is how a rehearsal ends up inside a
-# production manifest.
+# Experiment artifacts that are tracked despite the generic rules above: the manifests and
+# checksums of the raw data, and the compact results and figures the paper is built from.
+# The raw data (raw/*.bin) and build outputs stay untracked; they are regenerable.
 experiments/*/raw/smoke/
 experiments/*/results/smoke/
-
 !experiments/*/raw/manifest.csv
 !experiments/*/raw/checksums.sha256
-!experiments/*/results/*.pdf
+!experiments/*/raw/raw_checksums.sha256
+!experiments/*/checksums.sha256
 !experiments/*/*.env.json
-
-# Experiment 6 additionally commits its source data and its figures.  Its figure
-# script reads only these CSVs -- never the bulk binaries -- so a reviewer who has
-# the repository can regenerate every figure and check every plotted point without
-# rerunning a single draw.  The 600-dpi PNG previews stay untracked: they are
-# regenerable from the tracked PDF/SVG pair.  Same rule as above -- file-specific
-# patterns only.
+!experiments/*/results/*.pdf
 !experiments/*/results/*.csv
 !experiments/*/results/*.tex
 !experiments/*/figures/*.pdf
 !experiments/*/figures/*.svg
-!experiments/*/raw/raw_checksums.sha256
-!experiments/*/checksums.sha256
 
-uv.lock
 .DS_Store
 .clang-format

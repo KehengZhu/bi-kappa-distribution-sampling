@@ -1,8 +1,9 @@
 var searchData=
 [
-  ['field_20aligned_20velocity_20anisotropic_0',['Field-aligned velocity (anisotropic)',['../usage.html#usage_field_aligned',1,'']]],
-  ['field_20direction_3a_20ub_1',['Field direction: &lt;span class=&quot;tt&quot;&gt;ub&lt;/span&gt;',['../parameters.html#params_ub',1,'']]],
-  ['field_5faligned_5fvelocity_5fgenerator_2',['field_aligned_velocity_generator',['../parameters.html#params_fieldaligned',1,'']]],
-  ['five_20samplers_3',['The five samplers',['../index.html#autotoc_md4',1,'']]],
-  ['frame_20the_20cap_20is_20applied_20in_4',['Which frame the cap is applied in',['../usage.html#usage_cap_frame',1,'']]]
+  ['demo_0',['Building the tests and the demo',['../usage.html#usage_build',1,'']]],
+  ['demo_20program_1',['Demo program',['../usage.html#usage_full',1,'']]],
+  ['density_2',['density',['../usage.html#usage_velocity',1,'Isotropic velocities from your own density'],['../usage.html#usage_position',1,'Positions from your own density']]],
+  ['direction_3a_20ub_3',['Field direction: ub',['../parameters.html#params_ub',1,'']]],
+  ['distribution_20sampling_4',['bi-kappa-distribution-sampling',['../index.html',1,'']]],
+  ['documentation_5',['Documentation',['../index.html#autotoc_md6',1,'']]]
 ];

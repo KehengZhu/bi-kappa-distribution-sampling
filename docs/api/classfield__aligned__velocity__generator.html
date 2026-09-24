@@ -31,7 +31,7 @@ mermaid.initialize({ startOnLoad: true, theme: theme });
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">bi-kappa<span id="projectnumber">&#160;2.0.0</span>
+   <div id="projectname">bi-kappa<span id="projectnumber">&#160;2.2.1</span>
    </div>
    <div id="projectbrief">Monte Carlo particle samplers for plasma velocity and position distributions</div>
   </td>
@@ -135,10 +135,11 @@ Public Types</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 id="header-pub-methods" class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:ab3a3e7f1c92da8b8a21ef794850e7d4d" id="r_ab3a3e7f1c92da8b8a21ef794850e7d4d"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#ab3a3e7f1c92da8b8a21ef794850e7d4d">field_aligned_velocity_generator</a> ()</td></tr>
-<tr class="memitem:abf45c2717651aaeb820addcec81af9ef" id="r_abf45c2717651aaeb820addcec81af9ef"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#abf45c2717651aaeb820addcec81af9ef">field_aligned_velocity_generator</a> (<a class="el" href="#a5e27731348fd1d08f13c4a2cc280eb26">speed_sq_pdf_function</a> speed_sq_pdf, RealType speed_sq_min, RealType speed_sq_max, RealType theta_perp, <a class="el" href="#ae31b56b2be9502231edd5d3ab87516dc">point_type</a> ub, int parallel_sign, int probe_points=1024, int max_reject_tries=100000)</td></tr>
-<tr class="memitem:aadd6d41ebcbbe0650097ae75df83f1fe" id="r_aadd6d41ebcbbe0650097ae75df83f1fe"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#aadd6d41ebcbbe0650097ae75df83f1fe">define</a> (<a class="el" href="#a5e27731348fd1d08f13c4a2cc280eb26">speed_sq_pdf_function</a> speed_sq_pdf, RealType speed_sq_min, RealType speed_sq_max, RealType theta_perp, <a class="el" href="#ae31b56b2be9502231edd5d3ab87516dc">point_type</a> ub, int parallel_sign, int probe_points=1024, int max_reject_tries=100000)</td></tr>
-<tr class="memdesc:aadd6d41ebcbbe0650097ae75df83f1fe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Configure the sampler: user-supplied law along the field, Maxwellian across it.  <br /></td></tr>
+<tr class="memitem:aa6eb7095c90db921a6bc1ade0692682f" id="r_aa6eb7095c90db921a6bc1ade0692682f"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#aa6eb7095c90db921a6bc1ade0692682f">field_aligned_velocity_generator</a> (<a class="el" href="#a5e27731348fd1d08f13c4a2cc280eb26">speed_sq_pdf_function</a> speed_sq_pdf, RealType speed_sq_min, RealType speed_sq_max, RealType theta_perp, <a class="el" href="#ae31b56b2be9502231edd5d3ab87516dc">point_type</a> ub, int parallel_sign, int probe_points=1024, int max_reject_tries=100000, RealType max_normalized_velocity=RealType(20.0))</td></tr>
+<tr class="memitem:ac6ef7341a4268c3fcc446143fa514eb4" id="r_ac6ef7341a4268c3fcc446143fa514eb4"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#ac6ef7341a4268c3fcc446143fa514eb4">define</a> (<a class="el" href="#a5e27731348fd1d08f13c4a2cc280eb26">speed_sq_pdf_function</a> speed_sq_pdf, RealType speed_sq_min, RealType speed_sq_max, RealType theta_perp, <a class="el" href="#ae31b56b2be9502231edd5d3ab87516dc">point_type</a> ub, int parallel_sign, int probe_points=1024, int max_reject_tries=100000, RealType max_normalized_velocity=RealType(20.0))</td></tr>
+<tr class="memdesc:ac6ef7341a4268c3fcc446143fa514eb4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Configure the sampler: user-supplied law along the field, Maxwellian across it.  <br /></td></tr>
 <tr class="memitem:a7de700c28adc297d1fcee9864767266a" id="r_a7de700c28adc297d1fcee9864767266a"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#a7de700c28adc297d1fcee9864767266a">seed</a> (int s)</td></tr>
+<tr class="memdesc:a7de700c28adc297d1fcee9864767266a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reseed the internal engine and discard any variate cached from before, so that seed(s) followed by n draws gives the same values however many draws came first.  <br /></td></tr>
 <tr class="memitem:ac82f11cf21e63d70d3237dff6abe507d" id="r_ac82f11cf21e63d70d3237dff6abe507d"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#ac82f11cf21e63d70d3237dff6abe507d">reset</a> ()</td></tr>
 <tr class="memitem:a2cd15538d0895d3e32e0e1b144cda026" id="r_a2cd15538d0895d3e32e0e1b144cda026"><td class="memTemplParams" colspan="2">template&lt;typename GeneratorType&gt; </td></tr>
 <tr class="memitem:a2cd15538d0895d3e32e0e1b144cda026 template"><td class="memItemLeft"><a class="el" href="#ae31b56b2be9502231edd5d3ab87516dc">point_type</a>&#160;</td><td class="memItemRight"><a class="el" href="#a2cd15538d0895d3e32e0e1b144cda026">operator()</a> (GeneratorType &amp;gen)</td></tr>
@@ -148,25 +149,31 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:af09f242381a7c249a7d6e7380923dfbe" id="r_af09f242381a7c249a7d6e7380923dfbe"><td class="memItemLeft">RealType&#160;</td><td class="memItemRight"><a class="el" href="#af09f242381a7c249a7d6e7380923dfbe">thetaPerp</a> () const</td></tr>
 <tr class="memitem:a96898ae3e16bbee186c3f54f0c37c4ed" id="r_a96898ae3e16bbee186c3f54f0c37c4ed"><td class="memItemLeft"><a class="el" href="#ae31b56b2be9502231edd5d3ab87516dc">point_type</a>&#160;</td><td class="memItemRight"><a class="el" href="#a96898ae3e16bbee186c3f54f0c37c4ed">ub</a> () const</td></tr>
 <tr class="memitem:a6de55ee37ce4fc32dad85c756c741d70" id="r_a6de55ee37ce4fc32dad85c756c741d70"><td class="memItemLeft">RealType&#160;</td><td class="memItemRight"><a class="el" href="#a6de55ee37ce4fc32dad85c756c741d70">parallelSign</a> () const</td></tr>
+<tr class="memitem:a869723e07de463de4d7bd201ab2804e5" id="r_a869723e07de463de4d7bd201ab2804e5"><td class="memItemLeft">RealType&#160;</td><td class="memItemRight"><a class="el" href="#a869723e07de463de4d7bd201ab2804e5">max_normalized_velocity</a> () const</td></tr>
 <tr class="memitem:a56c41a7ef49dece11867ca6a46eaab69" id="r_a56c41a7ef49dece11867ca6a46eaab69"><td class="memItemLeft">RealType&#160;</td><td class="memItemRight"><a class="el" href="#a56c41a7ef49dece11867ca6a46eaab69">pdfUpperBound</a> () const</td></tr>
 <tr class="memitem:a6a6b0c3a56a7c190d8ed4804de8453fb" id="r_a6a6b0c3a56a7c190d8ed4804de8453fb"><td class="memItemLeft"><a class="el" href="#ae31b56b2be9502231edd5d3ab87516dc">point_type</a>&#160;</td><td class="memItemRight"><a class="el" href="#a6a6b0c3a56a7c190d8ed4804de8453fb">rotate_from_fieldAligned_frame</a> (const <a class="el" href="#ae31b56b2be9502231edd5d3ab87516dc">point_type</a> &amp;local, const <a class="el" href="#ae31b56b2be9502231edd5d3ab87516dc">point_type</a> &amp;ub) const</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 id="header-pub-static-methods" class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
+Static Public Member Functions</h2></td></tr>
+<tr class="memitem:a1dc9974c1a30385f4e41cfafd8738f3e" id="r_a1dc9974c1a30385f4e41cfafd8738f3e"><td class="memItemLeft">static constexpr RealType&#160;</td><td class="memItemRight"><a class="el" href="#a1dc9974c1a30385f4e41cfafd8738f3e">no_cap</a> ()</td></tr>
+<tr class="memdesc:a1dc9974c1a30385f4e41cfafd8738f3e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Value of <code class="param">max_normalized_velocity</code> that removes the perpendicular cap.  <br /></td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;typename RealType = double&gt;<br />
 class field_aligned_velocity_generator&lt; RealType &gt;</div><p>Samples field-aligned velocities: an arbitrary parallel speed-squared distribution along B, with a Maxwellian perpendicular spread. </p>
-<p>The parallel component is w_par = v_par^2, drawn from a user-defined distribution g(w_par); the parallel speed is |v_par| = sqrt(w_par) and its direction is set by a fixed sign (+1 along B, -1 opposite B). (For a distribution originally posed in energy, w_par = v_par^2 = 2E_par/m, so the mass drops out.) The two perpendicular components are independent Gaussians with N(0, theta_perp^2/2), i.e. a Maxwellian with thermal speed theta_perp (same convention as <a class="el" href="classbi__maxwellian__distribution.html" title="Bi-Maxwellian distribution for 3D velocity sampling.">bi_maxwellian_distribution</a>). The result is returned in the global (lab) frame.</p>
+<p>The parallel component is w_par = v_par^2, drawn from a user-defined distribution g(w_par); the parallel speed is |v_par| = sqrt(w_par) and its direction is set by a fixed sign (+1 along B, -1 opposite B). (For a distribution originally posed in energy, w_par = v_par^2 = 2E_par/m, so the mass drops out.) If speed_sq_min == speed_sq_max, every sample has the single parallel speed sqrt(speed_sq_min). The two perpendicular components are independent Gaussians with N(0, theta_perp^2/2), i.e. a Maxwellian with thermal speed theta_perp (same convention as <a class="el" href="classbi__maxwellian__distribution.html" title="Bi-Maxwellian distribution for 3D velocity sampling.">bi_maxwellian_distribution</a>), each capped at max_normalized_velocity thermal speeds (default 20, as in <a class="el" href="classbi__maxwellian__distribution.html" title="Bi-Maxwellian distribution for 3D velocity sampling.">bi_maxwellian_distribution</a>). The result is returned in the global (lab) frame.</p>
 <div class="fragment"><div class="line"><span class="keyword">auto</span> gW = [](<span class="keywordtype">double</span> w){ <span class="keywordflow">return</span> std::exp(-0.5 * w); }; <span class="comment">// any positive g(w), w = v_par^2</span></div>
 <div class="line"><a class="code hl_class" href="classfield__aligned__velocity__generator.html">field_aligned_velocity_generator&lt;double&gt;</a> gen;</div>
-<div class="line">gen.<a class="code hl_function" href="#aadd6d41ebcbbe0650097ae75df83f1fe">define</a>(gW, 0.0, 40.0, 1.0, {0, 0, 1}, +1);        <span class="comment">// g, v2_min, v2_max,</span></div>
+<div class="line">gen.<a class="code hl_function" href="#ac6ef7341a4268c3fcc446143fa514eb4">define</a>(gW, 0.0, 40.0, 1.0, {0, 0, 1}, +1);        <span class="comment">// g, v2_min, v2_max,</span></div>
 <div class="line">                                                       <span class="comment">// theta_perp, B, sign</span></div>
 <div class="line">gen.<a class="code hl_function" href="#a7de700c28adc297d1fcee9864767266a">seed</a>(12345);</div>
 <div class="line"><span class="keyword">auto</span> v = gen();                                        <span class="comment">// {vx, vy, vz}</span></div>
-<div class="ttc" id="aclassfield__aligned__velocity__generator_html"><div class="ttname"><a href="classfield__aligned__velocity__generator.html">field_aligned_velocity_generator</a></div><div class="ttdoc">Samples field-aligned velocities: an arbitrary parallel speed-squared distribution along B,...</div><div class="ttdef"><b>Definition</b> <a href="field__aligned__velocity__generator_8_h_source.html#l00036">field_aligned_velocity_generator.H:37</a></div></div>
-<div class="ttc" id="aclassfield__aligned__velocity__generator_html_a7de700c28adc297d1fcee9864767266a"><div class="ttname"><a href="#a7de700c28adc297d1fcee9864767266a">field_aligned_velocity_generator::seed</a></div><div class="ttdeci">void seed(int s)</div><div class="ttdef"><b>Definition</b> <a href="field__aligned__velocity__generator_8_h_source.html#l00165">field_aligned_velocity_generator.H:165</a></div></div>
-<div class="ttc" id="aclassfield__aligned__velocity__generator_html_aadd6d41ebcbbe0650097ae75df83f1fe"><div class="ttname"><a href="#aadd6d41ebcbbe0650097ae75df83f1fe">field_aligned_velocity_generator::define</a></div><div class="ttdeci">void define(speed_sq_pdf_function speed_sq_pdf, RealType speed_sq_min, RealType speed_sq_max, RealType theta_perp, point_type ub, int parallel_sign, int probe_points=1024, int max_reject_tries=100000)</div><div class="ttdoc">Configure the sampler: user-supplied law along the field, Maxwellian across it.</div><div class="ttdef"><b>Definition</b> <a href="field__aligned__velocity__generator_8_h_source.html#l00095">field_aligned_velocity_generator.H:95</a></div></div>
-</div><!-- fragment --><dl class="section see"><dt>See also</dt><dd><a class="el" href="usage.html" title="Usage Examples">Usage Examples</a> for more recipes. </dd></dl>
+<div class="ttc" id="aclassfield__aligned__velocity__generator_html"><div class="ttname"><a href="classfield__aligned__velocity__generator.html">field_aligned_velocity_generator</a></div><div class="ttdoc">Samples field-aligned velocities: an arbitrary parallel speed-squared distribution along B,...</div><div class="ttdef"><b>Definition</b> <a href="field__aligned__velocity__generator_8_h_source.html#l00038">field_aligned_velocity_generator.H:39</a></div></div>
+<div class="ttc" id="aclassfield__aligned__velocity__generator_html_a7de700c28adc297d1fcee9864767266a"><div class="ttname"><a href="#a7de700c28adc297d1fcee9864767266a">field_aligned_velocity_generator::seed</a></div><div class="ttdeci">void seed(int s)</div><div class="ttdoc">Reseed the internal engine and discard any variate cached from before, so that seed(s) followed by n ...</div><div class="ttdef"><b>Definition</b> <a href="field__aligned__velocity__generator_8_h_source.html#l00192">field_aligned_velocity_generator.H:192</a></div></div>
+<div class="ttc" id="aclassfield__aligned__velocity__generator_html_ac6ef7341a4268c3fcc446143fa514eb4"><div class="ttname"><a href="#ac6ef7341a4268c3fcc446143fa514eb4">field_aligned_velocity_generator::define</a></div><div class="ttdeci">void define(speed_sq_pdf_function speed_sq_pdf, RealType speed_sq_min, RealType speed_sq_max, RealType theta_perp, point_type ub, int parallel_sign, int probe_points=1024, int max_reject_tries=100000, RealType max_normalized_velocity=RealType(20.0))</div><div class="ttdoc">Configure the sampler: user-supplied law along the field, Maxwellian across it.</div><div class="ttdef"><b>Definition</b> <a href="field__aligned__velocity__generator_8_h_source.html#l00108">field_aligned_velocity_generator.H:108</a></div></div>
+</div><!-- fragment --><dl class="section see"><dt>See also</dt><dd><a class="el" href="usage.html" title="Usage examples">Usage examples</a> for more recipes. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00036">36</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00038">38</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
 </div><a name="doc-typedef-members" id="doc-typedef-members"></a><h2 id="header-doc-typedef-members" class="groupheader">Member Typedef Documentation</h2>
 <a id="ae31b56b2be9502231edd5d3ab87516dc" name="ae31b56b2be9502231edd5d3ab87516dc"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ae31b56b2be9502231edd5d3ab87516dc">&#9670;&#160;</a></span>point_type</h2>
@@ -182,7 +189,7 @@ template&lt;typename RealType = double&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00040">40</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00042">42</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
 
 </div>
 </div>
@@ -200,7 +207,7 @@ template&lt;typename RealType = double&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00039">39</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00041">41</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
 
 </div>
 </div>
@@ -218,7 +225,7 @@ template&lt;typename RealType = double&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00041">41</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00043">43</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
 
 </div>
 </div>
@@ -248,14 +255,14 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00043">43</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00045">45</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00054">field_aligned_velocity_generator()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00057">field_aligned_velocity_generator()</a>.</p>
 
 </div>
 </div>
-<a id="abf45c2717651aaeb820addcec81af9ef" name="abf45c2717651aaeb820addcec81af9ef"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abf45c2717651aaeb820addcec81af9ef">&#9670;&#160;</a></span>field_aligned_velocity_generator() <span class="overload">[2/2]</span></h2>
+<a id="aa6eb7095c90db921a6bc1ade0692682f" name="aa6eb7095c90db921a6bc1ade0692682f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa6eb7095c90db921a6bc1ade0692682f">&#9670;&#160;</a></span>field_aligned_velocity_generator() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -303,7 +310,12 @@ template&lt;typename RealType = double&gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>max_reject_tries</em></span><span class="paramdefsep"> = </span><span class="paramdefval">100000</span>&#160;)</td>
+          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>max_reject_tries</em></span><span class="paramdefsep"> = </span><span class="paramdefval">100000</span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">RealType</td>          <td class="paramname"><span class="paramname"><em>max_normalized_velocity</em></span><span class="paramdefsep"> = </span><span class="paramdefval">RealType(20.0)</span>&#160;)</td>
         </tr>
       </table>
   </td>
@@ -313,15 +325,15 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00054">54</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00057">57</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
 
-<p class="reference">References <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00043">field_aligned_velocity_generator()</a>, <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00095">define()</a>, and <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00207">ub()</a>.</p>
+<p class="reference">References <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00045">field_aligned_velocity_generator()</a>, <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00108">define()</a>, <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00254">max_normalized_velocity()</a>, and <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00252">ub()</a>.</p>
 
 </div>
 </div>
 <a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Member Function Documentation</h2>
-<a id="aadd6d41ebcbbe0650097ae75df83f1fe" name="aadd6d41ebcbbe0650097ae75df83f1fe"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aadd6d41ebcbbe0650097ae75df83f1fe">&#9670;&#160;</a></span>define()</h2>
+<a id="ac6ef7341a4268c3fcc446143fa514eb4" name="ac6ef7341a4268c3fcc446143fa514eb4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac6ef7341a4268c3fcc446143fa514eb4">&#9670;&#160;</a></span>define()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -369,7 +381,12 @@ template&lt;typename RealType = double&gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>max_reject_tries</em></span><span class="paramdefsep"> = </span><span class="paramdefval">100000</span>&#160;)</td>
+          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>max_reject_tries</em></span><span class="paramdefsep"> = </span><span class="paramdefval">100000</span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">RealType</td>          <td class="paramname"><span class="paramname"><em>max_normalized_velocity</em></span><span class="paramdefsep"> = </span><span class="paramdefval">RealType(20.0)</span>&#160;)</td>
         </tr>
       </table>
   </td>
@@ -384,28 +401,91 @@ template&lt;typename RealType = double&gt; </div>
   <table class="params">
     <tr><td class="paramname">speed_sq_pdf</td><td>Your g(w) for the <b>parallel</b> component, whose argument is v_par squared, not v_par. Need not be normalized; must be finite, non-negative, and positive somewhere in range. </td></tr>
     <tr><td class="paramname">speed_sq_min</td><td>Lower end of the sampled v_par^2, &gt;= 0. </td></tr>
-    <tr><td class="paramname">speed_sq_max</td><td>Upper end, &gt; <code class="param">speed_sq_min</code>. A hard support. </td></tr>
+    <tr><td class="paramname">speed_sq_max</td><td>Upper end, &gt;= <code class="param">speed_sq_min</code>. A hard support. If it equals <code class="param">speed_sq_min</code>, every sample has the parallel speed sqrt(speed_sq_min) and <code class="param">speed_sq_pdf</code> is not evaluated. </td></tr>
     <tr><td class="paramname">theta_perp</td><td>Thermal speed of the two perpendicular components, &gt; 0. Each is N(0, theta_perp^2/2), the same convention as <a class="el" href="classbi__maxwellian__distribution.html" title="Bi-Maxwellian distribution for 3D velocity sampling.">bi_maxwellian_distribution</a>. </td></tr>
     <tr><td class="paramname">ub</td><td>Magnetic-field direction {bx,by,bz}. Need not be normalized; must be non-zero. </td></tr>
     <tr><td class="paramname">parallel_sign</td><td>Exactly +1 (parallel component along <code class="param">ub</code>) or -1 (opposite). This makes the result <b>one-sided</b>: every sample streams the same way along the field, which is what you want for a beam and not what you want for a symmetric population. For the symmetric case draw the sign yourself, or use <a class="el" href="classbi__maxwellian__distribution.html" title="Bi-Maxwellian distribution for 3D velocity sampling.">bi_maxwellian_distribution</a> / <a class="el" href="classbi__kappa__distribution.html" title="Bi-Kappa distribution class for sampling 3D velocity vectors.">bi_kappa_distribution</a>. </td></tr>
-    <tr><td class="paramname">probe_points</td><td>Envelope-estimation grid; see <a class="el" href="parameters.html#params_rejection" title="Rejection-sampler knobs: &lt;tt&gt;probe_points&lt;/tt&gt;, &lt;tt&gt;max_reject_tries&lt;/tt&gt;">Rejection-sampler knobs: <span class="tt">probe_points</span>, <span class="tt">max_reject_tries</span></a> for the silent-bias failure mode. Must be &gt; 1. </td></tr>
-    <tr><td class="paramname">max_reject_tries</td><td>Candidate draws per sample before operator() throws. Must be &gt; 0.</td></tr>
+    <tr><td class="paramname">probe_points</td><td>Envelope-estimation grid; see <a class="el" href="parameters.html#params_rejection" title="Rejection-sampler settings: probe_points, max_reject_tries">Rejection-sampler settings: probe_points, max_reject_tries</a> for the silent-bias failure mode. Must be &gt;= 64. </td></tr>
+    <tr><td class="paramname">max_reject_tries</td><td>Candidate draws per sample before operator() throws. Must be &gt; 0. </td></tr>
+    <tr><td class="paramname">max_normalized_velocity</td><td>Cap on each perpendicular component in units of theta_perp: a pair with |v_perp_i| &gt; cap*theta_perp is redrawn. Default 20, as in <a class="el" href="classbi__maxwellian__distribution.html" title="Bi-Maxwellian distribution for 3D velocity sampling.">bi_maxwellian_distribution</a>; <a class="el" href="#a1dc9974c1a30385f4e41cfafd8738f3e" title="Value of max_normalized_velocity that removes the perpendicular cap.">no_cap()</a> removes it. Must be &gt; 0.</td></tr>
   </table>
   </dd>
 </dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
-    <tr><td class="paramname">std::invalid_argument</td><td>on a null callable, a bad range, a non-positive <code class="param">theta_perp</code>, a zero <code class="param">ub</code>, a <code class="param">parallel_sign</code> other than ±1, or a non-positive knob.</td></tr>
+    <tr><td class="paramname">std::invalid_argument</td><td>on a null callable, a bad range, a non-positive <code class="param">theta_perp</code>, a zero <code class="param">ub</code>, a <code class="param">parallel_sign</code> other than ±1, <code class="param">probe_points</code> &lt; 64, or a non-positive <code class="param">max_reject_tries</code> or cap.</td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="parameters.html" title="Parameter reference">Parameter reference</a> for the full table, <a class="el" href="usage.html#usage_field_aligned" title="Field-aligned velocity (anisotropic)">Field-aligned velocity (anisotropic)</a> for a recipe. </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="parameters.html" title="Parameter reference">Parameter reference</a> for the full table, <a class="el" href="usage.html#usage_field_aligned" title="Field-aligned velocities">Field-aligned velocities</a> for a recipe. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00095">95</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00108">108</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
 
-<p class="reference">References <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00167">reset()</a>, and <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00207">ub()</a>.</p>
+<p class="reference">References <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00254">max_normalized_velocity()</a>, <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00198">reset()</a>, and <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00252">ub()</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00054">field_aligned_velocity_generator()</a>, <a class="el" href="main_8cpp_source.html#l00016">main()</a>, and <a class="el" href="test__suite_8_h_source.html#l01263">test_define_field_aligned()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00057">field_aligned_velocity_generator()</a>, and <a class="el" href="main_8cpp_source.html#l00015">main()</a>.</p>
+
+</div>
+</div>
+<a id="a869723e07de463de4d7bd201ab2804e5" name="a869723e07de463de4d7bd201ab2804e5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a869723e07de463de4d7bd201ab2804e5">&#9670;&#160;</a></span>max_normalized_velocity()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename RealType = double&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">RealType <a class="el" href="classfield__aligned__velocity__generator.html">field_aligned_velocity_generator</a>&lt; RealType &gt;::max_normalized_velocity </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00254">254</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00057">field_aligned_velocity_generator()</a>, and <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00108">define()</a>.</p>
+
+</div>
+</div>
+<a id="a1dc9974c1a30385f4e41cfafd8738f3e" name="a1dc9974c1a30385f4e41cfafd8738f3e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1dc9974c1a30385f4e41cfafd8738f3e">&#9670;&#160;</a></span>no_cap()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename RealType = double&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr RealType <a class="el" href="classfield__aligned__velocity__generator.html">field_aligned_velocity_generator</a>&lt; RealType &gt;::no_cap </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel static">static</span><span class="mlabel constexpr">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Value of <code class="param">max_normalized_velocity</code> that removes the perpendicular cap. </p>
+
+<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00069">69</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
 
 </div>
 </div>
@@ -434,7 +514,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00199">199</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00244">244</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
 
 </div>
 </div>
@@ -465,9 +545,9 @@ template&lt;typename GeneratorType&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00174">174</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00205">205</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
 
-<p class="reference">References <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00216">rotate_from_fieldAligned_frame()</a>.</p>
+<p class="reference">References <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00262">rotate_from_fieldAligned_frame()</a>.</p>
 
 </div>
 </div>
@@ -496,7 +576,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00208">208</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00253">253</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
 
 </div>
 </div>
@@ -525,7 +605,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00205">205</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00250">250</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
 
 </div>
 </div>
@@ -554,7 +634,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00204">204</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00249">249</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
 
 </div>
 </div>
@@ -583,7 +663,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00209">209</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00255">255</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
 
 </div>
 </div>
@@ -612,9 +692,9 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00167">167</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00198">198</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00095">define()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00108">define()</a>, and <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00192">seed()</a>.</p>
 
 </div>
 </div>
@@ -647,11 +727,11 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00216">216</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00262">262</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
 
-<p class="reference">References <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00207">ub()</a>.</p>
+<p class="reference">References <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00252">ub()</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00174">operator()()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00205">operator()()</a>.</p>
 
 </div>
 </div>
@@ -680,9 +760,13 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00165">165</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
+<p>Reseed the internal engine and discard any variate cached from before, so that seed(s) followed by n draws gives the same values however many draws came first. </p>
 
-<p class="reference">Referenced by <a class="el" href="main_8cpp_source.html#l00016">main()</a>.</p>
+<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00192">192</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
+
+<p class="reference">References <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00198">reset()</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="main_8cpp_source.html#l00015">main()</a>.</p>
 
 </div>
 </div>
@@ -711,7 +795,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00206">206</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00251">251</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
 
 </div>
 </div>
@@ -740,9 +824,9 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00207">207</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00252">252</a> of file <a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00054">field_aligned_velocity_generator()</a>, <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00095">define()</a>, and <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00216">rotate_from_fieldAligned_frame()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00057">field_aligned_velocity_generator()</a>, <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00108">define()</a>, and <a class="el" href="field__aligned__velocity__generator_8_h_source.html#l00262">rotate_from_fieldAligned_frame()</a>.</p>
 
 </div>
 </div>

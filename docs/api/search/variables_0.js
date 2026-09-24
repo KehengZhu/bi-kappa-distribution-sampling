@@ -1,9 +1,6 @@
 var searchData=
 [
-  ['c_5faxis_0',['C_AXIS',['../namespacesphere__sampling__bias.html#af88030dbef0b37db5a1eba26632c730d',1,'sphere_sampling_bias']]],
-  ['c_5fbad_1',['C_BAD',['../namespacesphere__sampling__bias.html#a9b1ee0f526905a7a7bd388ee56d3e52d',1,'sphere_sampling_bias']]],
-  ['c_5fgood_2',['C_GOOD',['../namespacesphere__sampling__bias.html#abf05095dcfb22843438161db6f1b2061',1,'sphere_sampling_bias']]],
-  ['c_5fref_3',['C_REF',['../namespacesphere__sampling__bias.html#a89039091ec7f09010c909cd70aee341f',1,'sphere_sampling_bias']]],
-  ['cache_4',['cache',['../structtest__replay__state.html#aa4b93485780df6f689a6cbbff8bc8df0',1,'test_replay_state']]],
-  ['cached_5',['cached',['../structtest__replay__state.html#a27269ca52571e829df557766a5a81204',1,'test_replay_state']]]
+  ['density_5ffunction_0',['density_function',['../classgeneral__generators_1_1_general_position_generator.html#ab50c2451aa231b1d377904d19aa31ec4',1,'general_generators::GeneralPositionGenerator']]],
+  ['density_5fupper_5fbound_1',['density_upper_bound',['../classgeneral__generators_1_1_general_position_generator.html#a67aecd06294226fc89e32cc7ccfa9e48',1,'general_generators::GeneralPositionGenerator']]],
+  ['dimension_2',['dimension',['../classgeneral__generators_1_1_general_position_generator.html#a2cf4cc1c9ebd9571b15a5a9ed47b4a9a',1,'general_generators::GeneralPositionGenerator']]]
 ];

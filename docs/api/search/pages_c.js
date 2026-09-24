@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['next_0',['Next',['../choosing.html#choosing_next',1,'']]]
+  ['license_0',['License',['../index.html#autotoc_md8',1,'']]]
 ];

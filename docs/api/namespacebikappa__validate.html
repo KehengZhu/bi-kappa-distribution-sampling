@@ -31,7 +31,7 @@ mermaid.initialize({ startOnLoad: true, theme: theme });
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">bi-kappa<span id="projectnumber">&#160;2.0.0</span>
+   <div id="projectname">bi-kappa<span id="projectnumber">&#160;2.2.1</span>
    </div>
    <div id="projectbrief">Monte Carlo particle samplers for plasma velocity and position distributions</div>
   </td>
@@ -123,6 +123,9 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('namespacebikap
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-func-members" class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:a6384ebfa0c0bd774abdb3d93bc8d475d" id="r_a6384ebfa0c0bd774abdb3d93bc8d475d"><td class="memItemLeft">np.ndarray&#160;</td><td class="memItemRight"><a class="el" href="#a6384ebfa0c0bd774abdb3d93bc8d475d">log_radius_quantile</a> (float kappa, exceed)</td></tr>
+<tr class="memitem:a541036955b690baced998476295bf184" id="r_a541036955b690baced998476295bf184"><td class="memItemLeft">np.ndarray&#160;</td><td class="memItemRight"><a class="el" href="#a541036955b690baced998476295bf184">log_shell_edges</a> (float kappa)</td></tr>
+<tr class="memitem:ad7566da7762c7ebb580d8011d5b19baf" id="r_ad7566da7762c7ebb580d8011d5b19baf"><td class="memItemLeft">tuple[np.ndarray, np.ndarray]&#160;</td><td class="memItemRight"><a class="el" href="#ad7566da7762c7ebb580d8011d5b19baf">radius_shells</a> (float kappa, int n)</td></tr>
 <tr class="memitem:a80b6eac9a409c3bd8943dd27c56dd204" id="r_a80b6eac9a409c3bd8943dd27c56dd204"><td class="memItemLeft">np.ndarray&#160;</td><td class="memItemRight"><a class="el" href="#a80b6eac9a409c3bd8943dd27c56dd204">field_basis</a> (np.ndarray bhat)</td></tr>
 <tr class="memitem:a9e62f21a88fa6674718a9fcf70f346ae" id="r_a9e62f21a88fa6674718a9fcf70f346ae"><td class="memItemLeft">float&#160;</td><td class="memItemRight"><a class="el" href="#a9e62f21a88fa6674718a9fcf70f346ae">_ks_critical</a> (float alpha)</td></tr>
 <tr class="memitem:aab6c0558ffbf35393b0c8b8564b636a9" id="r_aab6c0558ffbf35393b0c8b8564b636a9"><td class="memItemLeft">float&#160;</td><td class="memItemRight"><a class="el" href="#aab6c0558ffbf35393b0c8b8564b636a9">mad_relative_sigma</a> (float kappa, int n)</td></tr>
@@ -136,7 +139,11 @@ Functions</h2></td></tr>
 Variables</h2></td></tr>
 <tr class="memitem:a555be2af057a6e92cef98459f0ce742a" id="r_a555be2af057a6e92cef98459f0ce742a"><td class="memItemLeft">tuple&#160;</td><td class="memItemRight"><a class="el" href="#a555be2af057a6e92cef98459f0ce742a">QUANTILE_PROBES</a> = (0.5, 0.9, 0.99, 0.999)</td></tr>
 <tr class="memitem:ad96c94f4886e96129a870eaac3e6c275" id="r_ad96c94f4886e96129a870eaac3e6c275"><td class="memItemLeft">int&#160;</td><td class="memItemRight"><a class="el" href="#ad96c94f4886e96129a870eaac3e6c275">N_RADIAL_BINS</a> = 4</td></tr>
-<tr class="memitem:aa27351d216747bd27b360d575eb62c3f" id="r_aa27351d216747bd27b360d575eb62c3f"><td class="memItemLeft">int&#160;</td><td class="memItemRight"><a class="el" href="#aa27351d216747bd27b360d575eb62c3f">N_COS_BINS</a> = 10</td></tr>
+<tr class="memitem:aa27351d216747bd27b360d575eb62c3f" id="r_aa27351d216747bd27b360d575eb62c3f"><td class="memItemLeft">int&#160;</td><td class="memItemRight"><a class="el" href="#aa27351d216747bd27b360d575eb62c3f">N_COS_BINS</a> = 5</td></tr>
+<tr class="memitem:aecddb1dc39da76da6d14e2c857063af5" id="r_aecddb1dc39da76da6d14e2c857063af5"><td class="memItemLeft">int&#160;</td><td class="memItemRight"><a class="el" href="#aecddb1dc39da76da6d14e2c857063af5">N_PHI_BINS</a> = 8</td></tr>
+<tr class="memitem:a9abd3d4c24937003258c44e06146b684" id="r_a9abd3d4c24937003258c44e06146b684"><td class="memItemLeft">int&#160;</td><td class="memItemRight"><a class="el" href="#a9abd3d4c24937003258c44e06146b684">N_SHELLS</a> = 10</td></tr>
+<tr class="memitem:abc139405a36e6f692f66d61bb4e17c36" id="r_abc139405a36e6f692f66d61bb4e17c36"><td class="memItemLeft">float&#160;</td><td class="memItemRight"><a class="el" href="#abc139405a36e6f692f66d61bb4e17c36">MIN_EXPECTED_PER_CELL</a> = 5.0</td></tr>
+<tr class="memitem:ae4332163fc72022b693dec34e677aa00" id="r_ae4332163fc72022b693dec34e677aa00"><td class="memItemLeft">tuple&#160;</td><td class="memItemRight"><a class="el" href="#ae4332163fc72022b693dec34e677aa00">TAIL_EXCEEDANCE</a> = (1e-2, 1e-3, 1e-4, 1e-5)</td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock"><pre class="fragment">Distributional validation of a bi-Kappa velocity sample.
@@ -168,7 +175,8 @@ theta^2 = 2[(kappa-3/2)/kappa](k_B T/m) is defined only for kappa &gt; 3/2 and i
 
 What the tests establish, and what they do not
 ----------------------------------------------
-The radial, directional and independence tests together pin down the
+The cell-count test of the accompanying paper (Sec. VI B) and the radial,
+directional and independence tests below together pin down the
 three-dimensional law, because a spherically symmetric density is determined by
 its radial law plus a uniform, radius-independent direction.  They are
 distribution-free and use no moments, so they remain valid on
@@ -216,9 +224,9 @@ Exit status is 0 if every test passes and 1 otherwise.
 </table>
 </div><div class="memdoc">
 <pre class="fragment">Holm-Bonferroni step-down over a family of p-values.</pre> 
-<p class="definition">Definition at line <a class="el" href="bikappa__validate_8py_source.html#l00134">134</a> of file <a class="el" href="bikappa__validate_8py_source.html">bikappa_validate.py</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bikappa__validate_8py_source.html#l00192">192</a> of file <a class="el" href="bikappa__validate_8py_source.html">bikappa_validate.py</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="bikappa__validate_8py_source.html#l00155">validate_sample()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="bikappa__validate_8py_source.html#l00213">validate_sample()</a>.</p>
 
 </div>
 </div>
@@ -245,9 +253,9 @@ Exit status is 0 if every test passes and 1 otherwise.
 </table>
 </div><div class="memdoc">
 <pre class="fragment">Asymptotic critical value of sqrt(n) D for a two-sided KS test.</pre> 
-<p class="definition">Definition at line <a class="el" href="bikappa__validate_8py_source.html#l00109">109</a> of file <a class="el" href="bikappa__validate_8py_source.html">bikappa_validate.py</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bikappa__validate_8py_source.html#l00167">167</a> of file <a class="el" href="bikappa__validate_8py_source.html">bikappa_validate.py</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="bikappa__validate_8py_source.html#l00155">validate_sample()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="bikappa__validate_8py_source.html#l00213">validate_sample()</a>.</p>
 
 </div>
 </div>
@@ -276,9 +284,9 @@ Any orthonormal basis with e3 = bhat serves for the tests below, since they
 depend on the perpendicular directions only through rotationally invariant
 statistics.
 </pre> 
-<p class="definition">Definition at line <a class="el" href="bikappa__validate_8py_source.html#l00078">78</a> of file <a class="el" href="bikappa__validate_8py_source.html">bikappa_validate.py</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bikappa__validate_8py_source.html#l00136">136</a> of file <a class="el" href="bikappa__validate_8py_source.html">bikappa_validate.py</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="bikappa__validate_8py_source.html#l00155">validate_sample()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="bikappa__validate_8py_source.html#l00213">validate_sample()</a>.</p>
 
 </div>
 </div>
@@ -297,9 +305,9 @@ statistics.
       </table>
 </div><div class="memdoc">
 <pre class="fragment">Render a report as a short human-readable table.</pre> 
-<p class="definition">Definition at line <a class="el" href="bikappa__validate_8py_source.html#l00386">386</a> of file <a class="el" href="bikappa__validate_8py_source.html">bikappa_validate.py</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bikappa__validate_8py_source.html#l00526">526</a> of file <a class="el" href="bikappa__validate_8py_source.html">bikappa_validate.py</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="bikappa__validate_8py_source.html#l00462">main()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="bikappa__validate_8py_source.html#l00610">main()</a>.</p>
 
 </div>
 </div>
@@ -322,9 +330,66 @@ statistics.
       </table>
 </div><div class="memdoc">
 <pre class="fragment">Read an (N, 3) sample from .npy, whitespace/comma text, or raw float64.</pre> 
-<p class="definition">Definition at line <a class="el" href="bikappa__validate_8py_source.html#l00445">445</a> of file <a class="el" href="bikappa__validate_8py_source.html">bikappa_validate.py</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bikappa__validate_8py_source.html#l00593">593</a> of file <a class="el" href="bikappa__validate_8py_source.html">bikappa_validate.py</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="bikappa__validate_8py_source.html#l00462">main()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="bikappa__validate_8py_source.html#l00610">main()</a>.</p>
+
+</div>
+</div>
+<a id="a6384ebfa0c0bd774abdb3d93bc8d475d" name="a6384ebfa0c0bd774abdb3d93bc8d475d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6384ebfa0c0bd774abdb3d93bc8d475d">&#9670;&#160;</a></span>log_radius_quantile()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"> np.ndarray log_radius_quantile </td>
+          <td>(</td>
+          <td class="paramtype">float</td>          <td class="paramname"><span class="paramname"><em>kappa</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>exceed</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre class="fragment">log of the radius r with P(R &gt; r) = exceed under the target, elementwise.
+
+P(R &gt; r) = P(W &lt; w) with W = 1/(1+R^2) ~ Beta(kappa-1/2, 3/2), and R^2 = (1-w)/w.
+Near kappa = 1/2 the edge w lies below the smallest double -- w ~ 10^-500 for
+the 10^-5 edge at kappa = 0.51, and even the deciles underflow once
+kappa - 1/2 &lt; 3e-3 -- so Beta.ppf returns 0 there.  For such w the leading term
+of I_w(a, b) = w^a / (a B(a, b)) (1 + O(w)) is exact to double precision and
+gives log w directly.  Comparing log R with these edges then needs no bounded
+transform of either, so nothing underflows however large R is.
+</pre> 
+<p class="definition">Definition at line <a class="el" href="bikappa__validate_8py_source.html#l00095">95</a> of file <a class="el" href="bikappa__validate_8py_source.html">bikappa_validate.py</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="bikappa__validate_8py_source.html#l00115">log_shell_edges()</a>, and <a class="el" href="bikappa__validate_8py_source.html#l00120">radius_shells()</a>.</p>
+
+</div>
+</div>
+<a id="a541036955b690baced998476295bf184" name="a541036955b690baced998476295bf184"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a541036955b690baced998476295bf184">&#9670;&#160;</a></span>log_shell_edges()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"> np.ndarray log_shell_edges </td>
+          <td>(</td>
+          <td class="paramtype">float</td>          <td class="paramname"><span class="paramname"><em>kappa</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre class="fragment">log of the radii splitting R into N_SHELLS shells of equal probability.</pre> 
+<p class="definition">Definition at line <a class="el" href="bikappa__validate_8py_source.html#l00115">115</a> of file <a class="el" href="bikappa__validate_8py_source.html">bikappa_validate.py</a>.</p>
+
+<p class="reference">References <a class="el" href="bikappa__validate_8py_source.html#l00095">log_radius_quantile()</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="bikappa__validate_8py_source.html#l00120">radius_shells()</a>, and <a class="el" href="bikappa__validate_8py_source.html#l00213">validate_sample()</a>.</p>
 
 </div>
 </div>
@@ -359,9 +424,9 @@ The relative error therefore scales as 1/(4 sqrt(n) t0 f(t0)), which blows up
 as kappa -&gt; 1/2 because the marginal flattens: a fixed percentage tolerance
 would be far too tight there and far too loose at large kappa.
 </pre> 
-<p class="definition">Definition at line <a class="el" href="bikappa__validate_8py_source.html#l00114">114</a> of file <a class="el" href="bikappa__validate_8py_source.html">bikappa_validate.py</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bikappa__validate_8py_source.html#l00172">172</a> of file <a class="el" href="bikappa__validate_8py_source.html">bikappa_validate.py</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="bikappa__validate_8py_source.html#l00155">validate_sample()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="bikappa__validate_8py_source.html#l00213">validate_sample()</a>.</p>
 
 </div>
 </div>
@@ -380,9 +445,40 @@ would be far too tight there and far too loose at large kappa.
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bikappa__validate_8py_source.html#l00462">462</a> of file <a class="el" href="bikappa__validate_8py_source.html">bikappa_validate.py</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bikappa__validate_8py_source.html#l00610">610</a> of file <a class="el" href="bikappa__validate_8py_source.html">bikappa_validate.py</a>.</p>
 
-<p class="reference">References <a class="el" href="bikappa__validate_8py_source.html#l00386">format_report()</a>, <a class="el" href="bikappa__validate_8py_source.html#l00445">load_sample()</a>, <a class="el" href="main_8cpp_source.html#l00016">main()</a>, and <a class="el" href="bikappa__validate_8py_source.html#l00155">validate_sample()</a>.</p>
+<p class="reference">References <a class="el" href="bikappa__validate_8py_source.html#l00526">format_report()</a>, <a class="el" href="bikappa__validate_8py_source.html#l00593">load_sample()</a>, <a class="el" href="main_8cpp_source.html#l00015">main()</a>, and <a class="el" href="bikappa__validate_8py_source.html#l00213">validate_sample()</a>.</p>
+
+</div>
+</div>
+<a id="ad7566da7762c7ebb580d8011d5b19baf" name="ad7566da7762c7ebb580d8011d5b19baf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad7566da7762c7ebb580d8011d5b19baf">&#9670;&#160;</a></span>radius_shells()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"> tuple[np.ndarray, np.ndarray] radius_shells </td>
+          <td>(</td>
+          <td class="paramtype">float</td>          <td class="paramname"><span class="paramname"><em>kappa</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>n</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre class="fragment">log edges and probabilities of the shells for the test of the radius alone.
+
+The N_SHELLS decile shells, with the outermost divided at those TAIL_EXCEEDANCE
+edges beyond which n draws expect at least MIN_EXPECTED_PER_CELL.
+</pre> 
+<p class="definition">Definition at line <a class="el" href="bikappa__validate_8py_source.html#l00120">120</a> of file <a class="el" href="bikappa__validate_8py_source.html">bikappa_validate.py</a>.</p>
+
+<p class="reference">References <a class="el" href="bikappa__validate_8py_source.html#l00095">log_radius_quantile()</a>, and <a class="el" href="bikappa__validate_8py_source.html#l00115">log_shell_edges()</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="bikappa__validate_8py_source.html#l00213">validate_sample()</a>.</p>
 
 </div>
 </div>
@@ -429,20 +525,36 @@ would be far too tight there and far too loose at large kappa.
         </tr>
       </table>
 </div><div class="memdoc">
-<pre class="fragment">Run the battery on an (N, 3) velocity sample.  See the module docstring.
+<pre class="fragment">Run the tests on an (N, 3) velocity sample.  See the module docstring.
 
 Returns a nested dict of per-test statistics and verdicts, plus a top-level
 ``passed`` flag.  Raises ``ValueError`` on a malformed input contract.
 </pre> 
-<p class="definition">Definition at line <a class="el" href="bikappa__validate_8py_source.html#l00149">149</a> of file <a class="el" href="bikappa__validate_8py_source.html">bikappa_validate.py</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bikappa__validate_8py_source.html#l00207">207</a> of file <a class="el" href="bikappa__validate_8py_source.html">bikappa_validate.py</a>.</p>
 
-<p class="reference">References <a class="el" href="bikappa__validate_8py_source.html#l00134">_holm()</a>, <a class="el" href="bikappa__validate_8py_source.html#l00109">_ks_critical()</a>, <a class="el" href="bikappa__validate_8py_source.html#l00078">field_basis()</a>, and <a class="el" href="bikappa__validate_8py_source.html#l00114">mad_relative_sigma()</a>.</p>
+<p class="reference">References <a class="el" href="bikappa__validate_8py_source.html#l00192">_holm()</a>, <a class="el" href="bikappa__validate_8py_source.html#l00167">_ks_critical()</a>, <a class="el" href="bikappa__validate_8py_source.html#l00136">field_basis()</a>, <a class="el" href="bikappa__validate_8py_source.html#l00115">log_shell_edges()</a>, <a class="el" href="bikappa__validate_8py_source.html#l00172">mad_relative_sigma()</a>, and <a class="el" href="bikappa__validate_8py_source.html#l00120">radius_shells()</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="bikappa__validate_8py_source.html#l00462">main()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="bikappa__validate_8py_source.html#l00610">main()</a>.</p>
 
 </div>
 </div>
 <a name="doc-var-members" id="doc-var-members"></a><h2 id="header-doc-var-members" class="groupheader">Variable Documentation</h2>
+<a id="abc139405a36e6f692f66d61bb4e17c36" name="abc139405a36e6f692f66d61bb4e17c36"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abc139405a36e6f692f66d61bb4e17c36">&#9670;&#160;</a></span>MIN_EXPECTED_PER_CELL</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float bikappa_validate.MIN_EXPECTED_PER_CELL = 5.0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="bikappa__validate_8py_source.html#l00085">85</a> of file <a class="el" href="bikappa__validate_8py_source.html">bikappa_validate.py</a>.</p>
+
+</div>
+</div>
 <a id="aa27351d216747bd27b360d575eb62c3f" name="aa27351d216747bd27b360d575eb62c3f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aa27351d216747bd27b360d575eb62c3f">&#9670;&#160;</a></span>N_COS_BINS</h2>
 
@@ -450,12 +562,28 @@ Returns a nested dict of per-test statistics and verdicts, plus a top-level
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int bikappa_validate.N_COS_BINS = 10</td>
+          <td class="memname">int bikappa_validate.N_COS_BINS = 5</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bikappa__validate_8py_source.html#l00071">71</a> of file <a class="el" href="bikappa__validate_8py_source.html">bikappa_validate.py</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bikappa__validate_8py_source.html#l00077">77</a> of file <a class="el" href="bikappa__validate_8py_source.html">bikappa_validate.py</a>.</p>
+
+</div>
+</div>
+<a id="aecddb1dc39da76da6d14e2c857063af5" name="aecddb1dc39da76da6d14e2c857063af5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aecddb1dc39da76da6d14e2c857063af5">&#9670;&#160;</a></span>N_PHI_BINS</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int bikappa_validate.N_PHI_BINS = 8</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="bikappa__validate_8py_source.html#l00078">78</a> of file <a class="el" href="bikappa__validate_8py_source.html">bikappa_validate.py</a>.</p>
 
 </div>
 </div>
@@ -471,7 +599,23 @@ Returns a nested dict of per-test statistics and verdicts, plus a top-level
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bikappa__validate_8py_source.html#l00070">70</a> of file <a class="el" href="bikappa__validate_8py_source.html">bikappa_validate.py</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bikappa__validate_8py_source.html#l00076">76</a> of file <a class="el" href="bikappa__validate_8py_source.html">bikappa_validate.py</a>.</p>
+
+</div>
+</div>
+<a id="a9abd3d4c24937003258c44e06146b684" name="a9abd3d4c24937003258c44e06146b684"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9abd3d4c24937003258c44e06146b684">&#9670;&#160;</a></span>N_SHELLS</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int bikappa_validate.N_SHELLS = 10</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="bikappa__validate_8py_source.html#l00084">84</a> of file <a class="el" href="bikappa__validate_8py_source.html">bikappa_validate.py</a>.</p>
 
 </div>
 </div>
@@ -487,7 +631,23 @@ Returns a nested dict of per-test statistics and verdicts, plus a top-level
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bikappa__validate_8py_source.html#l00068">68</a> of file <a class="el" href="bikappa__validate_8py_source.html">bikappa_validate.py</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bikappa__validate_8py_source.html#l00069">69</a> of file <a class="el" href="bikappa__validate_8py_source.html">bikappa_validate.py</a>.</p>
+
+</div>
+</div>
+<a id="ae4332163fc72022b693dec34e677aa00" name="ae4332163fc72022b693dec34e677aa00"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae4332163fc72022b693dec34e677aa00">&#9670;&#160;</a></span>TAIL_EXCEEDANCE</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">tuple bikappa_validate.TAIL_EXCEEDANCE = (1e-2, 1e-3, 1e-4, 1e-5)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="bikappa__validate_8py_source.html#l00092">92</a> of file <a class="el" href="bikappa__validate_8py_source.html">bikappa_validate.py</a>.</p>
 
 </div>
 </div>

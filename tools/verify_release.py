@@ -146,7 +146,7 @@ def main() -> int:
 
         # 5 & 6 -- the experiment bundle
         if not args.skip_experiment:
-            exp = os.path.join(top, "experiments", "exp7_confirmatory")
+            exp = os.path.join(top, "experiments", "exp4_finite_precision")
             if os.path.isdir(exp):
                 rc, out = sh(["make", "-s", "verify"], cwd=exp)
                 rep.add(rc == 0, "experiment checksum manifests verify",
@@ -159,7 +159,7 @@ def main() -> int:
                     rep.add(rc == 0, "derived artifacts regenerate byte-identically",
                             out.strip()[-300:] if rc else "")
             else:
-                rep.add(None, "experiment bundle present", "exp7_confirmatory not archived")
+                rep.add(None, "experiment bundle present", "exp4_finite_precision not archived")
     finally:
         if args.keep:
             print(f"\nextraction kept at {tmp}")

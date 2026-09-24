@@ -14,8 +14,7 @@ OUTPUT_LANGUAGE        = English
 # Output location  (./docs/api)
 #
 # docs/ is the GitHub Pages root.  Only docs/api/ is Doxygen-generated and may
-# be overwritten by a doxygen run; docs/revision/ holds hand-written revision
-# working documents and must never be touched by the generator.
+# be overwritten by a doxygen run.
 #---------------------------------------------------------------------------
 OUTPUT_DIRECTORY       = .
 HTML_OUTPUT            = docs/api
@@ -26,9 +25,13 @@ GENERATE_LATEX         = NO
 #---------------------------------------------------------------------------
 # Inputs
 #---------------------------------------------------------------------------
-INPUT                  = cpp python README.md choosing.dox parameters.dox usage.dox
+INPUT                  = README.md choosing.dox parameters.dox usage.dox \
+                         cpp/bi_kappa_distribution.H cpp/bi_maxwellian_distribution.H \
+                         cpp/general_velocity_generator.H cpp/field_aligned_velocity_generator.H \
+                         cpp/general_position_generator.H cpp/main.cpp \
+                         python/bikappa_validate.py python/general_generators.py
 FILE_PATTERNS          = *.H *.cpp *.py *.md
-RECURSIVE              = YES
+RECURSIVE              = NO
 USE_MDFILE_AS_MAINPAGE = README.md
 
 # Files referenced by \include / \snippet in usage.dox

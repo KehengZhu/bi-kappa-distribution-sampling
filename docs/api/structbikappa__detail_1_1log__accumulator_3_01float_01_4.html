@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.17.0"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>bi-kappa: Member List</title>
+<title>bi-kappa: bikappa_detail::log_accumulator&lt; float &gt; Struct Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="dynsections.js"></script>
 <script type="text/javascript" src="codefolding.js"></script>
@@ -31,7 +31,7 @@ mermaid.initialize({ startOnLoad: true, theme: theme });
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">bi-kappa<span id="projectnumber">&#160;2.0.0</span>
+   <div id="projectname">bi-kappa<span id="projectnumber">&#160;2.2.1</span>
    </div>
    <div id="projectbrief">Monte Carlo particle samplers for plasma velocity and position distributions</div>
   </td>
@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
   </div>
 </div>
 <script type="text/javascript">
-document.addEventListener('DOMContentLoaded',() => { initNavTree('structtest__replay__draw.html','',''); });
+document.addEventListener('DOMContentLoaded',() => { initNavTree('structbikappa__detail_1_1log__accumulator_3_01float_01_4.html','','structbikappa__detail_1_1log__accumulator_3_01float_01_4-members'); });
 </script>
 <div id="container">
 <div id="doc-content">
@@ -117,22 +117,57 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('structtest__re
 </div>
 
 <div class="header">
-  <div class="headertitle"><div class="title">test_replay_draw Member List</div></div>
+  <div class="headertitle"><div class="title">bikappa_detail::log_accumulator&lt; float &gt; Struct Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
-<p>This is the complete list of members for <a class="el" href="structtest__replay__draw.html">test_replay_draw</a>, including all inherited members.</p>
-<table class="directory">
-  <tr class="even"><td class="entry"><a class="el" href="structtest__replay__draw.html#af3b8d7a7457e71854ef89b51d28020c7">log_r</a></td><td class="entry"><a class="el" href="structtest__replay__draw.html">test_replay_draw</a></td><td class="entry"></td></tr>
-  <tr class="odd"><td class="entry"><a class="el" href="structtest__replay__draw.html#adc7a9541d4f036261fc60dc28b7cb631">nx</a></td><td class="entry"><a class="el" href="structtest__replay__draw.html">test_replay_draw</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="structtest__replay__draw.html#ab65b88d267ddfee9a426e89ec7583516">ny</a></td><td class="entry"><a class="el" href="structtest__replay__draw.html">test_replay_draw</a></td><td class="entry"></td></tr>
-  <tr class="odd"><td class="entry"><a class="el" href="structtest__replay__draw.html#acd194450b2ea6228949e638b78b5ab1f">nz</a></td><td class="entry"><a class="el" href="structtest__replay__draw.html">test_replay_draw</a></td><td class="entry"></td></tr>
-</table></div><!-- contents -->
+<p><span class="tt">float</span> accumulates in <span class="tt">double</span>: 53 bits against 24, over a range that easily holds <span class="tt">log(FLT_MAX)</span> and the largest <span class="tt">float</span> alike.  
+ <a href="#details">More...</a></p>
+
+<p><code>#include &lt;<a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>&gt;</code></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 id="header-pub-types" class="groupheader"><a id="pub-types" name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:a4ab4c87ed50199e7c9a8807665675a3e" id="r_a4ab4c87ed50199e7c9a8807665675a3e"><td class="memItemLeft">typedef double&#160;</td><td class="memItemRight"><a class="el" href="#a4ab4c87ed50199e7c9a8807665675a3e">type</a></td></tr>
+</table>
+<a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
+<div class="textblock"><p><span class="tt">float</span> accumulates in <span class="tt">double</span>: 53 bits against 24, over a range that easily holds <span class="tt">log(FLT_MAX)</span> and the largest <span class="tt">float</span> alike. </p>
+
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00100">100</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+</div><a name="doc-typedef-members" id="doc-typedef-members"></a><h2 id="header-doc-typedef-members" class="groupheader">Member Typedef Documentation</h2>
+<a id="a4ab4c87ed50199e7c9a8807665675a3e" name="a4ab4c87ed50199e7c9a8807665675a3e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4ab4c87ed50199e7c9a8807665675a3e">&#9670;&#160;</a></span>type</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef double <a class="el" href="structbikappa__detail_1_1log__accumulator.html">bikappa_detail::log_accumulator</a>&lt; float &gt;::type</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00102">102</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+
+</div>
+</div>
+<hr/>The documentation for this struct was generated from the following file:<ul>
+<li>cpp/<a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a></li>
+</ul>
+</div><!-- contents -->
 </div><!-- doc-content -->
+<div id="page-nav" class="page-nav-panel">
+<div id="page-nav-resize-handle"></div>
+<div id="page-nav-tree">
+<div id="page-nav-contents">
+</div><!-- page-nav-contents -->
+</div><!-- page-nav-tree -->
+</div><!-- page-nav -->
 </div><!-- container -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
+    <li class="navelem"><a href="namespacebikappa__detail.html">bikappa_detail</a></li><li class="navelem"><a href="structbikappa__detail_1_1log__accumulator_3_01float_01_4.html">log_accumulator&lt; float &gt;</a></li>
     <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.17.0 </li>
   </ul>
 </div>

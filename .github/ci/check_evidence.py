@@ -227,7 +227,7 @@ def main():
         "cross_stdlib_pairs_available": {a: sorted(set(v)) for a, v in archs.items()
                                          if len(set(v)) >= 2},
         "cross_arch_comparison_available": len([a for a in archs if archs[a]]) >= 2,
-        "reproduction_commands": "experiments/exp7_confirmatory/results/portability_remote.md",
+        "reproduction_commands": "experiments/exp4_finite_precision/results/portability_remote.md",
     }
     missing = [e["env_id"] for e in results if not e["complete"]]
     coverage["incomplete_environments"] = missing
@@ -254,7 +254,7 @@ def main():
                   "hand run; it can supply a comparison but cannot complete an environment."]
     lines += ["", "Gate state: **%s**" % coverage["gate_state"], "",
               "An environment that did not run leaves G4 open with an exact command in "
-              "`experiments/exp7_confirmatory/results/portability_remote.md`.  It is never "
+              "`experiments/exp4_finite_precision/results/portability_remote.md`.  It is never "
               "recorded as a pass (PROTOCOL.md 5.3)."]
     summary = "\n".join(lines)
     print(summary)

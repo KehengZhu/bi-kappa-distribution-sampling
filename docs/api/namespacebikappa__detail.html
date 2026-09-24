@@ -31,7 +31,7 @@ mermaid.initialize({ startOnLoad: true, theme: theme });
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">bi-kappa<span id="projectnumber">&#160;2.0.0</span>
+   <div id="projectname">bi-kappa<span id="projectnumber">&#160;2.2.1</span>
    </div>
    <div id="projectbrief">Monte Carlo particle samplers for plasma velocity and position distributions</div>
   </td>
@@ -124,6 +124,13 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('namespacebikap
 <p>Sampling primitives used to build the bi-Kappa radius.  
 <a href="#details">More...</a></p>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 id="header-nested-classes" class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:log_5Faccumulator" id="r_log_5Faccumulator"><td class="memItemLeft">struct &#160;</td><td class="memItemRight"><a class="el" href="structbikappa__detail_1_1log__accumulator.html">log_accumulator</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The type in which the log-domain radius is accumulated.  <a href="structbikappa__detail_1_1log__accumulator.html#details">More...</a><br /></td></tr>
+<tr class="memitem:log_5Faccumulator_3C_20float_20_3E" id="r_log_5Faccumulator_3C_20float_20_3E"><td class="memItemLeft">struct &#160;</td><td class="memItemRight"><a class="el" href="structbikappa__detail_1_1log__accumulator_3_01float_01_4.html">log_accumulator&lt; float &gt;</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><span class="tt">float</span> accumulates in <span class="tt">double</span>: 53 bits against 24, over a range that easily holds <span class="tt">log(FLT_MAX)</span> and the largest <span class="tt">float</span> alike.  <a href="structbikappa__detail_1_1log__accumulator_3_01float_01_4.html#details">More...</a><br /></td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-func-members" class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:a6bdc9e9068ebd6ff7cdb96841d773e76" id="r_a6bdc9e9068ebd6ff7cdb96841d773e76"><td class="memTemplParams" colspan="2">template&lt;typename GeneratorType&gt; </td></tr>
@@ -138,9 +145,12 @@ Functions</h2></td></tr>
 <tr class="memitem:a4c63751621048bea878caeb2f82e3beb" id="r_a4c63751621048bea878caeb2f82e3beb"><td class="memTemplParams" colspan="2">template&lt;typename RealType, typename GeneratorType&gt; </td></tr>
 <tr class="memitem:a4c63751621048bea878caeb2f82e3beb template"><td class="memItemLeft">RealType&#160;</td><td class="memItemRight"><a class="el" href="#a4c63751621048bea878caeb2f82e3beb">marsagliaTsangGamma</a> (RealType shape, GeneratorType &amp;gen, RealType &amp;ncache, bool &amp;ncached)</td></tr>
 <tr class="memdesc:a4c63751621048bea878caeb2f82e3beb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gamma(shape, 1) for shape &gt;= 1, by Marsaglia and Tsang (2000), ACM TOMS 26(3), 363-372.  <br /></td></tr>
-<tr class="memitem:a51cd3d2b9c15648ce909ebd1d7b3471b" id="r_a51cd3d2b9c15648ce909ebd1d7b3471b"><td class="memTemplParams" colspan="2">template&lt;typename RealType, typename GeneratorType&gt; </td></tr>
-<tr class="memitem:a51cd3d2b9c15648ce909ebd1d7b3471b template"><td class="memItemLeft">RealType&#160;</td><td class="memItemRight"><a class="el" href="#a51cd3d2b9c15648ce909ebd1d7b3471b">logGamma</a> (RealType a, GeneratorType &amp;gen, RealType &amp;ncache, bool &amp;ncached)</td></tr>
-<tr class="memdesc:a51cd3d2b9c15648ce909ebd1d7b3471b"><td class="mdescLeft">&#160;</td><td class="mdescRight"><span class="tt">log X</span> for <span class="tt">X ~ Gamma(a, 1)</span>, for every <span class="tt">a &gt; 0</span>, without ever forming <span class="tt">X</span>.  <br /></td></tr>
+<tr class="memitem:adcf93242b982940f3515bf8a405ded25" id="r_adcf93242b982940f3515bf8a405ded25"><td class="memTemplParams" colspan="2">template&lt;typename RealType, typename GeneratorType&gt; </td></tr>
+<tr class="memitem:adcf93242b982940f3515bf8a405ded25 template"><td class="memItemLeft"><a class="el" href="structbikappa__detail_1_1log__accumulator.html">log_accumulator</a>&lt; RealType &gt;::type&#160;</td><td class="memItemRight"><a class="el" href="#adcf93242b982940f3515bf8a405ded25">logGamma</a> (RealType a, GeneratorType &amp;gen, RealType &amp;ncache, bool &amp;ncached)</td></tr>
+<tr class="memdesc:adcf93242b982940f3515bf8a405ded25"><td class="mdescLeft">&#160;</td><td class="mdescRight"><span class="tt">log X</span> for <span class="tt">X ~ Gamma(a, 1)</span>, for every <span class="tt">a &gt; 0</span>, without ever forming <span class="tt">X</span>.  <br /></td></tr>
+<tr class="memitem:a682eccc287d777b3d3537263d7caa9cf" id="r_a682eccc287d777b3d3537263d7caa9cf"><td class="memTemplParams" colspan="2">template&lt;typename RealType&gt; </td></tr>
+<tr class="memitem:a682eccc287d777b3d3537263d7caa9cf template"><td class="memItemLeft">bool&#160;</td><td class="memItemRight"><a class="el" href="#a682eccc287d777b3d3537263d7caa9cf">materializeComponents</a> (typename <a class="el" href="structbikappa__detail_1_1log__accumulator.html">log_accumulator</a>&lt; RealType &gt;::type logR, const std::array&lt; typename <a class="el" href="structbikappa__detail_1_1log__accumulator.html">log_accumulator</a>&lt; RealType &gt;::type, 3 &gt; &amp;g, std::array&lt; RealType, 3 &gt; &amp;point)</td></tr>
+<tr class="memdesc:a682eccc287d777b3d3537263d7caa9cf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Materialize <span class="tt">V_j = R g_j</span> from <span class="tt">log R</span>, and report whether any component overflowed.  <br /></td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Sampling primitives used to build the bi-Kappa radius. </p>
@@ -179,14 +189,14 @@ template&lt;typename GeneratorType&gt; </div>
 
 <p>Whole bits of entropy the engine delivers per call (32 for <span class="tt">std::mt19937</span>). </p>
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00043">43</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00106">106</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="bi__kappa__distribution_8_h_source.html#l00070">openCanonical()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="bi__kappa__distribution_8_h_source.html#l00133">openCanonical()</a>.</p>
 
 </div>
 </div>
-<a id="a51cd3d2b9c15648ce909ebd1d7b3471b" name="a51cd3d2b9c15648ce909ebd1d7b3471b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a51cd3d2b9c15648ce909ebd1d7b3471b">&#9670;&#160;</a></span>logGamma()</h2>
+<a id="adcf93242b982940f3515bf8a405ded25" name="adcf93242b982940f3515bf8a405ded25"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adcf93242b982940f3515bf8a405ded25">&#9670;&#160;</a></span>logGamma()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -194,7 +204,7 @@ template&lt;typename GeneratorType&gt; </div>
 template&lt;typename RealType, typename GeneratorType&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">RealType bikappa_detail::logGamma </td>
+          <td class="memname"><a class="el" href="structbikappa__detail_1_1log__accumulator.html">log_accumulator</a>&lt; RealType &gt;::type bikappa_detail::logGamma </td>
           <td>(</td>
           <td class="paramtype">RealType</td>          <td class="paramname"><span class="paramname"><em>a</em></span>, </td>
         </tr>
@@ -221,11 +231,11 @@ template&lt;typename RealType, typename GeneratorType&gt; </div>
 </pre><p>The product form is what underflows: at <span class="tt">a = 0.01</span>, <span class="tt">U^{1/a} = U^{100}</span> is already zero in <span class="tt">double</span> for <span class="tt">U &lt; 7.2e-4</span>. The sum has no such loss, because <span class="tt">log Y</span> is order unity and <span class="tt">(log U)/a</span> is a moderate negative number. The relation holds for every positive shape, so this is one code path with no domain split and no fallback, and it is rejection-free at the boosting step: exactly one Gamma and one uniform per call.</p>
 <p><span class="tt">log X</span> is a <em>stable</em> representation of <span class="tt">X</span>, not an exact one. <span class="tt">log Y</span> carries about one unit in the last place, and <span class="tt">(log U)/a</span> about one unit in the last place of <span class="tt">|log U|/a</span>, so the absolute error of <span class="tt">log X</span> grows like <span class="tt">eps * |log X|</span> &ndash; equivalently the relative error of the radius grows like <span class="tt">eps * |log R|</span>, losing roughly one decimal digit per decade of dynamic range. The uniform also has finite resolution, so <span class="tt">|log U|</span> cannot exceed about 36.7 (<span class="tt">double</span>) or 16.6 (<span class="tt">float</span>), and the sampled law is truncated below <span class="tt">exp(-36.7/a)</span>. That region carries about <span class="tt">1.1e-16</span> of the probability and lies far outside the range in which any velocity component is representable. </p>
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00167">167</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00230">230</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
-<p class="reference">References <a class="el" href="bi__kappa__distribution_8_h_source.html#l00117">marsagliaTsangGamma()</a>, and <a class="el" href="bi__kappa__distribution_8_h_source.html#l00070">openCanonical()</a>.</p>
+<p class="reference">References <a class="el" href="bi__kappa__distribution_8_h_source.html#l00180">marsagliaTsangGamma()</a>, and <a class="el" href="bi__kappa__distribution_8_h_source.html#l00133">openCanonical()</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="bi__kappa__distribution_8_h_source.html#l00525">bi_kappa_distribution&lt; RealType &gt;::operator()()</a>, <a class="el" href="test__suite_8_h_source.html#l01952">test_log_radius_primitive()</a>, and <a class="el" href="test__suite_8_h_source.html#l00294">test_replay()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="bi__kappa__distribution_8_h_source.html#l00718">bi_kappa_distribution&lt; RealType &gt;::operator()()</a>.</p>
 
 </div>
 </div>
@@ -263,11 +273,61 @@ template&lt;typename RealType, typename GeneratorType&gt; </div>
 <p>Gamma(shape, 1) for shape &gt;= 1, by Marsaglia and Tsang (2000), ACM TOMS 26(3), 363-372. </p>
 <p>Expected attempts stay below 1.01 for every shape &gt;= 1, so the cost does not depend on the shape &ndash; which is why the boosted shape below is always taken above one. </p>
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00117">117</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00180">180</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
-<p class="reference">References <a class="el" href="bi__kappa__distribution_8_h_source.html#l00070">openCanonical()</a>, and <a class="el" href="bi__kappa__distribution_8_h_source.html#l00091">polarNormal()</a>.</p>
+<p class="reference">References <a class="el" href="bi__kappa__distribution_8_h_source.html#l00133">openCanonical()</a>, and <a class="el" href="bi__kappa__distribution_8_h_source.html#l00154">polarNormal()</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="bi__kappa__distribution_8_h_source.html#l00167">logGamma()</a>, <a class="el" href="bi__kappa__distribution_8_h_source.html#l00525">bi_kappa_distribution&lt; RealType &gt;::operator()()</a>, <a class="el" href="test__suite_8_h_source.html#l02224">test_log_radius_no_regression()</a>, and <a class="el" href="test__suite_8_h_source.html#l00294">test_replay()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="bi__kappa__distribution_8_h_source.html#l00230">logGamma()</a>, and <a class="el" href="bi__kappa__distribution_8_h_source.html#l00718">bi_kappa_distribution&lt; RealType &gt;::operator()()</a>.</p>
+
+</div>
+</div>
+<a id="a682eccc287d777b3d3537263d7caa9cf" name="a682eccc287d777b3d3537263d7caa9cf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a682eccc287d777b3d3537263d7caa9cf">&#9670;&#160;</a></span>materializeComponents()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename RealType&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">bool bikappa_detail::materializeComponents </td>
+          <td>(</td>
+          <td class="paramtype">typename <a class="el" href="structbikappa__detail_1_1log__accumulator.html">log_accumulator</a>&lt; RealType &gt;::type</td>          <td class="paramname"><span class="paramname"><em>logR</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::array&lt; typename <a class="el" href="structbikappa__detail_1_1log__accumulator.html">log_accumulator</a>&lt; RealType &gt;::type, 3 &gt; &amp;</td>          <td class="paramname"><span class="paramname"><em>g</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::array&lt; RealType, 3 &gt; &amp;</td>          <td class="paramname"><span class="paramname"><em>point</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Materialize <span class="tt">V_j = R g_j</span> from <span class="tt">log R</span>, and report whether any component overflowed. </p>
+<p>This is the one place the loader decides what is representable, and it decides it from the value it is about to return rather than from that value's logarithm.</p>
+<p>The obvious test &ndash; compare <span class="tt">log|V_j| = log R + log|g_j|</span> against <span class="tt">log(max())</span> &ndash; is wrong by up to a rounding step, in both directions, and neither error is academic:</p>
+<ul>
+<li><span class="tt">log(max())</span> is itself a rounded value and can land <em>above</em> the true logarithm, so <span class="tt">exp</span> of it need not be finite. In <span class="tt">float</span>, <span class="tt">exp(log(FLT_MAX))</span> is exactly <span class="tt">+inf</span>. A draw whose <span class="tt">log R</span> equals <span class="tt">log(FLT_MAX)</span> bit for bit therefore passes a <span class="tt">log R &lt;= logMax</span> test, and <span class="tt">exp(log R)</span> then overflows &ndash; while every component it should have produced is perfectly representable, because <span class="tt">|g_j| &lt; 1</span> pulls each of them back under the limit. One such draw occurred in 14.2 million attempts at <span class="tt">float kappa = 0.51</span>: <span class="tt">log R</span> was <span class="tt">0x1.62e43p+6</span>, identical to <span class="tt">log(FLT_MAX)</span>, the largest component's logarithm was 88.151 against a limit of 88.723, and the loader returned <span class="tt">(-inf, +inf, +inf)</span> &ndash; and, the overflow never having been detected, counted nothing.</li>
+<li>The same rounding in the other direction makes a logarithmic test discard a draw that <em>is</em> representable, which is an avoidable loss.</li>
+</ul>
+<p>Comparing the materialized magnitude against <span class="tt">max()</span> cannot have either defect: it is the number that will be returned, so the test and the result agree by construction. It is also cheaper, because the common path takes no logarithm at all &ndash; one per component is needed only where <span class="tt">R</span> alone overflows, which is where the log domain is doing the work anyway and where there is no accuracy left to lose.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">logR</td><td>logarithm of the radius, in the accumulator type of <a class="el" href="structbikappa__detail_1_1log__accumulator.html" title="bikappa_detail::log_accumulator">bikappa_detail::log_accumulator</a>. </td></tr>
+    <tr><td class="paramname">g</td><td>the order-unity vector, already rotated into the frame the caller returns, in the same accumulator type. <span class="tt">R</span> and <span class="tt">g_j</span> are both order-unity-to-moderate quantities whose product spans the whole range of the returned type, so the product is where the one rounding belongs: the working-precision <span class="tt">g_j</span> of a <span class="tt">float</span> run carries about 6e-8 of relative error, which is larger than the margin by which a component near <span class="tt">FLT_MAX</span> is representable, and rounding it before the multiply throws away a draw the type can hold. </td></tr>
+    <tr><td class="paramname">point</td><td>receives the materialized components, <span class="tt">+/-inf</span> where one has no representation, with the sign the mathematics gives it. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true iff at least one component had no representation in <code>RealType</code>. </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00286">286</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="bi__kappa__distribution_8_h_source.html#l00718">bi_kappa_distribution&lt; RealType &gt;::operator()()</a>.</p>
 
 </div>
 </div>
@@ -292,11 +352,11 @@ template&lt;typename RealType, typename GeneratorType&gt; </div>
 <p><span class="tt">b = digits - 1</span> random bits give an integer <span class="tt">k</span> uniform on <span class="tt">[0, 2^b)</span>, and the value returned is <span class="tt">(k + 1/2) / 2^b</span>. Spending one bit fewer than the significand is what makes the arithmetic exact: <span class="tt">k + 1/2</span> is then exactly representable and the division by a power of two is exact, so the result lies strictly inside (0,1) for every <span class="tt">k</span> &ndash; the smallest is <span class="tt">2^-(b+1)</span>, the largest <span class="tt">1 - 2^-(b+1)</span>. No endpoint is ever produced, so none is redrawn and none is clamped. Clamping is not a neutral choice: it replaces the end of the sampled law with an atom, which is what one standard library does for the value 1.</p>
 <p>The bit costs one part in <span class="tt">2^53</span> (<span class="tt">double</span>) or <span class="tt">2^24</span> (<span class="tt">float</span>) of resolution, far below what <span class="tt">log(U)/a</span> can carry at any shape. </p>
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00070">70</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00133">133</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
-<p class="reference">References <a class="el" href="bi__kappa__distribution_8_h_source.html#l00043">engineBits()</a>.</p>
+<p class="reference">References <a class="el" href="bi__kappa__distribution_8_h_source.html#l00106">engineBits()</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="bi__kappa__distribution_8_h_source.html#l00167">logGamma()</a>, <a class="el" href="bi__kappa__distribution_8_h_source.html#l00117">marsagliaTsangGamma()</a>, <a class="el" href="bi__kappa__distribution_8_h_source.html#l00525">bi_kappa_distribution&lt; RealType &gt;::operator()()</a>, <a class="el" href="bi__kappa__distribution_8_h_source.html#l00091">polarNormal()</a>, <a class="el" href="test__suite_8_h_source.html#l02224">test_log_radius_no_regression()</a>, <a class="el" href="test__suite_8_h_source.html#l01952">test_log_radius_primitive()</a>, and <a class="el" href="test__suite_8_h_source.html#l00294">test_replay()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="bi__kappa__distribution_8_h_source.html#l00230">logGamma()</a>, <a class="el" href="bi__kappa__distribution_8_h_source.html#l00180">marsagliaTsangGamma()</a>, <a class="el" href="bi__kappa__distribution_8_h_source.html#l00718">bi_kappa_distribution&lt; RealType &gt;::operator()()</a>, and <a class="el" href="bi__kappa__distribution_8_h_source.html#l00154">polarNormal()</a>.</p>
 
 </div>
 </div>
@@ -329,11 +389,11 @@ template&lt;typename RealType, typename GeneratorType&gt; </div>
 <p>Standard normal by the Marsaglia polar method. </p>
 <p>The second variate of each generated pair is cached, so <span class="tt">cached</span> must be cleared whenever the engine is reseeded &ndash; otherwise a reseeded stream opens with a variate belonging to the previous one. </p>
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00091">91</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00154">154</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
-<p class="reference">References <a class="el" href="bi__kappa__distribution_8_h_source.html#l00070">openCanonical()</a>.</p>
+<p class="reference">References <a class="el" href="bi__kappa__distribution_8_h_source.html#l00133">openCanonical()</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="bi__kappa__distribution_8_h_source.html#l00117">marsagliaTsangGamma()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="bi__kappa__distribution_8_h_source.html#l00180">marsagliaTsangGamma()</a>.</p>
 
 </div>
 </div>

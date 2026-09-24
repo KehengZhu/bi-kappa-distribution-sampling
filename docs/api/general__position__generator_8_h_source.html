@@ -31,7 +31,7 @@ mermaid.initialize({ startOnLoad: true, theme: theme });
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">bi-kappa<span id="projectnumber">&#160;2.0.0</span>
+   <div id="projectname">bi-kappa<span id="projectnumber">&#160;2.2.1</span>
    </div>
    <div id="projectbrief">Monte Carlo particle samplers for plasma velocity and position distributions</div>
   </td>
@@ -231,139 +231,145 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('general__posit
 <div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>        m_isDefined= <span class="keyword">true</span>;</div>
 <div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>    }</div>
 </div>
-<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span> </div>
-<div class="line"><a id="l00147" name="l00147"></a><span class="lineno"><a class="line" href="classgeneral__position__generator.html#a9e24551cc12367f1dfc653a95bdddd88">  147</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classgeneral__position__generator.html#a9e24551cc12367f1dfc653a95bdddd88">seed</a>(<span class="keywordtype">int</span> s) { applySeed(m_gen, s); }</div>
-<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span> </div>
+<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span></div>
 <div class="foldopen" id="foldopen00149" data-start="{" data-end="}">
-<div class="line"><a id="l00149" name="l00149"></a><span class="lineno"><a class="line" href="classgeneral__position__generator.html#a5d5e62e8eed5496bfc5a599d31004f6f">  149</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classgeneral__position__generator.html#a5d5e62e8eed5496bfc5a599d31004f6f">reset</a>()</div>
+<div class="line"><a id="l00149" name="l00149"></a><span class="lineno"><a class="line" href="classgeneral__position__generator.html#a9e24551cc12367f1dfc653a95bdddd88">  149</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classgeneral__position__generator.html#a9e24551cc12367f1dfc653a95bdddd88">seed</a>(<span class="keywordtype">int</span> s)</div>
 <div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>    {</div>
-<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>        m_distAccept.reset();</div>
-<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>        m_distUnit.reset();</div>
+<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>        applySeed(m_gen, s);</div>
+<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>        <a class="code hl_function" href="classgeneral__position__generator.html#a5d5e62e8eed5496bfc5a599d31004f6f">reset</a>();</div>
 <div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>    }</div>
 </div>
 <div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span> </div>
-<div class="line"><a id="l00155" name="l00155"></a><span class="lineno"><a class="line" href="classgeneral__position__generator.html#ab981f20143684850eb1bc4c9c1f382b7">  155</a></span>    <span class="keywordtype">int</span> <a class="code hl_function" href="classgeneral__position__generator.html#ab981f20143684850eb1bc4c9c1f382b7">dimension</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> m_dimension; }</div>
-<div class="line"><a id="l00156" name="l00156"></a><span class="lineno"><a class="line" href="classgeneral__position__generator.html#a1196d062467db52717e78638bc806ee8">  156</a></span>    <span class="keyword">const</span> <a class="code hl_typedef" href="classgeneral__position__generator.html#aee6d9e415a826e7a1f25068ce06bd976">point_type</a> &amp;<a class="code hl_function" href="classgeneral__position__generator.html#a1196d062467db52717e78638bc806ee8">lowerBounds</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> m_lowerBounds; }</div>
-<div class="line"><a id="l00157" name="l00157"></a><span class="lineno"><a class="line" href="classgeneral__position__generator.html#ae639e8c51ae41bc0ad084fa4f62200fc">  157</a></span>    <span class="keyword">const</span> <a class="code hl_typedef" href="classgeneral__position__generator.html#aee6d9e415a826e7a1f25068ce06bd976">point_type</a> &amp;<a class="code hl_function" href="classgeneral__position__generator.html#ae639e8c51ae41bc0ad084fa4f62200fc">upperBounds</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> m_upperBounds; }</div>
-<div class="line"><a id="l00158" name="l00158"></a><span class="lineno"><a class="line" href="classgeneral__position__generator.html#ad0dfb8bf9886bf5f62a0ce738c2fbce5">  158</a></span>    RealType <a class="code hl_function" href="classgeneral__position__generator.html#ad0dfb8bf9886bf5f62a0ce738c2fbce5">densityUpperBound</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> m_densityUpperBound; }</div>
-<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span> </div>
-<div class="foldopen" id="foldopen00160" data-start="{" data-end="}">
-<div class="line"><a id="l00160" name="l00160"></a><span class="lineno"><a class="line" href="classgeneral__position__generator.html#a5d27a839ae15bf072bea88fb479d88b8">  160</a></span>    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> GeneratorType&gt; <a class="code hl_typedef" href="classgeneral__position__generator.html#aee6d9e415a826e7a1f25068ce06bd976">point_type</a> <a class="code hl_function" href="classgeneral__position__generator.html#a5d27a839ae15bf072bea88fb479d88b8">operator()</a>(GeneratorType &amp;gen)<span class="keyword"> const</span></div>
-<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span><span class="keyword">    </span>{</div>
-<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span>        <span class="keywordflow">if</span> (!m_isDefined)</div>
-<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>        {</div>
-<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>            <span class="keywordflow">throw</span> std::runtime_error(</div>
-<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>                <span class="stringliteral">&quot;general_position_generator must be define(...)d before sampling&quot;</span>);</div>
-<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>        }</div>
-<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span> </div>
-<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>        <span class="keywordtype">int</span> tries= 0;</div>
-<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>        <span class="keywordflow">for</span> (tries= 0; tries &lt; m_maxRejectTries; ++tries)</div>
-<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span>        {</div>
-<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>            <a class="code hl_typedef" href="classgeneral__position__generator.html#aee6d9e415a826e7a1f25068ce06bd976">point_type</a> point= sampleUniformPoint(gen);</div>
-<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span>            RealType rho= evaluateDensity(point);</div>
-<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>            RealType y= m_distAccept(gen);</div>
-<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>            <span class="keywordflow">if</span> (y &lt;= rho)</div>
-<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span>            {</div>
-<div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span>                <span class="keywordflow">return</span> point;</div>
-<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>            }</div>
-<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>        }</div>
-<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span> </div>
-<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span>        <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;failed to sample position from density_function: rejection &quot;</span></div>
-<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span>                                 <span class="stringliteral">&quot;sampling exceeded max_reject_tries&quot;</span>);</div>
-<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span>    }</div>
+<div class="foldopen" id="foldopen00155" data-start="{" data-end="}">
+<div class="line"><a id="l00155" name="l00155"></a><span class="lineno"><a class="line" href="classgeneral__position__generator.html#a5d5e62e8eed5496bfc5a599d31004f6f">  155</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classgeneral__position__generator.html#a5d5e62e8eed5496bfc5a599d31004f6f">reset</a>()</div>
+<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>    {</div>
+<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>        m_distAccept.reset();</div>
+<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>        m_distUnit.reset();</div>
+<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>    }</div>
 </div>
-<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span> </div>
-<div class="foldopen" id="foldopen00184" data-start="{" data-end="}">
-<div class="line"><a id="l00184" name="l00184"></a><span class="lineno"><a class="line" href="classgeneral__position__generator.html#a9e6e98e62905d94d27bf147b219c3c38">  184</a></span>    <a class="code hl_typedef" href="classgeneral__position__generator.html#aee6d9e415a826e7a1f25068ce06bd976">point_type</a> <a class="code hl_function" href="classgeneral__position__generator.html#a9e6e98e62905d94d27bf147b219c3c38">operator()</a>()<span class="keyword"> const</span></div>
-<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span><span class="keyword">    </span>{</div>
-<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>        <span class="keywordflow">return</span> (*<span class="keyword">this</span>)(m_gen);</div>
-<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>    }</div>
+<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span> </div>
+<div class="line"><a id="l00161" name="l00161"></a><span class="lineno"><a class="line" href="classgeneral__position__generator.html#ab981f20143684850eb1bc4c9c1f382b7">  161</a></span>    <span class="keywordtype">int</span> <a class="code hl_function" href="classgeneral__position__generator.html#ab981f20143684850eb1bc4c9c1f382b7">dimension</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> m_dimension; }</div>
+<div class="line"><a id="l00162" name="l00162"></a><span class="lineno"><a class="line" href="classgeneral__position__generator.html#a1196d062467db52717e78638bc806ee8">  162</a></span>    <span class="keyword">const</span> <a class="code hl_typedef" href="classgeneral__position__generator.html#aee6d9e415a826e7a1f25068ce06bd976">point_type</a> &amp;<a class="code hl_function" href="classgeneral__position__generator.html#a1196d062467db52717e78638bc806ee8">lowerBounds</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> m_lowerBounds; }</div>
+<div class="line"><a id="l00163" name="l00163"></a><span class="lineno"><a class="line" href="classgeneral__position__generator.html#ae639e8c51ae41bc0ad084fa4f62200fc">  163</a></span>    <span class="keyword">const</span> <a class="code hl_typedef" href="classgeneral__position__generator.html#aee6d9e415a826e7a1f25068ce06bd976">point_type</a> &amp;<a class="code hl_function" href="classgeneral__position__generator.html#ae639e8c51ae41bc0ad084fa4f62200fc">upperBounds</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> m_upperBounds; }</div>
+<div class="line"><a id="l00164" name="l00164"></a><span class="lineno"><a class="line" href="classgeneral__position__generator.html#ad0dfb8bf9886bf5f62a0ce738c2fbce5">  164</a></span>    RealType <a class="code hl_function" href="classgeneral__position__generator.html#ad0dfb8bf9886bf5f62a0ce738c2fbce5">densityUpperBound</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> m_densityUpperBound; }</div>
+<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span> </div>
+<div class="foldopen" id="foldopen00166" data-start="{" data-end="}">
+<div class="line"><a id="l00166" name="l00166"></a><span class="lineno"><a class="line" href="classgeneral__position__generator.html#a5d27a839ae15bf072bea88fb479d88b8">  166</a></span>    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> GeneratorType&gt; <a class="code hl_typedef" href="classgeneral__position__generator.html#aee6d9e415a826e7a1f25068ce06bd976">point_type</a> <a class="code hl_function" href="classgeneral__position__generator.html#a5d27a839ae15bf072bea88fb479d88b8">operator()</a>(GeneratorType &amp;gen)<span class="keyword"> const</span></div>
+<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span><span class="keyword">    </span>{</div>
+<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>        <span class="keywordflow">if</span> (!m_isDefined)</div>
+<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>        {</div>
+<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span>            <span class="keywordflow">throw</span> std::runtime_error(</div>
+<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>                <span class="stringliteral">&quot;general_position_generator must be define(...)d before sampling&quot;</span>);</div>
+<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span>        }</div>
+<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span> </div>
+<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>        <span class="keywordtype">int</span> tries= 0;</div>
+<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span>        <span class="keywordflow">for</span> (tries= 0; tries &lt; m_maxRejectTries; ++tries)</div>
+<div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span>        {</div>
+<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>            <a class="code hl_typedef" href="classgeneral__position__generator.html#aee6d9e415a826e7a1f25068ce06bd976">point_type</a> point= sampleUniformPoint(gen);</div>
+<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>            RealType rho= evaluateDensity(point);</div>
+<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>            RealType y= m_distAccept(gen);</div>
+<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span>            <span class="keywordflow">if</span> (y &lt;= rho)</div>
+<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span>            {</div>
+<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span>                <span class="keywordflow">return</span> point;</div>
+<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>            }</div>
+<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>        }</div>
+<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span> </div>
+<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>        <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;failed to sample position from density_function: rejection &quot;</span></div>
+<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>                                 <span class="stringliteral">&quot;sampling exceeded max_reject_tries&quot;</span>);</div>
+<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>    }</div>
 </div>
-<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span> </div>
-<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>  <span class="keyword">private</span>:</div>
-<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>    <span class="keyword">static</span> <span class="keywordtype">void</span> applySeed(std::mt19937 &amp;gen, <span class="keywordtype">int</span> s)</div>
-<div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span>    {</div>
-<div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span>        <span class="keywordflow">if</span> (s &lt; 0)</div>
-<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>            gen.seed(std::random_device{}());</div>
-<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span>        <span class="keywordflow">else</span></div>
-<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span>            gen.seed(<span class="keyword">static_cast&lt;</span><span class="keywordtype">unsigned</span> <span class="keywordtype">int</span><span class="keyword">&gt;</span>(s));</div>
-<div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>    }</div>
-<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span> </div>
-<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span>    RealType evaluateDensity(<span class="keyword">const</span> <a class="code hl_typedef" href="classgeneral__position__generator.html#aee6d9e415a826e7a1f25068ce06bd976">point_type</a> &amp;point)<span class="keyword"> const</span></div>
-<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span><span class="keyword">    </span>{</div>
-<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span>        RealType value= m_densityFunction(point);</div>
-<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>        <span class="keywordflow">if</span> (!std::isfinite(value))</div>
-<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>        {</div>
-<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>            <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;density_function returned a non-finite value&quot;</span>);</div>
-<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span>        }</div>
-<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span>        <span class="keywordflow">if</span> (value &lt; RealType(0.0))</div>
-<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span>        {</div>
-<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span>            <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;density_function returned a negative value; expected a &quot;</span></div>
-<div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span>                                     <span class="stringliteral">&quot;non-negative density&quot;</span>);</div>
-<div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span>        }</div>
-<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span>        <span class="keywordflow">return</span> value;</div>
-<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span>    }</div>
-<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span> </div>
-<div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span>    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> GeneratorType&gt; <a class="code hl_typedef" href="classgeneral__position__generator.html#aee6d9e415a826e7a1f25068ce06bd976">point_type</a> sampleUniformPoint(GeneratorType &amp;gen)<span class="keyword"> const</span></div>
-<div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span><span class="keyword">    </span>{</div>
-<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span>        <a class="code hl_typedef" href="classgeneral__position__generator.html#aee6d9e415a826e7a1f25068ce06bd976">point_type</a> point(<span class="keyword">static_cast&lt;</span>std::size_t<span class="keyword">&gt;</span>(m_dimension), RealType(0.0));</div>
-<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span>        <span class="keywordtype">int</span> d= 0;</div>
-<div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span>        <span class="keywordflow">for</span> (d= 0; d &lt; m_dimension; ++d)</div>
-<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span>        {</div>
-<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span>            std::size_t idx= <span class="keyword">static_cast&lt;</span>std::size_t<span class="keyword">&gt;</span>(d);</div>
-<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span>            point[idx]= m_lowerBounds[idx] + m_rangeWidths[idx] * m_distUnit(gen);</div>
-<div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span>        }</div>
-<div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span>        <span class="keywordflow">return</span> point;</div>
-<div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span>    }</div>
-<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span> </div>
-<div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span>    RealType estimateDensityUpperBound(<span class="keywordtype">int</span> probe_points)<span class="keyword"> const</span></div>
-<div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span><span class="keyword">    </span>{</div>
-<div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span>        std::mt19937 probeGen(1337u);</div>
-<div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span>        RealType max_value= RealType(0.0);</div>
-<div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span> </div>
-<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span>        <span class="keywordtype">int</span> i= 0;</div>
-<div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span>        <span class="keywordflow">for</span> (i= 0; i &lt; probe_points; ++i)</div>
-<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span>        {</div>
-<div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span>            <a class="code hl_typedef" href="classgeneral__position__generator.html#aee6d9e415a826e7a1f25068ce06bd976">point_type</a> point= sampleUniformPoint(probeGen);</div>
-<div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span>            RealType value= evaluateDensity(point);</div>
-<div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span>            <span class="keywordflow">if</span> (value &gt; max_value)</div>
-<div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span>            {</div>
-<div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span>                max_value= value;</div>
-<div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span>            }</div>
-<div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span>        }</div>
-<div class="line"><a id="l00240" name="l00240"></a><span class="lineno">  240</span> </div>
-<div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span>        <span class="comment">// Add safety margin in case peak lies between probes.</span></div>
-<div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span>        <span class="keywordflow">return</span> max_value * RealType(1.05);</div>
-<div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span>    }</div>
-<div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span> </div>
-<div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span>    <span class="keywordtype">int</span> m_dimension;</div>
-<div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span>    <a class="code hl_typedef" href="classgeneral__position__generator.html#aee6d9e415a826e7a1f25068ce06bd976">point_type</a> m_lowerBounds;</div>
-<div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span>    <a class="code hl_typedef" href="classgeneral__position__generator.html#aee6d9e415a826e7a1f25068ce06bd976">point_type</a> m_upperBounds;</div>
-<div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span>    <a class="code hl_typedef" href="classgeneral__position__generator.html#aee6d9e415a826e7a1f25068ce06bd976">point_type</a> m_rangeWidths;</div>
-<div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span>    <a class="code hl_typedef" href="classgeneral__position__generator.html#a789698a61f02b4a8a24933bcd6c7f927">density_function</a> m_densityFunction;</div>
-<div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span>    <span class="keywordtype">int</span> m_maxRejectTries;</div>
-<div class="line"><a id="l00251" name="l00251"></a><span class="lineno">  251</span>    RealType m_densityUpperBound;</div>
-<div class="line"><a id="l00252" name="l00252"></a><span class="lineno">  252</span>    <span class="keywordtype">bool</span> m_isDefined;</div>
-<div class="line"><a id="l00253" name="l00253"></a><span class="lineno">  253</span>    <span class="keyword">mutable</span> std::mt19937 m_gen;</div>
-<div class="line"><a id="l00254" name="l00254"></a><span class="lineno">  254</span>    <span class="keyword">mutable</span> std::uniform_real_distribution&lt;RealType&gt; m_distAccept;</div>
-<div class="line"><a id="l00255" name="l00255"></a><span class="lineno">  255</span>    <span class="keyword">mutable</span> std::uniform_real_distribution&lt;RealType&gt; m_distUnit;</div>
-<div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span>};</div>
+<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span> </div>
+<div class="foldopen" id="foldopen00190" data-start="{" data-end="}">
+<div class="line"><a id="l00190" name="l00190"></a><span class="lineno"><a class="line" href="classgeneral__position__generator.html#a9e6e98e62905d94d27bf147b219c3c38">  190</a></span>    <a class="code hl_typedef" href="classgeneral__position__generator.html#aee6d9e415a826e7a1f25068ce06bd976">point_type</a> <a class="code hl_function" href="classgeneral__position__generator.html#a9e6e98e62905d94d27bf147b219c3c38">operator()</a>()<span class="keyword"> const</span></div>
+<div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span><span class="keyword">    </span>{</div>
+<div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span>        <span class="keywordflow">return</span> (*<span class="keyword">this</span>)(m_gen);</div>
+<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>    }</div>
 </div>
-<div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span> </div>
-<div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span><span class="preprocessor">#endif </span><span class="comment">// _GENERAL_POSITION_GENERATOR_H_</span></div>
-<div class="ttc" id="aclassgeneral__position__generator_html_a1196d062467db52717e78638bc806ee8"><div class="ttname"><a href="classgeneral__position__generator.html#a1196d062467db52717e78638bc806ee8">general_position_generator::lowerBounds</a></div><div class="ttdeci">const point_type &amp; lowerBounds() const</div><div class="ttdef"><b>Definition</b> <a href="#l00156">general_position_generator.H:156</a></div></div>
+<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span> </div>
+<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span>  <span class="keyword">private</span>:</div>
+<div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>    <span class="keyword">static</span> <span class="keywordtype">void</span> applySeed(std::mt19937 &amp;gen, <span class="keywordtype">int</span> s)</div>
+<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span>    {</div>
+<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span>        <span class="keywordflow">if</span> (s &lt; 0)</div>
+<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span>            gen.seed(std::random_device{}());</div>
+<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span>        <span class="keywordflow">else</span></div>
+<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>            gen.seed(<span class="keyword">static_cast&lt;</span><span class="keywordtype">unsigned</span> <span class="keywordtype">int</span><span class="keyword">&gt;</span>(s));</div>
+<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>    }</div>
+<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span> </div>
+<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span>    RealType evaluateDensity(<span class="keyword">const</span> <a class="code hl_typedef" href="classgeneral__position__generator.html#aee6d9e415a826e7a1f25068ce06bd976">point_type</a> &amp;point)<span class="keyword"> const</span></div>
+<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span><span class="keyword">    </span>{</div>
+<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span>        RealType value= m_densityFunction(point);</div>
+<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span>        <span class="keywordflow">if</span> (!std::isfinite(value))</div>
+<div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span>        {</div>
+<div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span>            <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;density_function returned a non-finite value&quot;</span>);</div>
+<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span>        }</div>
+<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span>        <span class="keywordflow">if</span> (value &lt; RealType(0.0))</div>
+<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>        {</div>
+<div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span>            <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;density_function returned a negative value; expected a &quot;</span></div>
+<div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span>                                     <span class="stringliteral">&quot;non-negative density&quot;</span>);</div>
+<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span>        }</div>
+<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span>        <span class="keywordflow">return</span> value;</div>
+<div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span>    }</div>
+<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span> </div>
+<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span>    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> GeneratorType&gt; <a class="code hl_typedef" href="classgeneral__position__generator.html#aee6d9e415a826e7a1f25068ce06bd976">point_type</a> sampleUniformPoint(GeneratorType &amp;gen)<span class="keyword"> const</span></div>
+<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span><span class="keyword">    </span>{</div>
+<div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span>        <a class="code hl_typedef" href="classgeneral__position__generator.html#aee6d9e415a826e7a1f25068ce06bd976">point_type</a> point(<span class="keyword">static_cast&lt;</span>std::size_t<span class="keyword">&gt;</span>(m_dimension), RealType(0.0));</div>
+<div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span>        <span class="keywordtype">int</span> d= 0;</div>
+<div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span>        <span class="keywordflow">for</span> (d= 0; d &lt; m_dimension; ++d)</div>
+<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span>        {</div>
+<div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span>            std::size_t idx= <span class="keyword">static_cast&lt;</span>std::size_t<span class="keyword">&gt;</span>(d);</div>
+<div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span>            point[idx]= m_lowerBounds[idx] + m_rangeWidths[idx] * m_distUnit(gen);</div>
+<div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span>        }</div>
+<div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span>        <span class="keywordflow">return</span> point;</div>
+<div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span>    }</div>
+<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span> </div>
+<div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span>    RealType estimateDensityUpperBound(<span class="keywordtype">int</span> probe_points)<span class="keyword"> const</span></div>
+<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span><span class="keyword">    </span>{</div>
+<div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span>        std::mt19937 probeGen(1337u);</div>
+<div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span>        RealType max_value= RealType(0.0);</div>
+<div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span> </div>
+<div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span>        <span class="keywordtype">int</span> i= 0;</div>
+<div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span>        <span class="keywordflow">for</span> (i= 0; i &lt; probe_points; ++i)</div>
+<div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span>        {</div>
+<div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span>            <a class="code hl_typedef" href="classgeneral__position__generator.html#aee6d9e415a826e7a1f25068ce06bd976">point_type</a> point= sampleUniformPoint(probeGen);</div>
+<div class="line"><a id="l00240" name="l00240"></a><span class="lineno">  240</span>            RealType value= evaluateDensity(point);</div>
+<div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span>            <span class="keywordflow">if</span> (value &gt; max_value)</div>
+<div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span>            {</div>
+<div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span>                max_value= value;</div>
+<div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span>            }</div>
+<div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span>        }</div>
+<div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span> </div>
+<div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span>        <span class="comment">// Add safety margin in case peak lies between probes.</span></div>
+<div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span>        <span class="keywordflow">return</span> max_value * RealType(1.05);</div>
+<div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span>    }</div>
+<div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span> </div>
+<div class="line"><a id="l00251" name="l00251"></a><span class="lineno">  251</span>    <span class="keywordtype">int</span> m_dimension;</div>
+<div class="line"><a id="l00252" name="l00252"></a><span class="lineno">  252</span>    <a class="code hl_typedef" href="classgeneral__position__generator.html#aee6d9e415a826e7a1f25068ce06bd976">point_type</a> m_lowerBounds;</div>
+<div class="line"><a id="l00253" name="l00253"></a><span class="lineno">  253</span>    <a class="code hl_typedef" href="classgeneral__position__generator.html#aee6d9e415a826e7a1f25068ce06bd976">point_type</a> m_upperBounds;</div>
+<div class="line"><a id="l00254" name="l00254"></a><span class="lineno">  254</span>    <a class="code hl_typedef" href="classgeneral__position__generator.html#aee6d9e415a826e7a1f25068ce06bd976">point_type</a> m_rangeWidths;</div>
+<div class="line"><a id="l00255" name="l00255"></a><span class="lineno">  255</span>    <a class="code hl_typedef" href="classgeneral__position__generator.html#a789698a61f02b4a8a24933bcd6c7f927">density_function</a> m_densityFunction;</div>
+<div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span>    <span class="keywordtype">int</span> m_maxRejectTries;</div>
+<div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span>    RealType m_densityUpperBound;</div>
+<div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span>    <span class="keywordtype">bool</span> m_isDefined;</div>
+<div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span>    <span class="keyword">mutable</span> std::mt19937 m_gen;</div>
+<div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span>    <span class="keyword">mutable</span> std::uniform_real_distribution&lt;RealType&gt; m_distAccept;</div>
+<div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span>    <span class="keyword">mutable</span> std::uniform_real_distribution&lt;RealType&gt; m_distUnit;</div>
+<div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span>};</div>
+</div>
+<div class="line"><a id="l00263" name="l00263"></a><span class="lineno">  263</span> </div>
+<div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span><span class="preprocessor">#endif </span><span class="comment">// _GENERAL_POSITION_GENERATOR_H_</span></div>
+<div class="ttc" id="aclassgeneral__position__generator_html_a1196d062467db52717e78638bc806ee8"><div class="ttname"><a href="classgeneral__position__generator.html#a1196d062467db52717e78638bc806ee8">general_position_generator::lowerBounds</a></div><div class="ttdeci">const point_type &amp; lowerBounds() const</div><div class="ttdef"><b>Definition</b> <a href="#l00162">general_position_generator.H:162</a></div></div>
 <div class="ttc" id="aclassgeneral__position__generator_html_a4bc78f1ce284b97a6281f376cda41e5b"><div class="ttname"><a href="classgeneral__position__generator.html#a4bc78f1ce284b97a6281f376cda41e5b">general_position_generator::general_position_generator</a></div><div class="ttdeci">general_position_generator()</div><div class="ttdef"><b>Definition</b> <a href="#l00033">general_position_generator.H:33</a></div></div>
 <div class="ttc" id="aclassgeneral__position__generator_html_a512e552fc35b0758430453661deb4963"><div class="ttname"><a href="classgeneral__position__generator.html#a512e552fc35b0758430453661deb4963">general_position_generator::define</a></div><div class="ttdeci">void define(int dimension, const point_type &amp;lower_bounds, const point_type &amp;upper_bounds, density_function density_function, int probe_points=4096, int max_reject_tries=200000)</div><div class="ttdoc">Configure the sampler.</div><div class="ttdef"><b>Definition</b> <a href="#l00076">general_position_generator.H:76</a></div></div>
-<div class="ttc" id="aclassgeneral__position__generator_html_a5d27a839ae15bf072bea88fb479d88b8"><div class="ttname"><a href="classgeneral__position__generator.html#a5d27a839ae15bf072bea88fb479d88b8">general_position_generator::operator()</a></div><div class="ttdeci">point_type operator()(GeneratorType &amp;gen) const</div><div class="ttdef"><b>Definition</b> <a href="#l00160">general_position_generator.H:160</a></div></div>
-<div class="ttc" id="aclassgeneral__position__generator_html_a5d5e62e8eed5496bfc5a599d31004f6f"><div class="ttname"><a href="classgeneral__position__generator.html#a5d5e62e8eed5496bfc5a599d31004f6f">general_position_generator::reset</a></div><div class="ttdeci">void reset()</div><div class="ttdef"><b>Definition</b> <a href="#l00149">general_position_generator.H:149</a></div></div>
+<div class="ttc" id="aclassgeneral__position__generator_html_a5d27a839ae15bf072bea88fb479d88b8"><div class="ttname"><a href="classgeneral__position__generator.html#a5d27a839ae15bf072bea88fb479d88b8">general_position_generator::operator()</a></div><div class="ttdeci">point_type operator()(GeneratorType &amp;gen) const</div><div class="ttdef"><b>Definition</b> <a href="#l00166">general_position_generator.H:166</a></div></div>
+<div class="ttc" id="aclassgeneral__position__generator_html_a5d5e62e8eed5496bfc5a599d31004f6f"><div class="ttname"><a href="classgeneral__position__generator.html#a5d5e62e8eed5496bfc5a599d31004f6f">general_position_generator::reset</a></div><div class="ttdeci">void reset()</div><div class="ttdef"><b>Definition</b> <a href="#l00155">general_position_generator.H:155</a></div></div>
 <div class="ttc" id="aclassgeneral__position__generator_html_a789698a61f02b4a8a24933bcd6c7f927"><div class="ttname"><a href="classgeneral__position__generator.html#a789698a61f02b4a8a24933bcd6c7f927">general_position_generator::density_function</a></div><div class="ttdeci">std::function&lt; RealType(const point_type &amp;)&gt; density_function</div><div class="ttdef"><b>Definition</b> <a href="#l00031">general_position_generator.H:31</a></div></div>
-<div class="ttc" id="aclassgeneral__position__generator_html_a9e24551cc12367f1dfc653a95bdddd88"><div class="ttname"><a href="classgeneral__position__generator.html#a9e24551cc12367f1dfc653a95bdddd88">general_position_generator::seed</a></div><div class="ttdeci">void seed(int s)</div><div class="ttdef"><b>Definition</b> <a href="#l00147">general_position_generator.H:147</a></div></div>
-<div class="ttc" id="aclassgeneral__position__generator_html_a9e6e98e62905d94d27bf147b219c3c38"><div class="ttname"><a href="classgeneral__position__generator.html#a9e6e98e62905d94d27bf147b219c3c38">general_position_generator::operator()</a></div><div class="ttdeci">point_type operator()() const</div><div class="ttdef"><b>Definition</b> <a href="#l00184">general_position_generator.H:184</a></div></div>
-<div class="ttc" id="aclassgeneral__position__generator_html_ab981f20143684850eb1bc4c9c1f382b7"><div class="ttname"><a href="classgeneral__position__generator.html#ab981f20143684850eb1bc4c9c1f382b7">general_position_generator::dimension</a></div><div class="ttdeci">int dimension() const</div><div class="ttdef"><b>Definition</b> <a href="#l00155">general_position_generator.H:155</a></div></div>
+<div class="ttc" id="aclassgeneral__position__generator_html_a9e24551cc12367f1dfc653a95bdddd88"><div class="ttname"><a href="classgeneral__position__generator.html#a9e24551cc12367f1dfc653a95bdddd88">general_position_generator::seed</a></div><div class="ttdeci">void seed(int s)</div><div class="ttdoc">Reseed the internal engine and discard any variate cached from before, so that seed(s) followed by n ...</div><div class="ttdef"><b>Definition</b> <a href="#l00149">general_position_generator.H:149</a></div></div>
+<div class="ttc" id="aclassgeneral__position__generator_html_a9e6e98e62905d94d27bf147b219c3c38"><div class="ttname"><a href="classgeneral__position__generator.html#a9e6e98e62905d94d27bf147b219c3c38">general_position_generator::operator()</a></div><div class="ttdeci">point_type operator()() const</div><div class="ttdef"><b>Definition</b> <a href="#l00190">general_position_generator.H:190</a></div></div>
+<div class="ttc" id="aclassgeneral__position__generator_html_ab981f20143684850eb1bc4c9c1f382b7"><div class="ttname"><a href="classgeneral__position__generator.html#ab981f20143684850eb1bc4c9c1f382b7">general_position_generator::dimension</a></div><div class="ttdeci">int dimension() const</div><div class="ttdef"><b>Definition</b> <a href="#l00161">general_position_generator.H:161</a></div></div>
 <div class="ttc" id="aclassgeneral__position__generator_html_acfba11b9d52cd35e108d4f19bf8685de"><div class="ttname"><a href="classgeneral__position__generator.html#acfba11b9d52cd35e108d4f19bf8685de">general_position_generator::result_type</a></div><div class="ttdeci">std::vector&lt; RealType &gt; result_type</div><div class="ttdef"><b>Definition</b> <a href="#l00029">general_position_generator.H:29</a></div></div>
-<div class="ttc" id="aclassgeneral__position__generator_html_ad0dfb8bf9886bf5f62a0ce738c2fbce5"><div class="ttname"><a href="classgeneral__position__generator.html#ad0dfb8bf9886bf5f62a0ce738c2fbce5">general_position_generator::densityUpperBound</a></div><div class="ttdeci">RealType densityUpperBound() const</div><div class="ttdef"><b>Definition</b> <a href="#l00158">general_position_generator.H:158</a></div></div>
+<div class="ttc" id="aclassgeneral__position__generator_html_ad0dfb8bf9886bf5f62a0ce738c2fbce5"><div class="ttname"><a href="classgeneral__position__generator.html#ad0dfb8bf9886bf5f62a0ce738c2fbce5">general_position_generator::densityUpperBound</a></div><div class="ttdeci">RealType densityUpperBound() const</div><div class="ttdef"><b>Definition</b> <a href="#l00164">general_position_generator.H:164</a></div></div>
 <div class="ttc" id="aclassgeneral__position__generator_html_ad92bced5cc31d94ed0fd51615fb0fae2"><div class="ttname"><a href="classgeneral__position__generator.html#ad92bced5cc31d94ed0fd51615fb0fae2">general_position_generator::general_position_generator</a></div><div class="ttdeci">general_position_generator(int dimension, const point_type &amp;lower_bounds, const point_type &amp;upper_bounds, density_function density_function, int probe_points=4096, int max_reject_tries=200000)</div><div class="ttdef"><b>Definition</b> <a href="#l00041">general_position_generator.H:41</a></div></div>
-<div class="ttc" id="aclassgeneral__position__generator_html_ae639e8c51ae41bc0ad084fa4f62200fc"><div class="ttname"><a href="classgeneral__position__generator.html#ae639e8c51ae41bc0ad084fa4f62200fc">general_position_generator::upperBounds</a></div><div class="ttdeci">const point_type &amp; upperBounds() const</div><div class="ttdef"><b>Definition</b> <a href="#l00157">general_position_generator.H:157</a></div></div>
+<div class="ttc" id="aclassgeneral__position__generator_html_ae639e8c51ae41bc0ad084fa4f62200fc"><div class="ttname"><a href="classgeneral__position__generator.html#ae639e8c51ae41bc0ad084fa4f62200fc">general_position_generator::upperBounds</a></div><div class="ttdeci">const point_type &amp; upperBounds() const</div><div class="ttdef"><b>Definition</b> <a href="#l00163">general_position_generator.H:163</a></div></div>
 <div class="ttc" id="aclassgeneral__position__generator_html_aee6d9e415a826e7a1f25068ce06bd976"><div class="ttname"><a href="classgeneral__position__generator.html#aee6d9e415a826e7a1f25068ce06bd976">general_position_generator::point_type</a></div><div class="ttdeci">result_type point_type</div><div class="ttdef"><b>Definition</b> <a href="#l00030">general_position_generator.H:30</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->

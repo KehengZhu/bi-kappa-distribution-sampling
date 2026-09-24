@@ -1,159 +1,200 @@
-# bi-kappa
+# bi-kappa-distribution-sampling
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20617011.svg)](https://doi.org/10.5281/zenodo.20617011)
 
-A **bi-Kappa / bi-Maxwellian velocity loader for kinetic plasma simulations** — header-only
-C++11, for PIC and hybrid initialization, loading particles relative to an **arbitrary magnetic
-field direction**. The cap is off by default, so what you load is the bi-Kappa distribution
-itself and not a bounded law that resembles it.
+Header-only C++11 samplers for loading particle velocities and positions in kinetic plasma
+simulations (particle-in-cell and hybrid codes). The package samples bi-Kappa and
+bi-Maxwellian velocity distributions about an arbitrary magnetic-field direction, and draws
+velocities or positions from densities you supply. A Python script tests a bi-Kappa velocity
+sample from any loader against the target distribution.
 
-- **C++** (`cpp/`) — header-only samplers: bi-kappa & bi-Maxwellian velocities, plus rejection samplers for any speed-squared (|v|²) or spatial density you define.
-- **Python** (`python/`) — [`bikappa_validate.py`](python/bikappa_validate.py), which validates an
-  `N × 3` velocity sample from *any* bi-Kappa loader; equivalent general samplers; and Jupyter
-  notebooks to visualize the output.
+- `cpp/`: the five sampler headers, a regression suite, and a demo program.
+- `python/`: the validator `bikappa_validate.py`, Python versions of the general samplers,
+  and a notebook that plots samples.
+- `experiments/`: the studies behind the accompanying paper.
 
-📖 **API reference:** [kehengzhu.github.io/bi-kappa-distribution-sampling](https://kehengzhu.github.io/bi-kappa-distribution-sampling/). Locally, open [`docs/index.html`](docs/index.html) in a browser.
+## Quick start (C++)
 
-## How to cite
-
-If you use this software, please cite both the paper and the archived release; GitHub's
-**Cite this repository** button reads [`CITATION.cff`](CITATION.cff), and the concept DOI
-above always resolves to the latest version.
-
----
-
-## Quick start — C++
-
-```bash
-cd cpp && make && ./main.exe     # runs tests, then writes samples_*.txt
-```
-
-To use a sampler in your own code, every generator follows the same three steps — **construct → `define(...)` → call**:
+Copy the headers you need from `cpp/` into your project, or add `cpp/` to the include path.
+Any C++11 compiler works.
 
 ```cpp
 #include "bi_kappa_distribution.H"
+#include <cstdio>
 
-bi_kappa_distribution<double> dist;
-dist.define(/*kappa*/ 2.0, /*theta_perp*/ 1.0, /*theta_par*/ 2.0,
-            /*ub*/ {0, 0, 1});
+int main()
+{
+    using BK = bi_kappa_distribution<double>;
+    BK dist;
 
-auto v = dist();     // v = {vx, vy, vz}, sampled in the global frame
+    // kappa, theta_perp, theta_par, field direction ub (need not be unit length).
+    // The velocity cap is 20 thermal speeds unless you pass one.
+    dist.define(2.0, 1.0, 2.0, {0.0, 0.0, 1.0});
+    dist.seed(12345);
+    BK::point_type v = dist();          // {vx, vy, vz} in the global frame
+
+    // The same distribution without the cap:
+    dist.define(2.0, 1.0, 2.0, {0.0, 0.0, 1.0}, BK::no_cap());
+    v = dist();
+
+    std::printf("%g %g %g\n", v[0], v[1], v[2]);
+    return 0;
+}
 ```
 
-The cap is **off by default**, so these samples follow the bi-Kappa distribution itself. To pass
-a seed as well, give the cap explicitly — it is the fifth argument, and the seed the sixth:
-
-```cpp
-dist.define(2.0, 1.0, 2.0, {0, 0, 1},
-            bi_kappa_distribution<double>::no_cap(), /*seed*/ 12345);
+```bash
+g++ -std=c++11 -O2 -I cpp example.cpp -o example
 ```
 
-*Prerequisite: any C++11 compiler. Set `CXX` in `cpp/GNUmakefile` if not `g++`.*
+To build and run the code shipped in `cpp/`:
+
+```bash
+make -C cpp test                  # build and run the regression suite (exit status 0 on success)
+cd cpp && make && ./main.exe      # short worked examples of all five samplers
+make -C cpp CXX=clang++ test      # use a different compiler
+```
+
+### The velocity cap
+
+`bi_kappa_distribution` and `bi_maxwellian_distribution` take a cap
+`max_normalized_velocity`, in thermal speeds. It is applied to each component in
+field-aligned coordinates: a draw with `|v_i| / theta_i > cap` for any component is redrawn.
+The samples therefore follow the distribution conditioned on that box, not the distribution
+itself.
+
+- The default cap is 20. Release 1.0.0 used the same default, so code written against 1.0.0
+  samples the same distribution.
+- Pass `no_cap()` (which is `+infinity`) to sample the bi-Kappa or bi-Maxwellian distribution
+  itself. `dist.param().capped()` reports whether a finite cap is in force.
+- For bi-Kappa with `kappa <= 3/2`, a cap of 20 removes an appreciable part of the high-energy
+  tail; the paper quantifies this. For bi-Maxwellian the default cap has no practical effect.
+
+Details, including the frame in which the box is applied, are on the
+[parameters page](https://kehengzhu.github.io/bi-kappa-distribution-sampling/api/parameters.html).
 
 ## The five samplers
 
-| Header | Samples | define(...) takes |
+| Header / class | Samples | `define(...)` arguments |
 |---|---|---|
-| `bi_kappa_distribution` | 3D bi-kappa velocity | `kappa, theta_perp, theta_par, ub[, cap][, seed]` |
-| `bi_maxwellian_distribution` | 3D bi-Maxwellian velocity | `theta_perp, theta_par, ub[, cap][, seed]` |
-| `general_velocity_generator` | speed from your `g(w)`, `w = \|v\|²`, isotropic direction | `g, v²_min, v²_max` |
-| `field_aligned_velocity_generator` | parallel speed from your `g(w)`, `w = v_par²`, along `ub`; Maxwellian perpendicular | `g, v²_min, v²_max, theta_perp, ub, sign` |
-| `general_position_generator` | position from your density `rho(x)` | `dimension, lower, upper, rho` |
+| `bi_kappa_distribution` | bi-Kappa velocity | `kappa, theta_perp, theta_par, ub[, cap[, seed]]` |
+| `bi_maxwellian_distribution` | bi-Maxwellian velocity | `theta_perp, theta_par, ub[, cap[, seed]]` |
+| `general_velocity_generator` | speed from your `g(w)`, `w = \|v\|^2`; isotropic direction | `g, w_min, w_max[, probe_points, max_reject_tries]` |
+| `field_aligned_velocity_generator` | parallel speed from your `g(w)`, `w = v_par^2`, with a fixed sign along `ub`; Maxwellian perpendicular components | `g, w_min, w_max, theta_perp, ub, sign[, probe_points, max_reject_tries, cap]` |
+| `general_position_generator` | position in 1-3 dimensions from your density `rho(x)` | `dimension, lower, upper, rho[, probe_points, max_reject_tries]` |
 
-They all share the same behavior:
+Common behavior:
 
-- **Construct → `define(...)` → call.** Calling before `define(...)` throws.
-- **Seeding:** call `dist.seed(s)` any time. `bi_kappa_distribution` and `bi_maxwellian_distribution` also accept the seed as the last `define(...)` argument. A **negative** `s` draws an unpredictable seed from `std::random_device`.
-- **No-arg call** `dist()` uses the sampler's own RNG. **Bring-your-own** `dist(gen)` accepts an external `std::mt19937`.
-- **`ub`** is the magnetic-field direction (need not be unit length). Output is rotated into the global frame; the default `{0,0,1}` returns field-aligned components directly.
-- **`cap`** selects which of **two distinct target distributions** you sample. It behaves the same
-  way on `bi_kappa_distribution` and `bi_maxwellian_distribution`; the bi-kappa case is described
-  here because that is where the choice has teeth.
-  - **Omitted, or `no_cap()` — the default on both.** Samples follow the full bi-Kappa law, and
-    the draw uses a fixed sequence of high-level variates with no outer acceptance–rejection
-    loop. Second moments diverge for `kappa <= 3/2`; that is a property of the distribution, not
-    a defect.
-  - A **finite** `cap` is **opt-in**. It rejects any component with `|v_i| / theta_i > cap` and
-    resamples, throwing after 10⁶ failed tries. The resulting samples follow the bi-Kappa
-    distribution **conditioned on** all normalized components lying inside that box — a different,
-    bounded law with its own normalization, not the bi-Kappa distribution itself. Its moments are
-    finite for every `kappa`, because it is a different distribution, not because truncation
-    regularizes the original one.
-  - `dist.param().capped()` reports which mode is active.
+- Construct, call `define(...)`, then call `dist()` for one sample. `define(...)` throws
+  `std::invalid_argument` on an invalid parameter.
+- `theta_perp` and `theta_par` are thermal-speed parameters in units of velocity. For the
+  bi-Maxwellian, `theta = sqrt(2 k_B T / m)` and each component is `N(0, theta^2 / 2)`. For the
+  bi-Kappa distribution they are the scales in its density (Eq. 2 of the paper) and are not
+  tied to a temperature, which does not exist for `kappa <= 3/2`.
+- `ub` is the magnetic-field direction. Samples are returned in the global frame.
+- `seed(s)` with `s >= 0` makes the stream reproducible; `s < 0` seeds from
+  `std::random_device`. Without a seed, runs are not reproducible.
+- `dist(gen)` draws from your own engine, for example a shared `std::mt19937`. For
+  `bi_kappa_distribution` the engine must produce a power-of-two number of distinct values,
+  as `std::mt19937` and `std::mt19937_64` do (`std::minstd_rand` does not).
+- `general_velocity_generator` and `field_aligned_velocity_generator` take no particle mass.
+  For a distribution written in energy, use `w = 2E/m`. If `w_min == w_max`, every sample has
+  speed `sqrt(w_min)`. `probe_points` must be at least 64.
+- The `field_aligned_velocity_generator` caps each perpendicular component at
+  `cap * theta_perp` (default 20); `no_cap()` removes it.
+- Near `kappa = 1/2`, some bi-Kappa draws exceed the largest representable floating-point
+  number. Without a cap they are returned with infinite components; with a cap they are
+  redrawn. `n_nonfinite()` and `n_attempts()` count them in both cases.
+- Compiling `bi_kappa_distribution.H` with `-ffast-math` prints a note, because in that mode
+  `no_cap()` and the overflow counters are unreliable. A finite cap still works. Define `BI_KAPPA_ALLOW_FAST_MATH` to
+  silence the note.
 
-  > **Why the cap is not the default.** `experiments/exp2_cap_characterization` measures the gap
-  > between the two laws. The rejected fraction *is* the total-variation distance to the bi-Kappa
-  > law, and it decays only as `cap^-(2*kappa-1)` — so at `kappa = 0.75` even `cap = 100` still
-  > discards 9.7% of attempts. A small discarded fraction does **not** imply a faithful tail:
-  > at `kappa = 1.5, cap = 50` the TV distance is 6.3e-4 while the 99.9th-percentile speed is
-  > still 24% too small. The conditioned law is also **not axisymmetric about `ub`**, because the
-  > box is a cube in normalized components — a four-fold azimuthal modulation that matters for
-  > PIC initialization. Separately, `experiments/exp4_precision` shows the rejection loop
-  > silently **hides** non-finite draws at very low `kappa` instead of reporting them. Use a
-  > finite cap when you need bounded support and have accepted those consequences.
-- **Change one parameter** without re-specifying the rest: `dist.kappa(3.0)`, `dist.ub({0,1,0})`, etc.
-
-For the full API — every overload, parameter constraint, and the Python classes — see the [API reference](https://kehengzhu.github.io/bi-kappa-distribution-sampling/). A worked example using all five samplers lives in [`cpp/main.cpp`](cpp/main.cpp).
-
-## Quick start — Python
+## Validate a sample (Python)
 
 ```bash
 cd python
-uv sync                # or: pip install numpy scipy pandas matplotlib ipykernel
-python general_generators.py     # writes samples_general_{velocity,position}.txt and samples_field_aligned.txt
+uv sync          # or: pip install numpy scipy   (the notebook and figure scripts also
+                 #     need matplotlib, pandas, mpmath and ipykernel)
 ```
 
-`general_generators.py` provides `GeneralVelocityGenerator`, `FieldAlignedVelocityGenerator`, and `GeneralPositionGenerator` — the Python equivalents of the C++ general samplers.
+`bikappa_validate.py` tests an `(N, 3)` velocity sample, with `N >= 1000`, from any bi-Kappa
+loader against the bi-Kappa distribution. It uses no moments, so it also applies at
+`kappa <= 3/2`. It tests the radius, the direction, their independence, the counts in cells
+of equal probability (with the radius resolved into the tail as far as the sample size
+allows), the anisotropy, and the number of non-finite values.
 
-## Visualize
+```bash
+uv run python bikappa_validate.py samples.txt --kappa 2 --theta-perp 1 --theta-par 2
+```
 
-Open [`python/visualize_samples.ipynb`](python/visualize_samples.ipynb) and run all cells. Point `workspace_root` at your sample files:
-
-- `"./"` — files in `python/`
-- `"../cpp/"` — files written by the C++ driver
-
-## Tests
-
-`./main.exe` runs `run_all_tests()` before sampling and **exits non-zero on any failure**. Coverage: frame-transform correctness, `define(...)`/getter behavior, the velocity cap, seed reproducibility, the radial formation (`test_radius_formation`), and uncapped/capped target-law semantics (`test_no_cap_semantics`).
-
-## Validation experiments
-
-`experiments/` holds the standalone validation studies behind the manuscript. Each is
-self-contained and reproducible from one documented command, with committed scripts, fixed
-seeds, a manifest, and an environment record.
-
-| Directory | What it establishes |
+| Option | Meaning |
 |---|---|
-| `exp1_radial_directional/` | The central radial law `T = R² ~ β'(3/2, κ−1/2)`, directional uniformity, radial–direction independence, anisotropy, and arbitrary **B**-frame invariance. 1.35×10⁷ draws, κ = 0.51…10. |
-| `exp2_cap_characterization/` | How the optional component-wise cap changes the sampled law: it is the bi-Kappa **conditioned on the box**, not the same distribution. The rejected fraction equals the total-variation distortion, decays only as `λ^−(2κ−1)`, and the box breaks axisymmetry about **B**. |
-| `exp3_benchmark/` | Throughput of the loader, against the bi-Maxwellian sampler and against the cost of the cap. |
-| `exp4_precision/` | Supported numerical range as a function of κ, precision and standard library, **for release 1.0.0**: `double` clean for κ ≥ 0.55, `float` for κ ≥ 0.75. Release 2.2.0 builds the radius in the log domain and does not have the failure mode this measured; see Experiment 7. |
-| `exp6_low_kappa_stabilization/` | **Exploratory.** Where the 1.0.0 loss near κ = 1/2 comes from — avoidable arithmetic loss separated from the honest representability floor — how that loss depends on the state of the draw, and a first log-domain prototype. Its acceptance rules deviated from its own plan, so it is evidence about mechanism rather than a confirmatory test; Experiment 7 records which of its results survive and which do not. |
-| `exp7_confirmatory/` | The confirmatory test of the log-domain loader, against a protocol committed before any of its data existed and on a disjoint seed block. Two holdouts returned NO-GO and are preserved unedited in `preserved/holdout_1_seeds_7001_7010/` and `preserved/holdout_2_seeds_8001_8010/`; protocol 3.0.0 governs the third, on a further disjoint block, and tests release 2.2.0. Seven pre-registered test families, a power study stating what the battery can and cannot detect, and gates that fail on absent evidence. |
+| `sample` | `.npy`, text (`.txt`, `.csv`), or raw float64 (`.bin`) file with three columns |
+| `--kappa`, `--theta-perp`, `--theta-par` | parameters of the target distribution (required) |
+| `--bhat BX BY BZ` | field direction; omit if the third column is already the parallel component |
+| `--attempts N` | total draws attempted, if the loader redrew samples outside a cap; adds the rejected fraction to the report |
+| `--alpha A` | significance level, default 0.01 |
+| `--binary` | read the file as raw float64 whatever its extension |
+| `--json` | print the full report as JSON |
 
-Bulk per-draw output (`raw/*.bin`) is regenerable and deliberately not tracked; manifests,
-compact summaries and manuscript-quality figures are.
+The exit status is 0 if every test passes and 1 otherwise. The tests compare the sample with
+the uncapped bi-Kappa distribution, so a sample from `bi_kappa_distribution` should be drawn
+with `no_cap()`; the default cap of 20 changes the distribution.
+
+From Python:
+
+```python
+from bikappa_validate import validate_sample, format_report
+report = validate_sample(v, kappa=2.0, theta_perp=1.0, theta_par=2.0)   # v: (N, 3) array
+print(format_report(report)); assert report["passed"]
+```
+
+Other Python files:
+
+- `general_generators.py`: `GeneralVelocityGenerator`, `FieldAlignedVelocityGenerator` and
+  `GeneralPositionGenerator`, with the same rules as the C++ classes. Call a generator with a
+  `numpy.random.Generator`: `v = gen(rng)`. Running the file writes example samples.
+- `visualize_samples.ipynb`: plots sample files written by the C++ or Python examples.
+- `test_bikappa_validate.py`: regression test of the validator
+  (`uv run python test_bikappa_validate.py`).
+
+## Reproducing the paper
+
+Each experiment directory has a README with its commands and outputs. Run the commands from
+that directory.
+
+| Directory | In the paper | Command |
+|---|---|---|
+| `experiments/exp1_radial_directional` | Tables III and IV, Figs. 4 and 5 | `make cells tail moments marginals` |
+| `experiments/exp2_cap_characterization` | Table II, Fig. 3 | `make run`, then `uv run --project ../../python python exp2_analyze.py` |
+| `experiments/exp4_finite_precision` | Fig. 2 | the run sequence in its README, ending with `make analyze figures` |
+| `experiments/exp3_benchmark` | not shown (speed comparison with two other samplers) | `make run`, then `uv run --project ../../python python exp3_analyze.py` |
+
+`paper/figures/make_manuscript_assets.py` regenerates the paper's figures and tables from the
+committed experiment results.
 
 ## Documentation
 
-The full API reference is generated from the in-source comments with [Doxygen](https://www.doxygen.nl/) and lives in [`docs/api/`](docs/api/).
+- API reference: [kehengzhu.github.io/bi-kappa-distribution-sampling](https://kehengzhu.github.io/bi-kappa-distribution-sampling/),
+  or open `docs/api/index.html` locally. Regenerate it with `doxygen Doxyfile` from the
+  repository root.
+- [Parameter reference](https://kehengzhu.github.io/bi-kappa-distribution-sampling/api/parameters.html):
+  every argument, default and valid range.
+- [Usage examples](https://kehengzhu.github.io/bi-kappa-distribution-sampling/api/usage.html) and
+  [choosing a sampler](https://kehengzhu.github.io/bi-kappa-distribution-sampling/api/choosing.html).
+- [CHANGELOG.md](https://github.com/KehengZhu/bi-kappa-distribution-sampling/blob/main/CHANGELOG.md): changes between releases, including what differs from 1.0.0.
 
-**Read it locally** — open [`docs/api/index.html`](docs/api/index.html) in a browser. (Note: clicking that file on github.com shows the HTML *source*, not the rendered page — use GitHub Pages below for a live site.)
+## How to cite
 
-**Regenerate after changing code or comments:**
-```bash
-doxygen Doxyfile      # run from the repo root; rewrites docs/api/ only
-```
-Install Doxygen first if needed: `brew install doxygen`.
+Please cite the paper and the software:
 
-`docs/` is laid out as:
+- K. Zhu and Y. A. Omelchenko, "Verifying the High-Energy Tail in Bi-Kappa Particle Loading:
+  Three-Dimensional Tests, Velocity Bounds, and Finite Precision" (2026).
+- K. Zhu and Y. A. Omelchenko, bi-kappa-distribution-sampling, Zenodo,
+  [doi:10.5281/zenodo.20617011](https://doi.org/10.5281/zenodo.20617011). This concept DOI
+  resolves to the latest release; Zenodo lists the DOI of each version.
 
-| Path | Contents | Generated? |
-|---|---|---|
-| `docs/index.html` | redirect that keeps the Pages root URL working | hand-written |
-| `docs/api/` | Doxygen API reference | **yes — overwritten by `doxygen Doxyfile`** |
-| `docs/revision/` | manuscript-revision working documents (see its `README.md`) | hand-written |
+GitHub's "Cite this repository" button reads [`CITATION.cff`](CITATION.cff).
 
 ## License
 
-Released under the MIT License. See [`LICENSE`](LICENSE) for the full text.
+MIT. See [`LICENSE`](LICENSE).

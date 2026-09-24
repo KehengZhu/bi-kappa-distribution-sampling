@@ -16,7 +16,7 @@ What goes in:
 
 Usage:
     tools/make_release_archive.py --ref v2.0.0 --out dist/
-    tools/make_release_archive.py --ref HEAD --with-results experiments/exp7_confirmatory
+    tools/make_release_archive.py --ref HEAD --with-results experiments/exp4_finite_precision
 """
 from __future__ import annotations
 

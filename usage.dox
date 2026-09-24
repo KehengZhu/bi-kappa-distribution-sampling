@@ -1,338 +1,210 @@
 /**
-\page usage Usage Examples
+\page usage Usage examples
 
-Practical, copy-pasteable recipes for the five samplers. Every snippet uses
-`Real = double`; substitute `float` or your project's `Real` as needed. All
-generators follow the same lifecycle: **construct → `define(...)` → call**.
+Short examples for the five samplers. They use `Real = double`; `float` also works. Every
+sampler is used the same way: construct, call `define(...)`, then call `operator()` once per
+sample.
 
 \tableofcontents
 
-\section usage_build Building and running the demo
+\section usage_build Building the tests and the demo
 
-The bundled driver runs the test suite and writes 100k samples from each
-generator to `samples_*.txt`:
+The headers need only a C++11 compiler. To build and run the code in `cpp/`:
 
 \code{.sh}
-cd cpp
-make
-./main.exe
+make -C cpp test                  # regression suite; exit status 0 if every check passes
+cd cpp && make && ./main.exe      # short worked examples of all five samplers
+make -C cpp CXX=clang++ test      # use a different compiler
 \endcode
 
-\section usage_bikappa Bi-kappa velocity samples
-
-Sample a 3D bi-kappa velocity distribution, anisotropic about the field
-direction `ub`, and stream the samples to a file.
+\section usage_bikappa Bi-Kappa velocities
 
 \code{.cpp}
 #include "bi_kappa_distribution.H"
 #include <fstream>
 using Real = double;
+using BK = bi_kappa_distribution<Real>;
 
-bi_kappa_distribution<Real> biKappa;
-//             kappa  theta_perp  theta_par  ub          cap                    seed
-biKappa.define(2.0,   1.0,        2.0,       {0, 0, 1},  Real(INFINITY),        20030410);
+BK biKappa;
+//             kappa  theta_perp  theta_par  ub          cap            seed
+biKappa.define(2.0,   1.0,        2.0,       {0, 0, 1},  BK::no_cap(),  20030410);
 
 std::ofstream out("samples_bikappa.txt");
 for (int i = 0; i < 100000; ++i) {
-    bi_kappa_distribution<Real>::point_type v = biKappa();   // {vx, vy, vz}, global frame
+    BK::point_type v = biKappa();          // {vx, vy, vz} in the global frame
     out << v[0] << ' ' << v[1] << ' ' << v[2] << '\n';
 }
 \endcode
 
-Write the cap as `bi_kappa_distribution<Real>::no_cap()` rather than `INFINITY` in real
-code; it is spelled out above only to keep the column alignment readable. **The cap is off
-by default**, so `biKappa.define(2.0, 1.0, 2.0, {0, 0, 1})` samples the same law — the cap is
-named here only because the seed has to follow it as the sixth argument.
+The seed is the sixth argument, so the cap has to be given when a seed is passed to
+`define(...)`. Alternatively, call `biKappa.seed(20030410)` after `define(...)`.
 
-\warning The cap selects which of **two different distributions** you sample — it is not a
-safety limit on an otherwise unchanged sampler. Omitting it, or passing `no_cap()`, gives the
-bi-kappa distribution. Passing a finite value gives a *different, bounded* law. Read
-\ref usage_bikappa_cap before using one. `dist.param().capped()` reports which is active.
+\subsection usage_bikappa_cap The velocity cap
 
-\subsection usage_bikappa_cap The velocity cap: what it does and how to select it
-
-Everything you need in order to use the cap correctly is on this page; the accompanying
-manuscript carries the derivations and the measurements behind the numbers quoted here.
-
-\subsubsection usage_cap_which Uncapped is the default
-
-Omitting the argument is enough. These three are identical:
+The fifth argument, `max_normalized_velocity`, is a cap in thermal speeds. It defaults to 20,
+the value used in release 1.0.0.
 
 \code{.cpp}
-using BK = bi_kappa_distribution<Real>;
 BK dist;
-
-dist.define(2.0, 1.0, 2.0, {0, 0, 1});                                  // omit it
-dist.define(2.0, 1.0, 2.0, {0, 0, 1}, BK::no_cap());                    // name it
-dist.define(2.0, 1.0, 2.0, {0, 0, 1}, std::numeric_limits<Real>::infinity());
+dist.define(2.0, 1.0, 2.0, {0, 0, 1});                // cap = 20 (default)
+dist.define(2.0, 1.0, 2.0, {0, 0, 1}, BK::no_cap());  // no cap
+dist.define(2.0, 1.0, 2.0, {0, 0, 1}, 50.0);          // cap = 50
+bool c = dist.param().capped();                       // true for a finite cap
+dist.max_normalized_velocity(BK::no_cap());           // remove the cap
+dist.max_normalized_velocity(0.0);                    // throws std::invalid_argument
 \endcode
 
-`no_cap()` *is* `+infinity`; naming it is worth the keystrokes wherever a reader of the calling
-code needs to know which of the two laws is being sampled.
+With a finite cap, a draw is redrawn if `|v_i| / theta_i > cap` for any component in
+field-aligned coordinates. The samples then follow the bi-Kappa distribution conditioned on
+that box, not the bi-Kappa distribution itself. For `kappa <= 3/2` a cap of 20 removes an
+appreciable part of the high-energy tail; the paper's section on finite velocity bounds
+quantifies this. Use `no_cap()` when the tail matters.
 
-Uncapped is not merely a cap large enough to never bind: `param_type::capped()` is
-`std::isfinite(...)`, so the sampler skips the acceptance-rejection loop entirely and the core
-mapping runs exactly once per draw. No rejection, no retry limit, no discarded variates.
+The box is aligned with the field-aligned axes and rotates with `ub`. Global-frame components
+are bounded individually only when `ub = {0, 0, 1}`; the speed is always bounded by
+`cap * sqrt(2 theta_perp^2 + theta_par^2)`. See \ref params_cap for details.
 
-To sample the **capped** law instead, pass a finite positive value. The arguments are
-positional, so enabling a cap means passing `ub` as well:
+\section usage_bimaxwell Bi-Maxwellian velocities
 
-\code{.cpp}
-dist.define(2.0, 1.0, 2.0, {0, 0, 1}, 50.0);   // bi-kappa conditioned on a 50-theta box
-bool c = dist.param().capped();                // true
-\endcode
-
-To go back to the unconditioned law afterwards, assign the sentinel — **do not pass `0`**, which
-`param_type` rejects along with every other non-positive value:
-
-\code{.cpp}
-dist.max_normalized_velocity(BK::no_cap());    // capped -> uncapped
-dist.max_normalized_velocity(0.0);             // throws std::invalid_argument
-\endcode
-
-\subsubsection usage_cap_law What the capped law is
-
-With a finite cap `lam`, a draw is accepted only if all three components lie inside the box
-
-    |v_x| / theta_perp <= lam,  |v_y| / theta_perp <= lam,  |v_par| / theta_par <= lam
-
-and is otherwise discarded and redrawn. The result is the bi-kappa density restricted to that
-box and renormalized — a distribution with bounded support, its own normalization constant, and
-finite moments of every order even for `kappa <= 3/2`, where the bi-kappa distribution itself
-has no finite variance. Those moments are finite because you are sampling a **different
-distribution**, not because the cap has repaired the original one. A temperature computed from
-capped samples is a property of the box as much as of `kappa`.
-
-\subsubsection usage_cap_frame Which frame the cap is applied in
-
-The test is performed in the **field-aligned frame, before the rotation into the global frame**.
-The box is therefore aligned with `ub` and rotates with it.
-
-Consequence for calling code: the returned `{vx, vy, vz}` are **not** individually bounded by
-`lam * theta` unless `ub` is `{0,0,1}`. What is bounded, in every frame, is the speed:
-
-    |v| <= lam * sqrt(2*theta_perp^2 + theta_par^2)
-
-which is the corner of the box. Size velocity-grid extents, array bounds, and CFL estimates on
-that, not on the per-component value.
-
-Normalizing each component by its own thermal speed makes `theta_perp` and `theta_par` cancel
-out of the test entirely. Two practical consequences: the rejected fraction depends on `kappa`
-and `lam` alone, so retuning temperatures never changes your sampling throughput; and the capped
-law in the local frame is the same law whatever `ub` you point it at.
-
-\subsubsection usage_cap_cost What a cap costs you
-
-**The rejected fraction is not just a cost — it is the error.** The total-variation distance
-between the capped law and the bi-kappa distribution equals the fraction of draws you throw away,
-exactly. There is no trade-off to tune between the two: they are one number.
-
-**A small rejected fraction does not mean the tails are right.** At `kappa = 1.5` with
-`lam = 50`, only `6.3e-4` of draws are rejected, yet the 99.9th-percentile speed of what you keep
-is **24% too low**. If suprathermal particles matter to your problem — and they are usually why
-a kappa distribution was chosen — judge the cap by the quantiles you care about, not by the
-acceptance rate.
-
-**The box is a cube, so the capped law is not axisymmetric about `ub`.** A direction pointing at
-a cube corner has `sqrt(3)` times more radial room than one along an axis, which imprints a
-four-fold azimuthal modulation on the distribution function that no choice of `theta` can absorb.
-The modulation is easy to miss: the cube's symmetries make the capped pressure tensor *exactly*
-gyrotropic and reproduce `(theta_par/theta_perp)^2` exactly, so every standard second-order
-diagnostic returns a clean result while the distribution function itself is not gyrotropic.
-
-For `kappa <= 3/2` no practical cap value is a good approximation to the bi-kappa law. If you
-need bounded velocities there, treat the capped law as the physical model you have chosen and
-report it as such.
-
-**Uncapped is the default, so omitting the argument is enough.** These three are identical:
-
-\code{.cpp}
-using BK = bi_kappa_distribution<Real>;
-BK dist;
-
-dist.define(2.0, 1.0, 2.0, {0, 0, 1});                                  // omit it
-dist.define(2.0, 1.0, 2.0, {0, 0, 1}, BK::no_cap());                    // name it
-dist.define(2.0, 1.0, 2.0, {0, 0, 1}, std::numeric_limits<Real>::infinity());
-\endcode
-
-`no_cap()` *is* `+infinity`; naming it is worth the keystrokes wherever a reader of the calling
-code needs to know which of the two laws is being sampled.
-
-Uncapped is not merely a cap large enough to never bind: `param_type::capped()` is
-`std::isfinite(...)`, so the sampler skips the acceptance-rejection loop entirely and the core
-mapping runs exactly once per draw. No rejection, no retry limit, no discarded variates.
-
-To sample the **capped** law instead, pass a finite positive value. The arguments are
-positional, so enabling a cap means passing `ub` as well:
-
-\code{.cpp}
-dist.define(2.0, 1.0, 2.0, {0, 0, 1}, 50.0);   // bi-kappa conditioned on a 50-theta box
-bool c = dist.param().capped();                // true
-\endcode
-
-To go back to the unconditioned law afterwards, assign the sentinel — **do not pass `0`**, which
-`param_type` rejects along with every other non-positive value:
-
-\code{.cpp}
-dist.max_normalized_velocity(BK::no_cap());    // capped -> uncapped
-dist.max_normalized_velocity(0.0);             // throws std::invalid_argument
-\endcode
-
-\section usage_bimaxwell Bi-Maxwellian velocity samples
-
-Same pattern, without the `kappa` parameter.
+The same interface without `kappa`. The cap works as for `bi_kappa_distribution`, with the same
+default of 20; for a Maxwellian it has no practical effect.
 
 \code{.cpp}
 #include "bi_maxwellian_distribution.H"
-using Real = double;
+using BM = bi_maxwellian_distribution<double>;
 
-bi_maxwellian_distribution<Real> biMaxwell;
-biMaxwell.define(1.0, 2.0, {0, 0, 1});         // theta_perp, theta_par, ub
-
-bi_maxwellian_distribution<Real>::point_type v = biMaxwell();
+BM biMaxwell;
+biMaxwell.define(1.0, 2.0, {0, 0, 1});                          // theta_perp, theta_par, ub
+biMaxwell.define(1.0, 2.0, {0, 0, 1}, BM::no_cap(), 20030410);  // no cap, with a seed
+BM::point_type v = biMaxwell();
 \endcode
 
-The cap works exactly as it does on `bi_kappa_distribution` — off by default, `no_cap()` to name
-that explicitly, `param().capped()` to query it — so everything in \ref usage_bikappa_cap applies
-here too. Gaussian tails are thin enough that a realistic cap is never exercised by a finite
-sample, so the choice rarely changes what you load on this sampler; it still changes which law
-you asked for.
+\section usage_reproducible Seeding
 
 \code{.cpp}
-//               theta_perp  theta_par  ub          cap                                seed
-biMaxwell.define(1.0,        2.0,       {0, 0, 1},  bi_maxwellian_distribution<Real>::no_cap(),
-                 20030410);
-\endcode
-
-\section usage_reproducible Reproducible runs (seeding)
-
-Each sampler owns an internal `std::mt19937`. Seed it for byte-for-byte
-reproducible sequences; re-seeding with the same value restarts the stream.
-
-\note What "byte-for-byte" does and does not cover.
-
-- **Same binary, same seed:** identical, and `seed(s)` restarts the stream cleanly.
-  Before version 2.0.0 that second half was not true of `bi_kappa_distribution` on
-  every platform: `seed(int)` reseeded the engine without discarding the variate
-  cached inside `std::gamma_distribution`, so under libstdc++ a reseed followed by an
-  odd number of draws did not reproduce. `seed()` now calls `reset()`.
-- **Different standard library, same architecture:** identical for
-  `bi_kappa_distribution` from version 2.0.0 on, because it draws its Gamma, normal
-  and uniform variates from primitives defined in its own header rather than from
-  `<random>`, whose distribution templates are specified only up to their
-  distribution and do use different algorithms in libc++ and libstdc++. The other
-  samplers in this repository still call `<random>` distributions directly and so do
-  **not** have this property.
-- **Different architecture:** not guaranteed for any sampler here. `log`, `exp` and
-  `pow` are not correctly rounded and their implementations differ, so results agree
-  statistically rather than bitwise.
-- **Across releases:** not guaranteed, and version 2.0.0 deliberately breaks it for
-  `bi_kappa_distribution`. Its radius is now built in the log domain, which changes
-  which variates are drawn, so a given seed produces a different sequence than it did
-  under 1.x. Pin the release if a stored stream must be reproduced.
-
-\code{.cpp}
-bi_kappa_distribution<Real> dist;
-
-// (a) seed as the last define() argument (bi_kappa only).  The cap cannot be
-//     omitted here, because the seed is the argument after it:
-dist.define(2.0, 1.0, 2.0, {0, 0, 1},
-            bi_kappa_distribution<Real>::no_cap(), /*seed*/ 55555);
-
-// (b) or seed any time after define() (all samplers):
+BK dist;
 dist.define(2.0, 1.0, 2.0);
-dist.seed(55555);            // same seed  -> identical sequence
-dist.seed(-1);               // negative   -> unpredictable seed from std::random_device
+dist.seed(55555);      // s >= 0: the same seed gives the same sequence
+dist.seed(-1);         // s < 0: seed from std::random_device
 \endcode
 
-\section usage_external_rng Sharing one RNG across samplers
+Without a seed, runs are not reproducible. On every sampler `seed(s)` also calls `reset()`, which
+discards any variate cached from earlier draws, so reseeding restarts the stream exactly. For
+`bi_kappa_distribution` a given seed gives the same values under libc++ and libstdc++ on the same
+architecture; the values are not bitwise identical across architectures, and they differ from
+release 1.0.0. `bi_maxwellian_distribution` uses `std::normal_distribution`, whose values depend
+on the standard library, and gives the same values as release 1.0.0.
 
-Pass your own `std::mt19937` to `operator()` when several samplers should draw
-from a single stream (e.g. for coordinated reproducibility).
+\section usage_external_rng Sharing one engine
+
+Pass your own engine to `operator()` to draw several samplers from one stream. For
+`bi_kappa_distribution` the engine must produce a power-of-two number of distinct values, as
+`std::mt19937` and `std::mt19937_64` do.
 
 \code{.cpp}
 #include <random>
 std::mt19937 gen(42u);
 
-bi_kappa_distribution<Real> perp, par;
-perp.define(2.0, 1.0, 1.0);
-par.define (2.0, 1.0, 5.0);
+BK core, halo;
+core.define(5.0, 1.0, 1.0);
+halo.define(2.0, 3.0, 3.0);
 
-auto vp = perp(gen);   // both consume the same gen
-auto vq = par (gen);
+BK::point_type a = core(gen);   // both draw from gen
+BK::point_type b = halo(gen);
 \endcode
 
-\section usage_redefine Reconfiguring a sampler
+\section usage_redefine Changing parameters
 
-Reconfigure everything with `define(...)`, or change one parameter at a time
-with the convenience setters — each setter re-validates the full parameter set.
+`define(...)` replaces the whole configuration. Each single-parameter setter re-validates the
+full set.
 
 \code{.cpp}
-bi_kappa_distribution<Real> dist;
-dist.define(2.0, 1.0, 1.0);     // initial configuration
-
-dist.kappa(5.0);                // change one field...
-dist.theta_par(2.5);            // ...each rebuilds + re-validates
+BK dist;
+dist.define(2.0, 1.0, 1.0);
+dist.kappa(5.0);
+dist.theta_par(2.5);
 dist.ub({1, 2, 3});
-
-dist.define(3.0, 1.5, 2.5, {0, 0, 1});         // or replace the whole config at once
+dist.max_normalized_velocity(BK::no_cap());
 \endcode
 
-\note `max_normalized_velocity(...)` is the one setter that changes *which distribution* is
-sampled, not merely its parameters.
+\section usage_overflow Overflow near kappa = 1/2
 
-\section usage_velocity Custom speed-squared distribution
+Close to `kappa = 1/2`, some bi-Kappa draws exceed the largest representable floating-point
+number. Without a cap they are returned with infinite components; with a cap they are redrawn.
+`n_nonfinite()` counts such draws and `n_attempts()` counts all attempts since the last
+`define()`, `seed()` or `reset()`.
 
-`general_velocity_generator` draws a speed from any speed-squared PDF `g(w)`
-you supply (by rejection sampling, with `w = |V|²`) and assigns an isotropic 3D
-direction, so `|V| = sqrt(w)`. There is no mass parameter: for a distribution
-originally posed in energy, `w = |V|² = 2E/m`, so the mass drops out.
+\code{.cpp}
+BK dist;
+dist.define(0.505, 1.0, 1.0, {0, 0, 1}, BK::no_cap());
+for (int i = 0; i < 1000000; ++i) {
+    BK::point_type v = dist();
+    if (!std::isfinite(v[0]) || !std::isfinite(v[1]) || !std::isfinite(v[2])) {
+        // handle or discard the draw
+    }
+}
+unsigned long long lost = dist.n_nonfinite();
+\endcode
+
+Under `-ffast-math` the compiler may assume that no infinity occurs, so `no_cap()` and the
+counters are unreliable. `bi_kappa_distribution.H` then prints a compile-time note; define
+`BI_KAPPA_ALLOW_FAST_MATH` to silence it. See \ref params_precision for typical rates.
+
+\section usage_velocity Isotropic velocities from your own density
+
+`general_velocity_generator` draws `w = |v|^2` from a density `g(w)` you supply, by rejection
+sampling, and gives the velocity an isotropic direction with speed `sqrt(w)`. There is no mass
+argument: for a distribution written in energy, use `w = 2E/m`.
 
 \code{.cpp}
 #include "general_velocity_generator.H"
 #include <cmath>
 using Real = double;
 
-auto gW = [](Real w) -> Real { return std::exp(-0.5 * w); };   // any positive g(w), w = |v|^2
+// Maxwellian with thermal speed 1, written as a density in w = |v|^2.
+auto gW = [](Real w) -> Real { return std::sqrt(w) * std::exp(-w); };
 
 general_velocity_generator<Real> velGen;
-//            g    v2_min  v2_max
-velGen.define(gW,  0.0,    40.0);
+//            g    w_min  w_max
+velGen.define(gW,  0.0,   40.0);
 velGen.seed(20030410);
-
 general_velocity_generator<Real>::point_type v = velGen();
 \endcode
 
-\section usage_field_aligned Field-aligned velocity (anisotropic)
+If `w_min == w_max`, every sample has speed `sqrt(w_min)`. `probe_points` (fourth argument,
+default 1024) must be at least 64.
 
-`field_aligned_velocity_generator` builds an anisotropic velocity about the
-field direction `ub`: the parallel component draws `v_par² ` from your
-speed-squared PDF `g(w)` (so `|v_par| = sqrt(w)`), pointing along `ub` for
-`sign = +1` or opposite it for `sign = -1`, while the two perpendicular
-components are a Maxwellian with thermal speed `theta_perp` (each
-`~ N(0, theta_perp²/2)`, the same convention as `bi_maxwellian_distribution`).
-The result is returned in the global frame.
+\section usage_field_aligned Field-aligned velocities
+
+`field_aligned_velocity_generator` draws `w = v_par^2` from your density `g(w)` and puts the
+parallel component along `ub` (`sign = +1`) or opposite to it (`sign = -1`). The two
+perpendicular components are Maxwellian with thermal speed `theta_perp`, each
+`N(0, theta_perp^2 / 2)`, and each is capped at `20 * theta_perp` by default. The result is
+returned in the global frame.
 
 \code{.cpp}
 #include "field_aligned_velocity_generator.H"
 #include <cmath>
 using Real = double;
+using FA = field_aligned_velocity_generator<Real>;
 
-auto gW = [](Real w) -> Real { return std::exp(-0.5 * w); };   // any positive g(w), w = v_par^2
+auto gW = [](Real w) -> Real { return std::exp(-0.5 * w); };   // density in w = v_par^2
 
-field_aligned_velocity_generator<Real> faGen;
-//           g    v2_min  v2_max  theta_perp  ub          sign
-faGen.define(gW,  0.0,    40.0,   1.0,        {0, 0, 1},  +1);
+FA faGen;
+//           g    w_min  w_max  theta_perp  ub          sign
+faGen.define(gW,  0.0,   40.0,  1.0,        {0, 0, 1},  +1);
 faGen.seed(20030410);
+FA::point_type v = faGen();
 
-field_aligned_velocity_generator<Real>::point_type v = faGen();   // {vx, vy, vz}, global frame
+// Without the perpendicular cap:
+faGen.define(gW, 0.0, 40.0, 1.0, {0, 0, 1}, +1, 1024, 100000, FA::no_cap());
 \endcode
 
-\section usage_position Custom spatial density
+\section usage_position Positions from your own density
 
-`general_position_generator` draws positions in 1D/2D/3D from any density
-`rho(x)` by rejection sampling in an axis-aligned box. The returned point is a
-`std::vector<Real>` of length `dimension`.
+`general_position_generator` draws positions in one to three dimensions from a density
+`rho(x)` in an axis-aligned box, by rejection sampling. The point is a `std::vector<Real>` of
+length `dimension`.
 
 \code{.cpp}
 #include "general_position_generator.H"
@@ -344,37 +216,34 @@ auto rho = [](const pos_t& x) -> Real { return 1.0 + std::sin(x[0]) * std::sin(x
 
 general_position_generator<Real> posGen;
 const Real pi = 3.14159265358979;
-//            dim  lower         upper        density
-posGen.define(2,   {-pi, -pi},   {pi, pi},    rho);
+//            dim  lower        upper       density
+posGen.define(2,   {-pi, -pi},  {pi, pi},   rho);
 posGen.seed(20030410);
-
-pos_t x = posGen();   // length-2 vector
+pos_t x = posGen();
 \endcode
 
-\section usage_errors Error handling
+\section usage_errors Errors
 
-- The general and field-aligned velocity generators throw `std::runtime_error`
-  if called before `define(...)`.
-- `define(...)` throws `std::invalid_argument` on bad input (e.g. `kappa <= 0.5`,
-  non-positive `theta`/`cap`, `v2_min >= v2_max`, `v2_min < 0`, a zero `ub`,
-  `sign` other than ±1, `dimension` outside 1–3).
-- Velocity samplers throw `std::runtime_error` if the cap rejection loop fails
-  10⁶ times in a row.
+- `define(...)` and the setters throw `std::invalid_argument` for a value outside its valid
+  range (see \ref parameters).
+- The general, field-aligned and position generators throw `std::runtime_error` if called
+  before `define(...)`, if `max_reject_tries` is exhausted, or if your function returns a
+  negative or non-finite value.
+- `bi_kappa_distribution` and `bi_maxwellian_distribution` throw `std::runtime_error` after
+  10^6 consecutive rejections by the cap.
 
 \code{.cpp}
 try {
     general_velocity_generator<Real> g;
-    auto v = g();                 // not define()d yet -> throws
+    general_velocity_generator<Real>::point_type v = g();   // not defined yet: throws
 } catch (const std::runtime_error& e) {
-    // handle "must be define(...)d before sampling"
+    // handle the error
 }
 \endcode
 
-\section usage_full Complete worked example
+\section usage_full Demo program
 
-The full driver below configures all four generators and writes their samples.
-See `test_suite.H` for further patterns (reproducible seeding, cap enforcement,
-and redefinition).
+`cpp/main.cpp` runs a short example of each sampler:
 
 \include main.cpp
 */

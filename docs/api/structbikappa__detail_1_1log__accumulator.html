@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.17.0"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>bi-kappa: cpp/test_main.cpp File Reference</title>
+<title>bi-kappa: bikappa_detail::log_accumulator&lt; RealType &gt; Struct Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="dynsections.js"></script>
 <script type="text/javascript" src="codefolding.js"></script>
@@ -31,7 +31,7 @@ mermaid.initialize({ startOnLoad: true, theme: theme });
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">bi-kappa<span id="projectnumber">&#160;2.0.0</span>
+   <div id="projectname">bi-kappa<span id="projectnumber">&#160;2.2.1</span>
    </div>
    <div id="projectbrief">Monte Carlo particle samplers for plasma velocity and position distributions</div>
   </td>
@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
   </div>
 </div>
 <script type="text/javascript">
-document.addEventListener('DOMContentLoaded',() => { initNavTree('test__main_8cpp.html','',''); });
+document.addEventListener('DOMContentLoaded',() => { initNavTree('structbikappa__detail_1_1log__accumulator.html','','structbikappa__detail_1_1log__accumulator-members'); });
 </script>
 <div id="container">
 <div id="doc-content">
@@ -117,47 +117,49 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('test__main_8cp
 </div>
 
 <div class="header">
-  <div class="headertitle"><div class="title">test_main.cpp File Reference</div></div>
+  <div class="headertitle"><div class="title">bikappa_detail::log_accumulator&lt; RealType &gt; Struct Template Reference</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &lt;cmath&gt;</code><br />
-<code>#include &lt;iostream&gt;</code><br />
-<code>#include &lt;random&gt;</code><br />
-<code>#include &quot;<a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="general__position__generator_8_h_source.html">general_position_generator.H</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="general__velocity__generator_8_h_source.html">general_velocity_generator.H</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="field__aligned__velocity__generator_8_h_source.html">field_aligned_velocity_generator.H</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="test__suite_8_h_source.html">test_suite.H</a>&quot;</code><br />
-</div>
-<p><a href="test__main_8cpp_source.html">Go to the source code of this file.</a></p>
+
+<p>The type in which the log-domain radius is accumulated.  
+ <a href="#details">More...</a></p>
+
+<p><code>#include &lt;<a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>&gt;</code></p>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 id="header-func-members" class="groupheader"><a id="func-members" name="func-members"></a>
-Functions</h2></td></tr>
-<tr class="memitem:ae66f6b31b5ad750f1fe042a706a4e3d4" id="r_ae66f6b31b5ad750f1fe042a706a4e3d4"><td class="memItemLeft">int&#160;</td><td class="memItemRight"><a class="el" href="#ae66f6b31b5ad750f1fe042a706a4e3d4">main</a> ()</td></tr>
+<tr class="heading"><td colspan="2"><h2 id="header-pub-types" class="groupheader"><a id="pub-types" name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:ab83d6d34314d1996c5d3593f90240c17" id="r_ab83d6d34314d1996c5d3593f90240c17"><td class="memItemLeft">typedef RealType&#160;</td><td class="memItemRight"><a class="el" href="#ab83d6d34314d1996c5d3593f90240c17">type</a></td></tr>
 </table>
-<a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Function Documentation</h2>
-<a id="ae66f6b31b5ad750f1fe042a706a4e3d4" name="ae66f6b31b5ad750f1fe042a706a4e3d4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae66f6b31b5ad750f1fe042a706a4e3d4">&#9670;&#160;</a></span>main()</h2>
+<a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
+<div class="textblock"><div class="compoundTemplParams">template&lt;typename RealType&gt;<br />
+struct bikappa_detail::log_accumulator&lt; RealType &gt;</div><p>The type in which the log-domain radius is accumulated. </p>
+<p><span class="tt">log R</span> is a stable representation of the radius, not an exact one: its absolute error is about <span class="tt">eps |log R|</span>, so the <em>relative</em> error of the radius it stands for is also about <span class="tt">eps |log R|</span>. Near the top of a type's range <span class="tt">|log R|</span> is the logarithm of the largest finite number &ndash; 88.7 in <span class="tt">float</span>, 709.8 in <span class="tt">double</span> &ndash; and the shape-boosting identity divides one of its two terms by <span class="tt">a = kappa - 1/2</span>, which amplifies the error of <span class="tt">log U</span> by <span class="tt">1/a</span>: 200-fold at <span class="tt">kappa = 0.505</span>. In <span class="tt">float</span> the result is an error of a few parts in a million on a quantity whose scale is 88.7, which is larger than the gap between neighbouring <span class="tt">float</span>s at the overflow threshold. The radius is then not resolved finely enough to say which side of the threshold a component near it falls on, and a draw that is representable can be exponentiated one ulp high and lost. One such draw appeared in 14.2 million attempts at <span class="tt">float kappa = 0.505</span>: its largest component lay 3.1e-08 natural-log units &ndash; about half an ulp &ndash; below <span class="tt">FLT_MAX</span>, and the <span class="tt">float</span> log radius carried 3.5e-06 of error, a hundred times that margin.</p>
+<p>Widening only the accumulator fixes it. The variates are still drawn in <span class="tt">RealType</span>, from the same engine bits, in the same order, so the sampled sequence does not change; what changes is that the sum <span class="tt">log Y + (log U)/a</span> and the radius built from it are formed in a type whose resolution is far finer than the margin being decided, and the value is rounded to <span class="tt">RealType</span> exactly once, where the component is materialized. For <span class="tt">float</span> that moves the resolution of <span class="tt">log R</span> from about 5.3e-06 to about 1.6e-14 and leaves a single rounding between the mathematics and the returned number.</p>
+<p>For <span class="tt">double</span> (and for <span class="tt">long double</span>, where the two coincide on the platforms this header targets) the accumulator <em>is</em> the working type, so the arithmetic is unchanged and a <span class="tt">double</span> instantiation of 2.2.0 returns the same bits as 2.1.0. </p>
+
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00093">93</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+</div><a name="doc-typedef-members" id="doc-typedef-members"></a><h2 id="header-doc-typedef-members" class="groupheader">Member Typedef Documentation</h2>
+<a id="ab83d6d34314d1996c5d3593f90240c17" name="ab83d6d34314d1996c5d3593f90240c17"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab83d6d34314d1996c5d3593f90240c17">&#9670;&#160;</a></span>type</h2>
 
 <div class="memitem">
 <div class="memproto">
+<div class="memtemplate">
+template&lt;typename RealType&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">int main </td>
-          <td>(</td>
-          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td></td>
+          <td class="memname">typedef RealType <a class="el" href="structbikappa__detail_1_1log__accumulator.html">bikappa_detail::log_accumulator</a>&lt; RealType &gt;::type</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="test__main_8cpp_source.html#l00023">23</a> of file <a class="el" href="test__main_8cpp_source.html">test_main.cpp</a>.</p>
-
-<p class="reference">References <a class="el" href="test__suite_8_h_source.html#l03009">run_all_tests()</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00095">95</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
 </div>
 </div>
+<hr/>The documentation for this struct was generated from the following file:<ul>
+<li>cpp/<a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a></li>
+</ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <div id="page-nav" class="page-nav-panel">
@@ -171,7 +173,7 @@ Functions</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a href="dir_df511e5bd85cec96854b39d5e1c27aa8.html">cpp</a></li><li class="navelem"><a href="test__main_8cpp.html">test_main.cpp</a></li>
+    <li class="navelem"><a href="namespacebikappa__detail.html">bikappa_detail</a></li><li class="navelem"><a href="structbikappa__detail_1_1log__accumulator.html">log_accumulator</a></li>
     <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.17.0 </li>
   </ul>
 </div>

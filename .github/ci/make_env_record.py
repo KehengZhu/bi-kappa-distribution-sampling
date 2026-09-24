@@ -175,7 +175,7 @@ def main():
 
     required = args.require_flag if args.require_flag else list(DEFAULT_REQUIRED_FLAGS)
     root = os.path.abspath(args.repo_root)
-    exp = os.path.join(root, "experiments", "exp7_confirmatory")
+    exp = os.path.join(root, "experiments", "exp4_finite_precision")
 
     with open(args.probe_json, "r") as fh:
         probe = json.load(fh)
@@ -216,12 +216,12 @@ def main():
 
     sources = {}
     for rel in ("cpp/bi_kappa_distribution.H",
-                "experiments/exp7_confirmatory/PROTOCOL.md",
-                "experiments/exp7_confirmatory/config/protocol.json",
-                "experiments/exp7_confirmatory/src/exp7_common.H",
-                "experiments/exp7_confirmatory/src/exp7_loaders.H",
-                "experiments/exp7_confirmatory/src/exp7_probe.cpp",
-                "experiments/exp7_confirmatory/GNUmakefile"):
+                "experiments/exp4_finite_precision/PROTOCOL.md",
+                "experiments/exp4_finite_precision/config/protocol.json",
+                "experiments/exp4_finite_precision/src/exp7_common.H",
+                "experiments/exp4_finite_precision/src/exp7_loaders.H",
+                "experiments/exp4_finite_precision/src/exp7_probe.cpp",
+                "experiments/exp4_finite_precision/GNUmakefile"):
         digest = sha256_of(os.path.join(root, rel))
         if digest:
             sources[rel] = digest

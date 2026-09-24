@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.17.0"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>bi-kappa: Usage Examples</title>
+<title>bi-kappa: Usage examples</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="dynsections.js"></script>
 <script type="text/javascript" src="codefolding.js"></script>
@@ -31,7 +31,7 @@ mermaid.initialize({ startOnLoad: true, theme: theme });
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">bi-kappa<span id="projectnumber">&#160;2.0.0</span>
+   <div id="projectname">bi-kappa<span id="projectnumber">&#160;2.2.1</span>
    </div>
    <div id="projectbrief">Monte Carlo particle samplers for plasma velocity and position distributions</div>
   </td>
@@ -117,203 +117,148 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('usage.html',''
 </div>
 
 <div><div class="header">
-  <div class="headertitle"><div class="title">Usage Examples </div></div>
+  <div class="headertitle"><div class="title">Usage examples </div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>Practical, copy-pasteable recipes for the five samplers.</p>
-<p>Every snippet uses <span class="tt"><a class="el" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> = double</span>; substitute <span class="tt">float</span> or your project's <span class="tt"><a class="el" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a></span> as needed. All generators follow the same lifecycle: <b>construct → <span class="tt">define(...)</span> → call</b>.</p>
+<div class="textblock"><p>Short examples for the five samplers.</p>
+<p>They use <span class="tt"><a class="el" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> = double</span>; <span class="tt">float</span> also works. Every sampler is used the same way: construct, call <span class="tt">define(...)</span>, then call <span class="tt">operator()</span> once per sample.</p>
 <h1 class="doxsection"><a class="anchor" id="usage_build"></a>
-Building and running the demo</h1>
-<p>The bundled driver runs the test suite and writes 100k samples from each generator to <span class="tt">samples_*.txt</span>:</p>
-<div class="fragment"><div class="line">cd cpp</div>
-<div class="line">make</div>
-<div class="line">./main.exe</div>
+Building the tests and the demo</h1>
+<p>The headers need only a C++11 compiler. To build and run the code in <span class="tt">cpp/</span>:</p>
+<div class="fragment"><div class="line">make -C cpp test                  # regression suite; exit status 0 if every check passes</div>
+<div class="line">cd cpp &amp;&amp; make &amp;&amp; ./main.exe      # short worked examples of all five samplers</div>
+<div class="line">make -C cpp CXX=clang++ test      # use a different compiler</div>
 </div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="usage_bikappa"></a>
-Bi-kappa velocity samples</h1>
-<p>Sample a 3D bi-kappa velocity distribution, anisotropic about the field direction <span class="tt">ub</span>, and stream the samples to a file.</p>
+Bi-Kappa velocities</h1>
 <div class="fragment"><div class="line"><span class="preprocessor">#include &quot;<a class="code" href="bi__kappa__distribution_8_h.html">bi_kappa_distribution.H</a>&quot;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;fstream&gt;</span></div>
 <div class="line"><span class="keyword">using </span><a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> = double;</div>
+<div class="line"><span class="keyword">using </span>BK = <a class="code hl_class" href="classbi__kappa__distribution.html">bi_kappa_distribution&lt;Real&gt;</a>;</div>
 <div class="line"> </div>
-<div class="line"><a class="code hl_class" href="classbi__kappa__distribution.html">bi_kappa_distribution&lt;Real&gt;</a> biKappa;</div>
-<div class="line"><span class="comment">//             kappa  theta_perp  theta_par  ub          cap                    seed</span></div>
-<div class="line">biKappa.<a class="code hl_function" href="classbi__kappa__distribution.html#a138df5909e003c80dc061b63da6d1e76">define</a>(2.0,   1.0,        2.0,       {0, 0, 1},  <a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a>(INFINITY),        20030410);</div>
+<div class="line">BK biKappa;</div>
+<div class="line"><span class="comment">//             kappa  theta_perp  theta_par  ub          cap            seed</span></div>
+<div class="line">biKappa.<a class="code hl_function" href="classbi__kappa__distribution.html#a138df5909e003c80dc061b63da6d1e76">define</a>(2.0,   1.0,        2.0,       {0, 0, 1},  BK::no_cap(),  20030410);</div>
 <div class="line"> </div>
 <div class="line">std::ofstream out(<span class="stringliteral">&quot;samples_bikappa.txt&quot;</span>);</div>
 <div class="line"><span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; 100000; ++i) {</div>
-<div class="line">    <a class="code hl_typedef" href="classbi__kappa__distribution.html#af074fc20c80c5001257d16854dd88531">bi_kappa_distribution&lt;Real&gt;::point_type</a> v = biKappa();   <span class="comment">// {vx, vy, vz}, global frame</span></div>
+<div class="line">    BK::point_type v = biKappa();          <span class="comment">// {vx, vy, vz} in the global frame</span></div>
 <div class="line">    out &lt;&lt; v[0] &lt;&lt; <span class="charliteral">&#39; &#39;</span> &lt;&lt; v[1] &lt;&lt; <span class="charliteral">&#39; &#39;</span> &lt;&lt; v[2] &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
 <div class="line">}</div>
 <div class="ttc" id="abi__kappa__distribution_8_h_html"><div class="ttname"><a href="bi__kappa__distribution_8_h.html">bi_kappa_distribution.H</a></div></div>
-<div class="ttc" id="aclassbi__kappa__distribution_html"><div class="ttname"><a href="classbi__kappa__distribution.html">bi_kappa_distribution</a></div><div class="ttdoc">Bi-Kappa distribution class for sampling 3D velocity vectors.</div><div class="ttdef"><b>Definition</b> <a href="bi__kappa__distribution_8_h_source.html#l00225">bi_kappa_distribution.H:226</a></div></div>
-<div class="ttc" id="aclassbi__kappa__distribution_html_a138df5909e003c80dc061b63da6d1e76"><div class="ttname"><a href="classbi__kappa__distribution.html#a138df5909e003c80dc061b63da6d1e76">bi_kappa_distribution::define</a></div><div class="ttdeci">void define(const param_type &amp;params)</div><div class="ttdef"><b>Definition</b> <a href="bi__kappa__distribution_8_h_source.html#l00360">bi_kappa_distribution.H:360</a></div></div>
-<div class="ttc" id="aclassbi__kappa__distribution_html_af074fc20c80c5001257d16854dd88531"><div class="ttname"><a href="classbi__kappa__distribution.html#af074fc20c80c5001257d16854dd88531">bi_kappa_distribution::point_type</a></div><div class="ttdeci">result_type point_type</div><div class="ttdef"><b>Definition</b> <a href="bi__kappa__distribution_8_h_source.html#l00229">bi_kappa_distribution.H:229</a></div></div>
+<div class="ttc" id="aclassbi__kappa__distribution_html"><div class="ttname"><a href="classbi__kappa__distribution.html">bi_kappa_distribution</a></div><div class="ttdoc">Bi-Kappa distribution class for sampling 3D velocity vectors.</div><div class="ttdef"><b>Definition</b> <a href="bi__kappa__distribution_8_h_source.html#l00384">bi_kappa_distribution.H:385</a></div></div>
+<div class="ttc" id="aclassbi__kappa__distribution_html_a138df5909e003c80dc061b63da6d1e76"><div class="ttname"><a href="classbi__kappa__distribution.html#a138df5909e003c80dc061b63da6d1e76">bi_kappa_distribution::define</a></div><div class="ttdeci">void define(const param_type &amp;params)</div><div class="ttdef"><b>Definition</b> <a href="bi__kappa__distribution_8_h_source.html#l00547">bi_kappa_distribution.H:547</a></div></div>
 <div class="ttc" id="amain_8cpp_html_a445a5f0e2a34c9d97d69a3c2d1957907"><div class="ttname"><a href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a></div><div class="ttdeci">double Real</div><div class="ttdef"><b>Definition</b> <a href="main_8cpp_source.html#l00006">main.cpp:6</a></div></div>
-</div><!-- fragment --><p>Write the cap as <span class="tt"><a class="el" href="classbi__kappa__distribution.html" title="Bi-Kappa distribution class for sampling 3D velocity vectors.">bi_kappa_distribution</a>&lt;<a class="el" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a>&gt;::no_cap()</span> rather than <span class="tt">INFINITY</span> in real code; it is spelled out above only to keep the column alignment readable. <b>The cap is off by default</b>, so <span class="tt">biKappa.define(2.0, 1.0, 2.0, {0, 0, 1})</span> samples the same law — the cap is named here only because the seed has to follow it as the sixth argument.</p>
-<dl class="section warning"><dt>Warning</dt><dd>The cap selects which of <b>two different distributions</b> you sample — it is not a safety limit on an otherwise unchanged sampler. Omitting it, or passing <span class="tt">no_cap()</span>, gives the bi-kappa distribution. Passing a finite value gives a <em>different, bounded</em> law. Read <a class="el" href="#usage_bikappa_cap" title="The velocity cap: what it does and how to select it">The velocity cap: what it does and how to select it</a> before using one. <span class="tt">dist.param().capped()</span> reports which is active.</dd></dl>
+</div><!-- fragment --><p>The seed is the sixth argument, so the cap has to be given when a seed is passed to <span class="tt">define(...)</span>. Alternatively, call <span class="tt">biKappa.seed(20030410)</span> after <span class="tt">define(...)</span>.</p>
 <h2 class="doxsection"><a class="anchor" id="usage_bikappa_cap"></a>
-The velocity cap: what it does and how to select it</h2>
-<p>Everything you need in order to use the cap correctly is on this page; the accompanying manuscript carries the derivations and the measurements behind the numbers quoted here.</p>
-<h3 class="doxsection"><a class="anchor" id="usage_cap_which"></a>
-Uncapped is the default</h3>
-<p>Omitting the argument is enough. These three are identical:</p>
-<div class="fragment"><div class="line"><span class="keyword">using </span>BK = <a class="code hl_class" href="classbi__kappa__distribution.html">bi_kappa_distribution&lt;Real&gt;</a>;</div>
-<div class="line">BK dist;</div>
-<div class="line"> </div>
-<div class="line">dist.<a class="code hl_function" href="classbi__kappa__distribution.html#a138df5909e003c80dc061b63da6d1e76">define</a>(2.0, 1.0, 2.0, {0, 0, 1});                                  <span class="comment">// omit it</span></div>
-<div class="line">dist.define(2.0, 1.0, 2.0, {0, 0, 1}, BK::no_cap());                    <span class="comment">// name it</span></div>
-<div class="line">dist.define(2.0, 1.0, 2.0, {0, 0, 1}, std::numeric_limits&lt;Real&gt;::infinity());</div>
-</div><!-- fragment --><p><span class="tt">no_cap()</span> <em>is</em> <span class="tt">+infinity</span>; naming it is worth the keystrokes wherever a reader of the calling code needs to know which of the two laws is being sampled.</p>
-<p>Uncapped is not merely a cap large enough to never bind: <span class="tt">param_type::capped()</span> is <span class="tt">std::isfinite(...)</span>, so the sampler skips the acceptance-rejection loop entirely and the core mapping runs exactly once per draw. No rejection, no retry limit, no discarded variates.</p>
-<p>To sample the <b>capped</b> law instead, pass a finite positive value. The arguments are positional, so enabling a cap means passing <span class="tt">ub</span> as well:</p>
-<div class="fragment"><div class="line">dist.define(2.0, 1.0, 2.0, {0, 0, 1}, 50.0);   <span class="comment">// bi-kappa conditioned on a 50-theta box</span></div>
-<div class="line"><span class="keywordtype">bool</span> c = dist.param().capped();                <span class="comment">// true</span></div>
-</div><!-- fragment --><p>To go back to the unconditioned law afterwards, assign the sentinel — <b>do not pass <span class="tt">0</span></b>, which <span class="tt">param_type</span> rejects along with every other non-positive value:</p>
-<div class="fragment"><div class="line">dist.max_normalized_velocity(BK::no_cap());    <span class="comment">// capped -&gt; uncapped</span></div>
-<div class="line">dist.max_normalized_velocity(0.0);             <span class="comment">// throws std::invalid_argument</span></div>
-</div><!-- fragment --><h3 class="doxsection"><a class="anchor" id="usage_cap_law"></a>
-What the capped law is</h3>
-<p>With a finite cap <span class="tt">lam</span>, a draw is accepted only if all three components lie inside the box </p><pre class="fragment">|v_x| / theta_perp &lt;= lam,  |v_y| / theta_perp &lt;= lam,  |v_par| / theta_par &lt;= lam
-</pre><p>and is otherwise discarded and redrawn. The result is the bi-kappa density restricted to that box and renormalized — a distribution with bounded support, its own normalization constant, and finite moments of every order even for <span class="tt">kappa &lt;= 3/2</span>, where the bi-kappa distribution itself has no finite variance. Those moments are finite because you are sampling a <b>different distribution</b>, not because the cap has repaired the original one. A temperature computed from capped samples is a property of the box as much as of <span class="tt">kappa</span>.</p>
-<h3 class="doxsection"><a class="anchor" id="usage_cap_frame"></a>
-Which frame the cap is applied in</h3>
-<p>The test is performed in the <b>field-aligned frame, before the rotation into the global frame</b>. The box is therefore aligned with <span class="tt">ub</span> and rotates with it.</p>
-<p>Consequence for calling code: the returned <span class="tt">{vx, vy, vz}</span> are <b>not</b> individually bounded by <span class="tt">lam * theta</span> unless <span class="tt">ub</span> is <span class="tt">{0,0,1}</span>. What is bounded, in every frame, is the speed: </p><pre class="fragment">|v| &lt;= lam * sqrt(2*theta_perp^2 + theta_par^2)
-</pre><p>which is the corner of the box. Size velocity-grid extents, array bounds, and CFL estimates on that, not on the per-component value.</p>
-<p>Normalizing each component by its own thermal speed makes <span class="tt">theta_perp</span> and <span class="tt">theta_par</span> cancel out of the test entirely. Two practical consequences: the rejected fraction depends on <span class="tt">kappa</span> and <span class="tt">lam</span> alone, so retuning temperatures never changes your sampling throughput; and the capped law in the local frame is the same law whatever <span class="tt">ub</span> you point it at.</p>
-<h3 class="doxsection"><a class="anchor" id="usage_cap_cost"></a>
-What a cap costs you</h3>
-<p>The rejected fraction is not just a cost — it is the error.** The total-variation distance between the capped law and the bi-kappa distribution equals the fraction of draws you throw away, exactly. There is no trade-off to tune between the two: they are one number.</p>
-<p>A small rejected fraction does not mean the tails are right.** At <span class="tt">kappa = 1.5</span> with <span class="tt">lam = 50</span>, only <span class="tt">6.3e-4</span> of draws are rejected, yet the 99.9th-percentile speed of what you keep is <b>24% too low</b>. If suprathermal particles matter to your problem — and they are usually why a kappa distribution was chosen — judge the cap by the quantiles you care about, not by the acceptance rate.</p>
-<p>The box is a cube, so the capped law is not axisymmetric about <span class="tt">ub</span>.** A direction pointing at a cube corner has <span class="tt">sqrt(3)</span> times more radial room than one along an axis, which imprints a four-fold azimuthal modulation on the distribution function that no choice of <span class="tt">theta</span> can absorb. The modulation is easy to miss: the cube's symmetries make the capped pressure tensor <em>exactly</em> gyrotropic and reproduce <span class="tt">(theta_par/theta_perp)^2</span> exactly, so every standard second-order diagnostic returns a clean result while the distribution function itself is not gyrotropic.</p>
-<p>For <span class="tt">kappa &lt;= 3/2</span> no practical cap value is a good approximation to the bi-kappa law. If you need bounded velocities there, treat the capped law as the physical model you have chosen and report it as such.</p>
-<p>Uncapped is the default, so omitting the argument is enough.** These three are identical:</p>
-<div class="fragment"><div class="line"><span class="keyword">using </span>BK = <a class="code hl_class" href="classbi__kappa__distribution.html">bi_kappa_distribution&lt;Real&gt;</a>;</div>
-<div class="line">BK dist;</div>
-<div class="line"> </div>
-<div class="line">dist.<a class="code hl_function" href="classbi__kappa__distribution.html#a138df5909e003c80dc061b63da6d1e76">define</a>(2.0, 1.0, 2.0, {0, 0, 1});                                  <span class="comment">// omit it</span></div>
-<div class="line">dist.define(2.0, 1.0, 2.0, {0, 0, 1}, BK::no_cap());                    <span class="comment">// name it</span></div>
-<div class="line">dist.define(2.0, 1.0, 2.0, {0, 0, 1}, std::numeric_limits&lt;Real&gt;::infinity());</div>
-</div><!-- fragment --><p><span class="tt">no_cap()</span> <em>is</em> <span class="tt">+infinity</span>; naming it is worth the keystrokes wherever a reader of the calling code needs to know which of the two laws is being sampled.</p>
-<p>Uncapped is not merely a cap large enough to never bind: <span class="tt">param_type::capped()</span> is <span class="tt">std::isfinite(...)</span>, so the sampler skips the acceptance-rejection loop entirely and the core mapping runs exactly once per draw. No rejection, no retry limit, no discarded variates.</p>
-<p>To sample the <b>capped</b> law instead, pass a finite positive value. The arguments are positional, so enabling a cap means passing <span class="tt">ub</span> as well:</p>
-<div class="fragment"><div class="line">dist.define(2.0, 1.0, 2.0, {0, 0, 1}, 50.0);   <span class="comment">// bi-kappa conditioned on a 50-theta box</span></div>
-<div class="line"><span class="keywordtype">bool</span> c = dist.param().capped();                <span class="comment">// true</span></div>
-</div><!-- fragment --><p>To go back to the unconditioned law afterwards, assign the sentinel — <b>do not pass <span class="tt">0</span></b>, which <span class="tt">param_type</span> rejects along with every other non-positive value:</p>
-<div class="fragment"><div class="line">dist.max_normalized_velocity(BK::no_cap());    <span class="comment">// capped -&gt; uncapped</span></div>
-<div class="line">dist.max_normalized_velocity(0.0);             <span class="comment">// throws std::invalid_argument</span></div>
-</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="usage_bimaxwell"></a>
-Bi-Maxwellian velocity samples</h1>
-<p>Same pattern, without the <span class="tt">kappa</span> parameter.</p>
+The velocity cap</h2>
+<p>The fifth argument, <span class="tt">max_normalized_velocity</span>, is a cap in thermal speeds. It defaults to 20, the value used in release 1.0.0.</p>
+<div class="fragment"><div class="line">BK dist;</div>
+<div class="line">dist.define(2.0, 1.0, 2.0, {0, 0, 1});                <span class="comment">// cap = 20 (default)</span></div>
+<div class="line">dist.define(2.0, 1.0, 2.0, {0, 0, 1}, BK::no_cap());  <span class="comment">// no cap</span></div>
+<div class="line">dist.define(2.0, 1.0, 2.0, {0, 0, 1}, 50.0);          <span class="comment">// cap = 50</span></div>
+<div class="line"><span class="keywordtype">bool</span> c = dist.param().capped();                       <span class="comment">// true for a finite cap</span></div>
+<div class="line">dist.max_normalized_velocity(BK::no_cap());           <span class="comment">// remove the cap</span></div>
+<div class="line">dist.max_normalized_velocity(0.0);                    <span class="comment">// throws std::invalid_argument</span></div>
+</div><!-- fragment --><p>With a finite cap, a draw is redrawn if <span class="tt">|v_i| / theta_i &gt; cap</span> for any component in field-aligned coordinates. The samples then follow the bi-Kappa distribution conditioned on that box, not the bi-Kappa distribution itself. For <span class="tt">kappa &lt;= 3/2</span> a cap of 20 removes an appreciable part of the high-energy tail; the paper's section on finite velocity bounds quantifies this. Use <span class="tt">no_cap()</span> when the tail matters.</p>
+<p>The box is aligned with the field-aligned axes and rotates with <span class="tt">ub</span>. Global-frame components are bounded individually only when <span class="tt">ub = {0, 0, 1}</span>; the speed is always bounded by <span class="tt">cap * sqrt(2 theta_perp^2 + theta_par^2)</span>. See <a class="el" href="parameters.html#params_cap" title="The velocity cap">The velocity cap</a> for details.</p>
+<h1 class="doxsection"><a class="anchor" id="usage_bimaxwell"></a>
+Bi-Maxwellian velocities</h1>
+<p>The same interface without <span class="tt">kappa</span>. The cap works as for <span class="tt"><a class="el" href="classbi__kappa__distribution.html" title="Bi-Kappa distribution class for sampling 3D velocity vectors.">bi_kappa_distribution</a></span>, with the same default of 20; for a Maxwellian it has no practical effect.</p>
 <div class="fragment"><div class="line"><span class="preprocessor">#include &quot;<a class="code" href="bi__maxwellian__distribution_8_h.html">bi_maxwellian_distribution.H</a>&quot;</span></div>
-<div class="line"><span class="keyword">using </span><a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> = double;</div>
+<div class="line"><span class="keyword">using </span>BM = <a class="code hl_class" href="classbi__maxwellian__distribution.html">bi_maxwellian_distribution&lt;double&gt;</a>;</div>
 <div class="line"> </div>
-<div class="line"><a class="code hl_class" href="classbi__maxwellian__distribution.html">bi_maxwellian_distribution&lt;Real&gt;</a> biMaxwell;</div>
-<div class="line">biMaxwell.<a class="code hl_function" href="classbi__maxwellian__distribution.html#aed2591ab2aed5ae7e6e520b9b141511f">define</a>(1.0, 2.0, {0, 0, 1});         <span class="comment">// theta_perp, theta_par, ub</span></div>
-<div class="line"> </div>
-<div class="line"><a class="code hl_typedef" href="classbi__maxwellian__distribution.html#a4108c0d09001ad9c856f157f3e07cf3b">bi_maxwellian_distribution&lt;Real&gt;::point_type</a> v = biMaxwell();</div>
+<div class="line">BM biMaxwell;</div>
+<div class="line">biMaxwell.<a class="code hl_function" href="classbi__maxwellian__distribution.html#aed2591ab2aed5ae7e6e520b9b141511f">define</a>(1.0, 2.0, {0, 0, 1});                          <span class="comment">// theta_perp, theta_par, ub</span></div>
+<div class="line">biMaxwell.define(1.0, 2.0, {0, 0, 1}, BM::no_cap(), 20030410);  <span class="comment">// no cap, with a seed</span></div>
+<div class="line">BM::point_type v = biMaxwell();</div>
 <div class="ttc" id="abi__maxwellian__distribution_8_h_html"><div class="ttname"><a href="bi__maxwellian__distribution_8_h.html">bi_maxwellian_distribution.H</a></div></div>
-<div class="ttc" id="aclassbi__maxwellian__distribution_html"><div class="ttname"><a href="classbi__maxwellian__distribution.html">bi_maxwellian_distribution</a></div><div class="ttdoc">Bi-Maxwellian distribution for 3D velocity sampling.</div><div class="ttdef"><b>Definition</b> <a href="bi__maxwellian__distribution_8_h_source.html#l00031">bi_maxwellian_distribution.H:32</a></div></div>
-<div class="ttc" id="aclassbi__maxwellian__distribution_html_a4108c0d09001ad9c856f157f3e07cf3b"><div class="ttname"><a href="classbi__maxwellian__distribution.html#a4108c0d09001ad9c856f157f3e07cf3b">bi_maxwellian_distribution::point_type</a></div><div class="ttdeci">result_type point_type</div><div class="ttdef"><b>Definition</b> <a href="bi__maxwellian__distribution_8_h_source.html#l00035">bi_maxwellian_distribution.H:35</a></div></div>
-<div class="ttc" id="aclassbi__maxwellian__distribution_html_aed2591ab2aed5ae7e6e520b9b141511f"><div class="ttname"><a href="classbi__maxwellian__distribution.html#aed2591ab2aed5ae7e6e520b9b141511f">bi_maxwellian_distribution::define</a></div><div class="ttdeci">void define(const param_type &amp;params)</div><div class="ttdef"><b>Definition</b> <a href="bi__maxwellian__distribution_8_h_source.html#l00142">bi_maxwellian_distribution.H:142</a></div></div>
-</div><!-- fragment --><p>The cap works exactly as it does on <span class="tt"><a class="el" href="classbi__kappa__distribution.html" title="Bi-Kappa distribution class for sampling 3D velocity vectors.">bi_kappa_distribution</a></span> — off by default, <span class="tt">no_cap()</span> to name that explicitly, <span class="tt">param().capped()</span> to query it — so everything in <a class="el" href="#usage_bikappa_cap" title="The velocity cap: what it does and how to select it">The velocity cap: what it does and how to select it</a> applies here too. Gaussian tails are thin enough that a realistic cap is never exercised by a finite sample, so the choice rarely changes what you load on this sampler; it still changes which law you asked for.</p>
-<div class="fragment"><div class="line"><span class="comment">//               theta_perp  theta_par  ub          cap                                seed</span></div>
-<div class="line">biMaxwell.<a class="code hl_function" href="classbi__maxwellian__distribution.html#aed2591ab2aed5ae7e6e520b9b141511f">define</a>(1.0,        2.0,       {0, 0, 1},  <a class="code hl_function" href="classbi__maxwellian__distribution.html#ab5f2402b76654e4adf1c3d63d620e94d">bi_maxwellian_distribution&lt;Real&gt;::no_cap</a>(),</div>
-<div class="line">                 20030410);</div>
-<div class="ttc" id="aclassbi__maxwellian__distribution_html_ab5f2402b76654e4adf1c3d63d620e94d"><div class="ttname"><a href="classbi__maxwellian__distribution.html#ab5f2402b76654e4adf1c3d63d620e94d">bi_maxwellian_distribution::no_cap</a></div><div class="ttdeci">static constexpr RealType no_cap()</div><div class="ttdoc">Sentinel selecting the untruncated sampler, and the default.</div><div class="ttdef"><b>Definition</b> <a href="bi__maxwellian__distribution_8_h_source.html#l00111">bi_maxwellian_distribution.H:111</a></div></div>
+<div class="ttc" id="aclassbi__maxwellian__distribution_html"><div class="ttname"><a href="classbi__maxwellian__distribution.html">bi_maxwellian_distribution</a></div><div class="ttdoc">Bi-Maxwellian distribution for 3D velocity sampling.</div><div class="ttdef"><b>Definition</b> <a href="bi__maxwellian__distribution_8_h_source.html#l00030">bi_maxwellian_distribution.H:31</a></div></div>
+<div class="ttc" id="aclassbi__maxwellian__distribution_html_aed2591ab2aed5ae7e6e520b9b141511f"><div class="ttname"><a href="classbi__maxwellian__distribution.html#aed2591ab2aed5ae7e6e520b9b141511f">bi_maxwellian_distribution::define</a></div><div class="ttdeci">void define(const param_type &amp;params)</div><div class="ttdef"><b>Definition</b> <a href="bi__maxwellian__distribution_8_h_source.html#l00139">bi_maxwellian_distribution.H:139</a></div></div>
 </div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="usage_reproducible"></a>
-Reproducible runs (seeding)</h1>
-<p>Each sampler owns an internal <span class="tt">std::mt19937</span>. Seed it for byte-for-byte reproducible sequences; re-seeding with the same value restarts the stream.</p>
-<dl class="section note"><dt>Note</dt><dd>What "byte-for-byte" does and does not cover.</dd></dl>
-<ul>
-<li><b>Same binary, same seed:</b> identical, and <span class="tt">seed(s)</span> restarts the stream cleanly. Before version 2.0.0 that second half was not true of <span class="tt"><a class="el" href="classbi__kappa__distribution.html" title="Bi-Kappa distribution class for sampling 3D velocity vectors.">bi_kappa_distribution</a></span> on every platform: <span class="tt">seed(int)</span> reseeded the engine without discarding the variate cached inside <span class="tt">std::gamma_distribution</span>, so under libstdc++ a reseed followed by an odd number of draws did not reproduce. <span class="tt">seed()</span> now calls <span class="tt">reset()</span>.</li>
-<li><b>Different standard library, same architecture:</b> identical for <span class="tt"><a class="el" href="classbi__kappa__distribution.html" title="Bi-Kappa distribution class for sampling 3D velocity vectors.">bi_kappa_distribution</a></span> from version 2.0.0 on, because it draws its Gamma, normal and uniform variates from primitives defined in its own header rather than from <span class="tt">&lt;random&gt;</span>, whose distribution templates are specified only up to their distribution and do use different algorithms in libc++ and libstdc++. The other samplers in this repository still call <span class="tt">&lt;random&gt;</span> distributions directly and so do not** have this property.</li>
-<li><b>Different architecture:</b> not guaranteed for any sampler here. <span class="tt">log</span>, <span class="tt">exp</span> and <span class="tt">pow</span> are not correctly rounded and their implementations differ, so results agree statistically rather than bitwise.</li>
-<li><b>Across releases:</b> not guaranteed, and version 2.0.0 deliberately breaks it for <span class="tt"><a class="el" href="classbi__kappa__distribution.html" title="Bi-Kappa distribution class for sampling 3D velocity vectors.">bi_kappa_distribution</a></span>. Its radius is now built in the log domain, which changes which variates are drawn, so a given seed produces a different sequence than it did under 1.x. Pin the release if a stored stream must be reproduced.</li>
-</ul>
-<div class="fragment"><div class="line"><a class="code hl_class" href="classbi__kappa__distribution.html">bi_kappa_distribution&lt;Real&gt;</a> dist;</div>
-<div class="line"> </div>
-<div class="line"><span class="comment">// (a) seed as the last define() argument (bi_kappa only).  The cap cannot be</span></div>
-<div class="line"><span class="comment">//     omitted here, because the seed is the argument after it:</span></div>
-<div class="line">dist.<a class="code hl_function" href="classbi__kappa__distribution.html#a138df5909e003c80dc061b63da6d1e76">define</a>(2.0, 1.0, 2.0, {0, 0, 1},</div>
-<div class="line">            <a class="code hl_function" href="classbi__kappa__distribution.html#ae297e0e424247abd355b55109bdb9dde">bi_kappa_distribution&lt;Real&gt;::no_cap</a>(), <span class="comment">/*seed*/</span> 55555);</div>
-<div class="line"> </div>
-<div class="line"><span class="comment">// (b) or seed any time after define() (all samplers):</span></div>
-<div class="line">dist.<a class="code hl_function" href="classbi__kappa__distribution.html#a138df5909e003c80dc061b63da6d1e76">define</a>(2.0, 1.0, 2.0);</div>
-<div class="line">dist.<a class="code hl_function" href="classbi__kappa__distribution.html#a004ccef23cf4f1cc3271134c1dde60b8">seed</a>(55555);            <span class="comment">// same seed  -&gt; identical sequence</span></div>
-<div class="line">dist.<a class="code hl_function" href="classbi__kappa__distribution.html#a004ccef23cf4f1cc3271134c1dde60b8">seed</a>(-1);               <span class="comment">// negative   -&gt; unpredictable seed from std::random_device</span></div>
-<div class="ttc" id="aclassbi__kappa__distribution_html_a004ccef23cf4f1cc3271134c1dde60b8"><div class="ttname"><a href="classbi__kappa__distribution.html#a004ccef23cf4f1cc3271134c1dde60b8">bi_kappa_distribution::seed</a></div><div class="ttdeci">void seed(int s)</div><div class="ttdoc">Reseed the internal engine.</div><div class="ttdef"><b>Definition</b> <a href="bi__kappa__distribution_8_h_source.html#l00472">bi_kappa_distribution.H:472</a></div></div>
-<div class="ttc" id="aclassbi__kappa__distribution_html_ae297e0e424247abd355b55109bdb9dde"><div class="ttname"><a href="classbi__kappa__distribution.html#ae297e0e424247abd355b55109bdb9dde">bi_kappa_distribution::no_cap</a></div><div class="ttdeci">static constexpr RealType no_cap()</div><div class="ttdoc">Sentinel selecting the untruncated sampler, and the default.</div><div class="ttdef"><b>Definition</b> <a href="bi__kappa__distribution_8_h_source.html#l00322">bi_kappa_distribution.H:322</a></div></div>
-</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="usage_external_rng"></a>
-Sharing one RNG across samplers</h1>
-<p>Pass your own <span class="tt">std::mt19937</span> to <span class="tt">operator()</span> when several samplers should draw from a single stream (e.g. for coordinated reproducibility).</p>
+Seeding</h1>
+<div class="fragment"><div class="line">BK dist;</div>
+<div class="line">dist.define(2.0, 1.0, 2.0);</div>
+<div class="line">dist.seed(55555);      <span class="comment">// s &gt;= 0: the same seed gives the same sequence</span></div>
+<div class="line">dist.seed(-1);         <span class="comment">// s &lt; 0: seed from std::random_device</span></div>
+</div><!-- fragment --><p>Without a seed, runs are not reproducible. On every sampler <span class="tt">seed(s)</span> also calls <span class="tt">reset()</span>, which discards any variate cached from earlier draws, so reseeding restarts the stream exactly. For <span class="tt"><a class="el" href="classbi__kappa__distribution.html" title="Bi-Kappa distribution class for sampling 3D velocity vectors.">bi_kappa_distribution</a></span> a given seed gives the same values under libc++ and libstdc++ on the same architecture; the values are not bitwise identical across architectures, and they differ from release 1.0.0. <span class="tt"><a class="el" href="classbi__maxwellian__distribution.html" title="Bi-Maxwellian distribution for 3D velocity sampling.">bi_maxwellian_distribution</a></span> uses <span class="tt">std::normal_distribution</span>, whose values depend on the standard library, and gives the same values as release 1.0.0.</p>
+<h1 class="doxsection"><a class="anchor" id="usage_external_rng"></a>
+Sharing one engine</h1>
+<p>Pass your own engine to <span class="tt">operator()</span> to draw several samplers from one stream. For <span class="tt"><a class="el" href="classbi__kappa__distribution.html" title="Bi-Kappa distribution class for sampling 3D velocity vectors.">bi_kappa_distribution</a></span> the engine must produce a power-of-two number of distinct values, as <span class="tt">std::mt19937</span> and <span class="tt">std::mt19937_64</span> do.</p>
 <div class="fragment"><div class="line"><span class="preprocessor">#include &lt;random&gt;</span></div>
 <div class="line">std::mt19937 gen(42u);</div>
 <div class="line"> </div>
-<div class="line"><a class="code hl_class" href="classbi__kappa__distribution.html">bi_kappa_distribution&lt;Real&gt;</a> perp, par;</div>
-<div class="line">perp.<a class="code hl_function" href="classbi__kappa__distribution.html#a138df5909e003c80dc061b63da6d1e76">define</a>(2.0, 1.0, 1.0);</div>
-<div class="line">par.<a class="code hl_function" href="classbi__kappa__distribution.html#a138df5909e003c80dc061b63da6d1e76">define</a> (2.0, 1.0, 5.0);</div>
+<div class="line">BK core, halo;</div>
+<div class="line">core.define(5.0, 1.0, 1.0);</div>
+<div class="line">halo.define(2.0, 3.0, 3.0);</div>
 <div class="line"> </div>
-<div class="line"><span class="keyword">auto</span> vp = perp(gen);   <span class="comment">// both consume the same gen</span></div>
-<div class="line"><span class="keyword">auto</span> vq = par (gen);</div>
+<div class="line">BK::point_type a = core(gen);   <span class="comment">// both draw from gen</span></div>
+<div class="line">BK::point_type b = halo(gen);</div>
 </div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="usage_redefine"></a>
-Reconfiguring a sampler</h1>
-<p>Reconfigure everything with <span class="tt">define(...)</span>, or change one parameter at a time with the convenience setters — each setter re-validates the full parameter set.</p>
-<div class="fragment"><div class="line"><a class="code hl_class" href="classbi__kappa__distribution.html">bi_kappa_distribution&lt;Real&gt;</a> dist;</div>
-<div class="line">dist.<a class="code hl_function" href="classbi__kappa__distribution.html#a138df5909e003c80dc061b63da6d1e76">define</a>(2.0, 1.0, 1.0);     <span class="comment">// initial configuration</span></div>
-<div class="line"> </div>
-<div class="line">dist.<a class="code hl_function" href="classbi__kappa__distribution.html#a758a03458aaab59b2577811af7a095cd">kappa</a>(5.0);                <span class="comment">// change one field...</span></div>
-<div class="line">dist.<a class="code hl_function" href="classbi__kappa__distribution.html#a971b78635ab0856bc35c9c9493ffa128">theta_par</a>(2.5);            <span class="comment">// ...each rebuilds + re-validates</span></div>
-<div class="line">dist.<a class="code hl_function" href="classbi__kappa__distribution.html#a56338c3cce56c2de00ac02aaa8c56fd5">ub</a>({1, 2, 3});</div>
-<div class="line"> </div>
-<div class="line">dist.<a class="code hl_function" href="classbi__kappa__distribution.html#a138df5909e003c80dc061b63da6d1e76">define</a>(3.0, 1.5, 2.5, {0, 0, 1});         <span class="comment">// or replace the whole config at once</span></div>
-<div class="ttc" id="aclassbi__kappa__distribution_html_a56338c3cce56c2de00ac02aaa8c56fd5"><div class="ttname"><a href="classbi__kappa__distribution.html#a56338c3cce56c2de00ac02aaa8c56fd5">bi_kappa_distribution::ub</a></div><div class="ttdeci">void ub(const point_type &amp;value)</div><div class="ttdef"><b>Definition</b> <a href="bi__kappa__distribution_8_h_source.html#l00434">bi_kappa_distribution.H:434</a></div></div>
-<div class="ttc" id="aclassbi__kappa__distribution_html_a758a03458aaab59b2577811af7a095cd"><div class="ttname"><a href="classbi__kappa__distribution.html#a758a03458aaab59b2577811af7a095cd">bi_kappa_distribution::kappa</a></div><div class="ttdeci">void kappa(RealType value)</div><div class="ttdef"><b>Definition</b> <a href="bi__kappa__distribution_8_h_source.html#l00416">bi_kappa_distribution.H:416</a></div></div>
-<div class="ttc" id="aclassbi__kappa__distribution_html_a971b78635ab0856bc35c9c9493ffa128"><div class="ttname"><a href="classbi__kappa__distribution.html#a971b78635ab0856bc35c9c9493ffa128">bi_kappa_distribution::theta_par</a></div><div class="ttdeci">void theta_par(RealType value)</div><div class="ttdef"><b>Definition</b> <a href="bi__kappa__distribution_8_h_source.html#l00428">bi_kappa_distribution.H:428</a></div></div>
-</div><!-- fragment --><dl class="section note"><dt>Note</dt><dd><span class="tt">max_normalized_velocity(...)</span> is the one setter that changes <em>which distribution</em> is sampled, not merely its parameters.</dd></dl>
+Changing parameters</h1>
+<p><span class="tt">define(...)</span> replaces the whole configuration. Each single-parameter setter re-validates the full set.</p>
+<div class="fragment"><div class="line">BK dist;</div>
+<div class="line">dist.define(2.0, 1.0, 1.0);</div>
+<div class="line">dist.kappa(5.0);</div>
+<div class="line">dist.theta_par(2.5);</div>
+<div class="line">dist.ub({1, 2, 3});</div>
+<div class="line">dist.max_normalized_velocity(BK::no_cap());</div>
+</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="usage_overflow"></a>
+Overflow near kappa = 1/2</h1>
+<p>Close to <span class="tt">kappa = 1/2</span>, some bi-Kappa draws exceed the largest representable floating-point number. Without a cap they are returned with infinite components; with a cap they are redrawn. <span class="tt">n_nonfinite()</span> counts such draws and <span class="tt">n_attempts()</span> counts all attempts since the last <span class="tt">define()</span>, <span class="tt">seed()</span> or <span class="tt">reset()</span>.</p>
+<div class="fragment"><div class="line">BK dist;</div>
+<div class="line">dist.define(0.505, 1.0, 1.0, {0, 0, 1}, BK::no_cap());</div>
+<div class="line"><span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; 1000000; ++i) {</div>
+<div class="line">    BK::point_type v = dist();</div>
+<div class="line">    <span class="keywordflow">if</span> (!std::isfinite(v[0]) || !std::isfinite(v[1]) || !std::isfinite(v[2])) {</div>
+<div class="line">        <span class="comment">// handle or discard the draw</span></div>
+<div class="line">    }</div>
+<div class="line">}</div>
+<div class="line"><span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> <span class="keywordtype">long</span> lost = dist.n_nonfinite();</div>
+</div><!-- fragment --><p>Under <span class="tt">-ffast-math</span> the compiler may assume that no infinity occurs, so <span class="tt">no_cap()</span> and the counters are unreliable. <span class="tt"><a class="el" href="bi__kappa__distribution_8_h.html">bi_kappa_distribution.H</a></span> then prints a compile-time note; define <span class="tt">BI_KAPPA_ALLOW_FAST_MATH</span> to silence it. See <a class="el" href="parameters.html#params_precision" title="Finite precision near kappa = 1/2">Finite precision near kappa = 1/2</a> for typical rates.</p>
 <h1 class="doxsection"><a class="anchor" id="usage_velocity"></a>
-Custom speed-squared distribution</h1>
-<p><span class="tt"><a class="el" href="classgeneral__velocity__generator.html" title="Samples velocities from a user-defined speed-squared distribution g(w).">general_velocity_generator</a></span> draws a speed from any speed-squared PDF <span class="tt">g(w)</span> you supply (by rejection sampling, with <span class="tt">w = |V|²</span>) and assigns an isotropic 3D direction, so <span class="tt">|V| = sqrt(w)</span>. There is no mass parameter: for a distribution originally posed in energy, <span class="tt">w = |V|² = 2E/m</span>, so the mass drops out.</p>
+Isotropic velocities from your own density</h1>
+<p><span class="tt"><a class="el" href="classgeneral__velocity__generator.html" title="Samples velocities from a user-defined speed-squared distribution g(w).">general_velocity_generator</a></span> draws <span class="tt">w = |v|^2</span> from a density <span class="tt">g(w)</span> you supply, by rejection sampling, and gives the velocity an isotropic direction with speed <span class="tt">sqrt(w)</span>. There is no mass argument: for a distribution written in energy, use <span class="tt">w = 2E/m</span>.</p>
 <div class="fragment"><div class="line"><span class="preprocessor">#include &quot;<a class="code" href="general__velocity__generator_8_h.html">general_velocity_generator.H</a>&quot;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;cmath&gt;</span></div>
 <div class="line"><span class="keyword">using </span><a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> = double;</div>
 <div class="line"> </div>
-<div class="line"><span class="keyword">auto</span> gW = [](<a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> w) -&gt; <a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> { <span class="keywordflow">return</span> std::exp(-0.5 * w); };   <span class="comment">// any positive g(w), w = |v|^2</span></div>
+<div class="line"><span class="comment">// Maxwellian with thermal speed 1, written as a density in w = |v|^2.</span></div>
+<div class="line"><span class="keyword">auto</span> gW = [](<a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> w) -&gt; <a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> { <span class="keywordflow">return</span> std::sqrt(w) * std::exp(-w); };</div>
 <div class="line"> </div>
 <div class="line"><a class="code hl_class" href="classgeneral__velocity__generator.html">general_velocity_generator&lt;Real&gt;</a> velGen;</div>
-<div class="line"><span class="comment">//            g    v2_min  v2_max</span></div>
-<div class="line">velGen.<a class="code hl_function" href="classgeneral__velocity__generator.html#af5fe31734db1a1197f95aecb99451aa1">define</a>(gW,  0.0,    40.0);</div>
+<div class="line"><span class="comment">//            g    w_min  w_max</span></div>
+<div class="line">velGen.<a class="code hl_function" href="classgeneral__velocity__generator.html#af5fe31734db1a1197f95aecb99451aa1">define</a>(gW,  0.0,   40.0);</div>
 <div class="line">velGen.<a class="code hl_function" href="classgeneral__velocity__generator.html#a2e42f5bd2170a5adc0a2382071574935">seed</a>(20030410);</div>
-<div class="line"> </div>
 <div class="line"><a class="code hl_typedef" href="classgeneral__velocity__generator.html#a8e63947f15d8d53218b6b99caef4ee32">general_velocity_generator&lt;Real&gt;::point_type</a> v = velGen();</div>
-<div class="ttc" id="aclassgeneral__velocity__generator_html"><div class="ttname"><a href="classgeneral__velocity__generator.html">general_velocity_generator</a></div><div class="ttdoc">Samples velocities from a user-defined speed-squared distribution g(w).</div><div class="ttdef"><b>Definition</b> <a href="general__velocity__generator_8_h_source.html#l00029">general_velocity_generator.H:30</a></div></div>
-<div class="ttc" id="aclassgeneral__velocity__generator_html_a2e42f5bd2170a5adc0a2382071574935"><div class="ttname"><a href="classgeneral__velocity__generator.html#a2e42f5bd2170a5adc0a2382071574935">general_velocity_generator::seed</a></div><div class="ttdeci">void seed(int s)</div><div class="ttdef"><b>Definition</b> <a href="general__velocity__generator_8_h_source.html#l00140">general_velocity_generator.H:140</a></div></div>
-<div class="ttc" id="aclassgeneral__velocity__generator_html_a8e63947f15d8d53218b6b99caef4ee32"><div class="ttname"><a href="classgeneral__velocity__generator.html#a8e63947f15d8d53218b6b99caef4ee32">general_velocity_generator::point_type</a></div><div class="ttdeci">result_type point_type</div><div class="ttdef"><b>Definition</b> <a href="general__velocity__generator_8_h_source.html#l00033">general_velocity_generator.H:33</a></div></div>
-<div class="ttc" id="aclassgeneral__velocity__generator_html_af5fe31734db1a1197f95aecb99451aa1"><div class="ttname"><a href="classgeneral__velocity__generator.html#af5fe31734db1a1197f95aecb99451aa1">general_velocity_generator::define</a></div><div class="ttdeci">void define(speed_sq_pdf_function speed_sq_pdf, RealType speed_sq_min, RealType speed_sq_max, int probe_points=1024, int max_reject_tries=100000)</div><div class="ttdoc">Configure the sampler.</div><div class="ttdef"><b>Definition</b> <a href="general__velocity__generator_8_h_source.html#l00084">general_velocity_generator.H:84</a></div></div>
+<div class="ttc" id="aclassgeneral__velocity__generator_html"><div class="ttname"><a href="classgeneral__velocity__generator.html">general_velocity_generator</a></div><div class="ttdoc">Samples velocities from a user-defined speed-squared distribution g(w).</div><div class="ttdef"><b>Definition</b> <a href="general__velocity__generator_8_h_source.html#l00030">general_velocity_generator.H:31</a></div></div>
+<div class="ttc" id="aclassgeneral__velocity__generator_html_a2e42f5bd2170a5adc0a2382071574935"><div class="ttname"><a href="classgeneral__velocity__generator.html#a2e42f5bd2170a5adc0a2382071574935">general_velocity_generator::seed</a></div><div class="ttdeci">void seed(int s)</div><div class="ttdoc">Reseed the internal engine and discard any variate cached from before, so that seed(s) followed by n ...</div><div class="ttdef"><b>Definition</b> <a href="general__velocity__generator_8_h_source.html#l00152">general_velocity_generator.H:152</a></div></div>
+<div class="ttc" id="aclassgeneral__velocity__generator_html_a8e63947f15d8d53218b6b99caef4ee32"><div class="ttname"><a href="classgeneral__velocity__generator.html#a8e63947f15d8d53218b6b99caef4ee32">general_velocity_generator::point_type</a></div><div class="ttdeci">result_type point_type</div><div class="ttdef"><b>Definition</b> <a href="general__velocity__generator_8_h_source.html#l00034">general_velocity_generator.H:34</a></div></div>
+<div class="ttc" id="aclassgeneral__velocity__generator_html_af5fe31734db1a1197f95aecb99451aa1"><div class="ttname"><a href="classgeneral__velocity__generator.html#af5fe31734db1a1197f95aecb99451aa1">general_velocity_generator::define</a></div><div class="ttdeci">void define(speed_sq_pdf_function speed_sq_pdf, RealType speed_sq_min, RealType speed_sq_max, int probe_points=1024, int max_reject_tries=100000)</div><div class="ttdoc">Configure the sampler.</div><div class="ttdef"><b>Definition</b> <a href="general__velocity__generator_8_h_source.html#l00087">general_velocity_generator.H:87</a></div></div>
 <div class="ttc" id="ageneral__velocity__generator_8_h_html"><div class="ttname"><a href="general__velocity__generator_8_h.html">general_velocity_generator.H</a></div></div>
-</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="usage_field_aligned"></a>
-Field-aligned velocity (anisotropic)</h1>
-<p><span class="tt"><a class="el" href="classfield__aligned__velocity__generator.html" title="Samples field-aligned velocities: an arbitrary parallel speed-squared distribution along B,...">field_aligned_velocity_generator</a></span> builds an anisotropic velocity about the field direction <span class="tt">ub</span>: the parallel component draws <span class="tt">v_par² </span> from your speed-squared PDF <span class="tt">g(w)</span> (so <span class="tt">|v_par| = sqrt(w)</span>), pointing along <span class="tt">ub</span> for <span class="tt">sign = +1</span> or opposite it for <span class="tt">sign = -1</span>, while the two perpendicular components are a Maxwellian with thermal speed <span class="tt">theta_perp</span> (each <span class="tt">~ N(0, theta_perp²/2)</span>, the same convention as <span class="tt"><a class="el" href="classbi__maxwellian__distribution.html" title="Bi-Maxwellian distribution for 3D velocity sampling.">bi_maxwellian_distribution</a></span>). The result is returned in the global frame.</p>
+</div><!-- fragment --><p>If <span class="tt">w_min == w_max</span>, every sample has speed <span class="tt">sqrt(w_min)</span>. <span class="tt">probe_points</span> (fourth argument, default 1024) must be at least 64.</p>
+<h1 class="doxsection"><a class="anchor" id="usage_field_aligned"></a>
+Field-aligned velocities</h1>
+<p><span class="tt"><a class="el" href="classfield__aligned__velocity__generator.html" title="Samples field-aligned velocities: an arbitrary parallel speed-squared distribution along B,...">field_aligned_velocity_generator</a></span> draws <span class="tt">w = v_par^2</span> from your density <span class="tt">g(w)</span> and puts the parallel component along <span class="tt">ub</span> (<span class="tt">sign = +1</span>) or opposite to it (<span class="tt">sign = -1</span>). The two perpendicular components are Maxwellian with thermal speed <span class="tt">theta_perp</span>, each <span class="tt">N(0, theta_perp^2 / 2)</span>, and each is capped at <span class="tt">20 * theta_perp</span> by default. The result is returned in the global frame.</p>
 <div class="fragment"><div class="line"><span class="preprocessor">#include &quot;<a class="code" href="field__aligned__velocity__generator_8_h.html">field_aligned_velocity_generator.H</a>&quot;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;cmath&gt;</span></div>
 <div class="line"><span class="keyword">using </span><a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> = double;</div>
+<div class="line"><span class="keyword">using </span>FA = <a class="code hl_class" href="classfield__aligned__velocity__generator.html">field_aligned_velocity_generator&lt;Real&gt;</a>;</div>
 <div class="line"> </div>
-<div class="line"><span class="keyword">auto</span> gW = [](<a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> w) -&gt; <a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> { <span class="keywordflow">return</span> std::exp(-0.5 * w); };   <span class="comment">// any positive g(w), w = v_par^2</span></div>
+<div class="line"><span class="keyword">auto</span> gW = [](<a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> w) -&gt; <a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> { <span class="keywordflow">return</span> std::exp(-0.5 * w); };   <span class="comment">// density in w = v_par^2</span></div>
 <div class="line"> </div>
-<div class="line"><a class="code hl_class" href="classfield__aligned__velocity__generator.html">field_aligned_velocity_generator&lt;Real&gt;</a> faGen;</div>
-<div class="line"><span class="comment">//           g    v2_min  v2_max  theta_perp  ub          sign</span></div>
-<div class="line">faGen.<a class="code hl_function" href="classfield__aligned__velocity__generator.html#aadd6d41ebcbbe0650097ae75df83f1fe">define</a>(gW,  0.0,    40.0,   1.0,        {0, 0, 1},  +1);</div>
-<div class="line">faGen.<a class="code hl_function" href="classfield__aligned__velocity__generator.html#a7de700c28adc297d1fcee9864767266a">seed</a>(20030410);</div>
+<div class="line">FA faGen;</div>
+<div class="line"><span class="comment">//           g    w_min  w_max  theta_perp  ub          sign</span></div>
+<div class="line">faGen.define(gW,  0.0,   40.0,  1.0,        {0, 0, 1},  +1);</div>
+<div class="line">faGen.seed(20030410);</div>
+<div class="line">FA::point_type v = faGen();</div>
 <div class="line"> </div>
-<div class="line"><a class="code hl_typedef" href="classfield__aligned__velocity__generator.html#ae31b56b2be9502231edd5d3ab87516dc">field_aligned_velocity_generator&lt;Real&gt;::point_type</a> v = faGen();   <span class="comment">// {vx, vy, vz}, global frame</span></div>
-<div class="ttc" id="aclassfield__aligned__velocity__generator_html"><div class="ttname"><a href="classfield__aligned__velocity__generator.html">field_aligned_velocity_generator</a></div><div class="ttdoc">Samples field-aligned velocities: an arbitrary parallel speed-squared distribution along B,...</div><div class="ttdef"><b>Definition</b> <a href="field__aligned__velocity__generator_8_h_source.html#l00036">field_aligned_velocity_generator.H:37</a></div></div>
-<div class="ttc" id="aclassfield__aligned__velocity__generator_html_a7de700c28adc297d1fcee9864767266a"><div class="ttname"><a href="classfield__aligned__velocity__generator.html#a7de700c28adc297d1fcee9864767266a">field_aligned_velocity_generator::seed</a></div><div class="ttdeci">void seed(int s)</div><div class="ttdef"><b>Definition</b> <a href="field__aligned__velocity__generator_8_h_source.html#l00165">field_aligned_velocity_generator.H:165</a></div></div>
-<div class="ttc" id="aclassfield__aligned__velocity__generator_html_aadd6d41ebcbbe0650097ae75df83f1fe"><div class="ttname"><a href="classfield__aligned__velocity__generator.html#aadd6d41ebcbbe0650097ae75df83f1fe">field_aligned_velocity_generator::define</a></div><div class="ttdeci">void define(speed_sq_pdf_function speed_sq_pdf, RealType speed_sq_min, RealType speed_sq_max, RealType theta_perp, point_type ub, int parallel_sign, int probe_points=1024, int max_reject_tries=100000)</div><div class="ttdoc">Configure the sampler: user-supplied law along the field, Maxwellian across it.</div><div class="ttdef"><b>Definition</b> <a href="field__aligned__velocity__generator_8_h_source.html#l00095">field_aligned_velocity_generator.H:95</a></div></div>
-<div class="ttc" id="aclassfield__aligned__velocity__generator_html_ae31b56b2be9502231edd5d3ab87516dc"><div class="ttname"><a href="classfield__aligned__velocity__generator.html#ae31b56b2be9502231edd5d3ab87516dc">field_aligned_velocity_generator::point_type</a></div><div class="ttdeci">result_type point_type</div><div class="ttdef"><b>Definition</b> <a href="field__aligned__velocity__generator_8_h_source.html#l00040">field_aligned_velocity_generator.H:40</a></div></div>
+<div class="line"><span class="comment">// Without the perpendicular cap:</span></div>
+<div class="line">faGen.define(gW, 0.0, 40.0, 1.0, {0, 0, 1}, +1, 1024, 100000, FA::no_cap());</div>
+<div class="ttc" id="aclassfield__aligned__velocity__generator_html"><div class="ttname"><a href="classfield__aligned__velocity__generator.html">field_aligned_velocity_generator</a></div><div class="ttdoc">Samples field-aligned velocities: an arbitrary parallel speed-squared distribution along B,...</div><div class="ttdef"><b>Definition</b> <a href="field__aligned__velocity__generator_8_h_source.html#l00038">field_aligned_velocity_generator.H:39</a></div></div>
 <div class="ttc" id="afield__aligned__velocity__generator_8_h_html"><div class="ttname"><a href="field__aligned__velocity__generator_8_h.html">field_aligned_velocity_generator.H</a></div></div>
 </div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="usage_position"></a>
-Custom spatial density</h1>
-<p><span class="tt"><a class="el" href="classgeneral__position__generator.html" title="Samples positions in 1D/2D/3D from a user density rho(x), rho(x,y), or rho(x,y,z).">general_position_generator</a></span> draws positions in 1D/2D/3D from any density <span class="tt">rho(x)</span> by rejection sampling in an axis-aligned box. The returned point is a <span class="tt">std::vector&lt;<a class="el" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a>&gt;</span> of length <span class="tt">dimension</span>.</p>
+Positions from your own density</h1>
+<p><span class="tt"><a class="el" href="classgeneral__position__generator.html" title="Samples positions in 1D/2D/3D from a user density rho(x), rho(x,y), or rho(x,y,z).">general_position_generator</a></span> draws positions in one to three dimensions from a density <span class="tt">rho(x)</span> in an axis-aligned box, by rejection sampling. The point is a <span class="tt">std::vector&lt;<a class="el" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a>&gt;</span> of length <span class="tt">dimension</span>.</p>
 <div class="fragment"><div class="line"><span class="preprocessor">#include &quot;<a class="code" href="general__position__generator_8_h.html">general_position_generator.H</a>&quot;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;cmath&gt;</span></div>
 <div class="line"><span class="keyword">using </span><a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> = double;</div>
@@ -323,32 +268,31 @@ Custom spatial density</h1>
 <div class="line"> </div>
 <div class="line"><a class="code hl_class" href="classgeneral__position__generator.html">general_position_generator&lt;Real&gt;</a> posGen;</div>
 <div class="line"><span class="keyword">const</span> <a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> pi = 3.14159265358979;</div>
-<div class="line"><span class="comment">//            dim  lower         upper        density</span></div>
-<div class="line">posGen.<a class="code hl_function" href="classgeneral__position__generator.html#a512e552fc35b0758430453661deb4963">define</a>(2,   {-pi, -pi},   {pi, pi},    rho);</div>
+<div class="line"><span class="comment">//            dim  lower        upper       density</span></div>
+<div class="line">posGen.<a class="code hl_function" href="classgeneral__position__generator.html#a512e552fc35b0758430453661deb4963">define</a>(2,   {-pi, -pi},  {pi, pi},   rho);</div>
 <div class="line">posGen.<a class="code hl_function" href="classgeneral__position__generator.html#a9e24551cc12367f1dfc653a95bdddd88">seed</a>(20030410);</div>
-<div class="line"> </div>
-<div class="line">pos_t x = posGen();   <span class="comment">// length-2 vector</span></div>
+<div class="line">pos_t x = posGen();</div>
 <div class="ttc" id="aclassgeneral__position__generator_html"><div class="ttname"><a href="classgeneral__position__generator.html">general_position_generator</a></div><div class="ttdoc">Samples positions in 1D/2D/3D from a user density rho(x), rho(x,y), or rho(x,y,z).</div><div class="ttdef"><b>Definition</b> <a href="general__position__generator_8_h_source.html#l00026">general_position_generator.H:27</a></div></div>
 <div class="ttc" id="aclassgeneral__position__generator_html_a512e552fc35b0758430453661deb4963"><div class="ttname"><a href="classgeneral__position__generator.html#a512e552fc35b0758430453661deb4963">general_position_generator::define</a></div><div class="ttdeci">void define(int dimension, const point_type &amp;lower_bounds, const point_type &amp;upper_bounds, density_function density_function, int probe_points=4096, int max_reject_tries=200000)</div><div class="ttdoc">Configure the sampler.</div><div class="ttdef"><b>Definition</b> <a href="general__position__generator_8_h_source.html#l00076">general_position_generator.H:76</a></div></div>
-<div class="ttc" id="aclassgeneral__position__generator_html_a9e24551cc12367f1dfc653a95bdddd88"><div class="ttname"><a href="classgeneral__position__generator.html#a9e24551cc12367f1dfc653a95bdddd88">general_position_generator::seed</a></div><div class="ttdeci">void seed(int s)</div><div class="ttdef"><b>Definition</b> <a href="general__position__generator_8_h_source.html#l00147">general_position_generator.H:147</a></div></div>
+<div class="ttc" id="aclassgeneral__position__generator_html_a9e24551cc12367f1dfc653a95bdddd88"><div class="ttname"><a href="classgeneral__position__generator.html#a9e24551cc12367f1dfc653a95bdddd88">general_position_generator::seed</a></div><div class="ttdeci">void seed(int s)</div><div class="ttdoc">Reseed the internal engine and discard any variate cached from before, so that seed(s) followed by n ...</div><div class="ttdef"><b>Definition</b> <a href="general__position__generator_8_h_source.html#l00149">general_position_generator.H:149</a></div></div>
 <div class="ttc" id="aclassgeneral__position__generator_html_aee6d9e415a826e7a1f25068ce06bd976"><div class="ttname"><a href="classgeneral__position__generator.html#aee6d9e415a826e7a1f25068ce06bd976">general_position_generator::point_type</a></div><div class="ttdeci">result_type point_type</div><div class="ttdef"><b>Definition</b> <a href="general__position__generator_8_h_source.html#l00030">general_position_generator.H:30</a></div></div>
 <div class="ttc" id="ageneral__position__generator_8_h_html"><div class="ttname"><a href="general__position__generator_8_h.html">general_position_generator.H</a></div></div>
 </div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="usage_errors"></a>
-Error handling</h1>
+Errors</h1>
 <ul>
-<li>The general and field-aligned velocity generators throw <span class="tt">std::runtime_error</span> if called before <span class="tt">define(...)</span>.</li>
-<li><span class="tt">define(...)</span> throws <span class="tt">std::invalid_argument</span> on bad input (e.g. <span class="tt">kappa &lt;= 0.5</span>, non-positive <span class="tt">theta</span>/<span class="tt">cap</span>, <span class="tt">v2_min &gt;= v2_max</span>, <span class="tt">v2_min &lt; 0</span>, a zero <span class="tt">ub</span>, <span class="tt">sign</span> other than ±1, <span class="tt">dimension</span> outside 1–3).</li>
-<li>Velocity samplers throw <span class="tt">std::runtime_error</span> if the cap rejection loop fails 10⁶ times in a row.</li>
+<li><span class="tt">define(...)</span> and the setters throw <span class="tt">std::invalid_argument</span> for a value outside its valid range (see <a class="el" href="parameters.html" title="Parameter reference">Parameter reference</a>).</li>
+<li>The general, field-aligned and position generators throw <span class="tt">std::runtime_error</span> if called before <span class="tt">define(...)</span>, if <span class="tt">max_reject_tries</span> is exhausted, or if your function returns a negative or non-finite value.</li>
+<li><span class="tt"><a class="el" href="classbi__kappa__distribution.html" title="Bi-Kappa distribution class for sampling 3D velocity vectors.">bi_kappa_distribution</a></span> and <span class="tt"><a class="el" href="classbi__maxwellian__distribution.html" title="Bi-Maxwellian distribution for 3D velocity sampling.">bi_maxwellian_distribution</a></span> throw <span class="tt">std::runtime_error</span> after 10^6 consecutive rejections by the cap.</li>
 </ul>
 <div class="fragment"><div class="line"><span class="keywordflow">try</span> {</div>
 <div class="line">    <a class="code hl_class" href="classgeneral__velocity__generator.html">general_velocity_generator&lt;Real&gt;</a> g;</div>
-<div class="line">    <span class="keyword">auto</span> v = g();                 <span class="comment">// not define()d yet -&gt; throws</span></div>
+<div class="line">    <a class="code hl_typedef" href="classgeneral__velocity__generator.html#a8e63947f15d8d53218b6b99caef4ee32">general_velocity_generator&lt;Real&gt;::point_type</a> v = g();   <span class="comment">// not defined yet: throws</span></div>
 <div class="line">} <span class="keywordflow">catch</span> (<span class="keyword">const</span> std::runtime_error&amp; e) {</div>
-<div class="line">    <span class="comment">// handle &quot;must be define(...)d before sampling&quot;</span></div>
+<div class="line">    <span class="comment">// handle the error</span></div>
 <div class="line">}</div>
 </div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="usage_full"></a>
-Complete worked example</h1>
-<p>The full driver below configures all four generators and writes their samples. See <span class="tt"><a class="el" href="test__suite_8_h.html">test_suite.H</a></span> for further patterns (reproducible seeding, cap enforcement, and redefinition).</p>
+Demo program</h1>
+<p><span class="tt"><a class="el" href="main_8cpp.html">cpp/main.cpp</a></span> runs a short example of each sampler:</p>
 <div class="fragment"><div class="line"><span class="preprocessor">#include &lt;random&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;cmath&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;iostream&gt;</span></div>
@@ -362,27 +306,21 @@ Complete worked example</h1>
 <div class="line"><span class="preprocessor">#include &quot;<a class="code" href="general__position__generator_8_h.html">general_position_generator.H</a>&quot;</span></div>
 <div class="line"><span class="preprocessor">#include &quot;<a class="code" href="general__velocity__generator_8_h.html">general_velocity_generator.H</a>&quot;</span></div>
 <div class="line"><span class="preprocessor">#include &quot;<a class="code" href="field__aligned__velocity__generator_8_h.html">field_aligned_velocity_generator.H</a>&quot;</span></div>
-<div class="line"><span class="preprocessor">#include &quot;<a class="code" href="test__suite_8_h.html">test_suite.H</a>&quot;</span></div>
 <div class="line"> </div>
 <div class="line"><span class="keywordtype">int</span> <a class="code hl_function" href="main_8cpp.html#ae66f6b31b5ad750f1fe042a706a4e3d4">main</a>()</div>
 <div class="line">{</div>
 <div class="line">    <span class="keyword">const</span> <a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> kappa = 2.0;</div>
 <div class="line">    <span class="keyword">const</span> <a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> theta_perp = 1.0;</div>
 <div class="line">    <span class="keyword">const</span> <a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> theta_par = 2.0;</div>
-<div class="line">    <span class="keyword">const</span> <span class="keywordtype">int</span> n_particle = 200000;</div>
-<div class="line"> </div>
-<div class="line">    <span class="keywordflow">if</span> (<a class="code hl_function" href="test__suite_8_h.html#af13f216ba3cfa17d37698394e4a39826">run_all_tests</a>() != 0)</div>
-<div class="line">    {</div>
-<div class="line">        <span class="keywordflow">return</span> 1;</div>
-<div class="line">    }</div>
-<div class="line">    std::cout &lt;&lt; std::endl;</div>
+<div class="line">    <span class="comment">// Short worked examples of the five samplers; each writes its samples to a text file</span></div>
+<div class="line">    <span class="comment">// (vx vy vz per line) that python/visualize_samples.ipynb plots.  The regression suite</span></div>
+<div class="line">    <span class="comment">// is separate: `make test`.</span></div>
+<div class="line">    <span class="keyword">const</span> <span class="keywordtype">int</span> n_particle = 50000;</div>
 <div class="line"> </div>
 <div class="line">    std::cout &lt;&lt; <span class="stringliteral">&quot;=== Example 1: BiKappaDistribution ===&quot;</span> &lt;&lt; std::endl;</div>
-<div class="line">    <span class="comment">// Uncapped, so these samples follow the bi-Kappa distribution itself.  no_cap() is</span></div>
-<div class="line">    <span class="comment">// the default; it is named explicitly here because a seed has to be passed as the</span></div>
-<div class="line">    <span class="comment">// sixth argument, and because the target law is the point of the example.  A finite</span></div>
-<div class="line">    <span class="comment">// cap would instead sample the bi-Kappa law conditioned on a component-wise box --</span></div>
-<div class="line">    <span class="comment">// a different distribution, and not axisymmetric about B.</span></div>
+<div class="line">    <span class="comment">// no_cap(): these samples follow the bi-Kappa distribution itself.  Omitting the fifth</span></div>
+<div class="line">    <span class="comment">// argument applies the default cap of 20 thermal speeds (as in release 1.0.0), which</span></div>
+<div class="line">    <span class="comment">// samples the bi-Kappa distribution conditioned on that component-wise box.</span></div>
 <div class="line">    <a class="code hl_class" href="classbi__kappa__distribution.html">bi_kappa_distribution&lt;Real&gt;</a> biKappa;</div>
 <div class="line">    biKappa.<a class="code hl_function" href="classbi__kappa__distribution.html#a138df5909e003c80dc061b63da6d1e76">define</a>(kappa, theta_perp, theta_par, {0,0,1},</div>
 <div class="line">                   <a class="code hl_function" href="classbi__kappa__distribution.html#ae297e0e424247abd355b55109bdb9dde">bi_kappa_distribution&lt;Real&gt;::no_cap</a>(), 20030410);</div>
@@ -396,8 +334,7 @@ Complete worked example</h1>
 <div class="line">    }</div>
 <div class="line"> </div>
 <div class="line">    std::cout &lt;&lt; <span class="stringliteral">&quot;\n=== Example 2: BiMaxwellianDistribution ===&quot;</span> &lt;&lt; std::endl;</div>
-<div class="line">    <span class="comment">// Uncapped, as above: no_cap() is the default here too, and is named because the</span></div>
-<div class="line">    <span class="comment">// seed follows it as the fifth argument.</span></div>
+<div class="line">    <span class="comment">// no_cap(), as above; the default is again a cap of 20 thermal speeds.</span></div>
 <div class="line">    <a class="code hl_class" href="classbi__maxwellian__distribution.html">bi_maxwellian_distribution&lt;Real&gt;</a> biMaxwell;</div>
 <div class="line">    biMaxwell.<a class="code hl_function" href="classbi__maxwellian__distribution.html#aed2591ab2aed5ae7e6e520b9b141511f">define</a>(theta_perp, theta_par, {0,0,1},</div>
 <div class="line">                     <a class="code hl_function" href="classbi__maxwellian__distribution.html#ab5f2402b76654e4adf1c3d63d620e94d">bi_maxwellian_distribution&lt;Real&gt;::no_cap</a>(), 20030410);</div>
@@ -466,7 +403,7 @@ Complete worked example</h1>
 <div class="line">    <span class="keyword">const</span> <a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> w_max_par = 4.0;   <span class="comment">// v_par spans [0, 2]</span></div>
 <div class="line">    <span class="keyword">auto</span> parallelSpeedSqPdf = [](<a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a>) -&gt; <a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a> { <span class="keywordflow">return</span> <a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a>(1.0); };</div>
 <div class="line">    <a class="code hl_class" href="classfield__aligned__velocity__generator.html">field_aligned_velocity_generator&lt;Real&gt;</a> fieldAlignedGen;</div>
-<div class="line">    fieldAlignedGen.<a class="code hl_function" href="classfield__aligned__velocity__generator.html#aadd6d41ebcbbe0650097ae75df83f1fe">define</a>(parallelSpeedSqPdf,</div>
+<div class="line">    fieldAlignedGen.<a class="code hl_function" href="classfield__aligned__velocity__generator.html#ac6ef7341a4268c3fcc446143fa514eb4">define</a>(parallelSpeedSqPdf,</div>
 <div class="line">                           <span class="keyword">static_cast&lt;</span><a class="code hl_typedef" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a><span class="keyword">&gt;</span>(0.0),</div>
 <div class="line">                           w_max_par,</div>
 <div class="line">                           theta_perp,</div>
@@ -485,9 +422,14 @@ Complete worked example</h1>
 <div class="line"> </div>
 <div class="line">    <span class="keywordflow">return</span> 0;</div>
 <div class="line">}</div>
-<div class="ttc" id="amain_8cpp_html_ae66f6b31b5ad750f1fe042a706a4e3d4"><div class="ttname"><a href="main_8cpp.html#ae66f6b31b5ad750f1fe042a706a4e3d4">main</a></div><div class="ttdeci">int main()</div><div class="ttdef"><b>Definition</b> <a href="main_8cpp_source.html#l00016">main.cpp:16</a></div></div>
-<div class="ttc" id="atest__suite_8_h_html"><div class="ttname"><a href="test__suite_8_h.html">test_suite.H</a></div></div>
-<div class="ttc" id="atest__suite_8_h_html_af13f216ba3cfa17d37698394e4a39826"><div class="ttname"><a href="test__suite_8_h.html#af13f216ba3cfa17d37698394e4a39826">run_all_tests</a></div><div class="ttdeci">static int run_all_tests()</div><div class="ttdef"><b>Definition</b> <a href="test__suite_8_h_source.html#l03009">test_suite.H:3009</a></div></div>
+<div class="ttc" id="aclassbi__kappa__distribution_html_ae297e0e424247abd355b55109bdb9dde"><div class="ttname"><a href="classbi__kappa__distribution.html#ae297e0e424247abd355b55109bdb9dde">bi_kappa_distribution::no_cap</a></div><div class="ttdeci">static constexpr RealType no_cap()</div><div class="ttdoc">Sentinel selecting the untruncated sampler.</div><div class="ttdef"><b>Definition</b> <a href="bi__kappa__distribution_8_h_source.html#l00509">bi_kappa_distribution.H:509</a></div></div>
+<div class="ttc" id="aclassbi__kappa__distribution_html_af074fc20c80c5001257d16854dd88531"><div class="ttname"><a href="classbi__kappa__distribution.html#af074fc20c80c5001257d16854dd88531">bi_kappa_distribution::point_type</a></div><div class="ttdeci">result_type point_type</div><div class="ttdef"><b>Definition</b> <a href="bi__kappa__distribution_8_h_source.html#l00388">bi_kappa_distribution.H:388</a></div></div>
+<div class="ttc" id="aclassbi__maxwellian__distribution_html_a4108c0d09001ad9c856f157f3e07cf3b"><div class="ttname"><a href="classbi__maxwellian__distribution.html#a4108c0d09001ad9c856f157f3e07cf3b">bi_maxwellian_distribution::point_type</a></div><div class="ttdeci">result_type point_type</div><div class="ttdef"><b>Definition</b> <a href="bi__maxwellian__distribution_8_h_source.html#l00034">bi_maxwellian_distribution.H:34</a></div></div>
+<div class="ttc" id="aclassbi__maxwellian__distribution_html_ab5f2402b76654e4adf1c3d63d620e94d"><div class="ttname"><a href="classbi__maxwellian__distribution.html#ab5f2402b76654e4adf1c3d63d620e94d">bi_maxwellian_distribution::no_cap</a></div><div class="ttdeci">static constexpr RealType no_cap()</div><div class="ttdoc">Sentinel selecting the untruncated sampler.</div><div class="ttdef"><b>Definition</b> <a href="bi__maxwellian__distribution_8_h_source.html#l00108">bi_maxwellian_distribution.H:108</a></div></div>
+<div class="ttc" id="aclassfield__aligned__velocity__generator_html_a7de700c28adc297d1fcee9864767266a"><div class="ttname"><a href="classfield__aligned__velocity__generator.html#a7de700c28adc297d1fcee9864767266a">field_aligned_velocity_generator::seed</a></div><div class="ttdeci">void seed(int s)</div><div class="ttdoc">Reseed the internal engine and discard any variate cached from before, so that seed(s) followed by n ...</div><div class="ttdef"><b>Definition</b> <a href="field__aligned__velocity__generator_8_h_source.html#l00192">field_aligned_velocity_generator.H:192</a></div></div>
+<div class="ttc" id="aclassfield__aligned__velocity__generator_html_ac6ef7341a4268c3fcc446143fa514eb4"><div class="ttname"><a href="classfield__aligned__velocity__generator.html#ac6ef7341a4268c3fcc446143fa514eb4">field_aligned_velocity_generator::define</a></div><div class="ttdeci">void define(speed_sq_pdf_function speed_sq_pdf, RealType speed_sq_min, RealType speed_sq_max, RealType theta_perp, point_type ub, int parallel_sign, int probe_points=1024, int max_reject_tries=100000, RealType max_normalized_velocity=RealType(20.0))</div><div class="ttdoc">Configure the sampler: user-supplied law along the field, Maxwellian across it.</div><div class="ttdef"><b>Definition</b> <a href="field__aligned__velocity__generator_8_h_source.html#l00108">field_aligned_velocity_generator.H:108</a></div></div>
+<div class="ttc" id="aclassfield__aligned__velocity__generator_html_ae31b56b2be9502231edd5d3ab87516dc"><div class="ttname"><a href="classfield__aligned__velocity__generator.html#ae31b56b2be9502231edd5d3ab87516dc">field_aligned_velocity_generator::point_type</a></div><div class="ttdeci">result_type point_type</div><div class="ttdef"><b>Definition</b> <a href="field__aligned__velocity__generator_8_h_source.html#l00042">field_aligned_velocity_generator.H:42</a></div></div>
+<div class="ttc" id="amain_8cpp_html_ae66f6b31b5ad750f1fe042a706a4e3d4"><div class="ttname"><a href="main_8cpp.html#ae66f6b31b5ad750f1fe042a706a4e3d4">main</a></div><div class="ttdeci">int main()</div><div class="ttdef"><b>Definition</b> <a href="main_8cpp_source.html#l00015">main.cpp:15</a></div></div>
 </div><!-- fragment --> </div></div><!-- contents -->
 </div><!-- PageDoc -->
 </div><!-- doc-content -->

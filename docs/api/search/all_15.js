@@ -1,12 +1,17 @@
 var searchData=
 [
-  ['validate_5fsample_0',['validate_sample',['../namespacebikappa__validate.html#a03709ed145bccf8d9b673ce443cf7731',1,'bikappa_validate']]],
-  ['validation_20experiments_1',['Validation experiments',['../index.html#autotoc_md8',1,'']]],
-  ['variants_2',['variants',['../namespacelowkappa__risk__audit.html#a750863777c203169b7734839de23c550',1,'lowkappa_risk_audit']]],
-  ['velocity_20anisotropic_3',['Field-aligned velocity (anisotropic)',['../usage.html#usage_field_aligned',1,'']]],
-  ['velocity_20cap_4',['The velocity cap',['../parameters.html#params_cap',1,'']]],
-  ['velocity_20cap_3a_20what_20it_20does_20and_20how_20to_20select_20it_5',['The velocity cap: what it does and how to select it',['../usage.html#usage_bikappa_cap',1,'']]],
-  ['velocity_20samplers_20at_20a_20glance_6',['Velocity samplers at a glance',['../choosing.html#choosing_velocity',1,'']]],
-  ['velocity_20samples_7',['velocity samples',['../usage.html#usage_bikappa',1,'Bi-kappa velocity samples'],['../usage.html#usage_bimaxwell',1,'Bi-Maxwellian velocity samples']]],
-  ['visualize_8',['Visualize',['../index.html#autotoc_md6',1,'']]]
+  ['tail_5fexceedance_0',['TAIL_EXCEEDANCE',['../namespacebikappa__validate.html#ae4332163fc72022b693dec34e677aa00',1,'bikappa_validate']]],
+  ['tests_20and_20the_20demo_1',['Building the tests and the demo',['../usage.html#usage_build',1,'']]],
+  ['the_20demo_2',['Building the tests and the demo',['../usage.html#usage_build',1,'']]],
+  ['the_20five_20samplers_3',['The five samplers',['../index.html#autotoc_md3',1,'']]],
+  ['the_20paper_4',['Reproducing the paper',['../index.html#autotoc_md5',1,'']]],
+  ['the_20tests_20and_20the_20demo_5',['Building the tests and the demo',['../usage.html#usage_build',1,'']]],
+  ['the_20velocity_20cap_6',['The velocity cap',['../index.html#autotoc_md2',1,'The velocity cap'],['../parameters.html#params_cap',1,'The velocity cap'],['../usage.html#usage_bikappa_cap',1,'The velocity cap']]],
+  ['thermal_20speeds_3a_20theta_5fperp_20theta_5fpar_7',['Thermal speeds: theta_perp, theta_par',['../parameters.html#params_theta',1,'']]],
+  ['theta_5fpar_8',['theta_par',['../parameters.html#params_theta',1,'Thermal speeds: theta_perp, theta_par'],['../classbi__kappa__distribution_1_1param__type.html#a3042417fe47ef29891a013acd5f66f63',1,'bi_kappa_distribution::param_type::theta_par()'],['../classbi__kappa__distribution.html#a971b78635ab0856bc35c9c9493ffa128',1,'bi_kappa_distribution::theta_par(RealType value)'],['../classbi__kappa__distribution.html#a3bfc76c0214f09eceef88469ae3a7277',1,'bi_kappa_distribution::theta_par() const'],['../classbi__maxwellian__distribution_1_1param__type.html#a831a7a7dd1bc7fa62056b7c6b06454a4',1,'bi_maxwellian_distribution::param_type::theta_par()'],['../classbi__maxwellian__distribution.html#af34264ec5592312b6b21429055d5eb8a',1,'bi_maxwellian_distribution::theta_par(RealType value)'],['../classbi__maxwellian__distribution.html#a75e231f0b56f4f4d9075580f4d823ab9',1,'bi_maxwellian_distribution::theta_par() const']]],
+  ['theta_5fperp_9',['theta_perp',['../classgeneral__generators_1_1_field_aligned_velocity_generator.html#a9833112b48fc1659ab4762bbbd553c77',1,'general_generators.FieldAlignedVelocityGenerator.theta_perp'],['../classbi__kappa__distribution_1_1param__type.html#aa8277f36dd7b8729d6d530fdb71165d6',1,'bi_kappa_distribution::param_type::theta_perp()'],['../classbi__kappa__distribution.html#aa3adfef659bf1c10d191926903cd69df',1,'bi_kappa_distribution::theta_perp(RealType value)'],['../classbi__kappa__distribution.html#ac9127046147c88fbfe6b382d233043b0',1,'bi_kappa_distribution::theta_perp() const'],['../classbi__maxwellian__distribution_1_1param__type.html#a6d2b8921dda616403ceeb4df89415e0f',1,'bi_maxwellian_distribution::param_type::theta_perp()'],['../classbi__maxwellian__distribution.html#ab254252bace3eb7465b74f5a8aa5fc82',1,'bi_maxwellian_distribution::theta_perp(RealType value)'],['../classbi__maxwellian__distribution.html#a3fb8333a4fb95552715b39fb5405ed5c',1,'bi_maxwellian_distribution::theta_perp() const']]],
+  ['theta_5fperp_20theta_5fpar_10',['Thermal speeds: theta_perp, theta_par',['../parameters.html#params_theta',1,'']]],
+  ['thetaperp_11',['thetaPerp',['../classfield__aligned__velocity__generator.html#af09f242381a7c249a7d6e7380923dfbe',1,'field_aligned_velocity_generator']]],
+  ['to_20cite_12',['How to cite',['../index.html#autotoc_md7',1,'']]],
+  ['type_13',['type',['../structbikappa__detail_1_1log__accumulator.html#ab83d6d34314d1996c5d3593f90240c17',1,'bikappa_detail::log_accumulator::type'],['../structbikappa__detail_1_1log__accumulator_3_01float_01_4.html#a4ab4c87ed50199e7c9a8807665675a3e',1,'bikappa_detail::log_accumulator&lt; float &gt;::type']]]
 ];

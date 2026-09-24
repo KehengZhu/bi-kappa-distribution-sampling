@@ -1,6 +1,8 @@
 var searchData=
 [
-  ['general_5fposition_5fgenerator_0',['general_position_generator',['../parameters.html#params_generalposition',1,'']]],
-  ['general_5fvelocity_5fgenerator_1',['general_velocity_generator',['../parameters.html#params_generalvelocity',1,'']]],
-  ['glance_2',['Velocity samplers at a glance',['../choosing.html#choosing_velocity',1,'']]]
+  ['engine_0',['Sharing one engine',['../usage.html#usage_external_rng',1,'']]],
+  ['engines_1',['Seeding and random engines',['../parameters.html#params_seed',1,'']]],
+  ['errors_2',['Errors',['../usage.html#usage_errors',1,'']]],
+  ['examples_3',['Usage examples',['../usage.html',1,'']]],
+  ['exceptions_4',['Exceptions',['../parameters.html#params_errors',1,'']]]
 ];

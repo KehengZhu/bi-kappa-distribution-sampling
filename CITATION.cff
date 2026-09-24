@@ -1,21 +1,15 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite both the software release and the paper below."
-title: "bi-kappa-distribution-sampling: a bi-Kappa velocity loader for kinetic plasma simulations"
+title: "bi-kappa-distribution-sampling: bi-Kappa and related velocity samplers for kinetic plasma simulations"
 abstract: >-
   Header-only C++11 samplers for bi-Kappa and bi-Maxwellian velocity
-  distributions, loading particles relative to an arbitrary magnetic-field
-  direction for particle-in-cell and hybrid simulation initialization. The
-  uncapped bi-Kappa distribution is the default target; a finite velocity bound
-  is opt-in and selects a distinct conditional law, which the interface reports
-  at run time. The bi-Kappa radius is built in the logarithmic domain, so the
-  small-shape Gamma variate that the Gamma-ratio construction needs is never
-  materialized and the loss near kappa = 1/2 is the representability floor of the
-  floating-point type rather than the underflow limit of an intermediate; draws
-  that have no representation are returned as non-finite components and counted.
-  Includes a validation battery that tests an N x 3 velocity sample from any
-  bi-Kappa loader.
+  distributions about an arbitrary magnetic-field direction, and for velocity
+  and position distributions supplied by the user, for initializing
+  particle-in-cell and hybrid simulations. A Python script tests a bi-Kappa
+  velocity sample from any loader against the target distribution.
 type: software
-date-released: 2026-09-19
+# Update date-released on the day the release is tagged.
+date-released: 2026-09-24
 authors:
   - family-names: Zhu
     given-names: Keheng
@@ -44,7 +38,7 @@ keywords:
 # preferred-citation is the paper; add its DOI once the journal assigns one.
 preferred-citation:
   type: article
-  title: "Bi-Kappa Loading for Kinetic Plasma Simulations: Validation, Velocity Bounds, and Numerical Limits"
+  title: "Verifying the High-Energy Tail in Bi-Kappa Particle Loading: Three-Dimensional Tests, Velocity Bounds, and Finite Precision"
   authors:
     - family-names: Zhu
       given-names: Keheng

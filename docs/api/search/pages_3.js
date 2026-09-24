@@ -1,11 +1,10 @@
 var searchData=
 [
-  ['default_0',['Uncapped is the default',['../usage.html#usage_cap_which',1,'']]],
-  ['demo_1',['Building and running the demo',['../usage.html#usage_build',1,'']]],
-  ['density_2',['Custom spatial density',['../usage.html#usage_position',1,'']]],
-  ['direction_3a_20ub_3',['Field direction: &lt;span class=&quot;tt&quot;&gt;ub&lt;/span&gt;',['../parameters.html#params_ub',1,'']]],
-  ['distribution_4',['Custom speed-squared distribution',['../usage.html#usage_velocity',1,'']]],
-  ['do_20i_20want_5',['Which one do I want?',['../choosing.html#choosing_table',1,'']]],
-  ['documentation_6',['Documentation',['../index.html#autotoc_md9',1,'']]],
-  ['does_20and_20how_20to_20select_20it_7',['The velocity cap: what it does and how to select it',['../usage.html#usage_bikappa_cap',1,'']]]
+  ['bi_20kappa_20distribution_20sampling_0',['bi-kappa-distribution-sampling',['../index.html',1,'']]],
+  ['bi_20kappa_20velocities_1',['Bi-Kappa velocities',['../usage.html#usage_bikappa',1,'']]],
+  ['bi_20maxwellian_20velocities_2',['Bi-Maxwellian velocities',['../usage.html#usage_bimaxwell',1,'']]],
+  ['bi_5fkappa_5fdistribution_3',['bi_kappa_distribution',['../parameters.html#params_bikappa',1,'']]],
+  ['bi_5fmaxwellian_5fdistribution_4',['bi_maxwellian_distribution',['../parameters.html#params_bimaxwellian',1,'']]],
+  ['building_20the_20tests_20and_20the_20demo_5',['Building the tests and the demo',['../usage.html#usage_build',1,'']]],
+  ['by_20all_20samplers_6',['Conventions shared by all samplers',['../parameters.html#params_shared',1,'']]]
 ];

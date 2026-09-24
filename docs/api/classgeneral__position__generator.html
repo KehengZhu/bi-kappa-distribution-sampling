@@ -31,7 +31,7 @@ mermaid.initialize({ startOnLoad: true, theme: theme });
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">bi-kappa<span id="projectnumber">&#160;2.0.0</span>
+   <div id="projectname">bi-kappa<span id="projectnumber">&#160;2.2.1</span>
    </div>
    <div id="projectbrief">Monte Carlo particle samplers for plasma velocity and position distributions</div>
   </td>
@@ -139,6 +139,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a512e552fc35b0758430453661deb4963" id="r_a512e552fc35b0758430453661deb4963"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#a512e552fc35b0758430453661deb4963">define</a> (int dimension, const <a class="el" href="#aee6d9e415a826e7a1f25068ce06bd976">point_type</a> &amp;lower_bounds, const <a class="el" href="#aee6d9e415a826e7a1f25068ce06bd976">point_type</a> &amp;upper_bounds, density_function<a class="el" href="#a789698a61f02b4a8a24933bcd6c7f927">density_function</a> density_function<a class="el" href="#a789698a61f02b4a8a24933bcd6c7f927">density_function</a>, int probe_points=4096, int max_reject_tries=200000)</td></tr>
 <tr class="memdesc:a512e552fc35b0758430453661deb4963"><td class="mdescLeft">&#160;</td><td class="mdescRight">Configure the sampler.  <br /></td></tr>
 <tr class="memitem:a9e24551cc12367f1dfc653a95bdddd88" id="r_a9e24551cc12367f1dfc653a95bdddd88"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#a9e24551cc12367f1dfc653a95bdddd88">seed</a> (int s)</td></tr>
+<tr class="memdesc:a9e24551cc12367f1dfc653a95bdddd88"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reseed the internal engine and discard any variate cached from before, so that seed(s) followed by n draws gives the same values however many draws came first.  <br /></td></tr>
 <tr class="memitem:a5d5e62e8eed5496bfc5a599d31004f6f" id="r_a5d5e62e8eed5496bfc5a599d31004f6f"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#a5d5e62e8eed5496bfc5a599d31004f6f">reset</a> ()</td></tr>
 <tr class="memitem:ab981f20143684850eb1bc4c9c1f382b7" id="r_ab981f20143684850eb1bc4c9c1f382b7"><td class="memItemLeft">int&#160;</td><td class="memItemRight"><a class="el" href="#ab981f20143684850eb1bc4c9c1f382b7">dimension</a> () const</td></tr>
 <tr class="memitem:a1196d062467db52717e78638bc806ee8" id="r_a1196d062467db52717e78638bc806ee8"><td class="memItemLeft">const <a class="el" href="#aee6d9e415a826e7a1f25068ce06bd976">point_type</a> &amp;&#160;</td><td class="memItemRight"><a class="el" href="#a1196d062467db52717e78638bc806ee8">lowerBounds</a> () const</td></tr>
@@ -159,8 +160,8 @@ class general_position_generator&lt; RealType &gt;</div><p>Samples positions in 
 <div class="line"><span class="keyword">auto</span> x = gen();   <span class="comment">// std::vector&lt;double&gt; of length 2</span></div>
 <div class="ttc" id="aclassgeneral__position__generator_html"><div class="ttname"><a href="classgeneral__position__generator.html">general_position_generator</a></div><div class="ttdoc">Samples positions in 1D/2D/3D from a user density rho(x), rho(x,y), or rho(x,y,z).</div><div class="ttdef"><b>Definition</b> <a href="general__position__generator_8_h_source.html#l00026">general_position_generator.H:27</a></div></div>
 <div class="ttc" id="aclassgeneral__position__generator_html_a512e552fc35b0758430453661deb4963"><div class="ttname"><a href="#a512e552fc35b0758430453661deb4963">general_position_generator::define</a></div><div class="ttdeci">void define(int dimension, const point_type &amp;lower_bounds, const point_type &amp;upper_bounds, density_function density_function, int probe_points=4096, int max_reject_tries=200000)</div><div class="ttdoc">Configure the sampler.</div><div class="ttdef"><b>Definition</b> <a href="general__position__generator_8_h_source.html#l00076">general_position_generator.H:76</a></div></div>
-<div class="ttc" id="aclassgeneral__position__generator_html_a9e24551cc12367f1dfc653a95bdddd88"><div class="ttname"><a href="#a9e24551cc12367f1dfc653a95bdddd88">general_position_generator::seed</a></div><div class="ttdeci">void seed(int s)</div><div class="ttdef"><b>Definition</b> <a href="general__position__generator_8_h_source.html#l00147">general_position_generator.H:147</a></div></div>
-</div><!-- fragment --><dl class="section see"><dt>See also</dt><dd><a class="el" href="usage.html" title="Usage Examples">Usage Examples</a> for more recipes. </dd></dl>
+<div class="ttc" id="aclassgeneral__position__generator_html_a9e24551cc12367f1dfc653a95bdddd88"><div class="ttname"><a href="#a9e24551cc12367f1dfc653a95bdddd88">general_position_generator::seed</a></div><div class="ttdeci">void seed(int s)</div><div class="ttdoc">Reseed the internal engine and discard any variate cached from before, so that seed(s) followed by n ...</div><div class="ttdef"><b>Definition</b> <a href="general__position__generator_8_h_source.html#l00149">general_position_generator.H:149</a></div></div>
+</div><!-- fragment --><dl class="section see"><dt>See also</dt><dd><a class="el" href="usage.html" title="Usage examples">Usage examples</a> for more recipes. </dd></dl>
 
 <p class="definition">Definition at line <a class="el" href="general__position__generator_8_h_source.html#l00026">26</a> of file <a class="el" href="general__position__generator_8_h_source.html">general_position_generator.H</a>.</p>
 </div><a name="doc-typedef-members" id="doc-typedef-members"></a><h2 id="header-doc-typedef-members" class="groupheader">Member Typedef Documentation</h2>
@@ -301,7 +302,7 @@ template&lt;typename RealType = double&gt; </div>
 
 <p class="definition">Definition at line <a class="el" href="general__position__generator_8_h_source.html#l00041">41</a> of file <a class="el" href="general__position__generator_8_h_source.html">general_position_generator.H</a>.</p>
 
-<p class="reference">References <a class="el" href="general__position__generator_8_h_source.html#l00033">general_position_generator()</a>, <a class="el" href="general__position__generator_8_h_source.html#l00076">define()</a>, and <a class="el" href="general__position__generator_8_h_source.html#l00155">dimension()</a>.</p>
+<p class="reference">References <a class="el" href="general__position__generator_8_h_source.html#l00033">general_position_generator()</a>, <a class="el" href="general__position__generator_8_h_source.html#l00076">define()</a>, and <a class="el" href="general__position__generator_8_h_source.html#l00161">dimension()</a>.</p>
 
 </div>
 </div>
@@ -362,7 +363,7 @@ template&lt;typename RealType = double&gt; </div>
     <tr><td class="paramname">lower_bounds</td><td>Lower corner of the sampling box, size <code class="param">dimension</code>. </td></tr>
     <tr><td class="paramname">upper_bounds</td><td>Upper corner, size <code class="param">dimension</code>, each entry above its counterpart in <code class="param">lower_bounds</code>. The box is a hard support: nothing outside it is ever produced. </td></tr>
     <tr><td class="paramname">density_function</td><td>Your rho(x), taking a std::vector&lt;RealType&gt; of length <code class="param">dimension</code>. Need not be normalized; must be finite, non-negative, and positive somewhere in the box. </td></tr>
-    <tr><td class="paramname">probe_points</td><td>Grid points used once to estimate max rho, which becomes the rejection envelope. A density with a spike narrow enough to fall between probes yields a <b>silently wrong</b> sample &ndash; see <a class="el" href="parameters.html#params_rejection" title="Rejection-sampler knobs: &lt;tt&gt;probe_points&lt;/tt&gt;, &lt;tt&gt;max_reject_tries&lt;/tt&gt;">Rejection-sampler knobs: <span class="tt">probe_points</span>, <span class="tt">max_reject_tries</span></a>. Must be &gt; 0. </td></tr>
+    <tr><td class="paramname">probe_points</td><td>Grid points used once to estimate max rho, which becomes the rejection envelope. A density with a spike narrow enough to fall between probes yields a <b>silently wrong</b> sample &ndash; see <a class="el" href="parameters.html#params_rejection" title="Rejection-sampler settings: probe_points, max_reject_tries">Rejection-sampler settings: probe_points, max_reject_tries</a>. Must be &gt; 0. </td></tr>
     <tr><td class="paramname">max_reject_tries</td><td>Candidate draws per sample before operator() throws. Must be &gt; 0. A density concentrated in a small corner of a large box exhausts this; shrink the box instead.</td></tr>
   </table>
   </dd>
@@ -373,13 +374,13 @@ template&lt;typename RealType = double&gt; </div>
   </table>
   </dd>
 </dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="parameters.html" title="Parameter reference">Parameter reference</a> for the full table, <a class="el" href="usage.html#usage_position" title="Custom spatial density">Custom spatial density</a> for a recipe. </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="parameters.html" title="Parameter reference">Parameter reference</a> for the full table, <a class="el" href="usage.html#usage_position" title="Positions from your own density">Positions from your own density</a> for a recipe. </dd></dl>
 
 <p class="definition">Definition at line <a class="el" href="general__position__generator_8_h_source.html#l00076">76</a> of file <a class="el" href="general__position__generator_8_h_source.html">general_position_generator.H</a>.</p>
 
-<p class="reference">References <a class="el" href="general__position__generator_8_h_source.html#l00155">dimension()</a>, and <a class="el" href="general__position__generator_8_h_source.html#l00149">reset()</a>.</p>
+<p class="reference">References <a class="el" href="general__position__generator_8_h_source.html#l00161">dimension()</a>, and <a class="el" href="general__position__generator_8_h_source.html#l00155">reset()</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="general__position__generator_8_h_source.html#l00041">general_position_generator()</a>, <a class="el" href="main_8cpp_source.html#l00016">main()</a>, <a class="el" href="test__suite_8_h_source.html#l00732">test_define_general_position()</a>, and <a class="el" href="test__suite_8_h_source.html#l01034">test_seed_api()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="general__position__generator_8_h_source.html#l00041">general_position_generator()</a>, and <a class="el" href="main_8cpp_source.html#l00015">main()</a>.</p>
 
 </div>
 </div>
@@ -408,7 +409,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__position__generator_8_h_source.html#l00158">158</a> of file <a class="el" href="general__position__generator_8_h_source.html">general_position_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__position__generator_8_h_source.html#l00164">164</a> of file <a class="el" href="general__position__generator_8_h_source.html">general_position_generator.H</a>.</p>
 
 </div>
 </div>
@@ -437,7 +438,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__position__generator_8_h_source.html#l00155">155</a> of file <a class="el" href="general__position__generator_8_h_source.html">general_position_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__position__generator_8_h_source.html#l00161">161</a> of file <a class="el" href="general__position__generator_8_h_source.html">general_position_generator.H</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="general__position__generator_8_h_source.html#l00041">general_position_generator()</a>, and <a class="el" href="general__position__generator_8_h_source.html#l00076">define()</a>.</p>
 
@@ -468,7 +469,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__position__generator_8_h_source.html#l00156">156</a> of file <a class="el" href="general__position__generator_8_h_source.html">general_position_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__position__generator_8_h_source.html#l00162">162</a> of file <a class="el" href="general__position__generator_8_h_source.html">general_position_generator.H</a>.</p>
 
 </div>
 </div>
@@ -497,7 +498,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__position__generator_8_h_source.html#l00184">184</a> of file <a class="el" href="general__position__generator_8_h_source.html">general_position_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__position__generator_8_h_source.html#l00190">190</a> of file <a class="el" href="general__position__generator_8_h_source.html">general_position_generator.H</a>.</p>
 
 </div>
 </div>
@@ -528,7 +529,7 @@ template&lt;typename GeneratorType&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__position__generator_8_h_source.html#l00160">160</a> of file <a class="el" href="general__position__generator_8_h_source.html">general_position_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__position__generator_8_h_source.html#l00166">166</a> of file <a class="el" href="general__position__generator_8_h_source.html">general_position_generator.H</a>.</p>
 
 </div>
 </div>
@@ -557,9 +558,9 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__position__generator_8_h_source.html#l00149">149</a> of file <a class="el" href="general__position__generator_8_h_source.html">general_position_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__position__generator_8_h_source.html#l00155">155</a> of file <a class="el" href="general__position__generator_8_h_source.html">general_position_generator.H</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="general__position__generator_8_h_source.html#l00076">define()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="general__position__generator_8_h_source.html#l00076">define()</a>, and <a class="el" href="general__position__generator_8_h_source.html#l00149">seed()</a>.</p>
 
 </div>
 </div>
@@ -588,9 +589,13 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__position__generator_8_h_source.html#l00147">147</a> of file <a class="el" href="general__position__generator_8_h_source.html">general_position_generator.H</a>.</p>
+<p>Reseed the internal engine and discard any variate cached from before, so that seed(s) followed by n draws gives the same values however many draws came first. </p>
 
-<p class="reference">Referenced by <a class="el" href="main_8cpp_source.html#l00016">main()</a>, and <a class="el" href="test__suite_8_h_source.html#l01034">test_seed_api()</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__position__generator_8_h_source.html#l00149">149</a> of file <a class="el" href="general__position__generator_8_h_source.html">general_position_generator.H</a>.</p>
+
+<p class="reference">References <a class="el" href="general__position__generator_8_h_source.html#l00155">reset()</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="main_8cpp_source.html#l00015">main()</a>.</p>
 
 </div>
 </div>
@@ -619,7 +624,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__position__generator_8_h_source.html#l00157">157</a> of file <a class="el" href="general__position__generator_8_h_source.html">general_position_generator.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__position__generator_8_h_source.html#l00163">163</a> of file <a class="el" href="general__position__generator_8_h_source.html">general_position_generator.H</a>.</p>
 
 </div>
 </div>

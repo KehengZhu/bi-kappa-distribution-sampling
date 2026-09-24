@@ -1,12 +1,9 @@
 var searchData=
 [
-  ['want_0',['Which one do I want?',['../choosing.html#choosing_table',1,'']]],
-  ['what_20a_20cap_20costs_20you_1',['What a cap costs you',['../usage.html#usage_cap_cost',1,'']]],
-  ['what_20it_20does_20and_20how_20to_20select_20it_2',['The velocity cap: what it does and how to select it',['../usage.html#usage_bikappa_cap',1,'']]],
-  ['what_20the_20capped_20law_20is_3',['What the capped law is',['../usage.html#usage_cap_law',1,'']]],
-  ['what_20throws_20and_20when_4',['What throws, and when',['../parameters.html#params_errors',1,'']]],
-  ['when_5',['What throws, and when',['../parameters.html#params_errors',1,'']]],
-  ['which_20frame_20the_20cap_20is_20applied_20in_6',['Which frame the cap is applied in',['../usage.html#usage_cap_frame',1,'']]],
-  ['which_20one_20do_20i_20want_7',['Which one do I want?',['../choosing.html#choosing_table',1,'']]],
-  ['worked_20example_8',['Complete worked example',['../usage.html#usage_full',1,'']]]
+  ['ub_0',['ub',['../parameters.html#params_ub',1,'Field direction: ub'],['../classbi__kappa__distribution_1_1param__type.html#ae8f64dd78847c50089b4a32551b0120d',1,'bi_kappa_distribution::param_type::ub()'],['../classbi__kappa__distribution.html#a56338c3cce56c2de00ac02aaa8c56fd5',1,'bi_kappa_distribution::ub(const point_type &amp;value)'],['../classbi__kappa__distribution.html#ab19cec13f364417d856fc366e8658ede',1,'bi_kappa_distribution::ub() const'],['../classbi__maxwellian__distribution_1_1param__type.html#a3ba11a7563972783a1b5c547de638494',1,'bi_maxwellian_distribution::param_type::ub()'],['../classbi__maxwellian__distribution.html#ae1668e8b92004e45acfc2f767bc0c21a',1,'bi_maxwellian_distribution::ub(const point_type &amp;value)'],['../classbi__maxwellian__distribution.html#aa048faf4eebf929f3907daaf337d88d1',1,'bi_maxwellian_distribution::ub() const'],['../classfield__aligned__velocity__generator.html#a96898ae3e16bbee186c3f54f0c37c4ed',1,'field_aligned_velocity_generator::ub()']]],
+  ['units_1',['Units',['../choosing.html#choosing_units',1,'']]],
+  ['upper_5fbounds_2',['upper_bounds',['../classgeneral__generators_1_1_general_position_generator.html#a42b21f0a360a9101001579483d7f63da',1,'general_generators::GeneralPositionGenerator']]],
+  ['upperbounds_3',['upperBounds',['../classgeneral__position__generator.html#ae639e8c51ae41bc0ad084fa4f62200fc',1,'general_position_generator']]],
+  ['usage_20examples_4',['Usage examples',['../usage.html',1,'']]],
+  ['usage_2edox_5',['usage.dox',['../usage_8dox.html',1,'']]]
 ];

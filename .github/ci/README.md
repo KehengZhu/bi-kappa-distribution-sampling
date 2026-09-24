@@ -1,10 +1,10 @@
 # CI helpers for Experiment 7's portability gate
 
 Four files, used by `.github/workflows/portability.yml` and by the hand-run recipe in
-`experiments/exp7_confirmatory/results/portability_remote.md`. Between them they produce
+`experiments/exp4_finite_precision/results/portability_remote.md`. Between them they produce
 the *inputs* to gate G4 and check that the inputs are what they claim to be. They decide
 nothing statistical: F7 and the G4 verdict belong to
-`experiments/exp7_confirmatory/analyze.py --portability-ingest`, which reads
+`experiments/exp4_finite_precision/analyze.py --portability-ingest`, which reads
 `config/protocol.json`.
 
 | file | what it does |

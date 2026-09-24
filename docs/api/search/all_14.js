@@ -1,10 +1,25 @@
 var searchData=
 [
-  ['ub_0',['ub',['../parameters.html#params_ub',1,'Field direction: &lt;span class=&quot;tt&quot;&gt;ub&lt;/span&gt;'],['../classbi__kappa__distribution_1_1param__type.html#ae8f64dd78847c50089b4a32551b0120d',1,'bi_kappa_distribution::param_type::ub()'],['../classbi__kappa__distribution.html#a56338c3cce56c2de00ac02aaa8c56fd5',1,'bi_kappa_distribution::ub(const point_type &amp;value)'],['../classbi__kappa__distribution.html#ab19cec13f364417d856fc366e8658ede',1,'bi_kappa_distribution::ub() const'],['../classbi__maxwellian__distribution_1_1param__type.html#a3ba11a7563972783a1b5c547de638494',1,'bi_maxwellian_distribution::param_type::ub()'],['../classbi__maxwellian__distribution.html#ae1668e8b92004e45acfc2f767bc0c21a',1,'bi_maxwellian_distribution::ub(const point_type &amp;value)'],['../classbi__maxwellian__distribution.html#aa048faf4eebf929f3907daaf337d88d1',1,'bi_maxwellian_distribution::ub() const'],['../classfield__aligned__velocity__generator.html#a96898ae3e16bbee186c3f54f0c37c4ed',1,'field_aligned_velocity_generator::ub()']]],
-  ['uncapped_20is_20the_20default_1',['Uncapped is the default',['../usage.html#usage_cap_which',1,'']]],
-  ['units_2',['Units',['../choosing.html#choosing_units',1,'']]],
-  ['upper_5fbounds_3',['upper_bounds',['../classgeneral__generators_1_1_general_position_generator.html#a42b21f0a360a9101001579483d7f63da',1,'general_generators::GeneralPositionGenerator']]],
-  ['upperbounds_4',['upperBounds',['../classgeneral__position__generator.html#ae639e8c51ae41bc0ad084fa4f62200fc',1,'general_position_generator']]],
-  ['usage_20examples_5',['Usage Examples',['../usage.html',1,'']]],
-  ['usage_2edox_6',['usage.dox',['../usage_8dox.html',1,'']]]
+  ['sample_20python_0',['Validate a sample (Python)',['../index.html#autotoc_md4',1,'']]],
+  ['sample_5fspeed_5fsq_1',['sample_speed_sq',['../classgeneral__generators_1_1_general_velocity_generator.html#a6259ab2d8e130bd7a86c42ee338222c2',1,'general_generators.GeneralVelocityGenerator.sample_speed_sq()'],['../classgeneral__generators_1_1_field_aligned_velocity_generator.html#a90f425a5e14a060cecb9b7734f743fab',1,'general_generators.FieldAlignedVelocityGenerator.sample_speed_sq()']]],
+  ['sampler_2',['sampler',['../choosing.html',1,'Choosing a sampler'],['../choosing.html#choosing_table',1,'Which sampler']]],
+  ['sampler_20settings_3a_20probe_5fpoints_20max_5freject_5ftries_3',['Rejection-sampler settings: probe_points, max_reject_tries',['../parameters.html#params_rejection',1,'']]],
+  ['samplers_4',['samplers',['../parameters.html#params_shared',1,'Conventions shared by all samplers'],['../index.html#autotoc_md3',1,'The five samplers']]],
+  ['samplers_20compared_5',['Velocity samplers compared',['../choosing.html#choosing_velocity',1,'']]],
+  ['sampling_6',['bi-kappa-distribution-sampling',['../index.html',1,'']]],
+  ['see_20also_7',['See also',['../choosing.html#choosing_next',1,'']]],
+  ['seed_8',['seed',['../classbi__kappa__distribution.html#a004ccef23cf4f1cc3271134c1dde60b8',1,'bi_kappa_distribution::seed()'],['../classbi__maxwellian__distribution.html#a91b1bf3e96f4175ac83d4ee39b1c79dd',1,'bi_maxwellian_distribution::seed()'],['../classgeneral__velocity__generator.html#a2e42f5bd2170a5adc0a2382071574935',1,'general_velocity_generator::seed()'],['../classfield__aligned__velocity__generator.html#a7de700c28adc297d1fcee9864767266a',1,'field_aligned_velocity_generator::seed()'],['../classgeneral__position__generator.html#a9e24551cc12367f1dfc653a95bdddd88',1,'general_position_generator::seed()']]],
+  ['seeding_9',['Seeding',['../usage.html#usage_reproducible',1,'']]],
+  ['seeding_20and_20random_20engines_10',['Seeding and random engines',['../parameters.html#params_seed',1,'']]],
+  ['settings_3a_20probe_5fpoints_20max_5freject_5ftries_11',['Rejection-sampler settings: probe_points, max_reject_tries',['../parameters.html#params_rejection',1,'']]],
+  ['shared_20by_20all_20samplers_12',['Conventions shared by all samplers',['../parameters.html#params_shared',1,'']]],
+  ['sharing_20one_20engine_13',['Sharing one engine',['../usage.html#usage_external_rng',1,'']]],
+  ['speed_5fsq_5fmax_14',['speed_sq_max',['../classgeneral__generators_1_1_general_velocity_generator.html#a2ece22d170339f79b9baf4c57aaf2aa1',1,'general_generators.GeneralVelocityGenerator.speed_sq_max'],['../classgeneral__generators_1_1_field_aligned_velocity_generator.html#a7a8f9ae34025dc32e9bb77aeebbe00ec',1,'general_generators.FieldAlignedVelocityGenerator.speed_sq_max']]],
+  ['speed_5fsq_5fmin_15',['speed_sq_min',['../classgeneral__generators_1_1_general_velocity_generator.html#a53f853526684eeb2cb98d0d2adc28a90',1,'general_generators.GeneralVelocityGenerator.speed_sq_min'],['../classgeneral__generators_1_1_field_aligned_velocity_generator.html#a02e33f9e93e1c475d854f5c52eb1bd64',1,'general_generators.FieldAlignedVelocityGenerator.speed_sq_min']]],
+  ['speed_5fsq_5fpdf_16',['speed_sq_pdf',['../classgeneral__generators_1_1_general_velocity_generator.html#ace267739d2df6dad9343da3400b7858a',1,'general_generators.GeneralVelocityGenerator.speed_sq_pdf'],['../classgeneral__generators_1_1_field_aligned_velocity_generator.html#aa751ac2be245377af016cd97faf84c90',1,'general_generators.FieldAlignedVelocityGenerator.speed_sq_pdf']]],
+  ['speed_5fsq_5fpdf_5ffunction_17',['speed_sq_pdf_function',['../classgeneral__velocity__generator.html#a89e76e21c394094b6d83c1db1c96c2b0',1,'general_velocity_generator::speed_sq_pdf_function'],['../classfield__aligned__velocity__generator.html#a5e27731348fd1d08f13c4a2cc280eb26',1,'field_aligned_velocity_generator::speed_sq_pdf_function']]],
+  ['speeds_3a_20theta_5fperp_20theta_5fpar_18',['Thermal speeds: theta_perp, theta_par',['../parameters.html#params_theta',1,'']]],
+  ['speedsqmax_19',['speedSqMax',['../classgeneral__velocity__generator.html#aed2de2e9460bf2f7d02a7a6a12a848ee',1,'general_velocity_generator']]],
+  ['speedsqmin_20',['speedSqMin',['../classgeneral__velocity__generator.html#a8f5dcdaa28f10c554055d36fe9f82d49',1,'general_velocity_generator']]],
+  ['start_20c_21',['Quick start (C++)',['../index.html#autotoc_md1',1,'']]]
 ];

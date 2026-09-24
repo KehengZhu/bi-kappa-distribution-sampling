@@ -1,18 +1,9 @@
-# The released library's own test suite, built and run on every toolchain the loader
-# claims to support.
+# Builds and runs the C++ regression suite on each supported toolchain, checks that every
+# header compiles on its own as strict C++11, and runs the Python validator's tests.
 #
-# Version 2.0.0 implements its Gamma, normal and uniform primitives in the header instead
-# of taking them from <random>, so that the sampled sequence is a function of the engine
-# rather than of the standard library.  That claim is only worth as much as the set of
-# libraries it has actually been compiled and run against, which is why both Linux
-# standard libraries appear here rather than one.
-#
-# The header is a C++11 header-only reference implementation, so the strict-C++11 syntax
-# check is a separate step: it has to fail on its own terms, not be masked by whatever
-# relaxations the test suite's build happens to allow.
-#
-# Dependency: `make -C cpp test` is added by the library agent.  This workflow assumes the
-# target exists, builds the suite with $(CXX) and returns non-zero on any failure.
+# The sampler draws its Gamma, normal and uniform variates with its own code rather than
+# <random>'s distributions, so the sampled sequence depends only on the engine; running
+# the suite against both libstdc++ and libc++ checks that.
 
 name: tests
 
@@ -52,9 +43,7 @@ jobs:
             experimental: false
           # ubuntu-24.04-arm is a GitHub-hosted arm64 label whose availability depends on
           # the account's plan and on the repository being public.  It is marked
-          # experimental so that an unavailable label costs this workflow nothing; see
-          # results/portability_remote.md, which records the environment as pending rather
-          # than as passing.
+          # experimental so that an unavailable label does not fail this workflow.
           - name: linux-arm64 gcc/libstdc++
             os: ubuntu-24.04-arm
             cxx: g++
@@ -114,3 +103,17 @@ jobs:
             fi
           done
           exit $status
+
+  python:
+    name: python validator
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: check out the repository
+        uses: actions/checkout@v4
+
+      - name: install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: run the validator's regression tests
+        run: uv run --project python python python/test_bikappa_validate.py

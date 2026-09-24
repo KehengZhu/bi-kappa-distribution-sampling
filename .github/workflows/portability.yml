@@ -19,18 +19,18 @@
 # environment is missing, and results/portability_remote.md carries the exact command to
 # run it elsewhere.
 #
-# Dependencies owned by other agents:
-#   * experiments/exp7_confirmatory/GNUmakefile must provide a `portability` target that
+# Requirements on other files:
+#   * experiments/exp4_finite_precision/GNUmakefile must provide a `portability` target that
 #     runs P5 at the frozen sizes, honour CXX_LIBCXX and CXX_LIBSTDCXX (an empty
 #     CXX_LIBSTDCXX disables that build), echo its compile lines, and write
 #     raw/portability/portability_<tag>.jsonl with tags libcxx and libstdcxx.
-#   * experiments/exp7_confirmatory/analyze.py must provide --portability-ingest; the
+#   * experiments/exp4_finite_precision/analyze.py must provide --portability-ingest; the
 #     contract is stated on that step below.
 
 name: portability (G4)
 
+# Run by hand only: it reruns the finite-precision study on hosted runners.
 on:
-  push:
   workflow_dispatch:
 
 permissions:
@@ -104,7 +104,7 @@ jobs:
       - name: build the probe and run P5 at the frozen sizes
         run: |
           set -euo pipefail
-          make -C experiments/exp7_confirmatory portability \
+          make -C experiments/exp4_finite_precision portability \
             CXX_LIBCXX="${{ matrix.cxx_libcxx }}" \
             CXX_LIBSTDCXX="${{ matrix.cxx_libstdcxx }}" \
             2>&1 | tee "$GITHUB_WORKSPACE/evidence/run.log"
@@ -140,7 +140,7 @@ jobs:
       - name: collect the counter rows
         run: |
           set -euo pipefail
-          src=experiments/exp7_confirmatory/raw/portability
+          src=experiments/exp4_finite_precision/raw/portability
           found=0
           for f in "$src"/portability_*.jsonl; do
             [ -e "$f" ] || continue
@@ -219,7 +219,7 @@ jobs:
           python3 .github/ci/check_evidence.py \
             --evidence evidence \
             --expect .github/ci/expected_environments.json \
-            --protocol experiments/exp7_confirmatory/config/protocol.json \
+            --protocol experiments/exp4_finite_precision/config/protocol.json \
             --out evidence/coverage.json
 
       - name: set up Python
@@ -253,7 +253,7 @@ jobs:
       - name: F7 tests and the G4 verdict
         id: ingest
         continue-on-error: true
-        working-directory: experiments/exp7_confirmatory
+        working-directory: experiments/exp4_finite_precision
         run: |
           set -euo pipefail
           uv run --project ../../python python analyze.py \
@@ -267,7 +267,7 @@ jobs:
           path: |
             evidence/
             .github/ci/expected_environments.json
-            experiments/exp7_confirmatory/results/
+            experiments/exp4_finite_precision/results/
           if-no-files-found: warn
           retention-days: 90
 
@@ -281,7 +281,7 @@ jobs:
           if [ "$coverage" != success ] || [ "$ingest" != success ]; then
             echo "G4 is OPEN.  An environment is missing, or the F7 rules did not pass." >&2
             echo "The exact command for every environment is in" >&2
-            echo "experiments/exp7_confirmatory/results/portability_remote.md" >&2
+            echo "experiments/exp4_finite_precision/results/portability_remote.md" >&2
             exit 1
           fi
           echo "G4 closed on the environments declared in evidence_expected.json."

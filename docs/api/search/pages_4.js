@@ -1,7 +1,10 @@
 var searchData=
 [
-  ['error_20handling_0',['Error handling',['../usage.html#usage_errors',1,'']]],
-  ['example_1',['Complete worked example',['../usage.html#usage_full',1,'']]],
-  ['examples_2',['Usage Examples',['../usage.html',1,'']]],
-  ['experiments_3',['Validation experiments',['../index.html#autotoc_md8',1,'']]]
+  ['c_0',['Quick start (C++)',['../index.html#autotoc_md1',1,'']]],
+  ['cap_1',['cap',['../index.html#autotoc_md2',1,'The velocity cap'],['../parameters.html#params_cap',1,'The velocity cap'],['../usage.html#usage_bikappa_cap',1,'The velocity cap']]],
+  ['changing_20parameters_2',['Changing parameters',['../usage.html#usage_redefine',1,'']]],
+  ['choosing_20a_20sampler_3',['Choosing a sampler',['../choosing.html',1,'']]],
+  ['cite_4',['How to cite',['../index.html#autotoc_md7',1,'']]],
+  ['compared_5',['Velocity samplers compared',['../choosing.html#choosing_velocity',1,'']]],
+  ['conventions_20shared_20by_20all_20samplers_6',['Conventions shared by all samplers',['../parameters.html#params_shared',1,'']]]
 ];

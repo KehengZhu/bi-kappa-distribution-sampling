@@ -31,7 +31,7 @@ mermaid.initialize({ startOnLoad: true, theme: theme });
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">bi-kappa<span id="projectnumber">&#160;2.0.0</span>
+   <div id="projectname">bi-kappa<span id="projectnumber">&#160;2.2.1</span>
    </div>
    <div id="projectbrief">Monte Carlo particle samplers for plasma velocity and position distributions</div>
   </td>
@@ -120,53 +120,53 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('choosing.html'
   <div class="headertitle"><div class="title">Choosing a sampler </div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>Five samplers, one lifecycle: <b>construct → <span class="tt">define(...)</span> → call</b>.</p>
-<p>Every one returns a fresh sample each time you call <span class="tt">operator()</span>, and every one owns a seedable <span class="tt">std::mt19937</span> you can replace with your own generator.</p>
+<div class="textblock"><p>All five samplers are used the same way: construct, call <span class="tt">define(...)</span>, then call <span class="tt">operator()</span> once per sample.</p>
+<p>Each owns a seedable <span class="tt">std::mt19937</span>, and each accepts your own engine instead.</p>
 <h1 class="doxsection"><a class="anchor" id="choosing_table"></a>
-Which one do I want?</h1>
+Which sampler</h1>
 <table class="markdownTable">
 <tr class="markdownTableHead">
-<th class="markdownTableHeadNone">I want to load…  </th><th class="markdownTableHeadNone">Use  </th><th class="markdownTableHeadNone">Minimal call  </th></tr>
+<th class="markdownTableHeadNone">To load  </th><th class="markdownTableHeadNone">Use  </th><th class="markdownTableHeadNone">Minimal call  </th></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">An anisotropic suprathermal population (power-law tails)  </td><td class="markdownTableBodyNone"><span class="tt"><a class="el" href="classbi__kappa__distribution.html" title="Bi-Kappa distribution class for sampling 3D velocity vectors.">bi_kappa_distribution</a></span>  </td><td class="markdownTableBodyNone"><span class="tt">d.define(kappa, theta_perp, theta_par, ub)</span>  </td></tr>
+<td class="markdownTableBodyNone">An anisotropic population with power-law tails  </td><td class="markdownTableBodyNone"><span class="tt"><a class="el" href="classbi__kappa__distribution.html" title="Bi-Kappa distribution class for sampling 3D velocity vectors.">bi_kappa_distribution</a></span>  </td><td class="markdownTableBodyNone"><span class="tt">d.define(kappa, theta_perp, theta_par, ub)</span>  </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">An anisotropic thermal population (no tails)  </td><td class="markdownTableBodyNone"><span class="tt"><a class="el" href="classbi__maxwellian__distribution.html" title="Bi-Maxwellian distribution for 3D velocity sampling.">bi_maxwellian_distribution</a></span>  </td><td class="markdownTableBodyNone"><span class="tt">d.define(theta_perp, theta_par, ub)</span>  </td></tr>
+<td class="markdownTableBodyNone">An anisotropic Maxwellian population  </td><td class="markdownTableBodyNone"><span class="tt"><a class="el" href="classbi__maxwellian__distribution.html" title="Bi-Maxwellian distribution for 3D velocity sampling.">bi_maxwellian_distribution</a></span>  </td><td class="markdownTableBodyNone"><span class="tt">d.define(theta_perp, theta_par, ub)</span>  </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">Speeds from a distribution I write myself, isotropic  </td><td class="markdownTableBodyNone"><span class="tt"><a class="el" href="classgeneral__velocity__generator.html" title="Samples velocities from a user-defined speed-squared distribution g(w).">general_velocity_generator</a></span>  </td><td class="markdownTableBodyNone"><span class="tt">g.define(gW, w_min, w_max)</span>  </td></tr>
+<td class="markdownTableBodyNone">Speeds from your own density, isotropic direction  </td><td class="markdownTableBodyNone"><span class="tt"><a class="el" href="classgeneral__velocity__generator.html" title="Samples velocities from a user-defined speed-squared distribution g(w).">general_velocity_generator</a></span>  </td><td class="markdownTableBodyNone"><span class="tt">g.define(gW, w_min, w_max)</span>  </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">Speeds from a distribution I write myself, along <b>B</b>  </td><td class="markdownTableBodyNone"><span class="tt"><a class="el" href="classfield__aligned__velocity__generator.html" title="Samples field-aligned velocities: an arbitrary parallel speed-squared distribution along B,...">field_aligned_velocity_generator</a></span>  </td><td class="markdownTableBodyNone"><span class="tt">g.define(gW, w_min, w_max, theta_perp, ub, +1)</span>  </td></tr>
+<td class="markdownTableBodyNone">Parallel speeds from your own density, along the field  </td><td class="markdownTableBodyNone"><span class="tt"><a class="el" href="classfield__aligned__velocity__generator.html" title="Samples field-aligned velocities: an arbitrary parallel speed-squared distribution along B,...">field_aligned_velocity_generator</a></span>  </td><td class="markdownTableBodyNone"><span class="tt">g.define(gW, w_min, w_max, theta_perp, ub, +1)</span>  </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">Positions from a spatial density I write myself  </td><td class="markdownTableBodyNone"><span class="tt"><a class="el" href="classgeneral__position__generator.html" title="Samples positions in 1D/2D/3D from a user density rho(x), rho(x,y), or rho(x,y,z).">general_position_generator</a></span>  </td><td class="markdownTableBodyNone"><span class="tt">g.define(dim, lower, upper, rho)</span>  </td></tr>
+<td class="markdownTableBodyNone">Positions from your own spatial density  </td><td class="markdownTableBodyNone"><span class="tt"><a class="el" href="classgeneral__position__generator.html" title="Samples positions in 1D/2D/3D from a user density rho(x), rho(x,y), or rho(x,y,z).">general_position_generator</a></span>  </td><td class="markdownTableBodyNone"><span class="tt">g.define(dim, lower, upper, rho)</span>  </td></tr>
 </table>
-<p>The two named distributions sample by direct transformation and are exact. The three <span class="tt">general_*</span> / <span class="tt">field_aligned_*</span> generators use rejection sampling against an estimated envelope, which makes them general but gives them two extra knobs and one failure mode — see <a class="el" href="parameters.html#params_rejection" title="Rejection-sampler knobs: &lt;tt&gt;probe_points&lt;/tt&gt;, &lt;tt&gt;max_reject_tries&lt;/tt&gt;">Rejection-sampler knobs: <span class="tt">probe_points</span>, <span class="tt">max_reject_tries</span></a>.</p>
+<p><span class="tt"><a class="el" href="classbi__kappa__distribution.html" title="Bi-Kappa distribution class for sampling 3D velocity vectors.">bi_kappa_distribution</a></span> and <span class="tt"><a class="el" href="classbi__maxwellian__distribution.html" title="Bi-Maxwellian distribution for 3D velocity sampling.">bi_maxwellian_distribution</a></span> transform standard random variates directly. The other three use rejection sampling against an envelope estimated in <span class="tt">define(...)</span>; see <a class="el" href="parameters.html#params_rejection" title="Rejection-sampler settings: probe_points, max_reject_tries">Rejection-sampler settings: probe_points, max_reject_tries</a>.</p>
 <h1 class="doxsection"><a class="anchor" id="choosing_velocity"></a>
-Velocity samplers at a glance</h1>
+Velocity samplers compared</h1>
 <table class="markdownTable">
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone"></th><th class="markdownTableHeadNone"><span class="tt">bi_kappa</span>  </th><th class="markdownTableHeadNone"><span class="tt">bi_maxwellian</span>  </th><th class="markdownTableHeadNone"><span class="tt">general_velocity</span>  </th><th class="markdownTableHeadNone"><span class="tt">field_aligned_velocity</span>  </th></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">Tails  </td><td class="markdownTableBodyNone">power law, set by <span class="tt">kappa</span>  </td><td class="markdownTableBodyNone">Gaussian  </td><td class="markdownTableBodyNone">whatever <span class="tt">g(w)</span> says  </td><td class="markdownTableBodyNone">whatever <span class="tt">g(w)</span> says (parallel only)  </td></tr>
+<td class="markdownTableBodyNone">Tails  </td><td class="markdownTableBodyNone">power law, set by <span class="tt">kappa</span>  </td><td class="markdownTableBodyNone">Gaussian  </td><td class="markdownTableBodyNone">set by <span class="tt">g(w)</span>  </td><td class="markdownTableBodyNone">set by <span class="tt">g(w)</span> (parallel); Gaussian (perpendicular)  </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">Anisotropy  </td><td class="markdownTableBodyNone"><span class="tt">theta_perp</span>, <span class="tt">theta_par</span>  </td><td class="markdownTableBodyNone"><span class="tt">theta_perp</span>, <span class="tt">theta_par</span>  </td><td class="markdownTableBodyNone">isotropic  </td><td class="markdownTableBodyNone"><span class="tt">g(w)</span> parallel, Maxwellian perpendicular  </td></tr>
+<td class="markdownTableBodyNone">Anisotropy  </td><td class="markdownTableBodyNone"><span class="tt">theta_perp</span>, <span class="tt">theta_par</span>  </td><td class="markdownTableBodyNone"><span class="tt">theta_perp</span>, <span class="tt">theta_par</span>  </td><td class="markdownTableBodyNone">none (isotropic)  </td><td class="markdownTableBodyNone"><span class="tt">g(w)</span> parallel, Maxwellian perpendicular  </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">Aligned with <span class="tt">ub</span>  </td><td class="markdownTableBodyNone">yes  </td><td class="markdownTableBodyNone">yes  </td><td class="markdownTableBodyNone">n/a (isotropic)  </td><td class="markdownTableBodyNone">yes  </td></tr>
+<td class="markdownTableBodyNone">Uses <span class="tt">ub</span>  </td><td class="markdownTableBodyNone">yes  </td><td class="markdownTableBodyNone">yes  </td><td class="markdownTableBodyNone">no  </td><td class="markdownTableBodyNone">yes  </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">Method  </td><td class="markdownTableBodyNone">exact transformation  </td><td class="markdownTableBodyNone">exact transformation  </td><td class="markdownTableBodyNone">rejection  </td><td class="markdownTableBodyNone">rejection (parallel part)  </td></tr>
+<td class="markdownTableBodyNone">Method  </td><td class="markdownTableBodyNone">direct transformation  </td><td class="markdownTableBodyNone">direct transformation  </td><td class="markdownTableBodyNone">rejection  </td><td class="markdownTableBodyNone">rejection (parallel part)  </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">Velocity cap  </td><td class="markdownTableBodyNone">optional, <b>off</b> by default  </td><td class="markdownTableBodyNone">optional, <b>off</b> by default  </td><td class="markdownTableBodyNone">none  </td><td class="markdownTableBodyNone">none  </td></tr>
+<td class="markdownTableBodyNone">Velocity cap  </td><td class="markdownTableBodyNone">20 thermal speeds by default; <span class="tt">no_cap()</span> removes it  </td><td class="markdownTableBodyNone">20 thermal speeds by default; <span class="tt">no_cap()</span> removes it  </td><td class="markdownTableBodyNone">none; <span class="tt">w</span> is limited to <span class="tt">[w_min, w_max]</span>  </td><td class="markdownTableBodyNone">perpendicular components, 20 <span class="tt">theta_perp</span> by default; <span class="tt">no_cap()</span> removes it  </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">Returns  </td><td class="markdownTableBodyNone"><span class="tt">std::array&lt;<a class="el" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a>,3&gt;</span>  </td><td class="markdownTableBodyNone"><span class="tt">std::array&lt;<a class="el" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a>,3&gt;</span>  </td><td class="markdownTableBodyNone"><span class="tt">std::array&lt;<a class="el" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a>,3&gt;</span>  </td><td class="markdownTableBodyNone"><span class="tt">std::array&lt;<a class="el" href="main_8cpp.html#a445a5f0e2a34c9d97d69a3c2d1957907">Real</a>,3&gt;</span>  </td></tr>
 </table>
-<p>Both named distributions default to sampling the law they are named after: omit <span class="tt">max_normalized_velocity</span> and you get the bi-kappa or bi-Maxwellian distribution, with no rejection loop. Passing a finite value opts in to a bounded conditional law instead — the same contract, and the same <span class="tt">no_cap()</span> / <span class="tt">capped()</span> spelling, on either class. See <a class="el" href="parameters.html#params_cap" title="The velocity cap">The velocity cap</a>.</p>
+<p>With the default cap, <span class="tt"><a class="el" href="classbi__kappa__distribution.html" title="Bi-Kappa distribution class for sampling 3D velocity vectors.">bi_kappa_distribution</a></span> samples the bi-Kappa distribution conditioned on a box of 20 thermal speeds per component. For <span class="tt">kappa &lt;= 3/2</span> this removes an appreciable part of the tail. Pass <span class="tt">no_cap()</span> to sample the bi-Kappa distribution itself; see <a class="el" href="parameters.html#params_cap" title="The velocity cap">The velocity cap</a>.</p>
 <h1 class="doxsection"><a class="anchor" id="choosing_units"></a>
 Units</h1>
-<p>Every sampler is unit-agnostic: velocities come back in whatever units you expressed <span class="tt">theta_perp</span>, <span class="tt">theta_par</span>, or <span class="tt">g(w)</span>'s domain in, and positions in whatever units you gave the bounds in. Nothing is normalized to <span class="tt">c</span>, and no mass appears anywhere — for a distribution posed in energy, <span class="tt">w = |v|^2 = 2E/m</span>, so the mass cancels before it reaches the generator.</p>
+<p>The samplers do not fix units. Velocities are returned in the units of <span class="tt">theta_perp</span>, <span class="tt">theta_par</span> or <span class="tt">sqrt(w)</span>, and positions in the units of the bounds. No mass enters: for a distribution written in energy, use <span class="tt">w = |v|^2 = 2E/m</span>.</p>
 <h1 class="doxsection"><a class="anchor" id="choosing_next"></a>
-Next</h1>
+See also</h1>
 <ul>
-<li><a class="el" href="parameters.html" title="Parameter reference">Parameter reference</a> — every argument of every <span class="tt">define(...)</span>, with defaults and valid ranges.</li>
-<li><a class="el" href="usage.html" title="Usage Examples">Usage Examples</a> — copy-pasteable recipes, including seeding and sharing one RNG.</li>
-<li><a class="el" href="usage.html#usage_bikappa_cap" title="The velocity cap: what it does and how to select it">The velocity cap: what it does and how to select it</a> — what the velocity cap does to the distribution you sample. </li>
+<li><a class="el" href="parameters.html" title="Parameter reference">Parameter reference</a> lists every argument, default and valid range.</li>
+<li><a class="el" href="usage.html" title="Usage examples">Usage examples</a> gives examples, including seeding and a shared engine.</li>
+<li><a class="el" href="usage.html#usage_bikappa_cap" title="The velocity cap">The velocity cap</a> describes what the velocity cap does. </li>
 </ul>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->

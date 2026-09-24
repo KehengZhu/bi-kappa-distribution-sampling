@@ -1,6 +1,7 @@
 var searchData=
 [
-  ['log_5fmax_0',['LOG_MAX',['../namespacelowkappa__risk__audit.html#a595d7ee29a3d07437e3d5a75273752ff',1,'lowkappa_risk_audit']]],
-  ['log_5fr_1',['log_r',['../structtest__replay__draw.html#af3b8d7a7457e71854ef89b51d28020c7',1,'test_replay_draw']]],
-  ['lower_5fbounds_2',['lower_bounds',['../classgeneral__generators_1_1_general_position_generator.html#a7e15c91a159b4561c943372fad575d28',1,'general_generators::GeneralPositionGenerator']]]
+  ['n_5fcos_5fbins_0',['N_COS_BINS',['../namespacebikappa__validate.html#aa27351d216747bd27b360d575eb62c3f',1,'bikappa_validate']]],
+  ['n_5fphi_5fbins_1',['N_PHI_BINS',['../namespacebikappa__validate.html#aecddb1dc39da76da6d14e2c857063af5',1,'bikappa_validate']]],
+  ['n_5fradial_5fbins_2',['N_RADIAL_BINS',['../namespacebikappa__validate.html#ad96c94f4886e96129a870eaac3e6c275',1,'bikappa_validate']]],
+  ['n_5fshells_3',['N_SHELLS',['../namespacebikappa__validate.html#a9abd3d4c24937003258c44e06146b684',1,'bikappa_validate']]]
 ];

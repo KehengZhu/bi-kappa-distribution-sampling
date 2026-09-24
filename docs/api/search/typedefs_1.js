@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['point_5ftype_0',['point_type',['../classbi__kappa__distribution.html#af074fc20c80c5001257d16854dd88531',1,'bi_kappa_distribution::point_type'],['../classbi__maxwellian__distribution.html#a4108c0d09001ad9c856f157f3e07cf3b',1,'bi_maxwellian_distribution::point_type'],['../classfield__aligned__velocity__generator.html#ae31b56b2be9502231edd5d3ab87516dc',1,'field_aligned_velocity_generator::point_type'],['../classgeneral__position__generator.html#aee6d9e415a826e7a1f25068ce06bd976',1,'general_position_generator::point_type'],['../classgeneral__velocity__generator.html#a8e63947f15d8d53218b6b99caef4ee32',1,'general_velocity_generator::point_type']]]
+  ['density_5ffunction_0',['density_function',['../classgeneral__position__generator.html#a789698a61f02b4a8a24933bcd6c7f927',1,'general_position_generator']]],
+  ['distribution_5ftype_1',['distribution_type',['../classbi__kappa__distribution_1_1param__type.html#abb07c81aabdf4e0fde2bab115cf83c58',1,'bi_kappa_distribution::param_type::distribution_type'],['../classbi__maxwellian__distribution_1_1param__type.html#aa937ba6267b0ae7dd758b068bdf24c1f',1,'bi_maxwellian_distribution::param_type::distribution_type']]]
 ];

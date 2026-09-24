@@ -31,7 +31,7 @@ mermaid.initialize({ startOnLoad: true, theme: theme });
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">bi-kappa<span id="projectnumber">&#160;2.0.0</span>
+   <div id="projectname">bi-kappa<span id="projectnumber">&#160;2.2.1</span>
    </div>
    <div id="projectbrief">Monte Carlo particle samplers for plasma velocity and position distributions</div>
   </td>
@@ -129,6 +129,9 @@ Namespaces</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-func-members" class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:a6384ebfa0c0bd774abdb3d93bc8d475d" id="r_a6384ebfa0c0bd774abdb3d93bc8d475d"><td class="memItemLeft">np.ndarray&#160;</td><td class="memItemRight"><a class="el" href="namespacebikappa__validate.html#a6384ebfa0c0bd774abdb3d93bc8d475d">bikappa_validate.log_radius_quantile</a> (float kappa, exceed)</td></tr>
+<tr class="memitem:a541036955b690baced998476295bf184" id="r_a541036955b690baced998476295bf184"><td class="memItemLeft">np.ndarray&#160;</td><td class="memItemRight"><a class="el" href="namespacebikappa__validate.html#a541036955b690baced998476295bf184">bikappa_validate.log_shell_edges</a> (float kappa)</td></tr>
+<tr class="memitem:ad7566da7762c7ebb580d8011d5b19baf" id="r_ad7566da7762c7ebb580d8011d5b19baf"><td class="memItemLeft">tuple[np.ndarray, np.ndarray]&#160;</td><td class="memItemRight"><a class="el" href="namespacebikappa__validate.html#ad7566da7762c7ebb580d8011d5b19baf">bikappa_validate.radius_shells</a> (float kappa, int n)</td></tr>
 <tr class="memitem:a80b6eac9a409c3bd8943dd27c56dd204" id="r_a80b6eac9a409c3bd8943dd27c56dd204"><td class="memItemLeft">np.ndarray&#160;</td><td class="memItemRight"><a class="el" href="namespacebikappa__validate.html#a80b6eac9a409c3bd8943dd27c56dd204">bikappa_validate.field_basis</a> (np.ndarray bhat)</td></tr>
 <tr class="memitem:a9e62f21a88fa6674718a9fcf70f346ae" id="r_a9e62f21a88fa6674718a9fcf70f346ae"><td class="memItemLeft">float&#160;</td><td class="memItemRight"><a class="el" href="namespacebikappa__validate.html#a9e62f21a88fa6674718a9fcf70f346ae">bikappa_validate._ks_critical</a> (float alpha)</td></tr>
 <tr class="memitem:aab6c0558ffbf35393b0c8b8564b636a9" id="r_aab6c0558ffbf35393b0c8b8564b636a9"><td class="memItemLeft">float&#160;</td><td class="memItemRight"><a class="el" href="namespacebikappa__validate.html#aab6c0558ffbf35393b0c8b8564b636a9">bikappa_validate.mad_relative_sigma</a> (float kappa, int n)</td></tr>
@@ -142,7 +145,11 @@ Functions</h2></td></tr>
 Variables</h2></td></tr>
 <tr class="memitem:a555be2af057a6e92cef98459f0ce742a" id="r_a555be2af057a6e92cef98459f0ce742a"><td class="memItemLeft">tuple&#160;</td><td class="memItemRight"><a class="el" href="namespacebikappa__validate.html#a555be2af057a6e92cef98459f0ce742a">bikappa_validate.QUANTILE_PROBES</a> = (0.5, 0.9, 0.99, 0.999)</td></tr>
 <tr class="memitem:ad96c94f4886e96129a870eaac3e6c275" id="r_ad96c94f4886e96129a870eaac3e6c275"><td class="memItemLeft">int&#160;</td><td class="memItemRight"><a class="el" href="namespacebikappa__validate.html#ad96c94f4886e96129a870eaac3e6c275">bikappa_validate.N_RADIAL_BINS</a> = 4</td></tr>
-<tr class="memitem:aa27351d216747bd27b360d575eb62c3f" id="r_aa27351d216747bd27b360d575eb62c3f"><td class="memItemLeft">int&#160;</td><td class="memItemRight"><a class="el" href="namespacebikappa__validate.html#aa27351d216747bd27b360d575eb62c3f">bikappa_validate.N_COS_BINS</a> = 10</td></tr>
+<tr class="memitem:aa27351d216747bd27b360d575eb62c3f" id="r_aa27351d216747bd27b360d575eb62c3f"><td class="memItemLeft">int&#160;</td><td class="memItemRight"><a class="el" href="namespacebikappa__validate.html#aa27351d216747bd27b360d575eb62c3f">bikappa_validate.N_COS_BINS</a> = 5</td></tr>
+<tr class="memitem:aecddb1dc39da76da6d14e2c857063af5" id="r_aecddb1dc39da76da6d14e2c857063af5"><td class="memItemLeft">int&#160;</td><td class="memItemRight"><a class="el" href="namespacebikappa__validate.html#aecddb1dc39da76da6d14e2c857063af5">bikappa_validate.N_PHI_BINS</a> = 8</td></tr>
+<tr class="memitem:a9abd3d4c24937003258c44e06146b684" id="r_a9abd3d4c24937003258c44e06146b684"><td class="memItemLeft">int&#160;</td><td class="memItemRight"><a class="el" href="namespacebikappa__validate.html#a9abd3d4c24937003258c44e06146b684">bikappa_validate.N_SHELLS</a> = 10</td></tr>
+<tr class="memitem:abc139405a36e6f692f66d61bb4e17c36" id="r_abc139405a36e6f692f66d61bb4e17c36"><td class="memItemLeft">float&#160;</td><td class="memItemRight"><a class="el" href="namespacebikappa__validate.html#abc139405a36e6f692f66d61bb4e17c36">bikappa_validate.MIN_EXPECTED_PER_CELL</a> = 5.0</td></tr>
+<tr class="memitem:ae4332163fc72022b693dec34e677aa00" id="r_ae4332163fc72022b693dec34e677aa00"><td class="memItemLeft">tuple&#160;</td><td class="memItemRight"><a class="el" href="namespacebikappa__validate.html#ae4332163fc72022b693dec34e677aa00">bikappa_validate.TAIL_EXCEEDANCE</a> = (1e-2, 1e-3, 1e-4, 1e-5)</td></tr>
 </table>
 </div><!-- contents -->
 </div><!-- doc-content -->

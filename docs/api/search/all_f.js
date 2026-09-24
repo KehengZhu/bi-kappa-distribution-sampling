@@ -1,17 +1,11 @@
 var searchData=
 [
-  ['parallel_5fsign_0',['parallel_sign',['../classgeneral__generators_1_1_field_aligned_velocity_generator.html#a47fe18dabd7da4949a29ee03af047820',1,'general_generators::FieldAlignedVelocityGenerator']]],
-  ['parallelsign_1',['parallelSign',['../classfield__aligned__velocity__generator.html#a6de55ee37ce4fc32dad85c756c741d70',1,'field_aligned_velocity_generator']]],
-  ['parallelspeedsqmax_2',['parallelSpeedSqMax',['../classfield__aligned__velocity__generator.html#a57fba08db2a39010cb4d86613c3560b9',1,'field_aligned_velocity_generator']]],
-  ['parallelspeedsqmin_3',['parallelSpeedSqMin',['../classfield__aligned__velocity__generator.html#a4c06026bb1da6c6cbf4c34b9cca47e24',1,'field_aligned_velocity_generator']]],
-  ['param_4',['param',['../classbi__kappa__distribution.html#a3b5f39d5e3d59fd76dbbf6f39cd9f1bd',1,'bi_kappa_distribution::param()'],['../classbi__maxwellian__distribution.html#af6528e247500682ea69a68c7e98812b6',1,'bi_maxwellian_distribution::param()']]],
-  ['param_5ftype_5',['param_type',['../classbi__kappa__distribution_1_1param__type.html',1,'bi_kappa_distribution&lt; RealType &gt;::param_type'],['../classbi__maxwellian__distribution_1_1param__type.html',1,'bi_maxwellian_distribution&lt; RealType &gt;::param_type'],['../classbi__kappa__distribution_1_1param__type.html#a053920e48d32509a94f184fa9ab7463a',1,'bi_kappa_distribution::param_type::param_type()'],['../classbi__maxwellian__distribution_1_1param__type.html#afc9c197fe216bca319acbc9e60e7bcee',1,'bi_maxwellian_distribution::param_type::param_type()']]],
-  ['parameter_20reference_6',['Parameter reference',['../parameters.html',1,'']]],
-  ['parameters_2edox_7',['parameters.dox',['../parameters_8dox.html',1,'']]],
-  ['pdf_5fupper_5fbound_8',['pdf_upper_bound',['../classgeneral__generators_1_1_general_velocity_generator.html#a920ddca0a73e6a4e84038c2d4d386592',1,'general_generators.GeneralVelocityGenerator.pdf_upper_bound'],['../classgeneral__generators_1_1_field_aligned_velocity_generator.html#a4ab7037535755ad77ac4baaa4dbe29f8',1,'general_generators.FieldAlignedVelocityGenerator.pdf_upper_bound']]],
-  ['pdfupperbound_9',['pdfUpperBound',['../classfield__aligned__velocity__generator.html#a56c41a7ef49dece11867ca6a46eaab69',1,'field_aligned_velocity_generator::pdfUpperBound()'],['../classgeneral__velocity__generator.html#a671b80796425e855d0ce23479b35d64d',1,'general_velocity_generator::pdfUpperBound()']]],
-  ['point_5ftype_10',['point_type',['../classbi__kappa__distribution.html#af074fc20c80c5001257d16854dd88531',1,'bi_kappa_distribution::point_type'],['../classbi__maxwellian__distribution.html#a4108c0d09001ad9c856f157f3e07cf3b',1,'bi_maxwellian_distribution::point_type'],['../classfield__aligned__velocity__generator.html#ae31b56b2be9502231edd5d3ab87516dc',1,'field_aligned_velocity_generator::point_type'],['../classgeneral__position__generator.html#aee6d9e415a826e7a1f25068ce06bd976',1,'general_position_generator::point_type'],['../classgeneral__velocity__generator.html#a8e63947f15d8d53218b6b99caef4ee32',1,'general_velocity_generator::point_type']]],
-  ['polarnormal_11',['polarNormal',['../namespacebikappa__detail.html#a9390e7d740c746600426f622a1087a8b',1,'bikappa_detail']]],
-  ['probe_5fpoints_20max_5freject_5ftries_12',['Rejection-sampler knobs: &lt;span class=&quot;tt&quot;&gt;probe_points&lt;/span&gt;, &lt;span class=&quot;tt&quot;&gt;max_reject_tries&lt;/span&gt;',['../parameters.html#params_rejection',1,'']]],
-  ['python_13',['Quick start — Python',['../index.html#autotoc_md5',1,'']]]
+  ['n_5fattempts_0',['n_attempts',['../classbi__kappa__distribution.html#a7d07cd82270174a9214bea92ae7ca6d9',1,'bi_kappa_distribution']]],
+  ['n_5fcos_5fbins_1',['N_COS_BINS',['../namespacebikappa__validate.html#aa27351d216747bd27b360d575eb62c3f',1,'bikappa_validate']]],
+  ['n_5fnonfinite_2',['n_nonfinite',['../classbi__kappa__distribution.html#a05ea352a1a4a3fc3c43db5f16490f06b',1,'bi_kappa_distribution']]],
+  ['n_5fphi_5fbins_3',['N_PHI_BINS',['../namespacebikappa__validate.html#aecddb1dc39da76da6d14e2c857063af5',1,'bikappa_validate']]],
+  ['n_5fradial_5fbins_4',['N_RADIAL_BINS',['../namespacebikappa__validate.html#ad96c94f4886e96129a870eaac3e6c275',1,'bikappa_validate']]],
+  ['n_5fshells_5',['N_SHELLS',['../namespacebikappa__validate.html#a9abd3d4c24937003258c44e06146b684',1,'bikappa_validate']]],
+  ['near_20kappa_201_202_6',['near kappa 1 2',['../parameters.html#params_precision',1,'Finite precision near kappa = 1/2'],['../usage.html#usage_overflow',1,'Overflow near kappa = 1/2']]],
+  ['no_5fcap_7',['no_cap',['../classbi__kappa__distribution.html#ae297e0e424247abd355b55109bdb9dde',1,'bi_kappa_distribution::no_cap()'],['../classbi__maxwellian__distribution.html#ab5f2402b76654e4adf1c3d63d620e94d',1,'bi_maxwellian_distribution::no_cap()'],['../classfield__aligned__velocity__generator.html#a1dc9974c1a30385f4e41cfafd8738f3e',1,'field_aligned_velocity_generator::no_cap()']]]
 ];

@@ -31,7 +31,7 @@ mermaid.initialize({ startOnLoad: true, theme: theme });
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">bi-kappa<span id="projectnumber">&#160;2.0.0</span>
+   <div id="projectname">bi-kappa<span id="projectnumber">&#160;2.2.1</span>
    </div>
    <div id="projectbrief">Monte Carlo particle samplers for plasma velocity and position distributions</div>
   </td>
@@ -135,15 +135,17 @@ Classes</h2></td></tr>
 Public Types</h2></td></tr>
 <tr class="memitem:a64162f45ffce3f90655f46c15bb14c30" id="r_a64162f45ffce3f90655f46c15bb14c30"><td class="memItemLeft">using&#160;</td><td class="memItemRight"><a class="el" href="#a64162f45ffce3f90655f46c15bb14c30">result_type</a> = std::array&lt;RealType, 3&gt;</td></tr>
 <tr class="memitem:af074fc20c80c5001257d16854dd88531" id="r_af074fc20c80c5001257d16854dd88531"><td class="memItemLeft">using&#160;</td><td class="memItemRight"><a class="el" href="#af074fc20c80c5001257d16854dd88531">point_type</a> = <a class="el" href="#a64162f45ffce3f90655f46c15bb14c30">result_type</a></td></tr>
+<tr class="memitem:a70026cf87b23ca3d112c7a261dd62e66" id="r_a70026cf87b23ca3d112c7a261dd62e66"><td class="memItemLeft">using&#160;</td><td class="memItemRight"><a class="el" href="#a70026cf87b23ca3d112c7a261dd62e66">accum_point</a></td></tr>
+<tr class="memdesc:a70026cf87b23ca3d112c7a261dd62e66"><td class="mdescLeft">&#160;</td><td class="mdescRight">The type in which the sampler forms <span class="tt">R g</span> before rounding once; see <a class="el" href="structbikappa__detail_1_1log__accumulator.html" title="bikappa_detail::log_accumulator">bikappa_detail::log_accumulator</a>.  <br /></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-methods" class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:ad471e400f09fef7a5211ad97b6daf3ea" id="r_ad471e400f09fef7a5211ad97b6daf3ea"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#ad471e400f09fef7a5211ad97b6daf3ea">bi_kappa_distribution</a> ()</td></tr>
-<tr class="memitem:a82750983765c00f5b303ae3ac2f78df8" id="r_a82750983765c00f5b303ae3ac2f78df8"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a82750983765c00f5b303ae3ac2f78df8">bi_kappa_distribution</a> (RealType kappa, RealType theta_perp=RealType(1.0), RealType theta_par=RealType(1.0), <a class="el" href="#af074fc20c80c5001257d16854dd88531">point_type</a> ub=<a class="el" href="#af074fc20c80c5001257d16854dd88531">point_type</a>({RealType(0.0), RealType(0.0), RealType(1.0)}), RealType max_normalized_velocity=<a class="el" href="#ae297e0e424247abd355b55109bdb9dde">no_cap</a>())</td></tr>
+<tr class="memitem:a02cdfe8e32ba51f8f0357c694c7dc5ed" id="r_a02cdfe8e32ba51f8f0357c694c7dc5ed"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a02cdfe8e32ba51f8f0357c694c7dc5ed">bi_kappa_distribution</a> (RealType kappa, RealType theta_perp=RealType(1.0), RealType theta_par=RealType(1.0), <a class="el" href="#af074fc20c80c5001257d16854dd88531">point_type</a> ub=<a class="el" href="#af074fc20c80c5001257d16854dd88531">point_type</a>({RealType(0.0), RealType(0.0), RealType(1.0)}), RealType max_normalized_velocity=RealType(20.0))</td></tr>
 <tr class="memitem:a47eec364b7ce3efe786bb45cecfe956a" id="r_a47eec364b7ce3efe786bb45cecfe956a"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a47eec364b7ce3efe786bb45cecfe956a">bi_kappa_distribution</a> (const <a class="el" href="classbi__kappa__distribution_1_1param__type.html">param_type</a> &amp;params)</td></tr>
 <tr class="memitem:a138df5909e003c80dc061b63da6d1e76" id="r_a138df5909e003c80dc061b63da6d1e76"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#a138df5909e003c80dc061b63da6d1e76">define</a> (const <a class="el" href="classbi__kappa__distribution_1_1param__type.html">param_type</a> &amp;params)</td></tr>
-<tr class="memitem:addb6b0b263beb4e31806a63207944455" id="r_addb6b0b263beb4e31806a63207944455"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#addb6b0b263beb4e31806a63207944455">define</a> (RealType kappa, RealType theta_perp=RealType(1.0), RealType theta_par=RealType(1.0), <a class="el" href="#af074fc20c80c5001257d16854dd88531">point_type</a> ub=<a class="el" href="#af074fc20c80c5001257d16854dd88531">point_type</a>({RealType(0.0), RealType(0.0), RealType(1.0)}), RealType max_normalized_velocity=<a class="el" href="#ae297e0e424247abd355b55109bdb9dde">no_cap</a>())</td></tr>
-<tr class="memdesc:addb6b0b263beb4e31806a63207944455"><td class="mdescLeft">&#160;</td><td class="mdescRight">Configure the sampler.  <br /></td></tr>
+<tr class="memitem:a0b57f8f6b20e94187911bfc35e8b0cdd" id="r_a0b57f8f6b20e94187911bfc35e8b0cdd"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#a0b57f8f6b20e94187911bfc35e8b0cdd">define</a> (RealType kappa, RealType theta_perp=RealType(1.0), RealType theta_par=RealType(1.0), <a class="el" href="#af074fc20c80c5001257d16854dd88531">point_type</a> ub=<a class="el" href="#af074fc20c80c5001257d16854dd88531">point_type</a>({RealType(0.0), RealType(0.0), RealType(1.0)}), RealType max_normalized_velocity=RealType(20.0))</td></tr>
+<tr class="memdesc:a0b57f8f6b20e94187911bfc35e8b0cdd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Configure the sampler.  <br /></td></tr>
 <tr class="memitem:abee415fa8e307793c361ac7fd377e9c2" id="r_abee415fa8e307793c361ac7fd377e9c2"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#abee415fa8e307793c361ac7fd377e9c2">define</a> (const <a class="el" href="classbi__kappa__distribution_1_1param__type.html">param_type</a> &amp;params, int seed)</td></tr>
 <tr class="memitem:a65a03add3c361ccc39171e18b5d39cff" id="r_a65a03add3c361ccc39171e18b5d39cff"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#a65a03add3c361ccc39171e18b5d39cff">define</a> (RealType kappa, RealType theta_perp, RealType theta_par, <a class="el" href="#af074fc20c80c5001257d16854dd88531">point_type</a> ub, RealType max_normalized_velocity, int seed)</td></tr>
 <tr class="memitem:a758a03458aaab59b2577811af7a095cd" id="r_a758a03458aaab59b2577811af7a095cd"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#a758a03458aaab59b2577811af7a095cd">kappa</a> (RealType value)</td></tr>
@@ -178,7 +180,10 @@ Public Member Functions</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 id="header-pub-static-methods" class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:ae297e0e424247abd355b55109bdb9dde" id="r_ae297e0e424247abd355b55109bdb9dde"><td class="memItemLeft">static constexpr RealType&#160;</td><td class="memItemRight"><a class="el" href="#ae297e0e424247abd355b55109bdb9dde">no_cap</a> ()</td></tr>
-<tr class="memdesc:ae297e0e424247abd355b55109bdb9dde"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sentinel selecting the untruncated sampler, and <b>the default</b>.  <br /></td></tr>
+<tr class="memdesc:ae297e0e424247abd355b55109bdb9dde"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sentinel selecting the untruncated sampler.  <br /></td></tr>
+<tr class="memitem:af420fc313de1fc181b80928710ad3fbc" id="r_af420fc313de1fc181b80928710ad3fbc"><td class="memTemplParams" colspan="2">template&lt;typename ValueType&gt; </td></tr>
+<tr class="memitem:af420fc313de1fc181b80928710ad3fbc template"><td class="memItemLeft">static std::array&lt; ValueType, 3 &gt;&#160;</td><td class="memItemRight"><a class="el" href="#af420fc313de1fc181b80928710ad3fbc">rotateFromFieldAlignedFrameIn</a> (const std::array&lt; ValueType, 3 &gt; &amp;local, const std::array&lt; ValueType, 3 &gt; &amp;ub)</td></tr>
+<tr class="memdesc:af420fc313de1fc181b80928710ad3fbc"><td class="mdescLeft">&#160;</td><td class="mdescRight">The same rotation, carried out in <code class="param">ValueType</code>.  <br /></td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;typename RealType = double&gt;<br />
@@ -187,16 +192,16 @@ class bi_kappa_distribution&lt; RealType &gt;</div><p>Bi-Kappa distribution clas
 <div class="fragment"><div class="line"><a class="code hl_function" href="#ad471e400f09fef7a5211ad97b6daf3ea">bi_kappa_distribution&lt;double&gt;</a> dist;</div>
 <div class="line">dist.<a class="code hl_function" href="#a138df5909e003c80dc061b63da6d1e76">define</a>(2.0, 1.0, 2.0, {0, 0, 1});   <span class="comment">// kappa, theta_perp, theta_par, ub</span></div>
 <div class="line"><span class="keyword">auto</span> v = dist();                          <span class="comment">// {vx, vy, vz}, global frame</span></div>
-<div class="ttc" id="aclassbi__kappa__distribution_html_a138df5909e003c80dc061b63da6d1e76"><div class="ttname"><a href="#a138df5909e003c80dc061b63da6d1e76">bi_kappa_distribution::define</a></div><div class="ttdeci">void define(const param_type &amp;params)</div><div class="ttdef"><b>Definition</b> <a href="bi__kappa__distribution_8_h_source.html#l00360">bi_kappa_distribution.H:360</a></div></div>
-<div class="ttc" id="aclassbi__kappa__distribution_html_ad471e400f09fef7a5211ad97b6daf3ea"><div class="ttname"><a href="#ad471e400f09fef7a5211ad97b6daf3ea">bi_kappa_distribution::bi_kappa_distribution</a></div><div class="ttdeci">bi_kappa_distribution()</div><div class="ttdef"><b>Definition</b> <a href="bi__kappa__distribution_8_h_source.html#l00330">bi_kappa_distribution.H:330</a></div></div>
-</div><!-- fragment --><dl class="section note"><dt>Note</dt><dd><b>The cap is off by default</b>, so the default target law is the bi-Kappa distribution itself. Passing a finite <span class="tt"><a class="el" href="#a79cd6a1b637d1afaab66874691c2de88" title="Unlike the other setters, this one changes which distribution is sampled, not merely its parameters.">max_normalized_velocity</a></span> opts in to a <em>different</em>, bounded target: the bi-Kappa law conditioned on the component-wise box. See <a class="el" href="#ae297e0e424247abd355b55109bdb9dde" title="Sentinel selecting the untruncated sampler, and the default.">no_cap()</a> and <a class="el" href="classbi__kappa__distribution_1_1param__type.html#a729ff204e81afd39cce8cbf3e7d8eab4" title="True when a finite component-wise cap is in force, i.e.">param_type::capped()</a>.</dd>
+<div class="ttc" id="aclassbi__kappa__distribution_html_a138df5909e003c80dc061b63da6d1e76"><div class="ttname"><a href="#a138df5909e003c80dc061b63da6d1e76">bi_kappa_distribution::define</a></div><div class="ttdeci">void define(const param_type &amp;params)</div><div class="ttdef"><b>Definition</b> <a href="bi__kappa__distribution_8_h_source.html#l00547">bi_kappa_distribution.H:547</a></div></div>
+<div class="ttc" id="aclassbi__kappa__distribution_html_ad471e400f09fef7a5211ad97b6daf3ea"><div class="ttname"><a href="#ad471e400f09fef7a5211ad97b6daf3ea">bi_kappa_distribution::bi_kappa_distribution</a></div><div class="ttdeci">bi_kappa_distribution()</div><div class="ttdef"><b>Definition</b> <a href="bi__kappa__distribution_8_h_source.html#l00517">bi_kappa_distribution.H:517</a></div></div>
+</div><!-- fragment --><dl class="section note"><dt>Note</dt><dd><b>The cap defaults to 20 thermal speeds</b>, as in release 1.0.0, so the default target is the bi-Kappa law conditioned on the component-wise box <span class="tt">|v_i|/theta_i &lt;= 20</span>. Pass <a class="el" href="#ae297e0e424247abd355b55109bdb9dde" title="Sentinel selecting the untruncated sampler.">no_cap()</a> to sample the bi-Kappa distribution itself. At kappa &lt;= 3/2 a cap of 20 removes an appreciable part of the tail; see <a class="el" href="usage.html#usage_bikappa_cap" title="The velocity cap">The velocity cap</a>, <a class="el" href="#ae297e0e424247abd355b55109bdb9dde" title="Sentinel selecting the untruncated sampler.">no_cap()</a> and <a class="el" href="classbi__kappa__distribution_1_1param__type.html#a729ff204e81afd39cce8cbf3e7d8eab4" title="True when a finite component-wise cap is in force, i.e.">param_type::capped()</a>.</dd>
 <dd>
-<b>The radius is built in the logarithmic domain.</b> <span class="tt">R = sqrt(X1)/sqrt(X2)</span> with <span class="tt">X2 ~ Gamma(<a class="el" href="#a758a03458aaab59b2577811af7a095cd">kappa</a> - 1/2, 1)</span>, so as <span class="tt"><a class="el" href="#a758a03458aaab59b2577811af7a095cd">kappa</a> -&gt; 1/2</span> the denominator's shape goes to zero and <span class="tt">X2</span> underflows to exactly zero. <span class="tt">X2</span> is therefore never formed: the sampler carries <span class="tt">log X2</span> and <span class="tt">log R</span>, and decides whether each returned component is representable from <span class="tt">log|V_j| = log R + log|g_j|</span> before exponentiating anything. Two consequences a caller should know about:</dd></dl>
+<b>The radius is built in the logarithmic domain.</b> <span class="tt">R = sqrt(X1)/sqrt(X2)</span> with <span class="tt">X2 ~ Gamma(<a class="el" href="#a758a03458aaab59b2577811af7a095cd">kappa</a> - 1/2, 1)</span>, so as <span class="tt"><a class="el" href="#a758a03458aaab59b2577811af7a095cd">kappa</a> -&gt; 1/2</span> the denominator's shape goes to zero and <span class="tt">X2</span> underflows to exactly zero. <span class="tt">X2</span> is therefore never formed: the sampler carries <span class="tt">log X2</span> and <span class="tt">log R</span>, and reaches the linear domain only at the last step, once per component. Whether a component is representable is then decided from the component itself &ndash; the number about to be returned &ndash; and never from its logarithm, because <span class="tt">log(max())</span> is a rounded value that can sit on either side of the true limit; see <a class="el" href="namespacebikappa__detail.html#a682eccc287d777b3d3537263d7caa9cf" title="bikappa_detail::materializeComponents">bikappa_detail::materializeComponents</a>. Two consequences a caller should know about:</dd></dl>
 <ul>
 <li><b>The random stream differs from releases before 2.0.0.</b> The Gamma, normal and uniform primitives are implemented in <a class="el" href="namespacebikappa__detail.html" title="bikappa_detail">bikappa_detail</a> rather than taken from <span class="tt">&lt;random&gt;</span>, and the direction is drawn by a rejection method that uses no trigonometry, so a given seed produces a different sequence than it used to. In exchange the sequence no longer depends on which standard library is in use: the same seed gives bit-identical output under libc++ and libstdc++, which it did not before &ndash; <span class="tt">std::gamma_distribution</span> uses a different algorithm in each, and a <span class="tt">sin</span>/<span class="tt">cos</span> pair on one argument is fused by one compiler and not the other. What the sequence does still depend on is whether the compiler contracts a multiply and an add; pass <span class="tt">-ffp-contract=off</span> to pin it to what the source text says. Across architectures nothing is bitwise: <span class="tt">log</span> and <span class="tt">exp</span> are not correctly rounded and their implementations differ.</li>
 <li><b>Non-finite output is still possible, and is now countable.</b> Sufficiently near <span class="tt"><a class="el" href="#a758a03458aaab59b2577811af7a095cd">kappa</a> = 1/2</span> the bi-Kappa law puts non-zero probability outside every finite floating-point range; those draws exist as mathematics and cannot be returned as numbers. Untruncated mode returns them with non-finite components, as before, and <a class="el" href="#a05ea352a1a4a3fc3c43db5f16490f06b" title="Attempts since the last reset(), define() or seed() whose intended velocity vector had no representat...">n_nonfinite()</a> counts them. What has changed is how many there are: the loss is now the representability floor of <code>RealType</code> rather than the underflow limit of an intermediate. Measured over 2x10^6 draws at <span class="tt"><a class="el" href="#a758a03458aaab59b2577811af7a095cd">kappa</a> = 0.505</span> in <span class="tt">double</span>, the rate falls from 2.4e-2 to 8.4e-4, which matches the analytic floor.</li>
 </ul>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="usage.html" title="Usage Examples">Usage Examples</a> for more recipes (seeding, external RNG, reconfiguration).</dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="usage.html" title="Usage examples">Usage examples</a> for more recipes (seeding, external RNG, reconfiguration).</dd></dl>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">RealType</td><td>The floating-point type (e.g., double, float) </td></tr>
@@ -204,8 +209,31 @@ class bi_kappa_distribution&lt; RealType &gt;</div><p>Bi-Kappa distribution clas
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00225">225</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00384">384</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 </div><a name="doc-typedef-members" id="doc-typedef-members"></a><h2 id="header-doc-typedef-members" class="groupheader">Member Typedef Documentation</h2>
+<a id="a70026cf87b23ca3d112c7a261dd62e66" name="a70026cf87b23ca3d112c7a261dd62e66"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a70026cf87b23ca3d112c7a261dd62e66">&#9670;&#160;</a></span>accum_point</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename RealType = double&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="classbi__kappa__distribution.html">bi_kappa_distribution</a>&lt; RealType &gt;::accum_point</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line"> </div>
+<div class="line">std::array&lt;typename bikappa_detail::log_accumulator&lt;RealType&gt;::type, 3&gt;</div>
+</div><!-- fragment -->
+<p>The type in which the sampler forms <span class="tt">R g</span> before rounding once; see <a class="el" href="structbikappa__detail_1_1log__accumulator.html" title="bikappa_detail::log_accumulator">bikappa_detail::log_accumulator</a>. </p>
+<p>Identical to <code><a class="el" href="#af074fc20c80c5001257d16854dd88531">point_type</a></code> unless <code>RealType</code> is <code>float</code>. Internal: no public entry point takes or returns it. </p>
+
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00393">393</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+
+</div>
+</div>
 <a id="af074fc20c80c5001257d16854dd88531" name="af074fc20c80c5001257d16854dd88531"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#af074fc20c80c5001257d16854dd88531">&#9670;&#160;</a></span>point_type</h2>
 
@@ -220,7 +248,7 @@ template&lt;typename RealType = double&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00229">229</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00388">388</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -238,7 +266,7 @@ template&lt;typename RealType = double&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00228">228</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00387">387</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -268,12 +296,12 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00330">330</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00517">517</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
 </div>
 </div>
-<a id="a82750983765c00f5b303ae3ac2f78df8" name="a82750983765c00f5b303ae3ac2f78df8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a82750983765c00f5b303ae3ac2f78df8">&#9670;&#160;</a></span>bi_kappa_distribution() <span class="overload">[2/3]</span></h2>
+<a id="a02cdfe8e32ba51f8f0357c694c7dc5ed" name="a02cdfe8e32ba51f8f0357c694c7dc5ed"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a02cdfe8e32ba51f8f0357c694c7dc5ed">&#9670;&#160;</a></span>bi_kappa_distribution() <span class="overload">[2/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -306,7 +334,7 @@ template&lt;typename RealType = double&gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">RealType</td>          <td class="paramname"><span class="paramname"><em>max_normalized_velocity</em></span><span class="paramdefsep"> = </span><span class="paramdefval"><a class="el" href="#ae297e0e424247abd355b55109bdb9dde">no_cap</a>()</span>&#160;)</td>
+          <td class="paramtype">RealType</td>          <td class="paramname"><span class="paramname"><em>max_normalized_velocity</em></span><span class="paramdefsep"> = </span><span class="paramdefval">RealType(20.0)</span>&#160;)</td>
         </tr>
       </table>
   </td>
@@ -316,7 +344,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00336">336</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00523">523</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -345,7 +373,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00348">348</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00535">535</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -375,9 +403,9 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00360">360</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00547">547</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="bi__kappa__distribution_8_h_source.html#l00348">bi_kappa_distribution()</a>, <a class="el" href="bi__kappa__distribution_8_h_source.html#l00408">define()</a>, <a class="el" href="bi__kappa__distribution_8_h_source.html#l00416">kappa()</a>, <a class="el" href="main_8cpp_source.html#l00016">main()</a>, <a class="el" href="bi__kappa__distribution_8_h_source.html#l00446">max_normalized_velocity()</a>, <a class="el" href="test__suite_8_h_source.html#l00467">test_define_bikappa()</a>, <a class="el" href="test__suite_8_h_source.html#l00813">test_max_normalized_velocity_bikappa()</a>, <a class="el" href="test__suite_8_h_source.html#l01621">test_no_cap_semantics()</a>, <a class="el" href="test__suite_8_h_source.html#l02533">test_overflow_observability()</a>, <a class="el" href="test__suite_8_h_source.html#l01034">test_seed_api()</a>, <a class="el" href="test__suite_8_h_source.html#l02637">test_seed_reset_contract()</a>, <a class="el" href="bi__kappa__distribution_8_h_source.html#l00428">theta_par()</a>, <a class="el" href="bi__kappa__distribution_8_h_source.html#l00422">theta_perp()</a>, and <a class="el" href="bi__kappa__distribution_8_h_source.html#l00434">ub()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="bi__kappa__distribution_8_h_source.html#l00535">bi_kappa_distribution()</a>, <a class="el" href="bi__kappa__distribution_8_h_source.html#l00597">define()</a>, <a class="el" href="bi__kappa__distribution_8_h_source.html#l00605">kappa()</a>, <a class="el" href="main_8cpp_source.html#l00015">main()</a>, <a class="el" href="bi__kappa__distribution_8_h_source.html#l00635">max_normalized_velocity()</a>, <a class="el" href="bi__kappa__distribution_8_h_source.html#l00617">theta_par()</a>, <a class="el" href="bi__kappa__distribution_8_h_source.html#l00611">theta_perp()</a>, and <a class="el" href="bi__kappa__distribution_8_h_source.html#l00623">ub()</a>.</p>
 
 </div>
 </div>
@@ -410,9 +438,9 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00406">406</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00595">595</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="bi__kappa__distribution_8_h_source.html#l00406">define()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="bi__kappa__distribution_8_h_source.html#l00595">define()</a>.</p>
 
 </div>
 </div>
@@ -465,12 +493,12 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00408">408</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00597">597</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
 </div>
 </div>
-<a id="addb6b0b263beb4e31806a63207944455" name="addb6b0b263beb4e31806a63207944455"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#addb6b0b263beb4e31806a63207944455">&#9670;&#160;</a></span>define() <span class="overload">[4/4]</span></h2>
+<a id="a0b57f8f6b20e94187911bfc35e8b0cdd" name="a0b57f8f6b20e94187911bfc35e8b0cdd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0b57f8f6b20e94187911bfc35e8b0cdd">&#9670;&#160;</a></span>define() <span class="overload">[4/4]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -503,7 +531,7 @@ template&lt;typename RealType = double&gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">RealType</td>          <td class="paramname"><span class="paramname"><em>max_normalized_velocity</em></span><span class="paramdefsep"> = </span><span class="paramdefval"><a class="el" href="#ae297e0e424247abd355b55109bdb9dde">no_cap</a>()</span>&#160;)</td>
+          <td class="paramtype">RealType</td>          <td class="paramname"><span class="paramname"><em>max_normalized_velocity</em></span><span class="paramdefsep"> = </span><span class="paramdefval">RealType(20.0)</span>&#160;)</td>
         </tr>
       </table>
   </td>
@@ -521,20 +549,20 @@ template&lt;typename RealType = double&gt; </div>
     <tr><td class="paramname">theta_perp</td><td>Thermal speed transverse to <code class="param">ub</code>, &gt; 0. A speed, not a temperature: theta = sqrt(2*k_B*T/m). </td></tr>
     <tr><td class="paramname">theta_par</td><td>Thermal speed along <code class="param">ub</code>, &gt; 0. </td></tr>
     <tr><td class="paramname">ub</td><td>Magnetic-field direction {bx,by,bz} in the global frame. Need not be normalized; must be non-zero. Samples are drawn in the field-aligned frame and rotated into the global frame before return. </td></tr>
-    <tr><td class="paramname">max_normalized_velocity</td><td>Velocity cap in thermal speeds, or <a class="el" href="#ae297e0e424247abd355b55109bdb9dde" title="Sentinel selecting the untruncated sampler, and the default.">no_cap()</a> (the default) for the untruncated bi-Kappa law. A finite value selects a <em>different</em>, bounded target law &ndash; see <a class="el" href="usage.html#usage_bikappa_cap" title="The velocity cap: what it does and how to select it">The velocity cap: what it does and how to select it</a>. Must be &gt; 0; passing 0 to mean "no cap" throws.</td></tr>
+    <tr><td class="paramname">max_normalized_velocity</td><td>Velocity cap in thermal speeds (default 20, as in release 1.0.0), or <a class="el" href="#ae297e0e424247abd355b55109bdb9dde" title="Sentinel selecting the untruncated sampler.">no_cap()</a> for the untruncated bi-Kappa law. A finite value selects a <em>different</em>, bounded target law &ndash; see <a class="el" href="usage.html#usage_bikappa_cap" title="The velocity cap">The velocity cap</a>. Must be &gt; 0; passing 0 to mean "no cap" throws.</td></tr>
   </table>
   </dd>
 </dl>
 <dl class="section note"><dt>Note</dt><dd>To seed reproducibly, either call <a class="el" href="#a004ccef23cf4f1cc3271134c1dde60b8" title="Reseed the internal engine.">seed()</a> afterwards or use the overload taking a trailing int: &gt;= 0 is reproducible, &lt; 0 reseeds from std::random_device. Without either, the stream stays as seeded at construction, which is <em>not</em> reproducible.</dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
-    <tr><td class="paramname">std::invalid_argument</td><td>if kappa &lt;= 0.5, either theta is non-positive, <code class="param">max_normalized_velocity</code> is non-positive, or <code class="param">ub</code> is the zero vector.</td></tr>
+    <tr><td class="paramname">std::invalid_argument</td><td>if kappa &lt;= 0.5, either theta is non-positive or non-finite, <span class="tt"><a class="el" href="#a56338c3cce56c2de00ac02aaa8c56fd5">ub</a></span> is zero or has a non-finite component, any of these is NaN, <code class="param">max_normalized_velocity</code> is non-positive, or <code class="param">ub</code> is the zero vector.</td></tr>
   </table>
   </dd>
 </dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="parameters.html" title="Parameter reference">Parameter reference</a> for the full table, <a class="el" href="choosing.html" title="Choosing a sampler">Choosing a sampler</a> to compare samplers. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00398">398</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00587">587</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -563,7 +591,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00460">460</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00649">649</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -592,9 +620,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00416">416</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
-
-<p class="reference">Referenced by <a class="el" href="test__suite_8_h_source.html#l00467">test_define_bikappa()</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00605">605</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -623,7 +649,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00464">464</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00653">653</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -653,12 +679,10 @@ template&lt;typename RealType = double&gt; </div>
 </div><div class="memdoc">
 
 <p>Unlike the other setters, this one changes <em>which distribution</em> is sampled, not merely its parameters. </p>
-<p>Pass <a class="el" href="#ae297e0e424247abd355b55109bdb9dde" title="Sentinel selecting the untruncated sampler, and the default.">no_cap()</a> to return to the bi-Kappa law itself; passing 0 to mean "no cap" throws, as every non-positive value does. </p><pre class="fragment">dist.max_normalized_velocity(50.0);                  // capped law
+<p>Pass <a class="el" href="#ae297e0e424247abd355b55109bdb9dde" title="Sentinel selecting the untruncated sampler.">no_cap()</a> to return to the bi-Kappa law itself; passing 0 to mean "no cap" throws, as every non-positive value does. </p><pre class="fragment">dist.max_normalized_velocity(50.0);                  // capped law
 dist.max_normalized_velocity(decltype(dist)::no_cap());  // bi-Kappa law 
 </pre> 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00446">446</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
-
-<p class="reference">Referenced by <a class="el" href="test__suite_8_h_source.html#l00467">test_define_bikappa()</a>, and <a class="el" href="test__suite_8_h_source.html#l00813">test_max_normalized_velocity_bikappa()</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00635">635</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -690,9 +714,7 @@ template&lt;typename RealType = double&gt; </div>
 <p>Core-mapping attempts made since the last <a class="el" href="#a2f8d649fef1d5532d6bd4e3bc45324a8" title="Discard any variate cached inside the sampler and zero the observability counters.">reset()</a>, <a class="el" href="#a138df5909e003c80dc061b63da6d1e76">define()</a> or <a class="el" href="#a004ccef23cf4f1cc3271134c1dde60b8" title="Reseed the internal engine.">seed()</a>. </p>
 <p>In untruncated mode this equals the number of returned samples; in capped mode it also counts the draws the box rejected. </p>
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00495">495</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
-
-<p class="reference">Referenced by <a class="el" href="test__suite_8_h_source.html#l02533">test_overflow_observability()</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00684">684</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -722,12 +744,10 @@ template&lt;typename RealType = double&gt; </div>
 </div><div class="memdoc">
 
 <p>Attempts since the last <a class="el" href="#a2f8d649fef1d5532d6bd4e3bc45324a8" title="Discard any variate cached inside the sampler and zero the observability counters.">reset()</a>, <a class="el" href="#a138df5909e003c80dc061b63da6d1e76">define()</a> or <a class="el" href="#a004ccef23cf4f1cc3271134c1dde60b8" title="Reseed the internal engine.">seed()</a> whose intended velocity vector had no representation in <code>RealType</code>. </p>
-<p>Sufficiently near kappa = 1/2 the bi-Kappa law puts non-zero probability outside every finite floating-point range, so such draws exist as mathematics and cannot be returned as numbers. Untruncated mode returns them as non-finite components &ndash; the honest answer, and unchanged from earlier releases &ndash; and counts them here. Capped mode rejects them, as it rejects anything outside the box, and still counts them here, so that a caller can tell "the box rejected a representable sample" from "the
-box rejected a sample that could not have been returned at all". Without this counter the second case is invisible: the returned samples are all finite and the acceptance rate alone does not distinguish the two. </p>
+<p>Sufficiently near kappa = 1/2 the bi-Kappa law puts non-zero probability outside every finite floating-point range, so such draws exist as mathematics and cannot be returned as numbers. Untruncated mode returns them as non-finite components, as earlier releases did, and counts them here. Capped mode rejects them, as it rejects anything outside the box, and still counts them here, so that a caller can tell "the box rejected a representable sample" from "the
+box rejected a sample that could not have been returned at all". In both modes the vector whose representability is counted is the <em>velocity</em> the caller would have received, rotation and thermal scaling included &ndash; not the normalized coordinate the cap predicate is written in, which understates the largest component whenever <span class="tt"><a class="el" href="#a971b78635ab0856bc35c9c9493ffa128">theta_par</a></span> and <span class="tt"><a class="el" href="#aa3adfef659bf1c10d191926903cd69df">theta_perp</a></span> differ. Without this counter the second case is invisible: the returned samples are all finite and the acceptance rate alone does not distinguish the two. </p>
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00509">509</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
-
-<p class="reference">Referenced by <a class="el" href="test__suite_8_h_source.html#l02524">test_dirty_counters()</a>, and <a class="el" href="test__suite_8_h_source.html#l02533">test_overflow_observability()</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00702">702</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -756,17 +776,17 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Sentinel selecting the untruncated sampler, and <b>the default</b>. </p>
+<p>Sentinel selecting the untruncated sampler. </p>
 <p>In this mode the draw uses a fixed sequence of high-level variates with no outer acceptance-rejection loop, and the sampled law is the full bi-Kappa distribution.</p>
-<p>Naming it explicitly is equivalent to omitting the argument, and is worth doing where the target law matters to a reader: </p><pre class="fragment">bi_kappa_distribution&lt;double&gt; d(2.0, 1.0, 2.0, {0,0,1},
+<p>It must be passed explicitly, because the default cap is 20 (release 1.0.0): </p><pre class="fragment">bi_kappa_distribution&lt;double&gt; d(2.0, 1.0, 2.0, {0,0,1},
                                 bi_kappa_distribution&lt;double&gt;::no_cap());
-</pre><p>With a finite cap the sampled law is instead that distribution conditioned on all normalized components lying inside the component-wise box &ndash; a different, bounded law with its own normalization. That is opt-in: it is never selected by default, because at kappa &lt;= 3/2 no practical cap value is a good approximation to the bi-Kappa law and the conditioned law is not even axisymmetric about B.</p>
+</pre><p>With a finite cap the sampled law is instead that distribution conditioned on all normalized components lying inside the component-wise box &ndash; a different, bounded law with its own normalization. At kappa &lt;= 3/2 no practical cap value is a good approximation to the bi-Kappa law, and the conditioned law is not even axisymmetric about B.</p>
 <p>The cap is tested in the field-aligned frame, before the rotation into the global frame, so the returned components are <em>not</em> individually bounded by cap*theta unless ub is {0,0,1}; the box rotates with ub. The speed is bounded in every frame, by cap*sqrt(2*theta_perp^2 + theta_par^2).</p>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="usage.html#usage_bikappa_cap" title="The velocity cap: what it does and how to select it">The velocity cap: what it does and how to select it</a> for what the capped law is, what it costs, and why a small rejected fraction does not imply faithful tails. </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="usage.html#usage_bikappa_cap" title="The velocity cap">The velocity cap</a> for what the capped law is, what it costs, and why a small rejected fraction does not imply faithful tails. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00322">322</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00509">509</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="main_8cpp_source.html#l00016">main()</a>, <a class="el" href="test__suite_8_h_source.html#l02715">test_log_cap_semantics()</a>, <a class="el" href="test__suite_8_h_source.html#l01621">test_no_cap_semantics()</a>, <a class="el" href="test__suite_8_h_source.html#l02533">test_overflow_observability()</a>, and <a class="el" href="test__suite_8_h_source.html#l01492">test_radius_formation()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="main_8cpp_source.html#l00015">main()</a>.</p>
 
 </div>
 </div>
@@ -795,7 +815,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00786">786</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l01031">1031</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -824,7 +844,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00519">519</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00712">712</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -855,7 +875,7 @@ template&lt;typename GeneratorType&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00514">514</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00707">707</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -890,7 +910,7 @@ template&lt;typename GeneratorType&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00525">525</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00718">718</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -919,7 +939,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00784">784</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l01029">1029</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -948,9 +968,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00457">457</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
-
-<p class="reference">Referenced by <a class="el" href="test__suite_8_h_source.html#l00467">test_define_bikappa()</a>, and <a class="el" href="test__suite_8_h_source.html#l01621">test_no_cap_semantics()</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00646">646</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -982,9 +1000,9 @@ template&lt;typename RealType = double&gt; </div>
 <p>Discard any variate cached inside the sampler and zero the observability counters. </p>
 <p>Called by <a class="el" href="#a004ccef23cf4f1cc3271134c1dde60b8" title="Reseed the internal engine.">seed()</a> and by every <a class="el" href="#a138df5909e003c80dc061b63da6d1e76">define()</a> overload. </p>
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00480">480</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00669">669</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="bi__kappa__distribution_8_h_source.html#l00360">define()</a>, <a class="el" href="bi__kappa__distribution_8_h_source.html#l00472">seed()</a>, and <a class="el" href="test__suite_8_h_source.html#l02533">test_overflow_observability()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="bi__kappa__distribution_8_h_source.html#l00547">define()</a>, and <a class="el" href="bi__kappa__distribution_8_h_source.html#l00661">seed()</a>.</p>
 
 </div>
 </div>
@@ -1017,9 +1035,47 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00725">725</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00952">952</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="bi__kappa__distribution_8_h_source.html#l00525">operator()()</a>, <a class="el" href="test__suite_8_h_source.html#l02840">test_log_rotation_stability()</a>, <a class="el" href="test__suite_8_h_source.html#l00194">test_overflow_floor()</a>, and <a class="el" href="test__suite_8_h_source.html#l00341">test_transform()</a>.</p>
+</div>
+</div>
+<a id="af420fc313de1fc181b80928710ad3fbc" name="af420fc313de1fc181b80928710ad3fbc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af420fc313de1fc181b80928710ad3fbc">&#9670;&#160;</a></span>rotateFromFieldAlignedFrameIn()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename RealType = double&gt; </div>
+<div class="memtemplate">
+template&lt;typename ValueType&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::array&lt; ValueType, 3 &gt; <a class="el" href="classbi__kappa__distribution.html">bi_kappa_distribution</a>&lt; RealType &gt;::rotateFromFieldAlignedFrameIn </td>
+          <td>(</td>
+          <td class="paramtype">const std::array&lt; ValueType, 3 &gt; &amp;</td>          <td class="paramname"><span class="paramname"><em>local</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::array&lt; ValueType, 3 &gt; &amp;</td>          <td class="paramname"><span class="paramname"><em>ub</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel static">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>The same rotation, carried out in <code class="param">ValueType</code>. </p>
+<p>The basis is a function of <span class="tt"><a class="el" href="#a56338c3cce56c2de00ac02aaa8c56fd5">ub</a></span> alone, so evaluating it in the accumulator changes no decision and no stream &ndash; it only stops the rotation from spending an ulp of the returned type before the component is formed. With <span class="tt">ValueType = RealType</span> this is the rotation used before the wider accumulator was introduced, so a <span class="tt">double</span> instantiation is unaffected. </p>
+
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00965">965</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="bi__kappa__distribution_8_h_source.html#l00718">operator()()</a>, and <a class="el" href="bi__kappa__distribution_8_h_source.html#l00952">rotate_from_fieldAligned_frame()</a>.</p>
 
 </div>
 </div>
@@ -1051,9 +1107,7 @@ template&lt;typename RealType = double&gt; </div>
 <p>Reseed the internal engine. </p>
 <p>This also calls <a class="el" href="#a2f8d649fef1d5532d6bd4e3bc45324a8" title="Discard any variate cached inside the sampler and zero the observability counters.">reset()</a>, so a reseeded stream restarts cleanly: without it the cached second normal variate of the previous stream would be consumed by the first draw of the new one, and <span class="tt">seed(s); draw()</span> would not reproduce. </p>
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00472">472</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
-
-<p class="reference">Referenced by <a class="el" href="test__suite_8_h_source.html#l02391">test_count_nonfinite()</a>, <a class="el" href="test__suite_8_h_source.html#l02715">test_log_cap_semantics()</a>, <a class="el" href="test__suite_8_h_source.html#l02224">test_log_radius_no_regression()</a>, <a class="el" href="test__suite_8_h_source.html#l01621">test_no_cap_semantics()</a>, <a class="el" href="test__suite_8_h_source.html#l02533">test_overflow_observability()</a>, <a class="el" href="test__suite_8_h_source.html#l01492">test_radius_formation()</a>, <a class="el" href="test__suite_8_h_source.html#l01034">test_seed_api()</a>, and <a class="el" href="test__suite_8_h_source.html#l02637">test_seed_reset_contract()</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00661">661</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -1082,7 +1136,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00462">462</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00651">651</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -1111,9 +1165,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00428">428</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
-
-<p class="reference">Referenced by <a class="el" href="test__suite_8_h_source.html#l00467">test_define_bikappa()</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00617">617</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -1142,7 +1194,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00461">461</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00650">650</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -1171,9 +1223,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00422">422</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
-
-<p class="reference">Referenced by <a class="el" href="test__suite_8_h_source.html#l00467">test_define_bikappa()</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00611">611</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -1202,7 +1252,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00463">463</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00652">652</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -1231,9 +1281,7 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00434">434</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
-
-<p class="reference">Referenced by <a class="el" href="test__suite_8_h_source.html#l00467">test_define_bikappa()</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00623">623</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
 </div>
 </div>

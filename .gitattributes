@@ -1,0 +1,6 @@
+# Kept in the repository but left out of release archives (GitHub zip/tarball, Zenodo):
+# the machinery that reruns the finite-precision study on hosted runners, and release tools.
+.github/ci/                        export-ignore
+.github/workflows/portability.yml  export-ignore
+tools/                             export-ignore
+.gitattributes                     export-ignore

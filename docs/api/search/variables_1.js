@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['density_5ffunction_0',['density_function',['../classgeneral__generators_1_1_general_position_generator.html#ab50c2451aa231b1d377904d19aa31ec4',1,'general_generators::GeneralPositionGenerator']]],
-  ['density_5fupper_5fbound_1',['density_upper_bound',['../classgeneral__generators_1_1_general_position_generator.html#a67aecd06294226fc89e32cc7ccfa9e48',1,'general_generators::GeneralPositionGenerator']]],
-  ['dimension_2',['dimension',['../classgeneral__generators_1_1_general_position_generator.html#a2cf4cc1c9ebd9571b15a5a9ed47b4a9a',1,'general_generators::GeneralPositionGenerator']]]
+  ['e1_0',['e1',['../classgeneral__generators_1_1_field_aligned_velocity_generator.html#a9d873c0e5b37c9a5d0c71251f7e6b25a',1,'general_generators::FieldAlignedVelocityGenerator']]],
+  ['e2_1',['e2',['../classgeneral__generators_1_1_field_aligned_velocity_generator.html#afa3d1932cf8bd74739b0d6504838d4ca',1,'general_generators::FieldAlignedVelocityGenerator']]],
+  ['e3_2',['e3',['../classgeneral__generators_1_1_field_aligned_velocity_generator.html#a5bf672c263aca9ff56bc19b0e9d33297',1,'general_generators::FieldAlignedVelocityGenerator']]]
 ];

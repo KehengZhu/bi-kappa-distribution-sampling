@@ -25,6 +25,7 @@
 var NAVTREE =
 [
   [ "bi-kappa", "index.html", [
+    [ "bi-kappa-distribution-sampling", "index.html", null ],
     [ "Choosing a sampler", "choosing.html", null ],
     [ "Parameter reference", "parameters.html", null ],
     [ "Usage examples", "usage.html", null ],
@@ -54,7 +55,7 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "annotated.html",
-"namespacebikappa__validate.html#ad155c8c56670b4607f5dedba4214496a"
+"namespacebikappa__validate.html#a555be2af057a6e92cef98459f0ce742a"
 ];
 
 const SYNCONMSG = 'click to disable panel synchronization';
