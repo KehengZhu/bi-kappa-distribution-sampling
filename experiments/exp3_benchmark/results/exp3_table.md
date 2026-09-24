@@ -1,14 +1,12 @@
 # Experiment 3 -- performance benchmark
 
-Answers **R1.4** and the performance part of **R2.A2**.
+
+## 1. Correctness check (phase 1)
+
+Timings are reported only for methods that pass this check. alpha = 0.01, fixed before the runs, with Holm-Bonferroni across the family of simultaneous tests.
 
 
-## 1. Correctness gate (phase 1)
-
-No timing below is believed for a method that fails here. alpha = 0.01, fixed before the runs, with Holm-Bonferroni across the family of simultaneous tests.
-
-
-> **On the multiplicity correction.** The gate runs one radial and one directional test per (method, kappa, seed) — 48 tests. At alpha = 0.01 the expected number of false rejections is ~0.5, so a rule of "every single test must clear alpha" fails ~38% of the time on a *correct* sampler. Exactly one uncorrected rejection occurred: `gamma_ratio_spherical` directional uniformity at kappa = 5, seed 3003, p = 0.0044 — while the other two seeds at that kappa give p = 0.59 and p = 0.85, and Experiment 1 validated directional uniformity for this same sampler over 1.35e7 draws. The per-test alpha is unchanged; only the multiplicity is accounted for. Uncorrected verdicts are retained in the JSON under `*_uncorrected`.
+> **On the multiplicity correction.** The check runs one radial and one directional test per (method, kappa, seed) — 48 tests. At alpha = 0.01 the expected number of false rejections is ~0.5, so a rule of "every single test must clear alpha" fails ~38% of the time on a *correct* sampler. Exactly one uncorrected rejection occurred: `gamma_ratio_spherical` directional uniformity at kappa = 5, seed 3003, p = 0.0044 — while the other two seeds at that kappa give p = 0.59 and p = 0.85, and Experiment 1 validated directional uniformity for this same sampler over 1.35e7 draws. The per-test alpha is unchanged; only the multiplicity is accounted for. Uncorrected verdicts are retained in the JSON under `*_uncorrected`.
 
 
 | method | kappa tested | radial law | direction | non-finite | verdict |
@@ -67,10 +65,8 @@ Attributable rather than folded into one number. `iso` is the baseline; `aniso` 
 | 10 | 124.2 | 124.6 | 126.0 | 124.6 |
 | 50 | 117.4 | 117.4 | 118.3 | 120.1 |
 
-## 4. What this licenses the manuscript to say
+## 4. Summary
 
 - Zenitani (2025) Pareto rejection costs **0.38x to 0.56x** the released Gamma-ratio implementation over kappa in [1.5, 50] (ratio < 1 means the rejection method is FASTER).
 - Measured acceptance for the Pareto envelope is reported per kappa above; compare against the 0.73–0.8 the author reports **for kappa >= 3/2 only**.
-- The released implementation's per-sample cost is **not** constant in kappa; read column `iso` in section 3 before writing any constant-time claim.
-
-**Wording that remains forbidden regardless of these numbers:** "fast", "resolves computational bottlenecks", "prohibitively low acceptance", "constant time per sample", "outperforms" — unless the specific sentence is tied to the specific measurement and parameter range above.
+- The released implementation's per-sample cost is **not** constant in kappa; see column `iso` in section 3.

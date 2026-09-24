@@ -13,8 +13,8 @@ This script quantifies the gap: how often a draw is rejected and redrawn, and ho
 the conditioned law sits from the target in robust quantiles, in the empirical CDF, in
 the moments that legitimately exist, and in the angular structure.
 
-Measuring the rejected fraction.  `operator()` loops internally and reports nothing, and
-we are not allowed to instrument it.  Instead the box predicate is re-evaluated here,
+Measuring the rejected fraction.  `operator()` loops internally and reports no attempt
+count, and the header is used unmodified.  Instead the box predicate is re-evaluated here,
 exactly as `withinNormalizedVelocityCap` writes it, on the draws of the *uncapped* run at
 the same seed.  Because each loop iteration consumes x1, x2, cosTheta, phi in the same
 order whether or not a cap is in force, the uncapped run reproduces the capped run's
@@ -43,8 +43,7 @@ from scipy import integrate, special, stats
 
 QUANTILE_PROBES = (0.5, 0.9, 0.99, 0.999)
 
-# "Negligible" thresholds, fixed here before any result was looked at.  A cap is called
-# negligible for a given kappa when BOTH hold:
+# "Negligible" thresholds.  A cap is called negligible for a given kappa when BOTH hold:
 #   total-variation distance from the target law (= rejection fraction) < 1e-3, and
 #   the p99.9 speed quantile is distorted by < 1%.
 NEGLIGIBLE_TV = 1.0e-3
@@ -488,7 +487,6 @@ def main() -> int:
 
     out = {
         "experiment": "Experiment 2 -- characterization of the component-wise velocity cap",
-        "answers": ["R1.1 (primary)", "R1.2 (primary)", "R1.3 item 5", "R1.5", "R1.6"],
         "target_law_statement": (
             "no_cap() samples the untruncated bi-Kappa distribution. A finite "
             "max_normalized_velocity = lambda samples a DIFFERENT law: the bi-Kappa "
@@ -584,6 +582,10 @@ def write_table(out: dict, path: str) -> None:
                     and e["mode"] == "uncapped"):
                 return e
         return None
+
+    # The worked example quoted in the prose below, read from the data.
+    ex = get("A", 1.5, 2.0, 50.0)
+    ex_tv, ex_q = ex["tv_distance_analytic"], ex["q_speed_ratio"]["mean"][3]
 
     L = [
         "# Experiment 2 results -- the component-wise velocity cap",
@@ -718,7 +720,7 @@ def write_table(out: dict, path: str) -> None:
         "Carlo to "
         f"{out['direction_density_validation']['max_cdf_abs_err_vs_monte_carlo']:.2e}.",
         "",
-        "Three consequences worth stating in the manuscript:",
+        "Three consequences:",
         "",
         "1. `P(accept)` depends on `(kappa, lambda)` only -- **not** on `theta_perp`,",
         "   `theta_par` or the field direction (the cap is tested before the frame rotation).",
@@ -777,8 +779,8 @@ def write_table(out: dict, path: str) -> None:
         "bound on it -- but neither bounds a *quantile* ratio. A cap can amputate the entire",
         "far tail while moving no probability by more than 1e-3, because the amputated region",
         "carries almost no probability and enormous velocity. At `kappa = 1.5, lambda = 50`",
-        "the total-variation distance is 6.6e-4 -- by any probability-based measure the two",
-        "laws are indistinguishable -- and the p99.9 speed is still 24% too small.",
+        f"the total-variation distance is {ex_tv:.1e}, and the p99.9 speed is still",
+        f"{100.0 * (1.0 - ex_q):.0f}% too small.",
         "",
         "| kappa | lambda | |v| p50 | |v| p90 | |v| p99 | |v| p99.9 | |v_z| p99.9 | "
         "sup ECDF gap on |v| | TV (analytic) |",
@@ -821,7 +823,7 @@ def write_table(out: dict, path: str) -> None:
         "",
         "### Where the cap becomes negligible",
         "",
-        f"Criterion fixed in advance: `TV < {NEGLIGIBLE_TV:g}` **and** p99.9 speed quantile",
+        f"Criterion: `TV < {NEGLIGIBLE_TV:g}` **and** p99.9 speed quantile",
         f"distorted by `< {100.0 * NEGLIGIBLE_Q999_REL:g}%`. Both are required precisely",
         "because they fail in different places.",
         "",
@@ -919,7 +921,7 @@ def write_table(out: dict, path: str) -> None:
           "do have a well-defined population variance -- it is just a variance of the box, not",
           "of the plasma.",
           "",
-          "Two honest caveats on the fitted rates. At `kappa = 3/2` the log-slope `B` rises",
+          "Two caveats on the fitted rates. At `kappa = 3/2` the log-slope `B` rises",
           "from 1.15 to 1.47 across the ladder rather than sitting at a constant: the growth is",
           "unmistakably slower than any power of lambda and consistent with `log lambda`, but",
           "lambda = 50 is not yet deep enough in the asymptotic regime to pin `B` down. At",
@@ -960,21 +962,17 @@ def write_table(out: dict, path: str) -> None:
 
     L += [
         "",
-        "## 5. Recommendation for the manuscript",
+        "## 5. Summary",
         "",
-        "1. Run every validation and every physics result with the cap **off**",
-        "   (`no_cap()`). That is the mode whose target law is the bi-Kappa distribution.",
-        "2. Document the finite `max_normalized_velocity` as an **optional pragmatic",
-        "   finite-velocity-box conditional target**: the bi-Kappa distribution conditioned on",
-        "   a component-wise box, useful only when a code needs bounded particle speeds.",
-        "3. Do **not** present it as a regularized or physically motivated kappa model. It is",
-        "   a cube in normalized velocity components: it is not isotropic, it is not",
-        "   axisymmetric about **B** (section 4), and its shape depends on the arbitrary",
-        "   choice of lambda.",
-        "4. State the cost and the distortion together, since they are the same number:",
-        "   rejected fraction = total-variation distance from the target = `1 - P(accept)`,",
-        "   with the closed form above.",
-        "5. Never quote a variance for `kappa <= 3/2` obtained from a capped run.",
+        "1. `no_cap()` samples the bi-Kappa distribution itself; validation runs use it.",
+        "2. A finite `max_normalized_velocity` samples the bi-Kappa distribution conditioned on",
+        "   a component-wise box. It is a cube in normalized velocity components: it is not",
+        "   isotropic, it is not axisymmetric about **B** (section 4), and its shape depends",
+        "   on lambda.",
+        "3. The rejected fraction equals the total-variation distance from the target,",
+        "   `1 - P(accept)`, with the closed form above.",
+        "4. A variance from a capped run at `kappa <= 3/2` is a variance of the box, not of",
+        "   the bi-Kappa distribution.",
         "",
     ]
     with open(path, "w") as fh:

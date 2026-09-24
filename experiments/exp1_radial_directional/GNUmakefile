@@ -1,31 +1,34 @@
 CXX      = g++
 CXXFLAGS = -Wall -Wextra -std=c++11 -O2
-TARGET   = exp1_sample.exe
-SRC      = exp1_sample.cpp
-RAWDIR   = raw
+PY       = uv run --project ../../python python
 
-all: $(TARGET)
+all: exp1_draw.exe
 
-$(TARGET): $(SRC) ../../cpp/bi_kappa_distribution.H
-	$(CXX) $(CXXFLAGS) -o $(TARGET) $(SRC)
+# One seed of the uncapped sampler at one kappa, written raw; driven by the scripts below.
+exp1_draw.exe: exp1_draw.cpp ../../cpp/bi_kappa_distribution.H
+	$(CXX) $(CXXFLAGS) -o exp1_draw.exe exp1_draw.cpp
 
-# Regenerate every sample file from scratch and record their checksums.  The .bin
-# files are gitignored on purpose; checksums.sha256 is whitelisted and is what makes
-# a regenerated raw/ verifiable against the tracked results.
-run: $(TARGET)
-	mkdir -p $(RAWDIR)
-	./$(TARGET) $(RAWDIR)
-	cd $(RAWDIR) && shasum -a 256 manifest.csv run_*.bin > checksums.sha256
+# Cell-count test: nine kappa, 5 x 10^7 draws each (Table III, 400-cell column).
+cells: exp1_draw.exe
+	$(PY) exp1_cells.py
 
-# Verify a regenerated raw/ against the committed checksums.
-verify:
-	cd $(RAWDIR) && shasum -a 256 --check checksums.sha256 | grep -v ': OK$$' || \
-	  echo "all files match checksums.sha256"
+# Radius test on 14 shells, on the same draws (Table III radius column, Fig. 4).
+tail: exp1_draw.exe
+	$(PY) exp1_tail.py
+
+# Variances at kappa = 2, 5, 10, on the same draws (Table IV).
+moments: exp1_draw.exe
+	$(PY) exp1_moments.py
+
+# Invariance under rescaling and rotation, on the same seeds (Sec. VI C).
+frame: exp1_draw.exe
+	$(PY) exp1_frame.py
+
+# Histograms of the three components (Fig. 5).
+marginals: exp1_draw.exe
+	$(PY) exp1_marginals.py
 
 clean:
-	rm -f $(TARGET)
+	rm -f exp1_draw.exe
 
-distclean: clean
-	rm -rf $(RAWDIR)
-
-.PHONY: all run verify clean distclean
+.PHONY: all cells tail moments frame marginals clean

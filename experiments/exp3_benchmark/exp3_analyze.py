@@ -1,24 +1,22 @@
 """Experiment 3 -- analysis of the performance benchmark.
 
-Answers R1.4 and the performance part of R2.A2.
+Two phases, in this order:
 
-Two phases, in this order and not the other:
-
-  1. CORRECTNESS GATE.  Every compared method must be shown to sample the intended
+  1. CORRECTNESS CHECK.  Every compared method is tested against the intended
      target law.  A method that fails is reported as failed and its timings are
-     marked unusable -- timing an incorrect sampler is worse than not timing it.
+     marked unusable.
   2. Timing summary, only for methods that passed.
 
-Numerical conventions, inherited from Experiments 1, 2 and 4 and not optional:
+Numerical conventions:
 
   * The radial law is tested through W = 1/(1+T) ~ Beta(kappa - 1/2, 3/2), computed
-    as expit(-log x) directly from log|v|, so T = x is never materialized.  NOT
-    Y = T/(1+T): at low kappa its mass piles up against 1.0 where no relative
-    resolution remains and a KS test measures rounding rather than the sampler
-    (Experiment 1 measured a spurious sqrt(n)*D = 51.8 that way).
+    as expit(-log x) directly from log|v|, so T = x is never materialized.  Not
+    Y = T/(1+T): at low kappa its mass piles up against 1.0, where no relative
+    resolution remains, and a KS test on Y would measure rounding rather than the
+    sampler.
   * The sampler dumps log|v| computed with hypot; nothing here squares a radius.
 
-Thresholds are fixed here before any result is looked at and are not retuned.
+The significance level of every test is ALPHA below.
 """
 
 from __future__ import annotations
@@ -39,7 +37,7 @@ HERE = Path(__file__).resolve().parent
 RAW = HERE / "raw"
 RESULTS = HERE / "results"
 
-# Fixed before any result was seen.  Not to be adjusted afterwards.
+# Significance level of every validation test.
 ALPHA = 0.01
 
 METHODS = {
@@ -98,7 +96,7 @@ def environment() -> dict:
 
 
 # --------------------------------------------------------------------------- #
-# phase 1 -- correctness gate
+# phase 1 -- correctness check
 # --------------------------------------------------------------------------- #
 def load_validate_dump(path: Path) -> dict[int, dict[str, np.ndarray]]:
     """Read the interleaved (method_id, log|v|, cos_theta) triples."""
@@ -186,14 +184,11 @@ def phase1() -> tuple[list[dict], dict[str, dict]]:
             per_run.append(row)
 
     # ---- family-wise correction -------------------------------------------- #
-    # The gate runs one radial and one directional test per (method, kappa, seed).
-    # That is a FAMILY of simultaneous tests, so "every single test must clear
-    # alpha" is the wrong rule: with ~48 tests at alpha = 0.01 the expected number
-    # of false rejections is ~0.5, and a lone p just under alpha is evidence of
-    # nothing.  Holm-Bonferroni controls the family-wise error rate at the SAME
-    # per-family alpha = 0.01 -- the threshold is not being relaxed after seeing
-    # the outcome, the multiplicity is being accounted for.  Both the raw and the
-    # corrected verdicts are recorded so neither is hidden.
+    # The check runs one radial and one directional test per (method, kappa, seed).
+    # That is a family of simultaneous tests: with ~48 tests at alpha = 0.01 the
+    # expected number of false rejections of a correct sampler is ~0.5.
+    # Holm-Bonferroni controls the family-wise error rate at alpha = 0.01 within
+    # each kind of test.  Both the raw and the corrected verdicts are recorded.
     for key, flag in (("radial_ks_p", "radial_pass_holm"),
                       ("direction_ks_p", "direction_pass_holm")):
         ps = sorted(((r[key], i) for i, r in enumerate(per_run)))
@@ -209,7 +204,7 @@ def phase1() -> tuple[list[dict], dict[str, dict]]:
     for r in per_run:
         r["radial_pass_holm"] = bool(r["radial_pass_holm"] and r["radial_cvm_p"] > 0.0)
 
-    # Aggregate the gate: a method passes at a kappa only if every seed passes.
+    # Aggregate the check: a method passes at a kappa only if every seed passes.
     gate: dict[str, dict] = {}
     for name in METHODS.values():
         rows = [r for r in per_run if r["method"] == name]
@@ -221,7 +216,7 @@ def phase1() -> tuple[list[dict], dict[str, dict]]:
                 # Uncorrected, per-test -- kept visible on purpose.
                 "radial_pass_all_uncorrected": all(r["radial_pass"] for r in kr),
                 "direction_pass_all_uncorrected": all(r["direction_pass"] for r in kr),
-                # Family-wise corrected; this is the verdict the gate acts on.
+                # Family-wise corrected; this verdict decides whether timings are usable.
                 "radial_pass_all": all(r["radial_pass_holm"] for r in kr),
                 "direction_pass_all": all(r["direction_pass_holm"] for r in kr),
                 "worst_radial_p": min(r["radial_ks_p"] for r in kr),
@@ -281,7 +276,7 @@ def phase2(gate: dict[str, dict]) -> list[dict]:
                 "ns_per_sample_iqr": float(np.percentile(t, 75) - np.percentile(t, 25)),
                 "samples_per_sec_median": float(1e9 / np.median(t)),
                 "acceptance": rec.get("acceptance", 1.0),
-                # A timing is only usable if the method passed its own gate.
+                # A timing is only usable if the method passed the correctness check.
                 "correctness_gate_passed": bool(passed),
                 "usable": bool(passed),
             })
@@ -292,13 +287,12 @@ def phase2(gate: dict[str, dict]) -> list[dict]:
 def write_table(gate, timing, path: Path) -> None:
     L: list[str] = []
     L.append("# Experiment 3 -- performance benchmark\n")
-    L.append("Answers **R1.4** and the performance part of **R2.A2**.\n")
 
-    L.append("\n## 1. Correctness gate (phase 1)\n")
-    L.append("No timing below is believed for a method that fails here. "
+    L.append("\n## 1. Correctness check (phase 1)\n")
+    L.append("Timings are reported only for methods that pass this check. "
              f"alpha = {ALPHA}, fixed before the runs, with Holm-Bonferroni across the "
              "family of simultaneous tests.\n")
-    L.append("\n> **On the multiplicity correction.** The gate runs one radial and one "
+    L.append("\n> **On the multiplicity correction.** The check runs one radial and one "
              "directional test per (method, kappa, seed) — 48 tests. At alpha = 0.01 the "
              "expected number of false rejections is ~0.5, so a rule of \"every single "
              "test must clear alpha\" fails ~38% of the time on a *correct* sampler. "
@@ -363,7 +357,7 @@ def write_table(gate, timing, path: Path) -> None:
         L.append(f"| {k:g} | " + " | ".join(cells) + " |")
 
     # Headline comparison, computed rather than asserted.
-    L.append("\n## 4. What this licenses the manuscript to say\n")
+    L.append("\n## 4. Summary\n")
     base = {r["kappa"]: r for r in iso if r["method"] == "gamma_ratio_spherical"
             and r["applicable"]}
     pare = {r["kappa"]: r for r in iso if r["method"] == "pareto_rejection"
@@ -381,12 +375,7 @@ def write_table(gate, timing, path: Path) -> None:
     L.append("- Measured acceptance for the Pareto envelope is reported per kappa above; "
              "compare against the 0.73–0.8 the author reports **for kappa >= 3/2 only**.")
     L.append("- The released implementation's per-sample cost is **not** constant in kappa; "
-             "read column `iso` in section 3 before writing any constant-time claim.")
-    L.append("\n**Wording that remains forbidden regardless of these numbers:** "
-             "\"fast\", \"resolves computational bottlenecks\", \"prohibitively low "
-             "acceptance\", \"constant time per sample\", \"outperforms\" — unless the "
-             "specific sentence is tied to the specific measurement and parameter range "
-             "above.")
+             "see column `iso` in section 3.")
 
     path.write_text("\n".join(L) + "\n")
 
@@ -404,11 +393,9 @@ def main() -> int:
     out = {
         "experiment": "Experiment 3 -- reproducible absolute and comparative "
                       "performance benchmark",
-        "answers": ["R1.4 (primary)", "R2.A2 (performance part)"],
         "protocol": (
             "Phase 1 validates every compared method against the intended target law; "
-            "phase 2 times only methods that passed. Timing an unvalidated sampler is "
-            "explicitly refused."
+            "phase 2 times only methods that passed."
         ),
         "methods": CITATIONS,
         "numerical_safety": [

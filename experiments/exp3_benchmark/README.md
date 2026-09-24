@@ -1,150 +1,120 @@
-# Experiment 3 — reproducible absolute and comparative performance benchmark
+# Experiment 3 — per-sample timing against two other bi-Kappa samplers
 
-Answers **R1.4** (primary) and the "how does it outperform" part of **R2.A2**.
+This experiment times the uncapped sampler of this package against two published methods for
+drawing isotropic Kappa velocities, after first checking that all three sample the intended
+distribution. It is not used in a figure or table of the paper.
 
-## The result, stated first because it is unfavourable to the manuscript
+## Result
 
-**The released implementation is not the fastest method tested. It is the slowest.**
+Both published methods were faster than this package's sampler on the test system.
 
-Zenitani (2025)'s Pareto-envelope rejection sampler costs **0.38×–0.56×** what our
-Gamma-ratio implementation costs, over κ ∈ [1.5, 50] — i.e. it is **1.8×–2.6× faster**,
-despite being a rejection method with ~0.73–0.81 acceptance. Abdul & Mace (2015)'s
-normal-triple scale mixture — which is the *same construction as ours*, differing only in
-how the direction is bought — is also faster, by 1.47×–1.89× across every κ tested
-(widest at κ = 1.5, narrowest at κ = 2).
+- Zenitani's (2025) Pareto-envelope rejection sampler took 0.38 to 0.56 times as long per
+  sample over κ ∈ [1.5, 50], with acceptance rates between 0.73 and 0.81.
+- The normal-triple scale mixture of Abdul & Mace (2015) was faster by a factor of 1.47 to 1.89
+  at every κ tested.
 
-This is reported because it is what the measurement says. Every "fast", "resolves
-computational bottlenecks", and "outperforms" claim in the manuscript must go, and R1.4
-must be answered by **retiring** the performance claim, not by supporting it.
+This package's sampler took 88 to 130 ns per sample (7.7 to 11.4 million samples per second),
+and the cost is not monotone in κ. The fastest point is κ = 1.5, where the shape `κ − 1/2` of
+the second Gamma variate equals 1. Standard-library Gamma generators commonly switch algorithm
+at shape 1, which is a plausible cause, but the library was not instrumented to confirm it.
+Anisotropy (θ∥ = 2θ⊥) and an oblique field direction each changed the time by at most 2.5 ns
+per sample. A cap of λ = 20 added at most 3 ns per sample for κ ≥ 1.5, 5% at κ = 1 and 36% at
+κ = 0.75, where it rejects 22% of attempts (Experiment 2).
 
-## Correctness before timing, enforced by the harness
+## Methods compared
 
-No timing number here is meaningful unless the method being timed samples the intended
-target law. `make run` therefore runs validation first, and `exp3_analyze.py` marks a
-method's timings `usable: false` if it failed its own gate.
-
-All three methods **pass**: radial law (KS **and** Cramér–von Mises against
-`W = 1/(1+T) ~ Beta(κ−1/2, 3/2)`), directional uniformity, and zero non-finite draws,
-at every κ tested, over 3 seeds × 2×10⁵ draws.
-
-**A transcription check worth more than the gate.** The measured Pareto acceptance
-reproduces Zenitani's published values to three digits:
-
-| κ | measured here | Zenitani (2025) reports |
+| tag | method | notes |
 |---|---|---|
-| 1.5 | 0.8060 | 0.806 |
-| 2 | 0.7856 | 0.785 |
-| 5 | 0.7505 | 0.750 |
-| 50 | 0.7327 | → `√(πe)/4 ≈ 0.7314` asymptotically |
+| `gamma_ratio_spherical` | this package, `cpp/bi_kappa_distribution.H` with `no_cap()` | `R = √X₁/√X₂` with `X₁ ~ Γ(3/2)`, `X₂ ~ Γ(κ − 1/2)`, and a uniform direction; equivalent to Zenitani & Nakano (2022), Alg. 1-1 |
+| `scale_mixture_normals` | Abdul & Mace (2015), *Phys. Plasmas* **22**, 102107, Eq. (22) with Eqs. (19)–(20) | `v_i = θ√κ Z_i/√(χ²_ν)`, `ν = 2κ − 1`, three standard normals `Z_i` sharing one χ² variate |
+| `pareto_rejection` | Zenitani (2025), *Res. Notes AAS* **9**, 299, Sec. 2 | rejection under a Pareto envelope with index `n = κ/2`, using uniform variates only |
 
-Agreement this close on a quantity we did not fit is strong evidence the algorithm was
-transcribed faithfully rather than approximated — which is the condition the revision
-plan sets before any published method may be benchmarked.
+The scale mixture uses the same construction as this package. Since `|Z|² ~ χ²₃ = 2 Γ(3/2)` and
+`χ²_ν = 2 Γ(κ − 1/2)`, its radius has the same Gamma-ratio form. It differs only in drawing the
+direction from three normal variates instead of two uniform variates. Abdul & Mace do not say how
+the χ² variate with non-integer `ν` is generated. Here it is drawn as `2 Γ(ν/2)` with
+`std::gamma_distribution`.
 
-## The three methods, and which are actually distinct
+The envelope index `n = κ/2` recommended by Zenitani requires `0 < n < κ − 1/2`, that is κ > 1.
+At κ = 0.75 and κ = 1 the rejection method is therefore recorded as not applicable. The measured
+acceptance rates agree with Zenitani's published values to three digits (0.8060, 0.7856 and
+0.7505 at κ = 1.5, 2 and 5, against 0.806, 0.785 and 0.750).
 
-| Tag | Source | Status |
-|---|---|---|
-| `gamma_ratio_spherical` | **The released header**, `cpp/bi_kappa_distribution.H` in `no_cap()` mode | baseline; equivalent to Zenitani & Nakano (2022) Alg. 1-1 and ZUM (2026) Alg. 3.1 |
-| `scale_mixture_normals` | Abdul & Mace (2015), *Phys. Plasmas* **22**, 102107, Eq. (22) with Eqs. (19)–(20) | **implementation variant of the baseline, not a rival algorithm** |
-| `pareto_rejection` | Zenitani (2025), *RNAAS* **9**, 299, §2 procedure, envelope index `n = κ/2` | **genuinely distinct algorithm**; uniform variates only |
-
-`scale_mixture_normals` is labelled a variant because it provably is one. A&M 2015 Eq. (22)
-with their Eqs. (19)–(20) reduces to `v_i = θ√κ · Z_i / √(χ²_ν)`, `ν = 2κ−1`; since
-`|Z|² ~ χ²₃ = 2·Ga(3/2,1)` and `χ²_ν = 2·Ga(κ−1/2,1)`, the radius is *exactly* the
-baseline's Gamma ratio. Inflating it into a competing algorithm is precisely what R2.A2
-warns against, so the benchmark reports it as what it is: the same construction buying its
-direction from three normals instead of two uniforms — and that choice is worth
-1.47×–1.89×.
-
-> **Disclosure.** A&M 2015 never states how the non-integer-ν χ² deviate is generated.
-> `χ²_ν = 2·Ga(ν/2,1)` via `std::gamma_distribution` is **our** choice, not theirs. Any cost
-> difference attributable to a different χ² route is not attributable to Abdul & Mace.
-
-### Where the rejection method does not apply
-
-Zenitani's recommended envelope index `n = κ/2` requires `0 < n < κ − 1/2`, i.e. **κ > 1**.
-At κ = 0.75 and κ = 1.0 it is **inapplicable**, and the harness records that as a result
-rather than silently skipping it. His quoted efficiencies begin at κ = 1.5. So the honest
-comparative statement is bounded: the rejection method wins *where it is defined*, and the
-Gamma-ratio route covers a κ range it does not.
-
-## Reproducing
-
-```bash
-make run                                              # validate, then time; writes checksums
-uv run --project ../../python python exp3_analyze.py  # -> results/
-make verify                                           # re-check a regenerated raw/
-```
-
-## Configuration
+## Design
 
 | | |
 |---|---|
-| Validation | κ ∈ {0.75, 1, 1.5, 2, 5, 10}, seeds 3001–3003, 2×10⁵ draws each |
-| Timing | κ ∈ {0.75, 1, 1.5, 2, 5, 10, 50}, seed 3101, 10⁶ per batch, **10 batches** + 1 discarded warm-up |
-| RNG | `std::mt19937` for **every** method, seeded identically — no method gets a cheaper generator |
-| θ | isotropic (θ⊥ = θ∥ = 1) for the cross-method comparison, because M2 and M3 as published are isotropic |
+| validation | κ ∈ {0.75, 1, 1.5, 2, 5, 10}, seeds 3001–3003, 2 × 10⁵ draws per method and seed |
+| timing | κ ∈ {0.75, 1, 1.5, 2, 5, 10, 50}, seed 3101, 10 timed batches of 10⁶ samples after one untimed warm-up batch |
+| random-number generator | `std::mt19937` for every method, seeded identically |
+| thermal speeds | θ⊥ = θ∥ = 1 for the comparison, because the two published methods are isotropic |
 
-Environment (compiler, target, flags, stdlib, arch, git revision, and the sampler header's
-SHA-256) is recorded in `results/exp3_results.json`.
+**Validation.** Before timing, each method is tested against the target distribution at every
+applicable κ and seed. The radius is tested with Kolmogorov–Smirnov and Cramér–von Mises tests
+of `W = 1/(1 + T) ~ Beta(κ − 1/2, 3/2)`, where `T = |v|²/(κθ²)`. The direction is tested with a
+KS test of `cos θ` against U(−1, 1). The pass/fail decision applies a Holm–Bonferroni
+correction at level α = 0.01 to the KS p-values of each kind (radius, direction) across all
+methods, κ and seeds; the Cramér–von Mises p-values are recorded alongside. A method that fails
+has its timings marked `usable: false`. All three methods pass. Without the correction one
+test falls below 0.01 (direction, `gamma_ratio_spherical`, κ = 5, seed 3003, p = 0.0044). The
+JSON output records the uncorrected results as well.
 
-### Fairness measures, all deliberate
+**Timing.** Every timing loop adds the returned components to a checksum, so the compiler cannot
+remove the work being timed. The same checksum is applied to every method. Each configuration
+reports the median, range and interquartile range of the ten batch times. This package's sampler
+is additionally timed in three variants of its own: `aniso` (θ∥ = 2), `rotated` (θ∥ = 2 and field
+direction `(0.3, −0.5, 0.8)`) and `capped20` (λ = 20).
 
-- The comparison is the **isotropic core only**. The released implementation's anisotropy
-  and field-rotation paths are timed as *its own variants*, never charged against M2/M3.
-- Timing loops accumulate a checksum, so the optimizer cannot delete the work being timed.
-  The same checksum is applied to all three methods, so it cannot bias the comparison.
-- One warm-up batch is discarded — first-call allocation is not steady-state per-sample cost.
-- Every configuration reports the **distribution** over 10 batches (median, min–max, IQR),
-  never a single timing.
+## Rerunning
 
-## Secondary findings
+Run from this directory.
 
-**1. Per-sample cost is not constant in κ.** The baseline ranges 88–130 ns/sample
-non-monotonically across the ladder. The fastest point is κ = 1.5 (88 ns), the slowest
-κ = 2 (130 ns). Note `shape(x₂) = κ − 1/2` crosses 1 exactly at κ = 1.5, and library Gamma
-generators switch algorithm at shape 1 — the plausible mechanism, though we did not
-instrument the standard library to confirm it. Either way: **the Abstract's "constant time
-per sample" is contradicted by direct measurement**, independently of the cause.
+```bash
+make run                                               # build, validate, time; write raw/ and raw/checksums.sha256
+uv run --project ../../python python exp3_analyze.py   # read raw/, write results/
+make verify                                            # check raw/ against raw/checksums.sha256
+```
 
-**2. Anisotropy and arbitrary-**B** rotation are essentially free.** `aniso` and `rotated`
-sit within ≈1–2 ns of `iso` at every κ. C2 (arbitrary field-frame loading) costs nothing
-measurable — a genuinely favourable result, and the only performance statement in this
-experiment that flatters the implementation.
+`make run` rebuilds `exp3_bench.exe` against the current `cpp/bi_kappa_distribution.H` and
+overwrites `raw/`. The analysis reads the validation dumps `raw/val_*.bin`, which are not
+committed, so it needs a completed `make run`. `make clean` removes the executable and
+`make distclean` also removes `raw/`.
 
-**3. The cap's cost tracks its rejection rate, as Experiment 2 predicts.** `capped20` is
-indistinguishable from `iso` for κ ≥ 1.5 but costs +36% at κ = 0.75 (140.9 vs 103.9
-ns/sample) — where Exp 2 measures 21.7% rejection at λ = 20. Cost and distortion move
-together, exactly as the "rejected fraction *is* the TV distance" result implies.
+`exp3_bench.exe` can also be called directly:
 
-## What the manuscript may and may not say
+```
+exp3_bench.exe validate <out.bin> <kappa> <theta> <seed> <n>
+exp3_bench.exe time <method> <variant> <kappa> <theta> <seed> <n> <repeats>
+    method  = gamma_ratio_spherical | scale_mixture_normals | pareto_rejection
+    variant = iso | aniso | rotated | capped20
+```
 
-**May, with the parameter range attached:** absolute throughput ≈8–11 M samples/s for the
-released implementation on the recorded hardware; anisotropy and frame rotation add no
-measurable cost; the capped mode's overhead is confined to low κ.
+**Runtime and disk use.** The timing phase draws about 4 × 10⁸ samples, which takes on the order
+of a minute at the measured rates. The validation dumps take about 220 MB.
 
-**May not, and this is now settled by data rather than by caution:** "fast", "resolves
-computational bottlenecks", "constant time per sample", "outperforms", or any implication
-that rejection sampling is inefficient for this problem. The dedicated rejection method is
-the fastest thing in the table.
+## Output files
 
-## Artifacts
-
-| Path | Canonical? |
+| file | contents |
 |---|---|
-| `exp3_bench.cpp`, `exp3_analyze.py`, `GNUmakefile`, `README.md` | **canonical** (committed source) |
-| `results/exp3_results.json`, `results/exp3_table.md` | **canonical** (compact summaries, committed) |
-| `raw/validate.jsonl`, `raw/timing.jsonl` | **canonical**, tracked — small, and the direct input to every reported number |
-| `raw/checksums.sha256` | **canonical**, tracked |
-| `raw/val_*.bin` | regenerable (`make run`) — bulk validation dumps, gitignored |
-| `exp3_bench.exe` | build output, gitignored |
+| `raw/validate.jsonl` | one line per (κ, seed): acceptance counts of the rejection method |
+| `raw/timing.jsonl` | one line per (method, variant, κ): the ten batch times and the build identity |
+| `raw/val_k<κ>_s<seed>.bin` | per draw and method: method id, `log\|v\|`, `cos θ` (not committed) |
+| `raw/checksums.sha256` | SHA-256 of the two `.jsonl` files and every `val_*.bin` |
+| `results/exp3_results.json` | validation results per method, κ and seed; timing summaries; build environment |
+| `results/exp3_table.md` | the same results as Markdown tables |
 
-## Caveat on the timing numbers
+## Header version and scope
 
-These are single-machine, single-toolchain wall-clock measurements (Apple clang / libc++ /
-arm64). They are reproducible on that machine and adequate to refute a constant-time claim
-and to establish a ≈2× ordering, which is what R1.4 needs. They are **not** a
-cross-platform performance characterization, and no claim of one is made. In particular the
-Gamma-generator cost that dominates the baseline is a standard-library implementation
-detail and may order differently elsewhere.
+The committed results measured `cpp/bi_kappa_distribution.H` as of commit `0139426`
+(2026-08-17), after release 1.0.0 and before release 2.0.0. `results/exp3_results.json` records
+its SHA-256 (`sampler_header_sha256`, beginning `6b138af5`). That version computes the radius
+directly as `√X₁/√X₂`, draws both Gamma variates with `std::gamma_distribution`, and draws the
+direction from `cos θ` and `φ`. Release 2.0.0 and later compute the radius on a logarithmic
+scale, generate the Gamma variates inside the header, and draw the direction by Marsaglia's
+(1972) rejection method. This benchmark has not been rerun on those releases, so its timings do
+not describe them. Experiment 4 times the current radius calculation against the direct one.
+
+The measurements come from one machine and one toolchain: Apple clang 21 with libc++ on arm64
+(Apple silicon), macOS 26.6.1, `-O2`. The measured version draws its Gamma variates from the
+standard library, so its cost, and the ordering of the methods, may differ with another standard
+library or processor.

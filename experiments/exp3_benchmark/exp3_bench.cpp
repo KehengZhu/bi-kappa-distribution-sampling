@@ -1,7 +1,5 @@
 // Experiment 3 -- reproducible absolute and comparative performance benchmark.
 //
-// Answers R1.4 and the "how does it outperform" part of R2.A2.
-//
 // THE RULE THIS FILE EXISTS TO OBEY: no timing number is meaningful until every
 // compared method is verified to sample the intended target law.  So this program
 // has two modes, and `validate` must pass before `time` is believed.
@@ -11,8 +9,8 @@
 //
 // ---------------------------------------------------------------------------
 // The three methods, each transcribed from its primary source.  Two of them are
-// NOT independent algorithms and are labelled as such -- inflating an
-// implementation variant into a rival algorithm is exactly what R2.A2 warns about.
+// NOT independent algorithms and are labelled as such: M2 is an implementation
+// variant of M1, not a rival algorithm.
 //
 // M1  gamma_ratio_spherical   THE RELEASED IMPLEMENTATION.
 //     cpp/bi_kappa_distribution.H in no_cap() mode.  X1 ~ Ga(3/2,1),

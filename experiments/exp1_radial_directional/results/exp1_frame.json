@@ -1,0 +1,121 @@
+{
+ "experiment": "Experiment 1 large-sample frame invariance -- kappa = 0.55, 2, 10",
+ "n_per_seed": 500000,
+ "reference": "theta = (1, 2), field along z",
+ "summary": [
+  {
+   "kappa": 0.55,
+   "combination": "theta_par=1,diag111",
+   "max_rel_vector_diff": 9.775266655633054e-16,
+   "n_compared": 50000000,
+   "n_nonfinite": 0
+  },
+  {
+   "kappa": 0.55,
+   "combination": "theta_par=1,oblique",
+   "max_rel_vector_diff": 7.863794388728755e-16,
+   "n_compared": 50000000,
+   "n_nonfinite": 0
+  },
+  {
+   "kappa": 0.55,
+   "combination": "theta_par=1,z",
+   "max_rel_vector_diff": 0.0,
+   "n_compared": 50000000,
+   "n_nonfinite": 0
+  },
+  {
+   "kappa": 0.55,
+   "combination": "theta_par=2,diag111",
+   "max_rel_vector_diff": 9.547882842190478e-16,
+   "n_compared": 50000000,
+   "n_nonfinite": 0
+  },
+  {
+   "kappa": 0.55,
+   "combination": "theta_par=2,oblique",
+   "max_rel_vector_diff": 7.800635138069637e-16,
+   "n_compared": 50000000,
+   "n_nonfinite": 0
+  },
+  {
+   "kappa": 2.0,
+   "combination": "theta_par=1,diag111",
+   "max_rel_vector_diff": 9.108046984893703e-16,
+   "n_compared": 50000000,
+   "n_nonfinite": 0
+  },
+  {
+   "kappa": 2.0,
+   "combination": "theta_par=1,oblique",
+   "max_rel_vector_diff": 7.421487792560499e-16,
+   "n_compared": 50000000,
+   "n_nonfinite": 0
+  },
+  {
+   "kappa": 2.0,
+   "combination": "theta_par=1,z",
+   "max_rel_vector_diff": 0.0,
+   "n_compared": 50000000,
+   "n_nonfinite": 0
+  },
+  {
+   "kappa": 2.0,
+   "combination": "theta_par=2,diag111",
+   "max_rel_vector_diff": 9.42086681784392e-16,
+   "n_compared": 50000000,
+   "n_nonfinite": 0
+  },
+  {
+   "kappa": 2.0,
+   "combination": "theta_par=2,oblique",
+   "max_rel_vector_diff": 7.341978839845469e-16,
+   "n_compared": 50000000,
+   "n_nonfinite": 0
+  },
+  {
+   "kappa": 10.0,
+   "combination": "theta_par=1,diag111",
+   "max_rel_vector_diff": 9.626573636915093e-16,
+   "n_compared": 50000000,
+   "n_nonfinite": 0
+  },
+  {
+   "kappa": 10.0,
+   "combination": "theta_par=1,oblique",
+   "max_rel_vector_diff": 7.289072657249528e-16,
+   "n_compared": 50000000,
+   "n_nonfinite": 0
+  },
+  {
+   "kappa": 10.0,
+   "combination": "theta_par=1,z",
+   "max_rel_vector_diff": 0.0,
+   "n_compared": 50000000,
+   "n_nonfinite": 0
+  },
+  {
+   "kappa": 10.0,
+   "combination": "theta_par=2,diag111",
+   "max_rel_vector_diff": 9.972394302422575e-16,
+   "n_compared": 50000000,
+   "n_nonfinite": 0
+  },
+  {
+   "kappa": 10.0,
+   "combination": "theta_par=2,oblique",
+   "max_rel_vector_diff": 7.201823589983811e-16,
+   "n_compared": 50000000,
+   "n_nonfinite": 0
+  }
+ ],
+ "max_rel_vector_diff": 9.972394302422575e-16,
+ "n_compared": 750000000,
+ "environment": {
+  "platform": "macOS-26.7-arm64-arm-64bit",
+  "python": "3.12.11",
+  "numpy": "2.4.3",
+  "sampler_header_sha256": "b6559a9d7022682ace5df7b1d5e02b3d3a7cc78f7f6e1b8eabf0fae2bf4b2327",
+  "git_commit": "1c1b25b5e2ff22e8aaef1823622e2d063ce818a7"
+ }
+}

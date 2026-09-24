@@ -1,7 +1,0 @@
-# `raw_full/` is the holdout-2 run tree as it stood on disk when protocol 3.0.0's run
-# displaced it: the JSONL summaries, the manifests, the checksum files and the multi-
-# gigabyte `.bin` audit and per-draw streams.  It is kept locally so that nothing the run
-# produced is destroyed, and it is untracked for the same reason the live `raw/` binaries
-# are: `.bin` is gitignored repository-wide and the JSONL beside it duplicates the curated
-# copy in `raw/`, which is the tracked record.
-raw_full/
