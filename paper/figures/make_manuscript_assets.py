@@ -1,32 +1,33 @@
 #!/usr/bin/env python3
-"""Regenerate every figure and numerical table in the JTJ1001 manuscript.
+"""Regenerate every figure and numerical table in the manuscript.
 
-Everything the manuscript prints is produced here, from the frozen experiment
-outputs in ``experiments/exp{1,2,3,4}_*``.  Nothing is transcribed by hand: the
-LaTeX tables are emitted as ``\\input``-able fragments so that no number can
-drift between the evidence and the paper.
+Everything the manuscript prints is produced here, from the committed experiment
+outputs in ``experiments/``.  Nothing is transcribed by hand: the LaTeX tables are
+emitted as ``\\input``-able fragments so that no number can drift between the
+evidence and the paper.
 
-Sources, and the reviewer comment each answers:
+Sources:
 
-  exp1  raw/*.bin + results/exp1_results.json  -> marginal figure, validation and moment tables   R1.3, R1.5, R1.6
-  exp2  results/exp2_results.json              -> Fig. 5, Table V            R1.1, R1.2
-  exp3  results/exp3_results.json              -> Table VI                   R1.4
-  exp4  results/exp4_results.json              -> Table VII                  R1.3
+  exp4  figures/fp1_failure_envelope.pdf        -> Fig. 2 (copied)
+  exp2  results/exp2_results.json               -> Fig. 3, Table II
+  exp1  results/exp1_tail.json                  -> Fig. 4, Table III (radius column)
+  exp1  results/exp1_cells.json                 -> Table III (400-cell column)
+  exp1  results/exp1_marginals.json             -> Fig. 5
+  exp1  results/exp1_moments.json               -> Table IV
+  verify_cap_geometry.py (closed form)          -> macros in tables/capgeom.tex
 
 Usage
 -----
     uv run --project ../../python python make_manuscript_assets.py
 
-Writes into ``paper/overleaf/figures/`` and ``paper/overleaf/tables/``.  Those
-live inside the git-ignored Overleaf project, so this script is the tracked
-record of how they were made.
+Writes into ``paper/overleaf/figures/`` and ``paper/overleaf/tables/``.
 """
 
 from __future__ import annotations
 
-import csv
 import json
 import os
+import shutil
 import sys
 
 import matplotlib as mpl
@@ -39,7 +40,7 @@ from scipy import stats
 from scipy.special import gammaln
 
 import verify_cap_geometry
-from verify_cap_geometry import cap_for_tv_target, speed_cap_anisotropy_limit
+from verify_cap_geometry import cap_for_tv_target
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
@@ -66,13 +67,7 @@ C_HIST = "0.72"
 C_KAPPA = "#1f4e9c"
 C_MAXW = "#c1272d"
 
-# The single (kappa, theta_par/theta_perp) pair Appendix A uses to illustrate the
-# physical-speed cap's wide-cap anisotropy bias.  kappa = 0.75 is the low-kappa
-# case already carried through Secs. IV and VI, and 2 is the anisotropy of every
-# capped experiment, so the example costs the reader no new parameters.
-SPEED_CAP_EXAMPLE = (0.75, 2.0)
-
-# The (kappa, TV target) pair Sec. IV B uses to state how wide a component-wise
+# The (kappa, TV target) pair Sec. V B uses to state how wide a component-wise
 # cap would have to be before the capped conditional law is within a negligible
 # total-variation distance of the intended one.  kappa = 0.75 is the same
 # low-kappa case; 10^-3 is the negligibility threshold Experiment 2 fixed before
@@ -108,49 +103,13 @@ def maxwellian_marginal_pdf(s):
 # Shared loading
 # --------------------------------------------------------------------------
 
-def load_manifest(exp_dir):
-    with open(os.path.join(exp_dir, "raw", "manifest.csv"), newline="") as fh:
-        return list(csv.DictReader(fh))
-
-
-def load_runs(exp_dir, rows):
-    """Concatenate the velocity vectors of the given manifest rows."""
-    chunks = []
-    for row in rows:
-        path = os.path.join(exp_dir, "raw", row["file"])
-        chunks.append(np.fromfile(path, dtype=np.float64).reshape(-1, 3))
-    return np.vstack(chunks)
-
-
 def load_json(exp_dir, name):
     with open(os.path.join(exp_dir, "results", name)) as fh:
         return json.load(fh)
 
 
-def select(rows, **kw):
-    def match(row):
-        for key, val in kw.items():
-            if abs(float(row[key]) - float(val)) > 1e-12 if key not in ("block", "mode", "ub_label") \
-                    else row[key] != val:
-                return False
-        return True
-    return [r for r in rows if match(r)]
-
-
-def block_a_rows(rows, kappa):
-    """Block A: theta = (1,2), B || z, uncapped, five seeds."""
-    out = []
-    for r in rows:
-        if r["block"] != "A" or r["mode"] != "uncapped":
-            continue
-        if abs(float(r["kappa"]) - kappa) > 1e-12:
-            continue
-        out.append(r)
-    return sorted(out, key=lambda r: int(r["seed"]))
-
-
 # --------------------------------------------------------------------------
-# Figure: Cartesian marginals and the bi-Maxwellian limit  (R1.6)
+# Figure: Cartesian marginals and the bi-Maxwellian limit
 # --------------------------------------------------------------------------
 
 def figure_marginals(exp1_dir):
@@ -163,7 +122,9 @@ def figure_marginals(exp1_dir):
     than only the core.  kappa = 1 has no finite variance; kappa = 2 and 10
     carry the approach to the bi-Maxwellian limit.
     """
-    rows = load_manifest(exp1_dir)
+    res = load_json(exp1_dir, "exp1_marginals.json")
+    by_kappa = {r["kappa"]: r for r in res["summary"]}
+    keys = ["v_perp1", "v_perp2", "v_par"]
     kappas = [1.0, 2.0, 10.0]
     thetas = [1.0, 1.0, 2.0]          # theta_perp, theta_perp, theta_par
     comps = [
@@ -173,7 +134,7 @@ def figure_marginals(exp1_dir):
     ]
 
     half = 6.0
-    bins = np.linspace(-half, half, 49)
+    bins = np.array(res["bin_edges"])
     width = bins[1] - bins[0]
     centers = 0.5 * (bins[1:] + bins[:-1])
     grid = np.linspace(-half, half, 800)
@@ -183,21 +144,19 @@ def figure_marginals(exp1_dir):
 
     for i, kappa in enumerate(kappas):
         ax = axes[i]
-        sel = block_a_rows(rows, kappa)
-        v = load_runs(exp1_dir, sel)
-        n_total = v.shape[0]
-        meta[kappa] = {"n_total": n_total, "seeds": [int(r["seed"]) for r in sel]}
+        rec = by_kappa[kappa]
+        n_total = rec["n_total"]
+        meta[kappa] = {"n_total": n_total, "seeds": rec["seeds"]}
 
         ax.plot(grid, bikappa_marginal_pdf(grid, kappa), color=C_KAPPA,
                 label="bi-Kappa marginal", zorder=2)
         ax.plot(grid, maxwellian_marginal_pdf(grid), color=C_MAXW,
                 ls="--", label="bi-Maxwellian limit", zorder=1)
         for j, (lab, mk, col) in enumerate(comps):
-            s = v[:, j] / thetas[j]
-            # Normalised by the FULL sample size, so the markers are the
-            # probability density itself, not a density renormalised over
-            # the displayed window.  Empty bins are not drawn.
-            counts, _ = np.histogram(s, bins=bins)
+            # Counts of v_j / theta_j per bin, normalised by the FULL sample size,
+            # so the markers are the probability density itself, not a density
+            # renormalised over the displayed window.  Empty bins are not drawn.
+            counts = np.array(rec["counts"][keys[j]])
             dens = counts / (n_total * width)
             keep = counts > 0
             ax.plot(centers[keep], dens[keep], mk, ms=2.4, mfc="none", mew=0.6,
@@ -205,7 +164,7 @@ def figure_marginals(exp1_dir):
 
         ax.set_yscale("log")
         ax.set_xlim(-half, half)
-        ax.set_ylim(1e-6, 1.0)
+        ax.set_ylim(1e-8, 1.0)
         ax.set_ylabel("Probability density")
         ax.text(0.03, 0.93, rf"$\kappa={kappa:g}$", transform=ax.transAxes,
                 va="top", ha="left")
@@ -223,7 +182,7 @@ def figure_marginals(exp1_dir):
 
 
 # --------------------------------------------------------------------------
-# Figure: what the component-wise cap does  (R1.1, R1.2)
+# Figure: what the component-wise cap does
 # --------------------------------------------------------------------------
 
 def capped_summary(exp2_dir):
@@ -284,6 +243,75 @@ def figure_cap(exp2_dir):
 
 
 # --------------------------------------------------------------------------
+# Figure: radius-shell counts into the tail
+# --------------------------------------------------------------------------
+
+def figure_radius_shells(exp1_dir):
+    """One single-column figure: the standardized deviation of each radius-shell count.
+
+    The horizontal axis is the shell, placed by category: each of the ten shells of
+    probability 1/10 gets one slot, and each of the five pieces of the outermost one a
+    wider slot, since the tail is what the subdivision adds.  The tick labels give the
+    shell edges as percentiles of R under the target (r_9 is the 90th), so the axis names
+    positions in R, in the same terms as the 99.9th-percentile speed of Sec. V B, and
+    shows how far into the tail the test resolves.  Each kappa is offset within the slot.  Under the target every deviation is
+    approximately standard normal.
+    """
+    res = load_json(exp1_dir, "exp1_tail.json")
+    rows = sorted(res["summary"], key=lambda r: float(r["kappa"]))
+    n_shells = len(rows[0]["shell_z"])
+    n_bulk = 9                       # shells inside r_9; the rest subdivide R > r_9
+    widths = np.array([0.7] * n_bulk + [2.2] * (n_shells - n_bulk))
+    edges = np.concatenate([[0.0], np.cumsum(widths)])
+    centers = 0.5 * (edges[:-1] + edges[1:])
+
+    fig, ax = plt.subplots(figsize=(3.4, 2.3))
+    ax.axhspan(-2.0, 2.0, color="0.92", lw=0, zorder=0)
+    ax.axhline(0.0, color="0.55", lw=0.6, zorder=1)
+    ax.axvline(edges[n_bulk], color="0.35", lw=0.6, ls=":", zorder=1)
+
+    cmap = mpl.colormaps["viridis"]
+    frac = np.linspace(-0.36, 0.36, len(rows))
+    for j, rec in enumerate(rows):
+        k = float(rec["kappa"])
+        col = cmap(0.05 + 0.85 * j / (len(rows) - 1))
+        # Filled markers for kappa <= 3/2, where the second moments do not exist.
+        filled = k <= 1.5
+        ax.plot(centers + frac[j] * widths, rec["shell_z"], "o", ms=2.6, mew=0.7,
+                color=col, mfc=col if filled else "white", label=rf"${k:g}$", zorder=3)
+
+    # Ticks at the shell edges, labelled by the percentile of R there.
+    major = {0: "$0$", 5: "$50$", 9: "$90$", 10: "$99$", 11: "$99.9$",
+             12: "$99.99$", 13: "$99.999$", 14: "$100$"}
+    ax.set_xticks([edges[i] for i in major])
+    ax.set_xticklabels(list(major.values()))
+    ax.set_xticks(edges, minor=True)
+    ax.tick_params(axis="x", which="minor", length=1.5)
+    ax.tick_params(axis="x", which="major", labelsize=6.5)
+    ax.set_xlim(edges[0], edges[-1])
+    ax.set_ylim(-3.6, 3.6)
+    ax.set_yticks([-3, -2, -1, 0, 1, 2, 3])
+    ax.set_xlabel(r"Percentile of $R$ at the shell edge")
+    ax.set_ylabel(r"$(O-E)/\sigma$")
+    ax.text(edges[n_bulk] + 0.2, 3.35, r"$R>r_9$", ha="left", va="top",
+            fontsize=7, color="0.3")
+
+    # Two legend rows: the six kappa <= 3/2 (filled) above, the three kappa > 3/2
+    # (open) below.  Matplotlib fills columns first, so the handles are interleaved.
+    handles, labels = ax.get_legend_handles_labels()
+    order = [0, 6, 1, 7, 2, 8, 3, 4, 5]
+    ax.legend([handles[i] for i in order], [labels[i] for i in order],
+              title=r"$\kappa$", frameon=False, ncol=6, fontsize=6.5,
+              title_fontsize=7, loc="lower center", bbox_to_anchor=(0.5, 1.0),
+              handletextpad=0.1, columnspacing=0.7, borderaxespad=0.2)
+    fig.tight_layout(pad=0.3)
+    path = os.path.join(OUT_FIG, "validation-shells.pdf")
+    fig.savefig(path)
+    plt.close(fig)
+    print(f"  wrote {path}")
+
+
+# --------------------------------------------------------------------------
 # Tables
 # --------------------------------------------------------------------------
 
@@ -315,20 +343,28 @@ def sci(x, nd=1):
 
 
 def table_validation(exp1_dir):
-    """The Experiment 1 cell-count test (R1.3): chi^2 p-values over equal-probability cells.
+    """The Experiment 1 cell-count test: chi^2 p-values.
 
-    One row per kappa, the five replicate runs pooled.  "Radius" sums the cells over
-    direction and tests the radial law alone; "all cells" tests the radius, the direction
-    and their independence together.
+    One row per kappa, on the large-sample draws (100 runs of 5 x 10^5 pooled,
+    5 x 10^7 per kappa).  "Radius" is the test of the radius alone over 14 shells,
+    the ten deciles with the outermost divided at the 99th to 99.999th percentiles
+    (exp1_tail.py, on the same draws); "all cells" tests the radius, the direction
+    and their independence together over 400 cells (exp1_cells.py).
     """
-    res = load_json(exp1_dir, "exp1_results.json")
-    rows = [r for r in res["summary"] if r["block"] == "A"]
+    res = load_json(exp1_dir, "exp1_cells.json")
+    rows = res["summary"]
+    radius = {float(r["kappa"]): r["radius_pvalue"]
+              for r in load_json(exp1_dir, "exp1_tail.json")["summary"]}
     lines = []
+    prev_k = None
     for rec in sorted(rows, key=lambda r: float(r["kappa"])):
         k = float(rec["kappa"])
+        # A rule separates kappa <= 3/2, where the second moments do not exist.
+        if prev_k is not None and prev_k <= 1.5 < k:
+            lines.append("\\hline")
+        prev_k = k
         lines.append(
-            f"${k:g}$ & {fmt(rec['cells_pooled_radius_pvalue'])} & "
-            f"{fmt(rec['cells_pooled_all_pvalue'])} \\\\"
+            f"${k:g}$ & {fmt(radius[k])} & {fmt(rec['all_cells_pvalue'])} \\\\"
         )
     body = "\n".join(lines)
     path = os.path.join(OUT_TAB, "validation-summary.tex")
@@ -338,44 +374,34 @@ def table_validation(exp1_dir):
 
 
 def table_moments(exp1_dir):
-    """Table IV -- second moments where they exist, with replicate spread (R1.5).
+    """Table IV: second moments where they exist.
 
-    Reports each replicate's sample variance, so statistical scatter is visible
-    rather than inferred.  The caveat that matters: the variance of the sample
-    variance needs a finite fourth moment, i.e. kappa > 5/2, so at kappa = 2 the
-    spread below has no finite population value and must not be read as a
-    standard error.
+    From the large-sample run (exp1_moments.py: the 100 cell-test runs of 5 x 10^5 at
+    kappa = 2, 5, 10).  "Sample" is the mean of the 100 run variances +/- its standard
+    error (sd of the run variances / 10).  The caveat that matters: the variance of the
+    sample variance needs a finite fourth moment, i.e. kappa > 5/2, so at kappa = 2 the
+    standard error has no finite population value and is only a rough scale.
     """
-    rows = load_manifest(exp1_dir)
+    res = load_json(exp1_dir, "exp1_moments.json")
+    names = {"v_perp1": "$V_{\\perp1}$", "v_perp2": "$V_{\\perp2}$",
+             "v_par": "$V_\\parallel$"}
     out_lines = []
-    audit = {}
-    for kappa in (2.0, 5.0, 10.0):
-        sel = block_a_rows(rows, kappa)
-        theta_perp, theta_par = 1.0, 2.0
-        per_seed = {"vx": [], "vy": [], "vz": []}
-        for r in sel:
-            v = load_runs(exp1_dir, [r])
-            per_seed["vx"].append(np.var(v[:, 0], ddof=1))
-            per_seed["vy"].append(np.var(v[:, 1], ddof=1))
-            per_seed["vz"].append(np.var(v[:, 2], ddof=1))
-
-        second = kappa / (2.0 * kappa - 3.0)
-        theory = {
-            "vx": theta_perp**2 * second,
-            "vy": theta_perp**2 * second,
-            "vz": theta_par**2 * second,
-        }
-        names = {"vx": "$V_{\\perp1}$", "vy": "$V_{\\perp2}$", "vz": "$V_\\parallel$"}
-        audit[kappa] = {}
-        for key in ("vx", "vy", "vz"):
-            vals = np.array(per_seed[key])
-            mean, sd = vals.mean(), vals.std(ddof=1)
-            rel = 100.0 * (mean - theory[key]) / theory[key]
-            audit[kappa][key] = {"theory": theory[key], "mean": mean,
-                                 "sd": sd, "rel_pct": rel}
+    check = {}
+    for rec in sorted(res["summary"], key=lambda r: r["kappa"]):
+        kappa = rec["kappa"]
+        check[kappa] = {}
+        for key in ("v_perp1", "v_perp2", "v_par"):
+            c = rec["components"][key]
+            check[kappa][key] = {"theory": c["expected"], "mean": c["mean_run_variance"],
+                                 "se": c["standard_error"], "rel_pct": c["diff_percent"],
+                                 "diff_over_se": c["diff_over_se"]}
+            diff = f"{c['diff_percent']:+.2f}"
+            if float(diff) == 0.0:
+                diff = "0.00"   # no sign on a difference that rounds to zero
             out_lines.append(
-                f"${kappa:g}$ & {names[key]} & {fmt(theory[key], 4)} & "
-                f"{fmt(mean, 4)} $\\pm$ {fmt(sd, 4)} & {rel:+.2f} \\\\"
+                f"${kappa:g}$ & {names[key]} & {fmt(c['expected'], 4)} & "
+                f"{fmt(c['mean_run_variance'], 4)} $\\pm$ {fmt(c['standard_error'], 4)} & "
+                f"{diff} \\\\"
             )
         out_lines.append("\\hline")
     body = "\n".join(out_lines[:-1])
@@ -383,11 +409,11 @@ def table_moments(exp1_dir):
     with open(path, "w") as fh:
         fh.write(body + "\n")
     print(f"  wrote {path}")
-    return audit
+    return check
 
 
 def table_cap(exp2_dir):
-    """Table V -- the cap's cost and distortion, quoted as one number (R1.1, R1.2)."""
+    """Table II: the removed probability mass and the 99.9th-percentile ratio."""
     _, table, kappas, _, i999 = capped_summary(exp2_dir)
     lams = [3.0, 5.0, 10.0, 20.0, 50.0, 100.0]
     lines = []
@@ -410,22 +436,10 @@ def table_cap(exp2_dir):
     print(f"  wrote {path}")
 
 
-def macro_speed_cap_limit():
-    """Appendix A and Sec. IV B velocity-bound numbers, as LaTeX macros.
+def macro_tv_threshold():
+    """Sec. V B velocity-bound numbers, as LaTeX macros.
 
-    Appendix A states the wide-cap limit as an equation and illustrates it with a
-    single value; it deliberately does not tabulate the (kappa, anisotropy) grid,
-    because a sweep would present the bounding geometry as a study in its own
-    right rather than as the analytic caution it is.  The number is emitted here
-    anyway so that it keeps the same provenance rule as every other figure in the
-    paper: nothing numeric is typed into the manuscript by hand.
-
-    ``verify_cap_geometry.py`` checks this same function against an independent
-    finite-cap quadrature carried out in velocity space; that check runs from
-    ``main()`` below, so a drift in either one fails asset generation.
-
-    The same fragment carries the component-wise cap's counterpart: the half-width
-    at which the capped conditional law comes within a negligible total-variation
+    The half-width at which the capped conditional law comes within a negligible total-variation
     distance of the intended one.  It is solved for, not tabulated, because the
     answer falls between the entries of any practical lambda ladder, and it is the
     number that makes the cost of the heavy-tailed cases concrete -- at
@@ -433,16 +447,10 @@ def macro_speed_cap_limit():
     cap anyone would set.  ``verify_cap_geometry.py``'s check 8 pins it from both
     directions, so it has the same provenance guarantee as every table entry.
     """
-    kappa, ratio = SPEED_CAP_EXAMPLE
-    value = speed_cap_anisotropy_limit(kappa, ratio)
     path = os.path.join(OUT_TAB, "capgeom.tex")
     with open(path, "w") as fh:
         fh.write("% generated by paper/figures/make_manuscript_assets.py "
                  "-- do not edit\n")
-        fh.write(f"\\newcommand{{\\SpeedCapLimit}}{{{value:.3f}}}\n")
-        fh.write(f"\\newcommand{{\\SpeedCapLimitKappa}}{{{kappa:g}}}\n")
-        fh.write(f"\\newcommand{{\\SpeedCapLimitRatio}}{{{ratio:g}}}\n")
-
         tv_kappa, tv_target = TV_TARGET_EXAMPLE
         lam = cap_for_tv_target(tv_kappa, tv_target)
         fh.write(f"\\newcommand{{\\TVThreshLambda}}{{{_math_sci(lam)}}}\n")
@@ -450,68 +458,14 @@ def macro_speed_cap_limit():
         fh.write(f"\\newcommand{{\\TVThreshTarget}}{{{_math_sci(tv_target)}}}\n")
 
     print(f"  wrote {path}")
-    return value, lam
+    return lam
 
 
-def table_performance(exp3_dir):
-    """Table VI -- measured per-sample cost (R1.4)."""
-    res = load_json(exp3_dir, "exp3_results.json")
-    by = {}
-    for rec in res["timing"]:
-        if rec.get("variant") not in (None, "iso"):
-            continue
-        by.setdefault(float(rec["kappa"]), {})[rec["method"]] = rec
-    order = ["gamma_ratio_spherical", "scale_mixture_normals", "pareto_rejection"]
-    lines = []
-    for k in sorted(by):
-        cells = [f"${k:g}$"]
-        for m in order:
-            rec = by[k].get(m)
-            if rec is None or not rec.get("applicable", True) \
-                    or rec.get("ns_per_sample_median") is None:
-                cells.append("n/a")
-            else:
-                cells.append(f"${rec['ns_per_sample_median']:.1f}$")
-        base = by[k].get("gamma_ratio_spherical")
-        par = by[k].get("pareto_rejection")
-        if base and par and par.get("applicable", True) \
-                and par.get("ns_per_sample_median"):
-            ratio = par["ns_per_sample_median"] / base["ns_per_sample_median"]
-            cells.append(f"${ratio:.2f}$")
-        else:
-            cells.append("n/a")
-        lines.append(" & ".join(cells) + " \\\\")
-    body = "\n".join(lines)
-    path = os.path.join(OUT_TAB, "performance.tex")
-    with open(path, "w") as fh:
-        fh.write(body + "\n")
-    print(f"  wrote {path}")
-
-
-def table_precision(exp4_dir):
-    """Table VII -- the measured operating envelope (R1.3, scoped per rule E)."""
-    res = load_json(exp4_dir, "exp4_results.json")
-    by = {}
-    for r in res["released"]:
-        by.setdefault(float(r["kappa"]), {}) \
-          .setdefault(r["precision"], {})[r["stdlib"]] = r
-    lines = []
-    for k in sorted(by):
-        cells = [f"${k:g}$"]
-        for prec in ("double", "float"):
-            per_lib = by[k].get(prec, {})
-            if not per_lib:
-                cells.append("---")
-                continue
-            # libc++ and libstdc++ agree to within seed noise, so the worst of
-            # the two is quoted rather than an average that could hide one.
-            frac = max(r["nonfinite_frac"] for r in per_lib.values())
-            cells.append(sci(frac))
-        lines.append(" & ".join(cells) + " \\\\")
-    body = "\n".join(lines)
-    path = os.path.join(OUT_TAB, "precision.tex")
-    with open(path, "w") as fh:
-        fh.write(body + "\n")
+def figure_failure_envelope(exp4_dir):
+    """Fig. 2: the finite-precision failure envelope, drawn by the experiment itself."""
+    src = os.path.join(exp4_dir, "figures", "fp1_failure_envelope.pdf")
+    path = os.path.join(OUT_FIG, "fp1_failure_envelope.pdf")
+    shutil.copyfile(src, path)
     print(f"  wrote {path}")
 
 
@@ -519,11 +473,11 @@ def main() -> int:
     os.makedirs(OUT_FIG, exist_ok=True)
     os.makedirs(OUT_TAB, exist_ok=True)
 
-    # The Appendix A and Sec. IV B velocity-bound claims are analytic, so they are checked
+    # The Sec. V B velocity-bound claims are analytic, so they are checked
     # before anything is written.  A drift between the closed forms in the
     # manuscript and independent quadrature must stop asset generation rather
     # than quietly emit a wrong number.
-    print("velocity-bound closed forms (Appendix A and Sec. IV B):")
+    print("velocity-bound closed forms (Sec. V B):")
     if verify_cap_geometry.main() != 0:
         print("cap-geometry verification failed; no assets written",
               file=sys.stderr)
@@ -532,33 +486,30 @@ def main() -> int:
 
     exp1 = os.path.join(EXP, "exp1_radial_directional")
     exp2 = os.path.join(EXP, "exp2_cap_characterization")
-    exp3 = os.path.join(EXP, "exp3_benchmark")
-    exp4 = os.path.join(EXP, "exp4_precision")
+    exp4 = os.path.join(EXP, "exp4_finite_precision")
 
     print("figures:")
+    figure_failure_envelope(exp4)
     m1 = figure_marginals(exp1)
+    figure_radius_shells(exp1)
     figure_cap(exp2)
 
     print("tables:")
     table_validation(exp1)
-    audit = table_moments(exp1)
+    check = table_moments(exp1)
     table_cap(exp2)
-    geom, tv_lam = macro_speed_cap_limit()
-    table_performance(exp3)
-    table_precision(exp4)
+    tv_lam = macro_tv_threshold()
 
     print("\nprovenance for the captions:")
     for k, v in m1.items():
         print(f"  marginals kappa={k:g}: N={v['n_total']}, seeds={v['seeds']}")
-    print(f"\nspeed-cap anisotropy limit at kappa={SPEED_CAP_EXAMPLE[0]:g}, "
-          f"theta_par/theta_perp={SPEED_CAP_EXAMPLE[1]:g}: {geom:.6f}")
     print(f"cap width reaching TV = {TV_TARGET_EXAMPLE[1]:g} at "
           f"kappa={TV_TARGET_EXAMPLE[0]:g}: lambda = {tv_lam:.6e}")
-    print("\nmoment audit (theory, mean, sd, rel%):")
-    for k in sorted(audit):
-        for key, d in audit[k].items():
+    print("\nmoment check (theory, mean, se, rel%, diff/se):")
+    for k in sorted(check):
+        for key, d in check[k].items():
             print(f"  kappa={k:g} {key}: {d['theory']:.4f} {d['mean']:.4f} "
-                  f"{d['sd']:.4f} {d['rel_pct']:+.2f}%")
+                  f"{d['se']:.4f} {d['rel_pct']:+.2f}% {d['diff_over_se']:+.2f}")
     return 0
 
 

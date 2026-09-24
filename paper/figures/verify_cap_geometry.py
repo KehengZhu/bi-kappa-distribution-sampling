@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Deterministic verification of the closed-form velocity-bound results.
 
-The physical-sphere limit in Appendix A and the component-box results in
-Sec. IV B are analytic, so they are checked here by quadrature rather than by
-sampling.  No random numbers are used and no experiment output is read, which
+The component-box results in Sec. V B are analytic, so they are checked here
+by quadrature rather than by sampling.  The wide-cap limit of a physical-speed
+bound is checked too; the manuscript no longer carries it (its appendix was
+removed), and it is kept here as the analysis record behind the one-sentence
+caution at the end of Sec. V B.  No random numbers are used and no experiment output is read, which
 makes this file a self-contained provenance record: run it and every generated
 number is either reproduced or the script exits non-zero.
 
@@ -75,7 +77,7 @@ from scipy.special import betainc, beta as beta_fn
 
 
 # --------------------------------------------------------------------------
-# the analytic wide-cap limit quoted in Appendix A
+# the analytic wide-cap limit of a physical-speed bound (not in the manuscript)
 # --------------------------------------------------------------------------
 
 def speed_cap_anisotropy_limit(kappa, ratio):
@@ -343,7 +345,7 @@ def cap_for_tv_target(kappa, tv_target, lam_hi=1.0e14):
 # --------------------------------------------------------------------------
 
 # The (kappa, TV target) pair the manuscript's cap-width statement is made at.
-# Sec. IV B shows that at the heavy-tailed end the cap needed to bring the
+# Sec. V B shows that at the heavy-tailed end the cap needed to bring the
 # capped law within a negligible total-variation distance of the target is
 # impractically wide; 10^-3 is the negligibility threshold fixed in Experiment 2
 # before any result was looked at.  ``make_manuscript_assets.py`` imports this
@@ -402,7 +404,7 @@ def main():
         check(f"{tag}: the limit is not unity",
               abs(lim - 1.0) > 0.02, f"limit={lim:.6f}")
         if expect is not None:
-            check(f"{tag}: limit equals the value quoted in Appendix A",
+            check(f"{tag}: limit equals the reference value",
                   close(lim, expect, 5.0e-6), f"{lim:.6f} vs {expect:.6f}")
 
     print("   the plateau closes continuously as kappa -> 3/2 from below, "
