@@ -1,36 +1,45 @@
 import numpy as np
 from typing import Callable, List
 
+# Fewer probes can miss the peak of g and bias the samples silently (as in the C++ headers).
+MIN_PROBE_POINTS = 64
+
 
 class GeneralVelocityGenerator:
     """Samples velocities from a user-defined speed-squared distribution g(w), w = |v|^2.
 
     The speed is |v| = sqrt(w); the direction is isotropic in 3D. (For a
     distribution originally posed in energy, w = |v|^2 = 2E/m, so the mass drops
-    out of this generator entirely.)"""
+    out of this generator entirely.)  If speed_sq_min == speed_sq_max, every sample has
+    the single speed sqrt(speed_sq_min)."""
 
     def __init__(self, speed_sq_pdf: Callable, speed_sq_min: float, speed_sq_max: float,
                  probe_points: int = 1024, max_reject_tries: int = 100000):
         if speed_sq_min < 0.0:
             raise ValueError("speed_sq_min must be non-negative (w = |v|^2 >= 0)")
-        if not (speed_sq_min < speed_sq_max):
-            raise ValueError("speed_sq_min must be strictly less than speed_sq_max")
+        if not (speed_sq_min <= speed_sq_max):
+            raise ValueError("speed_sq_max must not be less than speed_sq_min")
+        if probe_points < MIN_PROBE_POINTS:
+            raise ValueError("probe_points must be at least 64")
         self.speed_sq_pdf = speed_sq_pdf
         self.speed_sq_min = speed_sq_min
         self.speed_sq_max = speed_sq_max
         self.max_reject_tries = max_reject_tries
 
-        # Estimate upper bound of the PDF
-        self.pdf_upper_bound = self._estimate_pdf_upper_bound(probe_points)
+        # Estimate upper bound of the PDF (not needed for a single-valued range).
+        self.pdf_upper_bound = (self._estimate_pdf_upper_bound(probe_points)
+                                if speed_sq_min < speed_sq_max else 0.0)
 
     def _estimate_pdf_upper_bound(self, probe_points: int) -> float:
-        """Estimate the maximum value of the speed-squared PDF in the given range."""
+        """Estimate the maximum value of the speed-squared PDF, with a 5% margin."""
         grid = np.linspace(self.speed_sq_min, self.speed_sq_max, probe_points)
         pdf_values = np.array([self.speed_sq_pdf(w) for w in grid])
-        return np.max(pdf_values)
+        return np.max(pdf_values) * 1.05
 
     def sample_speed_sq(self, rng: np.random.Generator) -> float:
         """Sample w = |v|^2 using rejection sampling."""
+        if not self.speed_sq_min < self.speed_sq_max:
+            return self.speed_sq_min
         for _ in range(self.max_reject_tries):
             w = rng.uniform(self.speed_sq_min, self.speed_sq_max)
             u = rng.uniform(0, self.pdf_upper_bound)
@@ -98,15 +107,23 @@ class FieldAlignedVelocityGenerator:
     distribution g(w_par), w_par = v_par^2, along B, with a Maxwellian
     perpendicular spread (thermal speed theta_perp). (For a distribution
     originally posed in energy, w_par = v_par^2 = 2E_par/m, so the mass drops
-    out.)"""
+    out.)  If speed_sq_min == speed_sq_max, every sample has the single parallel speed
+    sqrt(speed_sq_min).  Each perpendicular component is capped at
+    max_normalized_velocity * theta_perp (default 20, as in the C++ header); pass
+    math.inf for no cap."""
 
     def __init__(self, speed_sq_pdf: Callable, speed_sq_min: float, speed_sq_max: float,
                  theta_perp: float, ub: List[float], parallel_sign: int,
-                 probe_points: int = 1024, max_reject_tries: int = 100000):
+                 probe_points: int = 1024, max_reject_tries: int = 100000,
+                 max_normalized_velocity: float = 20.0):
         if speed_sq_min < 0.0:
             raise ValueError("speed_sq_min must be non-negative (w = v_par^2 >= 0)")
-        if not (speed_sq_min < speed_sq_max):
-            raise ValueError("speed_sq_min must be strictly less than speed_sq_max")
+        if not (speed_sq_min <= speed_sq_max):
+            raise ValueError("speed_sq_max must not be less than speed_sq_min")
+        if probe_points < MIN_PROBE_POINTS:
+            raise ValueError("probe_points must be at least 64")
+        if not max_normalized_velocity > 0.0:
+            raise ValueError("max_normalized_velocity must be positive, or math.inf for no cap")
         if theta_perp <= 0.0:
             raise ValueError("theta_perp must be positive")
         if parallel_sign not in (1, -1):
@@ -120,13 +137,15 @@ class FieldAlignedVelocityGenerator:
         self.speed_sq_max = speed_sq_max
         self.theta_perp = theta_perp
         self.parallel_sign = float(parallel_sign)
+        self.max_normalized_velocity = max_normalized_velocity
         self.max_reject_tries = max_reject_tries
 
         # Field-aligned orthonormal frame (e1, e2 perpendicular; e3 = B/|B|).
         self.e1, self.e2, self.e3 = self._build_frame(ub)
 
         # Estimate upper bound of the parallel speed-squared PDF.
-        self.pdf_upper_bound = self._estimate_pdf_upper_bound(probe_points)
+        self.pdf_upper_bound = (self._estimate_pdf_upper_bound(probe_points)
+                                if speed_sq_min < speed_sq_max else 0.0)
 
     @staticmethod
     def _build_frame(ub: np.ndarray):
@@ -147,6 +166,8 @@ class FieldAlignedVelocityGenerator:
 
     def sample_speed_sq(self, rng: np.random.Generator) -> float:
         """Sample w_par = v_par^2 using rejection sampling."""
+        if not self.speed_sq_min < self.speed_sq_max:
+            return self.speed_sq_min
         for _ in range(self.max_reject_tries):
             w = rng.uniform(self.speed_sq_min, self.speed_sq_max)
             u = rng.uniform(0, self.pdf_upper_bound)
@@ -158,10 +179,18 @@ class FieldAlignedVelocityGenerator:
         """Generate a random 3D velocity vector in the global frame."""
         v_par = self.parallel_sign * np.sqrt(self.sample_speed_sq(rng))
 
-        # Perpendicular 2D Maxwellian: N(0, theta_perp^2/2) per component.
+        # Perpendicular 2D Maxwellian: N(0, theta_perp^2/2) per component, with the pair
+        # redrawn while either component exceeds the cap.
         sigma_perp = self.theta_perp / np.sqrt(2.0)
-        v_perp1 = sigma_perp * rng.standard_normal()
-        v_perp2 = sigma_perp * rng.standard_normal()
+        perp_max = self.max_normalized_velocity * self.theta_perp
+        for _ in range(self.max_reject_tries):
+            v_perp1 = sigma_perp * rng.standard_normal()
+            v_perp2 = sigma_perp * rng.standard_normal()
+            if abs(v_perp1) <= perp_max and abs(v_perp2) <= perp_max:
+                break
+        else:
+            raise RuntimeError("Failed to sample the perpendicular components under "
+                               "max_normalized_velocity after max_reject_tries attempts")
 
         return v_perp1 * self.e1 + v_perp2 * self.e2 + v_par * self.e3
 

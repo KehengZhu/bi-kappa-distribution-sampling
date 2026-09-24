@@ -1,15 +1,20 @@
 [project]
 name = "bi-kappa"
 version = "2.2.1"
-description = "Add your description here"
-readme = "README.md"
+description = "Validation of bi-Kappa velocity samples, and Python versions of the general velocity and position generators"
 license = "MIT"
 requires-python = ">=3.10"
 dependencies = [
+    "numpy>=2.2.6",
+    "scipy>=1.15.3",
+]
+
+# Used by the notebook, the figure scripts and the experiments; `uv sync` and `uv run`
+# install this group by default.
+[dependency-groups]
+dev = [
     "ipykernel>=7.2.0",
     "matplotlib>=3.10.8",
     "mpmath>=1.4.1",
-    "numpy>=2.2.6",
     "pandas>=2.3.3",
-    "scipy>=1.15.3",
 ]

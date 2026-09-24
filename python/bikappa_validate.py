@@ -84,18 +84,49 @@ N_PHI_BINS = 8
 N_SHELLS = 10
 MIN_EXPECTED_PER_CELL = 5.0
 
+# The test of the radius alone divides the outermost decile shell, R > r_9, further
+# at the radii that R exceeds with these probabilities (its 99th ... 99.999th
+# percentiles), so that the fastest 10% of draws are resolved in radius rather than
+# counted in one shell.  An edge is used only if the shell beyond it expects at least
+# MIN_EXPECTED_PER_CELL draws; at the paper's 5 x 10^7 draws all four are used.
+TAIL_EXCEEDANCE = (1e-2, 1e-3, 1e-4, 1e-5)
+
+
+def log_radius_quantile(kappa: float, exceed) -> np.ndarray:
+    """log of the radius r with P(R > r) = exceed under the target, elementwise.
+
+    P(R > r) = P(W < w) with W = 1/(1+R^2) ~ Beta(kappa-1/2, 3/2), and R^2 = (1-w)/w.
+    Near kappa = 1/2 the edge w lies below the smallest double -- w ~ 10^-500 for
+    the 10^-5 edge at kappa = 0.51, and even the deciles underflow once
+    kappa - 1/2 < 3e-3 -- so Beta.ppf returns 0 there.  For such w the leading term
+    of I_w(a, b) = w^a / (a B(a, b)) (1 + O(w)) is exact to double precision and
+    gives log w directly.  Comparing log R with these edges then needs no bounded
+    transform of either, so nothing underflows however large R is.
+    """
+    a = kappa - 0.5
+    exceed = np.atleast_1d(np.asarray(exceed, dtype=float))
+    with np.errstate(divide="ignore"):
+        log_w = np.log(stats.beta.ppf(exceed, a, 1.5))
+    tiny = ~(log_w > math.log(1e-280))
+    log_w[tiny] = (np.log(exceed[tiny]) + math.log(a) + special.betaln(a, 1.5)) / a
+    return 0.5 * (np.log1p(-np.exp(log_w)) - log_w)
+
 
 def log_shell_edges(kappa: float) -> np.ndarray:
-    """log of the radii splitting R into N_SHELLS shells of equal probability.
+    """log of the radii splitting R into N_SHELLS shells of equal probability."""
+    return log_radius_quantile(kappa, 1.0 - np.arange(1, N_SHELLS) / N_SHELLS)
 
-    P(T <= t) = P(W >= 1/(1+t)) with W = 1/(1+T) ~ Beta(kappa-1/2, 3/2), so the
-    edge at cumulative probability q has W_q = Beta.ppf(1-q) and
-    R_q^2 = (1-W_q)/W_q.  Comparing log R with these edges needs no bounded
-    transform of R, so nothing underflows however large R is.
+
+def radius_shells(kappa: float, n: int) -> tuple[np.ndarray, np.ndarray]:
+    """log edges and probabilities of the shells for the test of the radius alone.
+
+    The N_SHELLS decile shells, with the outermost divided at those TAIL_EXCEEDANCE
+    edges beyond which n draws expect at least MIN_EXPECTED_PER_CELL.
     """
-    q = np.arange(1, N_SHELLS) / N_SHELLS
-    w = stats.beta.ppf(1.0 - q, kappa - 0.5, 1.5)
-    return 0.5 * (np.log1p(-w) - np.log(w))
+    tail = [t for t in TAIL_EXCEEDANCE if n * t >= MIN_EXPECTED_PER_CELL]
+    edges = np.concatenate([log_shell_edges(kappa), log_radius_quantile(kappa, tail)])
+    exceed = np.concatenate([1.0 - np.arange(N_SHELLS) / N_SHELLS, tail, [0.0]])
+    return edges, exceed[:-1] - exceed[1:]
 
 
 # ----------------------------------------------------------------------------
@@ -130,7 +161,7 @@ def field_basis(bhat: np.ndarray) -> np.ndarray:
 
 
 # ----------------------------------------------------------------------------
-# the battery
+# the tests
 # ----------------------------------------------------------------------------
 
 def _ks_critical(alpha: float) -> float:
@@ -180,7 +211,7 @@ def validate_sample(v,
                     bhat=None,
                     n_attempts: int | None = None,
                     alpha: float = 0.01) -> dict:
-    """Run the battery on an (N, 3) velocity sample.  See the module docstring.
+    """Run the tests on an (N, 3) velocity sample.  See the module docstring.
 
     Returns a nested dict of per-test statistics and verdicts, plus a top-level
     ``passed`` flag.  Raises ``ValueError`` on a malformed input contract.
@@ -259,7 +290,7 @@ def validate_sample(v,
     # perfectly good sample.  The orientation is not cosmetic.
     #
     # For R > 1 the form (1/R)^2 / (1 + (1/R)^2) keeps W resolvable down to the
-    # subnormal range, R up to about 6e161.  (2.2.0 used 1/(1 + exp(2 log R)),
+    # subnormal range, R up to about 6e161.  (An earlier version used 1/(1 + exp(2 log R)),
     # which returns W = 0 already for R > 1.3e154.)
     with np.errstate(over="ignore", divide="ignore", under="ignore"):
         small = R <= 1.0
@@ -319,28 +350,41 @@ def validate_sample(v,
     # Equal occupancy of the cells, summed over radius, tests the joint law.
     cells = stats.chisquare(table.sum(axis=0))
 
-    # The paper's cell-count test: radius shells x direction cells, and the shells
-    # alone.  Skipped, with a note, when a cell would expect fewer than
-    # MIN_EXPECTED_PER_CELL draws, where the chi^2 approximation is poor.
+    # The paper's cell-count test: radius shells x direction cells, and the radius
+    # alone on the decile shells with the outermost divided into the tail.  Skipped,
+    # with a note, when a cell would expect fewer than MIN_EXPECTED_PER_CELL draws,
+    # where the chi^2 approximation is poor.  Non-finite draws were removed above
+    # and are reported by the finiteness test: a validator cannot tell a component
+    # that overflowed at the end of the calculation from one that went infinite
+    # through an intermediate underflow, so it does not assign them a radius.
     n_cells = N_SHELLS * N_COS_BINS * N_PHI_BINS
     if n / n_cells >= MIN_EXPECTED_PER_CELL:
         with np.errstate(divide="ignore"):
-            shell = np.searchsorted(log_shell_edges(kappa), np.log(R), side="right")
+            log_R = np.log(R)
+        shell = np.searchsorted(log_shell_edges(kappa), log_R, side="right")
         cell_counts = np.zeros((N_SHELLS, N_COS_BINS * N_PHI_BINS))
         np.add.at(cell_counts, (shell, c_bin * N_PHI_BINS + p_bin), 1.0)
-        cells_radius = stats.chisquare(cell_counts.sum(axis=1))
         cells_all = stats.chisquare(cell_counts.ravel())
+        r_log_edges, r_probs = radius_shells(kappa, n)
+        r_counts = np.bincount(np.searchsorted(r_log_edges, log_R, side="right"),
+                               minlength=r_probs.size)
+        cells_radius = stats.chisquare(r_counts, n * r_probs)
         pvalues["cells_radius"] = float(cells_radius.pvalue)
         pvalues["cells_all"] = float(cells_all.pvalue)
         report["tests"]["cells"] = {
             "radius_pvalue": float(cells_radius.pvalue),
+            "radius_shells": int(r_probs.size),
+            "radius_outermost_percentile": float(100.0 * (1.0 - r_probs[-1])),
+            "radius_expected_outermost": float(n * r_probs[-1]),
             "all_pvalue": float(cells_all.pvalue),
             "expected_per_cell": n / n_cells,
             "min_count": int(cell_counts.min()),
             "description": (f"Pearson chi^2 against equal occupancy of {N_SHELLS} "
                             "equal-probability radius shells x "
                             f"{N_COS_BINS * N_PHI_BINS} equal-solid-angle direction "
-                            "cells; 'radius' uses the shells alone"),
+                            "cells; 'radius' uses the radius shells alone, the "
+                            "outermost divided at the 99th to 99.999th percentiles "
+                            "of R as far as the sample size allows"),
         }
     else:
         report["notes"].append(
@@ -499,7 +543,7 @@ def format_report(report: dict) -> str:
 
     fam = report["family"]["tests"]
     if "cells" in t:
-        line("cells: radius shells",
+        line(f"cells: radius ({t['cells']['radius_shells']} shells)",
              f"p={t['cells']['radius_pvalue']:.3f}", not fam["cells_radius"]["rejected_at_alpha"])
         line("cells: radius x direction",
              f"p={t['cells']['all_pvalue']:.3f}", not fam["cells_all"]["rejected_at_alpha"])

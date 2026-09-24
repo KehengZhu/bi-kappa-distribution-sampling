@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Regression tests for bikappa_validate.
 
-A validation battery that never fails is not a validation battery, so the
+A set of tests that never fails tests nothing, so the
 negative controls below matter more than the positive one: each injects a
-specific, plausible loader bug and asserts that the battery names it.
+specific, plausible loader bug and asserts that the tests catch it.
 
 Run with:  uv run --project python python python/test_bikappa_validate.py
 Exit status is 0 on success.
@@ -18,7 +18,8 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from bikappa_validate import validate_sample, format_report, field_basis  # noqa: E402
+from bikappa_validate import (validate_sample, format_report, field_basis,  # noqa: E402
+                             log_radius_quantile)
 
 N = 100_000
 
@@ -85,16 +86,19 @@ def main() -> int:
               f"failing: {failing_tests(r)}")
 
     # At kappa = 0.51 the reference generator above underflows in double
-    # precision -- it draws a Gamma variate of shape 0.01 -- so the battery
-    # should report non-finite draws rather than a distributional failure.  The
-    # fraction it sees is the same order as the released C++ loader's.
+    # precision -- it draws a Gamma variate of shape 0.01 -- and the draws it
+    # loses are those with R above about 10^161, beyond the 99.9th percentile of R.
+    # The validator should report the non-finite draws, and the radius shells beyond
+    # the 99.9th percentile should see that the finite draws lack that tail; the
+    # remaining tests, which do not resolve the fastest 0.1%, should pass.
     r = validate_sample(draw(N, 0.51, 1.0, 2.0, rng), 0.51, 1.0, 2.0)
-    check("non-finite draws are reported, not misread as a bad law",
-          failing_tests(r) == ["finiteness"],
-          f"fraction = {r['tests']['finiteness']['fraction']:.1e}")
+    check("underflow losses are reported and the depleted tail is caught",
+          sorted(failing_tests(r)) == ["cells_radius", "finiteness"],
+          f"fraction = {r['tests']['finiteness']['fraction']:.1e}, "
+          f"caught by: {failing_tests(r)}")
 
     # With the radius formed in logs the sample is exact, and about 6e-4 of its
-    # probability lies where W = 1/(1+R^2) underflows to 0.  Release 2.2.0 mapped
+    # probability lies where W = 1/(1+R^2) underflows to 0.  An earlier version mapped
     # those draws to F_W = 0 and failed an exact sample of this size
     # (sqrt(n) D = 2.33 at n = 8e6).
     n_big = 8_000_000
@@ -129,6 +133,23 @@ def main() -> int:
     r = validate_sample(draw(N, 3.0, 1.0, 2.0, rng), 2.0, 1.0, 2.0)
     check("wrong kappa is caught by the radial test",
           "radial_ks" in failing_tests(r) and "cells_radius" in failing_tests(r),
+          f"caught by: {failing_tests(r)}")
+
+    # A tail error confined to the fastest 1%: beyond the 99th percentile r_99 the
+    # radius is compressed, R -> r_99 (R/r_99)^(1/2).  The draws stay beyond r_99,
+    # so every decile-shell count, and with it the 400-cell test, is unchanged; the
+    # CDF moves by at most 10^-2, below what a KS test resolves at this size.  Only
+    # the radius shells beyond r_99 see it.
+    kappa = 2.0
+    v = draw(N, kappa, 1.0, 2.0, rng)
+    u = v / (np.sqrt(kappa) * np.array([1.0, 1.0, 2.0]))
+    R = np.hypot(np.hypot(u[:, 0], u[:, 1]), u[:, 2])
+    r99 = np.exp(log_radius_quantile(kappa, 1e-2)[0])
+    far = R > r99
+    v[far] *= ((r99 * np.sqrt(R[far] / r99)) / R[far])[:, None]
+    r = validate_sample(v, kappa, 1.0, 2.0)
+    check("tail compression beyond the 99th percentile is caught by the radius shells",
+          "cells_radius" in failing_tests(r) and "cells_all" not in failing_tests(r),
           f"caught by: {failing_tests(r)}")
 
     r = validate_sample(draw(N, 2.0, 1.0, 2.0, rng), 2.0, 2.0, 1.0)
