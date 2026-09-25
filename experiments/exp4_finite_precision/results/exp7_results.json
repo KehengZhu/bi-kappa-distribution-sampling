@@ -1,7 +1,7 @@
 {
   "F2": {
-    "informative_intervals": 441,
-    "observed_misses": 3,
+    "informative_intervals": 442,
+    "observed_misses": 5,
     "resolved_intervals": 650,
     "total_intervals": 650
   },
@@ -28,313 +28,313 @@
       "conditional": false,
       "label": "C0|CANDIDATE|direction_uniformity",
       "loss_fraction": 0.0,
-      "p": 0.9633171628270529
+      "p": 0.4126355672337779
     },
     {
       "conditional": false,
       "label": "C0|CANDIDATE|independence",
       "loss_fraction": 0.0,
-      "p": 0.6157116752272893
+      "p": 0.5175223696726872
     },
     {
       "conditional": false,
       "label": "C0|CANDIDATE|frame_invariance",
       "loss_fraction": 0.0,
-      "p": 0.8825771427049872
+      "p": 0.7295083368923215
     },
     {
       "conditional": false,
       "label": "C0|CANDIDATE|anisotropy",
       "loss_fraction": 0.0,
-      "p": 0.7742540261052369
+      "p": 0.4497580904557593
     },
     {
       "conditional": false,
       "label": "C0|CANDIDATE|tail_1em2_count",
       "loss_fraction": 0.0,
-      "p": 0.9094685802714144
+      "p": 0.6441294451567021
     },
     {
       "conditional": false,
       "label": "C0|CANDIDATE|tail_1em2_excess",
       "loss_fraction": 0.0,
-      "p": 0.6159334988585881
+      "p": 0.7110337683200241
     },
     {
       "conditional": false,
       "label": "C0|CANDIDATE|tail_1em3_count",
       "loss_fraction": 0.0,
-      "p": 0.4739767889671951
+      "p": 0.9464940777849682
     },
     {
       "conditional": false,
       "label": "C0|CANDIDATE|tail_1em3_excess",
       "loss_fraction": 0.0,
-      "p": 0.7337250463035259
+      "p": 0.1976379056617753
     },
     {
       "conditional": false,
       "label": "C0|CANDIDATE|tail_1em4_count",
       "loss_fraction": 0.0,
-      "p": 0.1568151038881775
+      "p": 0.43654691638927223
     },
     {
       "conditional": false,
       "label": "C0|CANDIDATE|tail_1em4_excess",
       "loss_fraction": 0.0,
-      "p": 0.6087976848900348
+      "p": 0.23809798478133315
     },
     {
       "conditional": false,
       "label": "C1|CANDIDATE|direction_uniformity",
       "loss_fraction": 0.0,
-      "p": 0.9776992969121782
+      "p": 0.05153087926496969
     },
     {
       "conditional": false,
       "label": "C1|CANDIDATE|independence",
       "loss_fraction": 0.0,
-      "p": 0.9150488862276874
+      "p": 0.5779698320734216
     },
     {
       "conditional": false,
       "label": "C1|CANDIDATE|frame_invariance",
       "loss_fraction": 0.0,
-      "p": 0.301177062283295
+      "p": 0.8814393841054784
     },
     {
       "conditional": false,
       "label": "C1|CANDIDATE|anisotropy",
       "loss_fraction": 0.0,
-      "p": 0.6872616318392005
+      "p": 0.17745820167201232
     },
     {
       "conditional": false,
       "label": "C1|CANDIDATE|tail_1em2_count",
       "loss_fraction": 0.0,
-      "p": 0.20586862392724228
+      "p": 0.7980705323627344
     },
     {
       "conditional": false,
       "label": "C1|CANDIDATE|tail_1em2_excess",
       "loss_fraction": 0.0,
-      "p": 0.004210821971916023
+      "p": 0.2997933709860453
     },
     {
       "conditional": false,
       "label": "C1|CANDIDATE|tail_1em3_count",
       "loss_fraction": 0.0,
-      "p": 0.5164806426800619
+      "p": 0.08098140876914123
     },
     {
       "conditional": false,
       "label": "C1|CANDIDATE|tail_1em3_excess",
       "loss_fraction": 0.0,
-      "p": 0.7218734671709992
+      "p": 0.9989189827405751
     },
     {
       "conditional": false,
       "label": "C1|CANDIDATE|tail_1em4_count",
       "loss_fraction": 0.0,
-      "p": 1.0
+      "p": 0.9436721772141967
     },
     {
       "conditional": false,
       "label": "C1|CANDIDATE|tail_1em4_excess",
       "loss_fraction": 0.0,
-      "p": 0.3845084049507719
+      "p": 0.11564890147929308
     },
     {
       "conditional": false,
       "label": "C2|CANDIDATE|direction_uniformity",
       "loss_fraction": 0.0,
-      "p": 0.9776992969121656
+      "p": 0.051530879264947704
     },
     {
       "conditional": false,
       "label": "C2|CANDIDATE|independence",
       "loss_fraction": 0.0,
-      "p": 0.9150488862276874
+      "p": 0.5779698320734216
     },
     {
       "conditional": false,
       "label": "C2|CANDIDATE|frame_invariance",
       "loss_fraction": 0.0,
-      "p": 0.301177062283302
+      "p": 0.8814393841054784
     },
     {
       "conditional": false,
       "label": "C2|CANDIDATE|anisotropy",
       "loss_fraction": 0.0,
-      "p": 0.6872616318392005
+      "p": 0.17745820167201232
     },
     {
       "conditional": false,
       "label": "C2|CANDIDATE|tail_1em2_count",
       "loss_fraction": 0.0,
-      "p": 0.20586862392724228
+      "p": 0.7980705323627344
     },
     {
       "conditional": false,
       "label": "C2|CANDIDATE|tail_1em2_excess",
       "loss_fraction": 0.0,
-      "p": 0.0042107013796982146
+      "p": 0.2997723293918415
     },
     {
       "conditional": false,
       "label": "C2|CANDIDATE|tail_1em3_count",
       "loss_fraction": 0.0,
-      "p": 0.5164806426800619
+      "p": 0.08098140876914123
     },
     {
       "conditional": false,
       "label": "C2|CANDIDATE|tail_1em3_excess",
       "loss_fraction": 0.0,
-      "p": 0.7217744958573165
+      "p": 0.9989200974928663
     },
     {
       "conditional": false,
       "label": "C2|CANDIDATE|tail_1em4_count",
       "loss_fraction": 0.0,
-      "p": 1.0
+      "p": 0.9436721772141967
     },
     {
       "conditional": false,
       "label": "C2|CANDIDATE|tail_1em4_excess",
       "loss_fraction": 0.0,
-      "p": 0.38596626921883137
+      "p": 0.11563139111021314
     },
     {
       "conditional": true,
       "label": "C3|CANDIDATE|direction_uniformity",
-      "loss_fraction": 0.000148,
-      "p": 0.16550821803641091
+      "loss_fraction": 0.000134,
+      "p": 0.4368486681097181
     },
     {
       "conditional": true,
       "label": "C3|CANDIDATE|independence",
-      "loss_fraction": 0.000148,
-      "p": 0.8637639551474051
+      "loss_fraction": 0.000134,
+      "p": 0.42531834643349176
     },
     {
       "conditional": true,
       "label": "C3|CANDIDATE|frame_invariance",
-      "loss_fraction": 0.000148,
-      "p": 0.5140036604189588
+      "loss_fraction": 0.000134,
+      "p": 0.5232591183461481
     },
     {
       "conditional": true,
       "label": "C3|CANDIDATE|anisotropy",
-      "loss_fraction": 0.000148,
-      "p": 0.001646103841265285
+      "loss_fraction": 0.000134,
+      "p": 0.1476539760932778
     },
     {
       "conditional": true,
       "label": "C3|CANDIDATE|tail_1em2_count",
-      "loss_fraction": 0.000148,
-      "p": 0.7816579855968948
+      "loss_fraction": 0.000134,
+      "p": 0.235293500995693
     },
     {
       "conditional": true,
       "label": "C3|CANDIDATE|tail_1em2_excess",
-      "loss_fraction": 0.000148,
-      "p": 0.3678196612296889
+      "loss_fraction": 0.000134,
+      "p": 0.27157547595308484
     },
     {
       "conditional": true,
       "label": "C3|CANDIDATE|tail_1em3_count",
-      "loss_fraction": 0.000148,
-      "p": 0.3473319057871157
+      "loss_fraction": 0.000134,
+      "p": 0.03953076078509485
     },
     {
       "conditional": true,
       "label": "C3|CANDIDATE|tail_1em3_excess",
-      "loss_fraction": 0.000148,
-      "p": 0.1592871738011825
+      "loss_fraction": 0.000134,
+      "p": 0.49712473558774306
     },
     {
       "conditional": true,
       "label": "C3|CANDIDATE|tail_1em4_count",
-      "loss_fraction": 0.000148,
-      "p": 0.5709222414565954
+      "loss_fraction": 0.000134,
+      "p": 0.5245396914913278
     },
     {
       "conditional": true,
       "label": "C4|CANDIDATE|direction_uniformity",
-      "loss_fraction": 0.000796,
-      "p": 0.9894111072721523
+      "loss_fraction": 0.000768,
+      "p": 0.07082297772376334
     },
     {
       "conditional": true,
       "label": "C4|CANDIDATE|independence",
-      "loss_fraction": 0.000796,
-      "p": 0.9437376051733517
+      "loss_fraction": 0.000768,
+      "p": 0.5438716445870077
     },
     {
       "conditional": true,
       "label": "C4|CANDIDATE|frame_invariance",
-      "loss_fraction": 0.000796,
-      "p": 0.0837507276546261
+      "loss_fraction": 0.000768,
+      "p": 0.7218730226144376
     },
     {
       "conditional": true,
       "label": "C4|CANDIDATE|anisotropy",
-      "loss_fraction": 0.000796,
-      "p": 0.870093688593714
+      "loss_fraction": 0.000768,
+      "p": 0.5189083645987078
     },
     {
       "conditional": true,
       "label": "C4|CANDIDATE|tail_1em2_count",
-      "loss_fraction": 0.000796,
-      "p": 0.29945957805944934
+      "loss_fraction": 0.000768,
+      "p": 0.9603244599147827
     },
     {
       "conditional": true,
       "label": "C4|CANDIDATE|tail_1em2_excess",
-      "loss_fraction": 0.000796,
-      "p": 0.00484965112231342
+      "loss_fraction": 0.000768,
+      "p": 0.8181382975510672
     },
     {
       "conditional": true,
       "label": "C4|CANDIDATE|tail_1em3_count",
-      "loss_fraction": 0.000796,
-      "p": 0.33601939656333224
+      "loss_fraction": 0.000768,
+      "p": 0.06656263619774078
     },
     {
       "conditional": true,
       "label": "C4|CANDIDATE|tail_1em3_excess",
-      "loss_fraction": 0.000796,
-      "p": 0.25138449329968626
+      "loss_fraction": 0.000768,
+      "p": 0.9167771458482324
     },
     {
       "conditional": true,
       "label": "C4|CANDIDATE|tail_1em4_count",
-      "loss_fraction": 0.000796,
-      "p": 0.8873444670950759
+      "loss_fraction": 0.000768,
+      "p": 0.9436721772141967
     },
     {
       "conditional": false,
       "label": "C5|CANDIDATE|anisotropy",
       "loss_fraction": 0.0,
-      "p": 0.39365207826980997
+      "p": 0.22453619123110824
     },
     {
       "conditional": false,
       "label": "C5|CANDIDATE|cap_law",
       "loss_fraction": 0.0,
-      "p": 0.0858228934364651
+      "p": 0.06952328189495194
     },
     {
       "conditional": false,
       "label": "C6|CANDIDATE|anisotropy",
       "loss_fraction": 0.0,
-      "p": 0.4438093731840682
+      "p": 0.14905666759078484
     },
     {
       "conditional": false,
       "label": "C6|CANDIDATE|cap_law",
       "loss_fraction": 0.0,
-      "p": 0.20336527324414522
+      "p": 0.7512582317856201
     }
   ],
   "F6_controls": [
@@ -370,6 +370,7 @@
     }
   ],
   "amendments": [
+    "5.0.0",
     "4.0.0",
     "3.0.0",
     "2.0.0",
@@ -388,19 +389,20 @@
   "cross_phase_native_disagreements": 0,
   "evidence": {
     "accounting_failures": 0,
-    "archive_identifier": "bi-kappa 2.3.0 @ 60ef3438ea0dfebaa9f4eae9b4bd1f089be2fb03",
+    "archive_identifier": null,
     "audit_coverage": {
       "avoidable_loss_candidate": "nan",
       "finite_but_wrong_candidate": "nan",
       "method_disagreement": 1.0,
       "subnormal_or_zero_denominator_representable_target": 1.0,
-      "unambiguous_failure_beyond_margin": 0.001000202091399003,
-      "uniform_sample": 0.00010002999945146408,
+      "unambiguous_failure_beyond_margin": 0.0010002224532821857,
+      "uniform_sample": 0.00010003098259013934,
       "within_margin_of_a_type_limit": 1.0
     },
     "baseline_comparison_resolved": true,
     "benign_control_exercises_candidate": true,
-    "candidate_avoidable_total": 6,
+    "candidate_avoidable_total": 0,
+    "candidate_rounding_band_total": 2,
     "conditional_cells_without_loss_fraction": 0,
     "dependencies_clean": true,
     "environments": [
@@ -449,20 +451,20 @@
         "stdlib": "libstdcxx"
       }
     ],
-    "g6_receipt": "accepted: measured at 60ef3438ea0dfebaa9f4eae9b4bd1f089be2fb03 under protocol 664d906899b1726ae6d0bd3856483c4590af875a9dfdc3fee14fdcb79dbc4e34",
+    "g6_receipt": "absent",
     "honest_minus_floor_unadjudicated": 0,
     "log_q_worst_abs_error": 2.842170943040401e-14,
-    "make_reverify_identical": true,
-    "make_verify_exit_code": 0,
-    "oracle_audited_records": 115029238,
+    "make_reverify_identical": null,
+    "make_verify_exit_code": null,
+    "oracle_audited_records": 115021896,
     "oracle_conversion_failures": 0,
     "oracle_disagreements": 0,
-    "protocol_sha256": "664d906899b1726ae6d0bd3856483c4590af875a9dfdc3fee14fdcb79dbc4e34",
+    "protocol_sha256": "8fa713c11bebc4a76f9d1a412633a7fdb72f7be1ddce397112801c1b400f3596",
     "raw_manifest_verified": true,
     "rng_stream_break_documented": true,
     "same_seed_reproducible": true,
-    "time_per_return_ratio": 0.8540850373890946,
-    "time_per_return_ratio_hi": 0.9066457536393603
+    "time_per_return_ratio": 0.8619564993285915,
+    "time_per_return_ratio_hi": 0.9153804438850685
   },
   "expected_false_failure_bound": 0.05,
   "experiment": "exp7_confirmatory",
@@ -472,45 +474,45 @@
       "detail": "Simes over 26 configurations; 0 identified by Holm on rejection",
       "family": "F1_radial_law",
       "offenders": [],
-      "p_value": 0.9898281239599174,
+      "p_value": 0.2552946119173066,
       "passed": true,
-      "statistic": 0.9898281239599174
+      "statistic": 0.2552946119173066
     },
     "F2_quantile_coverage": {
       "alpha": 0.005,
-      "detail": "3 misses of 650 resolved intervals in 130 independently streamed configurations; expected 6.22; fail above 14",
+      "detail": "5 misses of 650 resolved intervals in 130 independently streamed configurations; expected 6.22; fail above 14",
       "family": "F2_quantile_coverage",
       "offenders": [],
-      "p_value": 0.943617616850876,
+      "p_value": 0.7376021746687031,
       "passed": true,
-      "statistic": 3.0
+      "statistic": 5.0
     },
     "F3_quantile_direction": {
       "alpha": 0.01,
       "detail": "Holm over 130 (kappa, precision, p) cells",
       "family": "F3_quantile_direction",
       "offenders": [],
-      "p_value": 0.24210085014123248,
+      "p_value": 0.8308672658704204,
       "passed": true,
-      "statistic": 0.24210085014123248
+      "statistic": 0.8308672658704204
     },
     "F4_upper_tail_mass": {
       "alpha": 0.01,
       "detail": "Simes over 780 exceedance statistics",
       "family": "F4_upper_tail_mass",
       "offenders": [],
-      "p_value": 0.6778996058821818,
+      "p_value": 0.05740722315413416,
       "passed": true,
-      "statistic": 0.6778996058821818
+      "statistic": 0.05740722315413416
     },
     "F5_loader_battery": {
       "alpha": 0.01,
       "detail": "Holm jointly over 52 tests across all cells; 18 cells are conditional on success and are labelled as such",
       "family": "F5_loader_battery",
       "offenders": [],
-      "p_value": 0.06304546459007446,
+      "p_value": 0.526379156999418,
       "passed": true,
-      "statistic": 0.06304546459007446
+      "statistic": 0.526379156999418
     },
     "F6_negative_controls": {
       "alpha": "nan",
@@ -544,18 +546,19 @@
       "title": "primary-source audit"
     },
     "G1": {
-      "evidence": "4/4 scalar families pass; candidate avoidable loss 6 (required exactly 0); benign control exercises the candidate: True",
+      "evidence": "4/4 scalar families pass; candidate avoidable loss outside the rounding band 0 (required exactly 0); rounding-band loss 2 (published, not counted); benign control exercises the candidate: True",
       "gate": "G1",
       "inputs": {
-        "avoidable": 6,
+        "avoidable": 0,
         "benign_control_ok": true,
-        "failed_families": []
+        "failed_families": [],
+        "rounding_band": 2
       },
-      "status": "FAIL",
+      "status": "PASS",
       "title": "scalar correctness"
     },
     "G2": {
-      "evidence": "0 accounting-identity failures; 0 oracle disagreements in 115029238 adjudicated attempts; 0 honest-count discrepancies left unadjudicated",
+      "evidence": "0 accounting-identity failures; 0 oracle disagreements in 115021896 adjudicated attempts; 0 honest-count discrepancies left unadjudicated",
       "gate": "G2",
       "inputs": {
         "audit_coverage": {
@@ -563,8 +566,8 @@
           "finite_but_wrong_candidate": "nan",
           "method_disagreement": 1.0,
           "subnormal_or_zero_denominator_representable_target": 1.0,
-          "unambiguous_failure_beyond_margin": 0.001000202091399003,
-          "uniform_sample": 0.00010002999945146408,
+          "unambiguous_failure_beyond_margin": 0.0010002224532821857,
+          "uniform_sample": 0.00010003098259013934,
           "within_margin_of_a_type_limit": 1.0
         },
         "declared_rates": {
@@ -589,9 +592,9 @@
           "detail": "Holm jointly over 52 tests across all cells; 18 cells are conditional on success and are labelled as such",
           "family": "F5_loader_battery",
           "offenders": [],
-          "p_value": 0.06304546459007446,
+          "p_value": 0.526379156999418,
           "passed": true,
-          "statistic": 0.06304546459007446
+          "statistic": 0.526379156999418
         },
         "F6": {
           "alpha": "nan",
@@ -624,37 +627,33 @@
       "title": "portability"
     },
     "G5": {
-      "evidence": "candidate/LEGACY time per returned sample 0.854 (cluster-bootstrap upper limit 0.907; pre-registered bound 2); same-seed reproducible: True; RNG-stream break documented: True",
+      "evidence": "candidate/LEGACY time per returned sample 0.862 (cluster-bootstrap upper limit 0.915; pre-registered bound 2); same-seed reproducible: True; RNG-stream break documented: True",
       "gate": "G5",
       "inputs": {
         "bound": 2.0,
-        "hi": 0.9066457536393603,
-        "ratio": 0.8540850373890946
+        "hi": 0.9153804438850685,
+        "ratio": 0.8619564993285915
       },
       "status": "PASS",
       "title": "operational viability"
     },
     "G6": {
-      "evidence": "raw manifest verifies against the bytes read: True; make verify exit 0; derived artifacts regenerate byte-identically: True; dependency set clean: True; baseline comparison resolved: True; protocol hash matches the frozen document: True; archive identifier bi-kappa 2.3.0 @ 60ef3438ea0dfebaa9f4eae9b4bd1f089be2fb03; receipt: accepted: measured at 60ef3438ea0dfebaa9f4eae9b4bd1f089be2fb03 under protocol 664d906899b1726ae6d0bd3856483c4590af875a9dfdc3fee14fdcb79dbc4e34",
+      "evidence": "required evidence is absent: `make verify` was never run (receipt: absent). An absent measurement fails this gate; it never passes it.",
       "gate": "G6",
-      "inputs": {
-        "archive_identifier": "bi-kappa 2.3.0 @ 60ef3438ea0dfebaa9f4eae9b4bd1f089be2fb03",
-        "g6_receipt": "accepted: measured at 60ef3438ea0dfebaa9f4eae9b4bd1f089be2fb03 under protocol 664d906899b1726ae6d0bd3856483c4590af875a9dfdc3fee14fdcb79dbc4e34",
-        "protocol_sha256_matches": true
-      },
-      "status": "PASS",
+      "inputs": {},
+      "status": "FAIL",
       "title": "reproducible artifact"
     }
   },
   "mode": "production",
   "performance": {
     "bound": 2.0,
-    "hi": 0.9066457536393603,
-    "lo": 0.8028083336788505,
-    "ratio": 0.8540850373890946
+    "hi": 0.9153804438850685,
+    "lo": 0.8113265949607538,
+    "ratio": 0.8619564993285915
   },
   "primary_environment_tag": "libcxx",
-  "protocol_sha256": "664d906899b1726ae6d0bd3856483c4590af875a9dfdc3fee14fdcb79dbc4e34",
-  "protocol_version": "4.0.0",
+  "protocol_sha256": "8fa713c11bebc4a76f9d1a412633a7fdb72f7be1ddce397112801c1b400f3596",
+  "protocol_version": "5.0.0",
   "verdict": "NO-GO"
 }

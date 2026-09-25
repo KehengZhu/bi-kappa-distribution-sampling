@@ -4,29 +4,29 @@ NO-GO
 
 Generated deterministically from the recorded run; this report carries no wall-clock stamp, so `make reverify` can diff it. Run times and build identity are in `provenance.md`.
 
-Protocol `config/protocol.json` version 4.0.0, SHA-256 `664d906899b1726ae6d0bd3856483c4590af875a9dfdc3fee14fdcb79dbc4e34`.
+Protocol `config/protocol.json` version 5.0.0, SHA-256 `8fa713c11bebc4a76f9d1a412633a7fdb72f7be1ddce397112801c1b400f3596`.
 
 ## Gates
 
 | gate | name | verdict | evidence |
 |---|---|---|---|
 | G0 | primary-source audit | PASS | log-q evaluator agrees with the 60-digit oracle to 2.84e-14 (tolerance 1e-10); attribution checklist complete for 7/7 cited methods; acceptance-rate predictor pre-registered as 'area_ratio' |
-| G1 | scalar correctness | FAIL | 4/4 scalar families pass; candidate avoidable loss 6 (required exactly 0); benign control exercises the candidate: True |
-| G2 | mechanism closure | PASS | 0 accounting-identity failures; 0 oracle disagreements in 115029238 adjudicated attempts; 0 honest-count discrepancies left unadjudicated |
+| G1 | scalar correctness | PASS | 4/4 scalar families pass; candidate avoidable loss outside the rounding band 0 (required exactly 0); rounding-band loss 2 (published, not counted); benign control exercises the candidate: True |
+| G2 | mechanism closure | PASS | 0 accounting-identity failures; 0 oracle disagreements in 115021896 adjudicated attempts; 0 honest-count discrepancies left unadjudicated |
 | G3 | complete-loader fidelity | PASS | F5 passes jointly over its cells (Holm jointly over 52 tests across all cells; 18 cells are conditional on success and are labelled as such); F6 passes (5 controls; required power 0.9 at the pre-registered effect); 0 conditional cells lack a loss fraction |
 | G4 | portability | PASS | 2 native environments completed ([('arm64', 'libc++'), ('arm64', 'libstdc++')]); 0 translated results recorded as corroborating only and excluded from the decision; 1 bitwise cross-standard-library comparisons; acceptance is limited to the supported environment; the cross-architecture claim is withdrawn from the claim boundary and published as a limitation, not assumed; 1 bitwise cross-stdlib comparisons (exact); 0 cross-architecture cells, of which 0 are equivalent within +/-0.15 on the log rate ratio, 0 disagree and 0 are underpowered (too few events to establish either, so they leave the gate open rather than closing or failing it) |
-| G5 | operational viability | PASS | candidate/LEGACY time per returned sample 0.854 (cluster-bootstrap upper limit 0.907; pre-registered bound 2); same-seed reproducible: True; RNG-stream break documented: True |
-| G6 | reproducible artifact | PASS | raw manifest verifies against the bytes read: True; make verify exit 0; derived artifacts regenerate byte-identically: True; dependency set clean: True; baseline comparison resolved: True; protocol hash matches the frozen document: True; archive identifier bi-kappa 2.3.0 @ 60ef3438ea0dfebaa9f4eae9b4bd1f089be2fb03; receipt: accepted: measured at 60ef3438ea0dfebaa9f4eae9b4bd1f089be2fb03 under protocol 664d906899b1726ae6d0bd3856483c4590af875a9dfdc3fee14fdcb79dbc4e34 |
+| G5 | operational viability | PASS | candidate/LEGACY time per returned sample 0.862 (cluster-bootstrap upper limit 0.915; pre-registered bound 2); same-seed reproducible: True; RNG-stream break documented: True |
+| G6 | reproducible artifact | FAIL | required evidence is absent: `make verify` was never run (receipt: absent). An absent measurement fails this gate; it never passes it. |
 
 ## Families
 
 | family | alpha | passed | statistic | p | detail |
 |---|---:|---|---:|---:|---|
-| F1_radial_law | 0.01 | yes | 0.9898 | 0.9898 | Simes over 26 configurations; 0 identified by Holm on rejection |
-| F2_quantile_coverage | 0.005 | yes | 3 | 0.9436 | 3 misses of 650 resolved intervals in 130 independently streamed configurations; expected 6.22; fail above 14 |
-| F3_quantile_direction | 0.01 | yes | 0.2421 | 0.2421 | Holm over 130 (kappa, precision, p) cells |
-| F4_upper_tail_mass | 0.01 | yes | 0.6779 | 0.6779 | Simes over 780 exceedance statistics |
-| F5_loader_battery | 0.01 | yes | 0.06305 | 0.06305 | Holm jointly over 52 tests across all cells; 18 cells are conditional on success and are labelled as such |
+| F1_radial_law | 0.01 | yes | 0.2553 | 0.2553 | Simes over 26 configurations; 0 identified by Holm on rejection |
+| F2_quantile_coverage | 0.005 | yes | 5 | 0.7376 | 5 misses of 650 resolved intervals in 130 independently streamed configurations; expected 6.22; fail above 14 |
+| F3_quantile_direction | 0.01 | yes | 0.8309 | 0.8309 | Holm over 130 (kappa, precision, p) cells |
+| F4_upper_tail_mass | 0.01 | yes | 0.05741 | 0.05741 | Simes over 780 exceedance statistics |
+| F5_loader_battery | 0.01 | yes | 0.5264 | 0.5264 | Holm jointly over 52 tests across all cells; 18 cells are conditional on success and are labelled as such |
 | F6_negative_controls | - | yes | - | - | 5 controls; required power 0.9 at the pre-registered effect |
 | F7_portability | 0.005 | yes | 0 | 1 | 1 bitwise cross-stdlib comparisons (exact); 0 cross-architecture cells, of which 0 are equivalent within +/-0.15 on the log rate ratio, 0 disagree and 0 are underpowered (too few events to establish either, so they leave the gate open rather than closing or failing it) |
 
@@ -38,7 +38,7 @@ Expected false-failure rate of this design, computed from the frozen family stru
 
 ## Unresolved
 
-- **G1 (scalar correctness) - FAIL.** 4/4 scalar families pass; candidate avoidable loss 6 (required exactly 0); benign control exercises the candidate: True
+- **G6 (reproducible artifact) - FAIL.** required evidence is absent: `make verify` was never run (receipt: absent). An absent measurement fails this gate; it never passes it.
 
 ## Decisive source data
 

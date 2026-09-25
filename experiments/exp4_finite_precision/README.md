@@ -50,7 +50,7 @@ GitHub repository.
 |---|---|
 | κ | 0.5001, 0.501, 0.505, 0.51, 0.55, 0.6, 0.75, 1, 1.25, 1.49, 1.5, 2, 5 |
 | precision | `float` and `double` |
-| attempts | 10⁶ per seed and setting, seeds 10001–10005 (5 × 10⁶ per setting); `p2` 10⁷ per seed (5 × 10⁷ per setting); timing on seeds 10006–10010 |
+| attempts | 10⁶ per seed and setting, seeds 11001–11005 (5 × 10⁶ per setting); `p2` 10⁷ per seed (5 × 10⁷ per setting); timing on seeds 11006–11010 |
 | builds | Apple clang with libc++, and GCC 15 with libstdc++, both on arm64 (Apple silicon) |
 | flags | `-Wall -Wextra -std=c++11 -O2 -ffp-contract=off`; RNG `std::mt19937` |
 
@@ -82,6 +82,10 @@ classifies it again. The recorded attempts are:
 - 1 in 10³ of the failures further than 20 log units beyond a type limit;
 - 1 in 10⁴ of the remaining attempts.
 
+For every recorded attempt that a calculation lost avoidably, the recomputation also reports
+whether the exact largest component lies within the rounding band of the overflow threshold
+(see Results).
+
 The experiment runs in six phases, each a make target.
 
 | target | measures |
@@ -100,52 +104,64 @@ The experiment runs in six phases, each a make target.
 
 ## Results
 
-The committed results were produced with release 2.3.0 of `cpp/bi_kappa_distribution.H`, which
+The committed results were produced with release 3.0.0 of `cpp/bi_kappa_distribution.H`, which
 computes in the working precision in every instantiation: in `float` all arithmetic is done in
-`float`. `raw/environment.json` records its SHA-256 (beginning `4c7c95ea`) and the SHA-256 of
+`float`. `raw/environment.json` records its SHA-256 (beginning `0573ea1c`) and the SHA-256 of
 every other source file, and `results/provenance.md` records the compilers and run times.
 
 - In double precision the stabilized calculation had no avoidable loss in any setting. Every
   non-finite output it returned had a component too large for `double`.
-- In single precision it returned three draws as non-finite whose largest component could have
-  been stored: two at κ = 0.505 and one at κ = 0.51, out of 5 × 10⁷ attempts per setting, the
-  same three draws in both builds. Their exact largest components lay 4.3 × 10⁻⁶, 9.8 × 10⁻⁶
-  and 5.2 × 10⁻⁷ (relative) below the value at which a `float` overflows. The single-precision
-  radius carries a relative error of about 10⁻⁵ at that size, so such a component can round
-  either way; one draw at κ = 0.51 rounded the other way and was returned finite although its
-  exact value lay 6.2 × 10⁻⁶ above the limit. These three draws are avoidable losses under the
-  protocol. Every other non-finite output had a component too large for `float`.
+- In single precision it returned one draw as non-finite whose largest component could have
+  been stored, at κ = 0.501, out of 5 × 10⁷ attempts; the same draw occurred in both builds.
+  Its exact largest component lay 2.7 × 10⁻⁶ (relative) below the value at which a `float`
+  overflows. The single-precision radius carries a relative error of about 10⁻⁵ at that size,
+  so a component that close to the limit can round either way. The protocol counts such a draw
+  as a rounding-band loss rather than an avoidable one (see below). Every other non-finite
+  output had a component too large for `float`.
 - The direct calculation lost additional draws near κ = 1/2. In double precision at κ = 0.505,
   for example, it failed on 2.4% of attempts, against 0.083% for the stabilized calculation. In
-  single precision at κ = 0.55 the two rates were 0.57% and 0.014%.
+  single precision at κ = 0.55 the two rates were 0.57% and 0.013%.
 - Unavoidable losses dominate at the smallest κ. At κ = 0.5001 they affect 86.8% of attempts in
   double precision and 98.2% in single precision.
-- The 100-digit recomputation agreed with the probe's classification on all 115 029 238
+- The 100-digit recomputation agreed with the probe's classification on all 115 021 896
   recorded attempts.
 - The tests of the radial distribution (`p1`) and of the complete loader (`p4`) found no
   departure from the target distribution at the significance levels set in `PROTOCOL.md`.
-- The pre-registered verdict in `results/analysis_report.md` is NO-GO, because gate G1 requires
-  the stabilized calculation to have no avoidable loss at all, and the three single-precision
-  draws above fail it. The gate counts them once per build, as six.
 - The two builds returned bitwise identical output for the stabilized calculation in all 130
   configurations compared. The direct calculation, which draws its Gamma variates from the
   standard library, differed between the builds in all 130.
-- With libc++ the stabilized calculation took 0.70 to 0.91 times as long per returned sample as
+- With libc++ the stabilized calculation took 0.71 to 0.92 times as long per returned sample as
   the direct one, depending on the benchmark case. With libstdc++ it took 1.15 to 1.40 times as
   long. The single-precision case is the fastest of the five.
+- Every statistical and mechanism gate in `results/analysis_report.md` passes. The verdict line
+  reads NO-GO because gate G6 requires a `make verify` measurement taken after the analysis, and
+  no such record exists for this run until a release archive is built and checked.
 
 Only one processor architecture (64-bit ARM) was tested. `results/portability_remote.md` gives
 the commands for running the comparison on x86_64.
 
-**2026-09-25, protocol 4.0.0.** The results above replace those of protocol 3.0.0, which were
-produced with release 2.2.0 on seeds 9001–9010. Release 2.2.0 computed a `float` sample in
-`double` and rounded each component once; release 2.3.0 computes it in `float`, so that the
+**Rounding-band losses.** A calculation in the working type cannot tell on which side of the
+overflow threshold a component falls when the exact component lies within its rounding error
+of the threshold. Since protocol 5.0.0 a failure whose exact largest component `V` lies below
+the threshold by a relative distance of at most `4 eps max(1, |log V|)` (4.2 × 10⁻⁵ in `float`,
+6.3 × 10⁻¹³ in `double`) is counted separately, in the `rounding_band_*` columns of
+`results/failure_envelope.csv`, and not as avoidable loss. In this run that applied to the one
+single-precision draw above for the stabilized calculation, and to 28 draws for the direct
+calculation (9 at κ = 0.501, 8 at κ = 0.505, 11 at κ = 0.51, all single precision), whose
+denominator had underflowed to zero.
+
+**2026-09-25, protocols 4.0.0 and 5.0.0.** These results replace those of protocol 3.0.0, which
+were produced with release 2.2.0 on seeds 9001–9010. Release 2.2.0 computed a `float` sample in
+`double` and rounded each component once; release 3.0.0 computes it in `float`, so that the
 header works where only single precision is available. `double` output is unchanged. The
-mechanism phase `p2` now runs 10⁷ attempts per seed instead of 10⁶. With 5 × 10⁶ attempts per
+mechanism phase `p2` runs 10⁷ attempts per seed instead of 10⁶: with 5 × 10⁶ attempts per
 setting a setting with no failure could only be bounded at 6.0 × 10⁻⁷ (one-sided 95%), above the
 nonzero fractions observed at neighbouring κ; with 5 × 10⁷ the bound is 6.0 × 10⁻⁸. The
-recomputation now uses MPFR instead of `cpp_dec_float_100`. `PROTOCOL.md` §2.8 records the
-amendment.
+recomputation uses MPFR instead of `cpp_dec_float_100`. A first run under protocol 4.0.0, on
+seeds 10001–10010 (commit `84130b5`), found three single-precision draws of the kind described
+above and failed gate G1, which then counted them as avoidable losses. Protocol 5.0.0 adds the
+rounding band and was tested on the new seed block 11001–11010. `PROTOCOL.md` §2.8 and §2.9
+record both amendments.
 
 ## Rerunning
 

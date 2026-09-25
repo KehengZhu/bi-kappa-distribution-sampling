@@ -294,15 +294,17 @@ def fp1_candidate_sentence(summary: dict) -> str:
                 "type.")
     text = ""
     if av:
-        text += (f"The stabilized calculation lost {sum(av.values())} such draws "
+        text += (f"The stabilized calculation lost {sum(av.values())} such "
+                 f"draw{'' if sum(av.values()) == 1 else 's'} "
                  f"({_where(av)}). ")
     else:
         text += ("The stabilized calculation returned all such draws except those whose "
                  "final component lay within rounding error of the largest value the output "
                  "type can hold. ")
     if band:
-        text += (f"Within that rounding error of the limit it returned {sum(band.values())} "
-                 f"draws as non-finite ({_where(band)}). ")
+        nb = sum(band.values())
+        text += (f"Within that rounding error of the limit it returned {nb} "
+                 f"draw{'' if nb == 1 else 's'} as non-finite ({_where(band)}). ")
     text += ("Its other failures occurred only when a final velocity component was too large "
              "for the output type.")
     return text

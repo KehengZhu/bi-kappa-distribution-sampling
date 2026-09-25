@@ -1,17 +1,17 @@
 {
   "experiment": "exp7_confirmatory",
-  "generated_utc": "2026-09-25T05:51:50+00:00",
+  "generated_utc": "2026-09-25T14:57:56+00:00",
   "exploratory": false,
   "git": {
-    "commit": "60ef3438ea0dfebaa9f4eae9b4bd1f089be2fb03",
+    "commit": "64cd22c40b6b2ec6e2d6d2fdbb68683c362dddc0",
     "repo_dirty": true,
     "dependencies_clean": true,
     "unclean_dependencies": []
   },
   "dependencies": {
     "../../cpp/bi_kappa_distribution.H": {
-      "sha256": "4c7c95ea76d6c65eada4936cfd3a635f499a4d74c87dfacea7ffc600d6763deb",
-      "head_sha256": "4c7c95ea76d6c65eada4936cfd3a635f499a4d74c87dfacea7ffc600d6763deb",
+      "sha256": "0573ea1c1dbc551364dfad0e0b10150a04b6b8b5b54155aa2849e3a6659a918a",
+      "head_sha256": "0573ea1c1dbc551364dfad0e0b10150a04b6b8b5b54155aa2849e3a6659a918a",
       "state": "clean"
     },
     "src/legacy/bi_kappa_distribution_v1.H": {
@@ -20,13 +20,13 @@
       "state": "clean"
     },
     "src/exp7_common.H": {
-      "sha256": "c0f5e9e4903c494036a309e2969f8767f9dc6c47d4237ac15d57af1c78cab390",
-      "head_sha256": "c0f5e9e4903c494036a309e2969f8767f9dc6c47d4237ac15d57af1c78cab390",
+      "sha256": "a2520bffcbc918058d7d3422e84d5aac28746f1f4e234b1331c4ae15a6178f2f",
+      "head_sha256": "a2520bffcbc918058d7d3422e84d5aac28746f1f4e234b1331c4ae15a6178f2f",
       "state": "clean"
     },
     "src/exp7_loaders.H": {
-      "sha256": "8f4a34f809c99d58da20b56cee14e583b8cffc543b93d2cd60ffd0a114cc552e",
-      "head_sha256": "8f4a34f809c99d58da20b56cee14e583b8cffc543b93d2cd60ffd0a114cc552e",
+      "sha256": "73070eb64726089bb1e2b0c400036bdcd23b339f4fad28fb162f5bd8fb645a19",
+      "head_sha256": "73070eb64726089bb1e2b0c400036bdcd23b339f4fad28fb162f5bd8fb645a19",
       "state": "clean"
     },
     "src/exp7_digest.H": {
@@ -35,33 +35,33 @@
       "state": "clean"
     },
     "src/exp7_probe.cpp": {
-      "sha256": "58688448081964e9d9ba3d1302b04a949f985b8af5e1735f2a112fa452a34185",
-      "head_sha256": "58688448081964e9d9ba3d1302b04a949f985b8af5e1735f2a112fa452a34185",
+      "sha256": "a0e3c787909f4635d980b5dbd5488d41fffaff836f406a3811c0ca1ae36bc48e",
+      "head_sha256": "a0e3c787909f4635d980b5dbd5488d41fffaff836f406a3811c0ca1ae36bc48e",
       "state": "clean"
     },
     "src/exp7_protocol.H": {
-      "sha256": "9f420da502c198210fa1adf429617957b2a75040b4b724887e46ecf3603e4f2e",
-      "head_sha256": "9f420da502c198210fa1adf429617957b2a75040b4b724887e46ecf3603e4f2e",
+      "sha256": "3b28878aff65e63df63ee33b5e9186cd428d4acf58525715b79ea395dbb0a4a2",
+      "head_sha256": "3b28878aff65e63df63ee33b5e9186cd428d4acf58525715b79ea395dbb0a4a2",
       "state": "clean"
     },
     "PROTOCOL.md": {
-      "sha256": "018ce02e01e33939ae6b14eed1f7844a392bb3602183ddcf1f7ae852a19b9768",
-      "head_sha256": "018ce02e01e33939ae6b14eed1f7844a392bb3602183ddcf1f7ae852a19b9768",
+      "sha256": "fdaf227dec99e069f5a166388ea5836b83a258dbb9117831d721578a77901dc3",
+      "head_sha256": "fdaf227dec99e069f5a166388ea5836b83a258dbb9117831d721578a77901dc3",
       "state": "clean"
     },
     "config/protocol.json": {
-      "sha256": "664d906899b1726ae6d0bd3856483c4590af875a9dfdc3fee14fdcb79dbc4e34",
-      "head_sha256": "664d906899b1726ae6d0bd3856483c4590af875a9dfdc3fee14fdcb79dbc4e34",
+      "sha256": "8fa713c11bebc4a76f9d1a412633a7fdb72f7be1ddce397112801c1b400f3596",
+      "head_sha256": "8fa713c11bebc4a76f9d1a412633a7fdb72f7be1ddce397112801c1b400f3596",
       "state": "clean"
     },
     "src/exp7_oracle.cpp": {
-      "sha256": "f579d765cd61c162ba6d67faf230d24c3c398643d8cdd2e60909b755f857df96",
-      "head_sha256": "f579d765cd61c162ba6d67faf230d24c3c398643d8cdd2e60909b755f857df96",
+      "sha256": "98240c30b973c597e1b2a83fe9148c80aa2fecdc9b07f08277691ce5bb287286",
+      "head_sha256": "98240c30b973c597e1b2a83fe9148c80aa2fecdc9b07f08277691ce5bb287286",
       "state": "clean"
     },
     "src/gen_protocol_header.py": {
-      "sha256": "b202e9931261e33b0b4a61cd2d9597e2e2556aa294b3789577c939a1c033aa72",
-      "head_sha256": "b202e9931261e33b0b4a61cd2d9597e2e2556aa294b3789577c939a1c033aa72",
+      "sha256": "e5341dfe704b68f87c02806f3d4e7f475b8ba07a9132d303398bcca12a89811b",
+      "head_sha256": "e5341dfe704b68f87c02806f3d4e7f475b8ba07a9132d303398bcca12a89811b",
       "state": "clean"
     },
     "src/check_legacy.py": {
@@ -70,18 +70,18 @@
       "state": "clean"
     },
     "GNUmakefile": {
-      "sha256": "64eb237045bdaeb0c2ec7e022138a825ba08766768b64c8e909272c815f50c11",
-      "head_sha256": "64eb237045bdaeb0c2ec7e022138a825ba08766768b64c8e909272c815f50c11",
+      "sha256": "03eb18ec77052f014760c5e849d11f19958f8a659e0e43a93cb760ebef7d4ce3",
+      "head_sha256": "03eb18ec77052f014760c5e849d11f19958f8a659e0e43a93cb760ebef7d4ce3",
       "state": "clean"
     },
     "analyze.py": {
-      "sha256": "1faac741f55a6160f293b92eab32d6d71cfe6af76c83fc2923715092d3455fa7",
-      "head_sha256": "1faac741f55a6160f293b92eab32d6d71cfe6af76c83fc2923715092d3455fa7",
+      "sha256": "dce9182090d91e00cc188ed139c53396aa7010634731d1d28877fce9ca045e14",
+      "head_sha256": "dce9182090d91e00cc188ed139c53396aa7010634731d1d28877fce9ca045e14",
       "state": "clean"
     },
     "make_figures.py": {
-      "sha256": "58fe1e143e0381410cb241d27ab3d5cc8a4111cbf5bd74008ab09636100a600f",
-      "head_sha256": "58fe1e143e0381410cb241d27ab3d5cc8a4111cbf5bd74008ab09636100a600f",
+      "sha256": "311df4a191612b63112bb406788a87706415650c06b55407e3100c7a158a7364",
+      "head_sha256": "311df4a191612b63112bb406788a87706415650c06b55407e3100c7a158a7364",
       "state": "clean"
     },
     "preflight.py": {
@@ -110,8 +110,8 @@
       "state": "clean"
     },
     "exp7_gates.py": {
-      "sha256": "7a7ab5f51aed01008d451816ba6c40cc348e275f63b73ea3fb99cbbe7530426d",
-      "head_sha256": "7a7ab5f51aed01008d451816ba6c40cc348e275f63b73ea3fb99cbbe7530426d",
+      "sha256": "f10bd5bc8f088a88282eed3f570c9e5074e6bb7693a96c3ebb4926d4b9a4b7e0",
+      "head_sha256": "f10bd5bc8f088a88282eed3f570c9e5074e6bb7693a96c3ebb4926d4b9a4b7e0",
       "state": "clean"
     },
     "exp7_portability.py": {
@@ -120,13 +120,13 @@
       "state": "clean"
     },
     "config/make_protocol.py": {
-      "sha256": "f966473a0a2049fb70cbc670b55d71ffb9c389eb2effe132d44bbf68262cd645",
-      "head_sha256": "f966473a0a2049fb70cbc670b55d71ffb9c389eb2effe132d44bbf68262cd645",
+      "sha256": "7bf8c756d96c7198a5d502ecfebccb0a3ce9ba1733f656f2dd107f5eade81e27",
+      "head_sha256": "7bf8c756d96c7198a5d502ecfebccb0a3ce9ba1733f656f2dd107f5eade81e27",
       "state": "clean"
     }
   },
   "continuity": {
-    "previous_preflight_utc": "2026-09-25T05:51:04+00:00",
+    "previous_preflight_utc": "2026-09-25T14:57:09+00:00",
     "dependency_hashes_unchanged_since_previous_preflight": true,
     "sampling_dependency_hashes_unchanged_since_previous_preflight": true,
     "note": "Raw draws depend only on the sampling dependencies. If those hashes are unchanged since the preflight a raw file was produced under, that file came from this content, whatever else was edited afterwards."
@@ -187,9 +187,9 @@
       "arch": "arm64",
       "precision": "n/a",
       "rng": "mt19937",
-      "bi_kappa_version": "2.3.0",
-      "protocol_version": "4.0.0",
-      "protocol_sha256": "664d906899b1726ae6d0bd3856483c4590af875a9dfdc3fee14fdcb79dbc4e34",
+      "bi_kappa_version": "3.0.0",
+      "protocol_version": "5.0.0",
+      "protocol_sha256": "8fa713c11bebc4a76f9d1a412633a7fdb72f7be1ddce397112801c1b400f3596",
       "cxxflags": "-Wall -Wextra -std=c++11 -O2 -ffp-contract=off -I src",
       "rounding_mode": "FE_TONEAREST",
       "flt_eval_method": 0,
@@ -212,9 +212,9 @@
       "arch": "arm64",
       "precision": "n/a",
       "rng": "mt19937",
-      "bi_kappa_version": "2.3.0",
-      "protocol_version": "4.0.0",
-      "protocol_sha256": "664d906899b1726ae6d0bd3856483c4590af875a9dfdc3fee14fdcb79dbc4e34",
+      "bi_kappa_version": "3.0.0",
+      "protocol_version": "5.0.0",
+      "protocol_sha256": "8fa713c11bebc4a76f9d1a412633a7fdb72f7be1ddce397112801c1b400f3596",
       "cxxflags": "-Wall -Wextra -std=c++11 -O2 -ffp-contract=off -I src",
       "rounding_mode": "FE_TONEAREST",
       "flt_eval_method": 0,
@@ -261,18 +261,18 @@
     "n_conditioning": 1000000,
     "n_loader": 100000,
     "production_seeds": [
-      10001,
-      10002,
-      10003,
-      10004,
-      10005
+      11001,
+      11002,
+      11003,
+      11004,
+      11005
     ],
     "performance_seeds": [
-      10006,
-      10007,
-      10008,
-      10009,
-      10010
+      11006,
+      11007,
+      11008,
+      11009,
+      11010
     ],
     "kappa_ladder": [
       0.5001,
@@ -291,8 +291,8 @@
     ]
   },
   "protocol": {
-    "version": "4.0.0",
-    "sha256": "664d906899b1726ae6d0bd3856483c4590af875a9dfdc3fee14fdcb79dbc4e34",
+    "version": "5.0.0",
+    "sha256": "8fa713c11bebc4a76f9d1a412633a7fdb72f7be1ddce397112801c1b400f3596",
     "path": "config/protocol.json"
   }
 }

@@ -10,10 +10,10 @@
     "height_mm": 78,
     "interval_definition": "no interval is drawn for an observed fraction; the failure count and its two-sided 95% Clopper-Pearson interval are published for every setting in failure_envelope.csv, and a setting with zero failures is drawn as an open marker with a downward arrow at its one-sided 95% upper bound, joined to the method's last nonzero fraction by a dashed line",
     "panels": 2,
-    "protocol_sha256": "664d906899b1726ae6d0bd3856483c4590af875a9dfdc3fee14fdcb79dbc4e34",
-    "script_sha256": "48233d92f3b57212e3d77e99998d974d650275734aab7c1a10ae6acd3110c402",
+    "protocol_sha256": "8fa713c11bebc4a76f9d1a412633a7fdb72f7be1ddce397112801c1b400f3596",
+    "script_sha256": "47247e5da2bcb61bf66e42ddec79c2d862777a10f758337f3b3c62eabb1e052e",
     "source_csv_sha256s": {
-      "failure_envelope.csv": "b7e90deb8e14b9c10a0f4927c51df07bf70cdabad97c7b933eed37a0f344e27a"
+      "failure_envelope.csv": "5d8c24f7436f3fd3b401766020b7364eb9b246f6bde72003c8f4009ae8c6e298"
     },
     "source_csvs": [
       "failure_envelope.csv"
@@ -31,11 +31,11 @@
     "height_mm": 118,
     "interval_definition": "95% Clopper-Pearson for per-bin success rates (one-sided 95% upper limits where a bin saw no success); 99% cluster-bootstrap percentile intervals over seeds, 10000 resamples, for the tail ratios",
     "panels": 4,
-    "protocol_sha256": "664d906899b1726ae6d0bd3856483c4590af875a9dfdc3fee14fdcb79dbc4e34",
-    "script_sha256": "48233d92f3b57212e3d77e99998d974d650275734aab7c1a10ae6acd3110c402",
+    "protocol_sha256": "8fa713c11bebc4a76f9d1a412633a7fdb72f7be1ddce397112801c1b400f3596",
+    "script_sha256": "47247e5da2bcb61bf66e42ddec79c2d862777a10f758337f3b3c62eabb1e052e",
     "source_csv_sha256s": {
-      "conditioning_bins.csv": "c9ccb20aafcb50cbca2d4aa721866742407024e1b85c917752cd98b0e9c1039a",
-      "tail_metrics.csv": "ecf7201105084b9b39731fc11eb12424e680a31802bd3b468d5a2685092016ee"
+      "conditioning_bins.csv": "020955b3b9ceb494c63a951283830ce5dfab3669e21b59eb458f8051e638c72e",
+      "tail_metrics.csv": "94665a6340f2067eab99705cdabd47b9c49e3644e9d5367cdd070f93abd3d854"
     },
     "source_csvs": [
       "conditioning_bins.csv",
@@ -54,11 +54,11 @@
     "height_mm": 118,
     "interval_definition": "dotted lines are simultaneous Kolmogorov bands at the frozen F1 level; quantile brackets are exact binomial order-statistic intervals, Bonferroni-corrected over the five levels",
     "panels": 4,
-    "protocol_sha256": "664d906899b1726ae6d0bd3856483c4590af875a9dfdc3fee14fdcb79dbc4e34",
-    "script_sha256": "48233d92f3b57212e3d77e99998d974d650275734aab7c1a10ae6acd3110c402",
+    "protocol_sha256": "8fa713c11bebc4a76f9d1a412633a7fdb72f7be1ddce397112801c1b400f3596",
+    "script_sha256": "47247e5da2bcb61bf66e42ddec79c2d862777a10f758337f3b3c62eabb1e052e",
     "source_csv_sha256s": {
-      "scalar_ecdf.csv": "5157e60ebd0cb7733dbd10b3a5e3fb1804cad562183048ec35766dc8917e897f",
-      "scalar_validation.csv": "7c3a40996538c39004e5514c7e54fad9a58c06f5835eefc1b8198f0cd4ab1aa6"
+      "scalar_ecdf.csv": "67de274d3dab20f05913a4fbf709d5e976a2a7917b0d0c2c8e9b45fb5f2e3fd7",
+      "scalar_validation.csv": "1718dd8bb69438cf7f3ab0269b666283330dd5a805179e224adf7b1ee008a95f"
     },
     "source_csvs": [
       "scalar_ecdf.csv",
@@ -77,10 +77,10 @@
     "height_mm": 104,
     "interval_definition": "Holm-corrected jointly over all cells and tests at the frozen F5 familywise alpha; a conditional cell cannot support the fidelity claim on its own",
     "panels": 1,
-    "protocol_sha256": "664d906899b1726ae6d0bd3856483c4590af875a9dfdc3fee14fdcb79dbc4e34",
-    "script_sha256": "48233d92f3b57212e3d77e99998d974d650275734aab7c1a10ae6acd3110c402",
+    "protocol_sha256": "8fa713c11bebc4a76f9d1a412633a7fdb72f7be1ddce397112801c1b400f3596",
+    "script_sha256": "47247e5da2bcb61bf66e42ddec79c2d862777a10f758337f3b3c62eabb1e052e",
     "source_csv_sha256s": {
-      "loader_validation.csv": "ea0ec1e6f8da83a363e5dbd169297e8f7ce21d3c73eba1cc23a1255c70a58e2a"
+      "loader_validation.csv": "02a120d23e9b82a2305d0b6578ed487e4eed552fe72b5e19267e301225276212"
     },
     "source_csvs": [
       "loader_validation.csv"
@@ -98,11 +98,11 @@
     "height_mm": 84,
     "interval_definition": "99% cluster-bootstrap percentile interval over seeds, 10000 resamples, for the paired blockwise time ratio; the bitwise comparison is exact and has no interval",
     "panels": 2,
-    "protocol_sha256": "664d906899b1726ae6d0bd3856483c4590af875a9dfdc3fee14fdcb79dbc4e34",
-    "script_sha256": "48233d92f3b57212e3d77e99998d974d650275734aab7c1a10ae6acd3110c402",
+    "protocol_sha256": "8fa713c11bebc4a76f9d1a412633a7fdb72f7be1ddce397112801c1b400f3596",
+    "script_sha256": "47247e5da2bcb61bf66e42ddec79c2d862777a10f758337f3b3c62eabb1e052e",
     "source_csv_sha256s": {
-      "performance.csv": "75b32018191035b6206ded3a060fd95140769a750b02d4447998396601073955",
-      "portability.csv": "79ce6a1748a4e484eeabfef868812b7287ffc4cbf000dd673901b26c0220055d"
+      "performance.csv": "e8a50b3db21314fdfe10fe7f38764844d60030ca6e011f9a1c6b8debe13b3b6a",
+      "portability.csv": "5b9795ecf8771d965f16d1ab88109ca29e26b5a3b107364d3eeed6e34315d10b"
     },
     "source_csvs": [
       "portability.csv",
