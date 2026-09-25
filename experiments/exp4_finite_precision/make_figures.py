@@ -198,8 +198,8 @@ def plot_upper_bounds(ax, xs, bounds, style, ms):
 
     A zero fraction has no place on a logarithmic axis, and leaving the point out reads as
     missing data.  The bound is drawn as an open marker of the method's shape with a
-    downward arrow, unjoined to the observed series.  `ms` is passed in so that, where
-    both methods have the same bound, the circle can enclose the square.
+    downward arrow.  `ms` is passed in so that, where both methods have the same bound,
+    the circle can enclose the square.
     """
     for x, ub in zip(xs, bounds):
         if not (np.isfinite(ub) and ub > 0):
@@ -209,6 +209,25 @@ def plot_upper_bounds(ax, xs, bounds, style, ms):
                                     mutation_scale=5, shrinkA=ms * 0.55, shrinkB=0))
         ax.plot([x], [ub], ls="none", marker=style["marker"], ms=ms, mfc="white",
                 mec=style["color"], mew=0.9, zorder=3)
+
+
+def plot_bound_continuation(ax, xs, rates, bound_xs, bounds, style, offset):
+    """Join the last positive fraction to the upper bounds that follow it, dashed.
+
+    The dashed line runs beneath the markers, one segment per pair of neighbouring
+    points.  Where both methods share a segment, their dash patterns are offset by
+    `offset` so that the two colours alternate instead of one hiding the other.
+    """
+    obs = [(x, r) for x, r in zip(xs, rates) if np.isfinite(r) and r > 0]
+    pts = sorted((x, ub) for x, ub in zip(bound_xs, bounds) if np.isfinite(ub) and ub > 0)
+    if not pts:
+        return
+    before = [p for p in obs if p[0] < pts[0][0]]
+    if before:
+        pts.insert(0, max(before))
+    for (x0, y0), (x1, y1) in zip(pts[:-1], pts[1:]):
+        ax.plot([x0, x1], [y0, y1], color=style["color"], lw=0.9,
+                ls=(offset, (2.2, 3.8)), zorder=1.5)
 
 
 # ---------------------------------------------------------------------------
@@ -280,6 +299,12 @@ def figure_fp1(ctx: dict) -> None:
     observed = [num(r, "failure_rate") for r in plotted_rows
                 if num(r, "failure_rate") > 0]
     ymin = (min(observed) / 10.0) if observed else 1e-8
+    # The arrow below an upper bound ends at a sixth of it; an annotation whose tip leaves
+    # the axes is not drawn at all, so the lower limit must clear the smallest tip.
+    tips = [num(r, "failure_ci_hi") / 6.0 for r in plotted_rows
+            if num(r, "failure_count") == 0 and truthy(r, "failure_is_upper_bound")
+            and num(r, "kappa") - 0.5 <= XMAX_FP1 and num(r, "failure_ci_hi") > 0]
+    ybottom = min([ymin * 0.2] + [t * 0.5 for t in tips])
     for ax, precision, letter in zip(axes, ("double", "float"), ("a", "b")):
         sub = [r for r in rows if r["precision"] == precision]
         if not sub:
@@ -296,6 +321,11 @@ def figure_fp1(ctx: dict) -> None:
             zero = [r for r in ms if num(r, "failure_count") == 0
                     and truthy(r, "failure_is_upper_bound")
                     and num(r, "kappa") - 0.5 <= XMAX_FP1]
+            plot_bound_continuation(
+                ax, xs, [num(r, "failure_rate") for r in ms],
+                [num(r, "kappa") - 0.5 for r in zero],
+                [num(r, "failure_ci_hi") for r in zero], STYLE[method],
+                offset=0.0 if method == "LEGACY" else 3.0)
             plot_upper_bounds(
                 ax, [num(r, "kappa") - 0.5 for r in zero],
                 [num(r, "failure_ci_hi") for r in zero], STYLE[method],
@@ -308,7 +338,7 @@ def figure_fp1(ctx: dict) -> None:
                     else "single precision")
     for ax in axes:
         ax.set_xlim(8e-5, XMAX_FP1)
-        ax.set_ylim(max(ymin * 0.2, 1e-320), 3.0)
+        ax.set_ylim(max(ybottom, 1e-320), 3.0)
     axes[0].set_ylabel("Non-finite fraction")
     handles = [Line2D([], [], label="Direct calculation",
                       **STYLE["LEGACY"]),
@@ -334,7 +364,8 @@ def figure_fp1(ctx: dict) -> None:
            "no interval is drawn for an observed fraction; the failure count and its "
            "two-sided 95% Clopper-Pearson interval are published for every setting in "
            "failure_envelope.csv, and a setting with zero failures is drawn as an open "
-           "marker with a downward arrow at its one-sided 95% upper bound")
+           "marker with a downward arrow at its one-sided 95% upper bound, joined to the "
+           "method's last nonzero fraction by a dashed line")
 
 
 # ---------------------------------------------------------------------------
@@ -769,7 +800,8 @@ def write_captions(ctx: dict) -> None:
             + fp1_candidate_sentence(fp1) + " Each point pools "
             f"{n_fp1} attempts across five independent seeds. Where all "
             f"{n_fp1} attempts returned finite values, an open symbol with a downward "
-            "arrow marks the one-sided 95 per cent upper confidence bound on the fraction. "
+            "arrow marks the one-sided 95 per cent upper confidence bound on the fraction, "
+            "and a dashed line joins it to the method's last nonzero fraction. "
             "Failure counts and "
             "their two-sided 95 per cent binomial confidence intervals are given for every "
             "setting in `failure_envelope.csv`.",
