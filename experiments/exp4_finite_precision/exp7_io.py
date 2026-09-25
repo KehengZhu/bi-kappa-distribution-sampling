@@ -105,6 +105,35 @@ def read_records(path: str, expect_kind: int, expect_schema: int = 1):
     return header, arr
 
 
+def map_records(path: str, expect_kind: int, expect_schema: int = 1) -> np.memmap:
+    """A read-only memory map of one bulk file's records, with the header checks of
+    :func:`read_records`.
+
+    For looking up a few records by index in an audit stream of several gigabytes without
+    reading the whole file.
+    """
+    size = os.path.getsize(path)
+    with open(path, "rb") as fh:
+        raw = fh.read(HEADER_SIZE)
+    if len(raw) < HEADER_SIZE:
+        raise SchemaError(f"{path}: shorter than one header")
+    (magic, schema, kind, rsize, _res, *_geom, _seed, _is_float,
+     n_records) = struct.unpack(HEADER_FMT, raw)
+    if magic[:7] != b"EXP7REC":
+        raise SchemaError(f"{path}: not an exp7 record file")
+    if kind != expect_kind:
+        raise SchemaError(f"{path}: record kind {kind}, expected {expect_kind}")
+    if schema != expect_schema:
+        raise SchemaError(f"{path}: schema {schema}, expected {expect_schema}")
+    dt = DTYPE_BY_KIND[kind]
+    if rsize != dt.itemsize:
+        raise SchemaError(f"{path}: record size {rsize}, reader expects {dt.itemsize}")
+    if HEADER_SIZE + n_records * rsize != size:
+        raise SchemaError(
+            f"{path}: header declares {n_records} records but the file is {size} bytes")
+    return np.memmap(path, dtype=dt, mode="r", offset=HEADER_SIZE, shape=(n_records,))
+
+
 def read_jsonl(path: str) -> list[dict]:
     rows = []
     with open(path, "r", encoding="utf-8") as fh:

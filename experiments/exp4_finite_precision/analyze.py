@@ -512,6 +512,9 @@ class Context:
         self.notes: list[str] = []
         # Amendment 5.0.0: rounding-band attempts per configuration, from the oracle.
         self.rounding_band: dict = {}
+        # Near-limit failures of the direct and quotient-first calculations that an
+        # underflowed X2 caused, and which therefore stay avoidable loss.
+        self.underflow_near_limit: dict = {}
         self._phase_cache: dict = {}
 
     # -- paths -------------------------------------------------------------
@@ -946,6 +949,25 @@ def analyse_p1(ctx: Context) -> dict:
                 "protocol_sha256": proto.sha256})
     write_csv(ctx.out("honest_floor.csv"), floor_cols, floor_rows)
 
+    # --- honest_floor_curve.csv: the same floor on a fine grid, for Fig. 2 --------------
+    # 200 points uniform in log(kappa - 1/2) from 1e-4 to 0.15, the horizontal range of the
+    # failure-envelope figure.  The figure script reads this curve; it computes nothing.
+    curve_cols = ["precision", "grid_index", "shape_a", "kappa", "honest_floor_rate",
+                  "honest_floor_log10", "configuration", "protocol_sha256"]
+    curve_rows = []
+    grid = np.logspace(math.log10(1e-4), math.log10(0.15), 200)
+    for precision in sorted(proto.get("matrix", "precisions")):
+        for i, s_a in enumerate(grid):
+            kappa = 0.5 + float(s_a)
+            fl = honest_floor(kappa, precision)
+            curve_rows.append({
+                "precision": precision, "grid_index": i, "shape_a": kappa - 0.5,
+                "kappa": kappa, "honest_floor_rate": fl["floor"],
+                "honest_floor_log10": fl["log10_floor"],
+                "configuration": "isotropic, unrotated, theta_perp = theta_par = 1",
+                "protocol_sha256": proto.sha256})
+    write_csv(ctx.out("honest_floor_curve.csv"), curve_cols, curve_rows)
+
     # --- families ----------------------------------------------------------------
     fam = {}
     fam["F1_radial_law"] = F.family_F1(proto, [
@@ -1049,7 +1071,22 @@ def rounding_band_by_config(ctx: Context, band_rows: list[dict],
     Each record's margin is re-checked against the band of `rounding_band` in the protocol,
     so the analysis does not take the oracle's classification on trust.
 
-    Returns {(phase, tag, method, precision, round(kappa, 12), seed): count}.
+    A record counts as a rounding-band loss only when the failure happened at the last step,
+    where the output component is formed.  A failure the probe attributes to an intermediate
+    quantity that underflowed -- a denominator X2 that materialized as zero
+    (`denominator_zero`), the quotient X1/X2 overflowing because X2 was that small
+    (`quotient_first_loss`), or any other loss of the direct or quotient-first calculation
+    on a draw whose X2 went zero or subnormal -- is an avoidable (underflow) loss wherever
+    its exact component lies, because the rounding of the last step is not what lost it.
+    The flags of such a record are read from the audit stream itself.  The stabilized
+    calculation never forms X2, so every one of its records is a last-step failure.  This
+    rule was added to the analysis after the 5.0.0 run (README.md, "Rounding band: a
+    correction made after the 5.0.0 run"); it changes only the diagnostic columns of the
+    direct and quotient-first calculations.
+
+    Returns {(phase, tag, method, precision, round(kappa, 12), seed): count} of the records
+    that are rounding-band losses, and stores the records moved back to avoidable loss, in
+    the same form, on `ctx.underflow_near_limit`.
     """
     band = ctx.proto.get("rounding_band")
     factor = float(band["factor"])
@@ -1087,6 +1124,8 @@ def rounding_band_by_config(ctx: Context, band_rows: list[dict],
         ranges[f] = (phase, tag, starts, keys)
 
     out: dict = defaultdict(int)
+    moved: dict = defaultdict(int)
+    maps: dict = {}
     for r in band_rows:
         if r.get("kind") != "rounding_band":
             continue
@@ -1107,8 +1146,42 @@ def rounding_band_by_config(ctx: Context, band_rows: list[dict],
         if not (0.0 < m <= b) or int(r["oracle_category"]) != int(r["probe_category"]):
             raise AnalysisError(f"{f} record {idx + 1}: margin {m} is not inside the band {b}, "
                                 "or the oracle and the probe disagree on its category")
-        out[(phase, tag, r["method"], precision, kappa, seed)] += 1
+        key = (phase, tag, r["method"], precision, kappa, seed)
+        if r["method"] != "CANDIDATE" and _underflow_loss(ctx, f, idx, r, maps):
+            moved[key] += 1
+            continue
+        out[key] += 1
+    ctx.underflow_near_limit = dict(moved)
     return dict(out)
+
+
+# Terminal categories that name an intermediate quantity as the cause of the loss.
+UNDERFLOW_CATS = (CAT_INDEX["denominator_zero"], CAT_INDEX["quotient_first_loss"])
+AUDIT_CAT_FIELD = {"LEGACY": "cat_legacy", "QF": "cat_qf"}
+
+
+def _underflow_loss(ctx: Context, f: str, idx: int, r: dict, maps: dict) -> bool:
+    """Whether a rounding-band record of the direct or quotient-first calculation is a loss
+    caused by the underflow of X2 rather than by the rounding of the last step.
+
+    The audit record the band record points at is read back and checked against it, so a
+    wrong index cannot silently attach another draw's flags.
+    """
+    if f not in maps:
+        try:
+            maps[f] = IO.map_records(ctx.resolve_raw(f), 4)
+        except (OSError, IO.SchemaError) as exc:
+            raise AnalysisError(f"{f}: {exc}; the rounding band of the direct calculation "
+                                "needs the audit record of each failure") from exc
+    rec = maps[f][idx]
+    cat = int(r["probe_category"])
+    if (int(rec[AUDIT_CAT_FIELD[r["method"]]]) != cat
+            or bool(rec["precision_is_float"]) != (r["precision"] == "float")
+            or abs(float(rec["kappa"]) - float(r["kappa"])) > 1e-12):
+        raise AnalysisError(f"{f} record {idx + 1}: the audit record does not match the "
+                            "oracle's rounding-band record (category, precision or kappa)")
+    x2_small = IO.FLAG_BITS["x2_zero"] | IO.FLAG_BITS["x2_subnormal"]
+    return cat in UNDERFLOW_CATS or bool(int(rec["flags"]) & x2_small)
 
 
 def analyse_p2(ctx: Context, p1: dict) -> dict:
@@ -3045,6 +3118,10 @@ def run(ctx: Context, g6_override: str | None) -> int:
 
     oracle_audit, oracle_disag = ctx.oracle_rows()
     ctx.rounding_band = rounding_band_by_config(ctx, ctx.rounding_band_rows(), oracle_audit)
+    print(f"  rounding band: {sum(ctx.rounding_band.values())} last-step failure(s) inside "
+          f"the band; {sum(ctx.underflow_near_limit.values())} near-limit failure(s) of the "
+          "direct and quotient-first calculations caused by an underflowed X2, kept as "
+          "avoidable loss")
 
     p1 = analyse_p1(ctx)
     print(f"  P1: {len(p1['scalar_rows'])} scalar rows")

@@ -21,6 +21,7 @@ experiments/exp4_finite_precision/compare_regenerated.py          export-ignore
 experiments/exp4_finite_precision/exp7_*.py                       export-ignore
 experiments/exp4_finite_precision/results/*                       export-ignore
 experiments/exp4_finite_precision/results/failure_envelope.csv    -export-ignore
+experiments/exp4_finite_precision/results/honest_floor_curve.csv  -export-ignore
 experiments/exp4_finite_precision/results/source_data_README.md   -export-ignore
 experiments/exp4_finite_precision/figures/*                       export-ignore
 experiments/exp4_finite_precision/figures/fp1_failure_envelope.*  -export-ignore

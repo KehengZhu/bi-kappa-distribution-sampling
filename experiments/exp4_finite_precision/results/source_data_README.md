@@ -223,6 +223,22 @@ One row per `precision` x `kappa`. A reference curve, not a measurement: it has 
 | `type_max`, `log_type_max` | the largest finite value of the type, and its logarithm | -- |
 | `configuration` | the configuration the floor is derived for: isotropic, unrotated, `theta_perp = theta_par = 1`, which is what P1 and P2 run | -- |
 
+### `honest_floor_curve.csv` — the same floor on a fine grid, for Fig. 2
+
+The floor of `honest_floor.csv` evaluated on 200 points uniform in `log(kappa - 1/2)` from
+1e-4 to 0.15, the horizontal range of `figures/fp1_failure_envelope`, for each precision. It is
+the grey line of that figure: the fraction of attempts whose exact velocity has a component
+larger than the largest finite value of the type, which no calculation returning values in
+that type can return. A reference curve, not a measurement: it has no interval.
+
+| column | meaning | unit |
+|---|---|---|
+| `precision` | `float` or `double` | -- |
+| `grid_index` | position on the grid, 0 to 199 | -- |
+| `shape_a`, `kappa` | the grid point `kappa - 1/2`, and `kappa` | -- |
+| `honest_floor_rate`, `honest_floor_log10` | the floor at that point, and its base-10 logarithm | probability, log10 |
+| `configuration` | isotropic, unrotated, `theta_perp = theta_par = 1`, the configuration of P2's `paired` layer | -- |
+
 ---
 
 ## 4. `failure_envelope.csv` — P2, the mechanism decomposition
@@ -251,8 +267,8 @@ One row per `precision` x `kappa`. A reference curve, not a measurement: it has 
 | `max_rel_error_threshold` | the FINITE_BUT_WRONG threshold for the type, from the protocol: 1.05e-8 in `double`, 2.44e-4 in `float` | dimensionless |
 | `max_log_r_ref`, `max_finite_log_component` | largest intended `log R`, and largest intended `max_j log|V_j|` among successes | log units |
 | `failure_*`, `avoidable_*`, `honest_*` | rate blocks (see §0) | probability |
-| `rounding_band_*` | rate block for the avoidable losses whose exact (100-digit) largest component lies below the overflow threshold by a relative distance of at most `B = 4 eps max(1, |log V|)` (PROTOCOL.md §2.9): 4.2e-5 in `float`, 6.3e-13 in `double`. Taken from the oracle's `raw/oracle_rounding_band.jsonl`. `paired` rows only; `NA` on `native` rows, which have no per-attempt adjudication | probability |
-| `avoidable_outside_band_*` | rate block for `n_avoidable` minus the rounding-band count: the avoidable losses G1 counts. `paired` rows only | probability |
+| `rounding_band_*` | rate block for the avoidable losses that occurred at the step forming the output component and whose exact (100-digit) largest component lies below the overflow threshold by a relative distance of at most `B = 4 eps max(1, |log V|)` (PROTOCOL.md §2.9): 4.2e-5 in `float`, 6.3e-13 in `double`. Taken from the oracle's `raw/oracle_rounding_band.jsonl`. A failure of the direct calculation or of the quotient-first diagnostic that the probe attributes to the underflow of `X2` (`denominator_zero`, `quotient_first_loss`, or a draw whose `X2` was zero or subnormal) is not counted here, however close to the threshold it lies; every failure of the stabilized calculation is a final-step failure. This exclusion was added to the analysis after the 5.0.0 run. As first implemented, the column also counted 28 underflow losses per build of the direct calculation, and the same draws of the quotient-first diagnostic, in single precision at kappa = 0.501, 0.505 and 0.51 (see README.md). The stabilized calculation's counts are unchanged. `paired` rows only; `NA` on `native` rows, which have no per-attempt adjudication | probability |
+| `avoidable_outside_band_*` | rate block for `n_avoidable` minus the rounding-band count: the avoidable losses G1 counts for the stabilized calculation. Since the correction described under `rounding_band_*`, it includes the underflow losses of the direct calculation and the quotient-first diagnostic that lie near the threshold. `paired` rows only | probability |
 | `honest_floor_rate`, `honest_floor_log10`, `observed_over_floor` | the analytic floor (see §0) | -- |
 | `audit_margin_log_units` | 20.0, the margin within which an attempt is decision-relevant | log units |
 | `audit_margin_assertions`, `audit_margin_assertion_failures` | attempts declared unambiguous, each of which had its margin evaluated in working precision, and how many failed the inequality. **Must be zero** | count |

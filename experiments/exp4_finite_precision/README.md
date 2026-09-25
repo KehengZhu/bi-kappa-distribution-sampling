@@ -33,14 +33,14 @@ Source and output files carry the prefix `exp7`.
 ## Paper
 
 Fig. 2 of the paper is `figures/fp1_failure_envelope.pdf`. It is drawn by `make_figures.py` from
-`results/failure_envelope.csv` and copied into the paper by
+`results/failure_envelope.csv` and `results/honest_floor_curve.csv` and copied into the paper by
 `paper/figures/make_manuscript_assets.py`. The four other figures in `figures/` are not used in
 the paper.
 
 The release archive (the GitHub and Zenodo downloads) contains only what reproduces Fig. 2 from
 the committed results: this README, `GNUmakefile`, `make_figures.py`,
-`results/failure_envelope.csv` with its column description `results/source_data_README.md`, and
-the figure files. There, `make figures` redraws Fig. 2. The protocol, the analysis code, the
+`results/failure_envelope.csv` and `results/honest_floor_curve.csv` with their column
+description `results/source_data_README.md`, and the figure files. There, `make figures` redraws Fig. 2. The protocol, the analysis code, the
 sampler probe, the 100-digit recomputation and the run records described below are in the
 GitHub repository.
 
@@ -146,9 +146,29 @@ of the threshold. Since protocol 5.0.0 a failure whose exact largest component `
 the threshold by a relative distance of at most `4 eps max(1, |log V|)` (4.2 × 10⁻⁵ in `float`,
 6.3 × 10⁻¹³ in `double`) is counted separately, in the `rounding_band_*` columns of
 `results/failure_envelope.csv`, and not as avoidable loss. In this run that applied to the one
-single-precision draw above for the stabilized calculation, and to 28 draws for the direct
-calculation (9 at κ = 0.501, 8 at κ = 0.505, 11 at κ = 0.51, all single precision), whose
-denominator had underflowed to zero.
+single-precision draw above for the stabilized calculation. The direct calculation had 28
+failures in single precision whose exact largest component also lay within the band (9 at
+κ = 0.501, 8 at κ = 0.505, 11 at κ = 0.51). Their denominator had underflowed to zero, and they
+are counted as avoidable losses (see the next paragraph).
+
+**Rounding band: a correction made after the 5.0.0 run.** The way the analysis applies the
+rounding band was changed after the 5.0.0 run. As first implemented, the band applied to every
+avoidable loss whose exact largest component lay inside it, whatever the cause. That rule
+counted the 28 failures of the direct calculation above as rounding-band losses in each build,
+and the same 28 draws for the quotient-first diagnostic. Each of them occurred because the
+denominator `X₂` had underflowed to zero, not because of the rounding of the final step, so
+the original rule misclassified an underflow loss as a rounding loss. `analyze.py` now counts a
+failure as a rounding-band loss only when it occurred at the step that forms the output
+component. A failure that the probe attributes to an intermediate quantity (`denominator_zero`,
+`quotient_first_loss`, or any other loss on a draw whose `X₂` was zero or subnormal) remains an
+avoidable loss wherever its exact component lies. The stabilized calculation never forms `X₂`,
+so every one of its failures is a failure of the final step, and its counts are unchanged. The
+correction changes only the diagnostic columns `rounding_band_*` and `avoidable_outside_band_*`
+of the direct calculation and of the quotient-first diagnostic in
+`results/failure_envelope.csv`. No gate result changes, because G1 counts only the stabilized
+calculation. `PROTOCOL.md` and `config/protocol.json` were not changed, so that the recorded
+protocol hash still matches the run; the sentence in `PROTOCOL.md` §2.9.2 that the rule is the
+same for every method describes the rule as first implemented.
 
 **2026-09-25, protocols 4.0.0 and 5.0.0.** These results replace those of protocol 3.0.0, which
 were produced with release 2.2.0 on seeds 9001–9010. Release 2.2.0 computed a `float` sample in

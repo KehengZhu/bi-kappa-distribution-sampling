@@ -234,6 +234,16 @@ def plot_bound_continuation(ax, xs, rates, bound_xs, bounds, style, offset):
 # FP1 - failure envelope and mechanism decomposition
 # ---------------------------------------------------------------------------
 XMAX_FP1 = 0.15
+FLOOR_STYLE = dict(color=GREY_C, ls="-", lw=0.8)
+
+
+def plot_format_floor(ax, rows) -> None:
+    """The probability that the exact velocity has a component the output type cannot
+    hold, drawn beneath the data.  The axes clip the part below the lower limit."""
+    pts = sorted((num(r, "shape_a"), num(r, "honest_floor_rate")) for r in rows)
+    pts = [(x, y) for x, y in pts if np.isfinite(x) and np.isfinite(y) and y > 0]
+    if pts:
+        ax.plot([p[0] for p in pts], [p[1] for p in pts], zorder=1, **FLOOR_STYLE)
 
 
 def tex_count(n: float) -> str:
@@ -301,10 +311,6 @@ def fp1_candidate_sentence(summary: dict) -> str:
         text += ("The stabilized calculation returned all such draws except those whose "
                  "final component lay within rounding error of the largest value the output "
                  "type can hold. ")
-    if band:
-        nb = sum(band.values())
-        text += (f"Within that rounding error of the limit it returned {nb} "
-                 f"draw{'' if nb == 1 else 's'} as non-finite ({_where(band)}). ")
     text += ("Its other failures occurred only when a final velocity component was too large "
              "for the output type.")
     return text
@@ -317,6 +323,10 @@ def figure_fp1(ctx: dict) -> None:
     if not rows:
         print("  FP1: no data")
         return
+
+    # The probability that the exact velocity has a component the output type cannot hold,
+    # on a fine grid, computed by analyze.py (honest_floor_curve.csv).
+    floor = load(ctx, "honest_floor_curve.csv")
 
     fig, axes = plt.subplots(1, 2, figsize=(WIDTH_MM * MM, 78 * MM))
     plotted_rows = [r for r in rows if r["method"] in ("LEGACY", "CANDIDATE")]
@@ -354,6 +364,7 @@ def figure_fp1(ctx: dict) -> None:
                 ax, [num(r, "kappa") - 0.5 for r in zero],
                 [num(r, "failure_ci_hi") for r in zero], STYLE[method],
                 ms=6.2 if method == "LEGACY" else 3.6)
+        plot_format_floor(ax, [r for r in floor if r["precision"] == precision])
 
         ax.set_xscale("log")
         ax.set_yscale("log")
@@ -369,27 +380,40 @@ def figure_fp1(ctx: dict) -> None:
                Line2D([], [], label="Stabilized calculation", **STYLE["CANDIDATE"]),
                Line2D([], [], ls="none", marker=r"$\downarrow$", ms=6, color=NEUTRAL,
                       label="No non-finite output (95% upper bound)")]
+    if floor:
+        handles.append(Line2D([], [], label="Fraction the output format cannot hold",
+                              **FLOOR_STYLE))
+    # Two columns: the two methods, then the two reference marks.
     fig.legend(handles=handles, frameon=False, loc="lower center",
-               bbox_to_anchor=(0.5, 0.01), ncol=3, columnspacing=1.8,
+               bbox_to_anchor=(0.5, 0.01), ncol=2 if floor else 3, columnspacing=3.0,
                handletextpad=0.5)
-    fig.tight_layout(pad=0.4, rect=(0, 0.10, 1, 1))
+    fig.tight_layout(pad=0.4, rect=(0, 0.15 if floor else 0.10, 1, 1))
     summary = fp1_summary(ctx)
     conclusion = ("The stabilized log-scale calculation removes the intermediate failures "
                   "of direct square-root evaluation. ")
-    if summary["candidate_avoidable"] or summary["candidate_rounding_band"]:
+    if summary["candidate_avoidable"]:
         conclusion += ("Apart from the draws listed in the caption, every remaining "
                        "non-finite output contains a component that is too large for the "
                        "output type.")
+    elif summary["candidate_rounding_band"]:
+        conclusion += ("Apart from draws whose final component lies within rounding error "
+                       "of the largest finite value, every remaining non-finite output "
+                       "contains a component that is too large for the output type.")
     else:
         conclusion += ("Every remaining non-finite output contains a component that is too "
                        "large for the output type.")
     export(ctx, fig, "fp1_failure_envelope", 2, conclusion,
-           ["failure_envelope.csv"], WIDTH_MM, 78,
+           ["failure_envelope.csv"] + (["honest_floor_curve.csv"] if floor else []),
+           WIDTH_MM, 78,
            "no interval is drawn for an observed fraction; the failure count and its "
            "two-sided 95% Clopper-Pearson interval are published for every setting in "
            "failure_envelope.csv, and a setting with zero failures is drawn as an open "
            "marker with a downward arrow at its one-sided 95% upper bound, joined to the "
-           "method's last nonzero fraction by a dashed line")
+           "method's last nonzero fraction by a dashed line; the grey line is the "
+           "probability, computed in closed form and without an interval, that the exact "
+           "velocity has a "
+           "component larger than the largest finite value of the output type "
+           "(honest_floor_curve.csv)")
 
 
 # ---------------------------------------------------------------------------
@@ -826,6 +850,10 @@ def write_captions(ctx: dict) -> None:
             f"{n_fp1} attempts returned finite values, an open symbol with a downward "
             "arrow marks the one-sided 95 per cent upper confidence bound on the fraction, "
             "and a dashed line joins it to the method's last nonzero fraction. "
+            "The grey line is the probability, computed in closed form, that the exact "
+            "velocity of an attempt has a component larger than the largest finite value of "
+            "the output type; no calculation that returns values in that type can return "
+            "such a draw. "
             "Failure counts and "
             "their two-sided 95 per cent binomial confidence intervals are given for every "
             "setting in `failure_envelope.csv`.",
@@ -958,7 +986,8 @@ def main() -> int:
     ctx = {"results": results, "figures": figures, "protocol_sha256": sha}
     expected = ("failure_envelope.csv", "conditioning_bins.csv", "tail_metrics.csv",
                 "scalar_validation.csv", "scalar_ecdf.csv", "loader_validation.csv",
-                "portability.csv", "performance.csv", "honest_floor.csv")
+                "portability.csv", "performance.csv", "honest_floor.csv",
+                "honest_floor_curve.csv")
     absent = [n for n in expected if not os.path.exists(os.path.join(results, n))]
     if len(absent) == len(expected):
         print(f"make_figures.py: {os.path.relpath(results, HERE)} holds none of the source "

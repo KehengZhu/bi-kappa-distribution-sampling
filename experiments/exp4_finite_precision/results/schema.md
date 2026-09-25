@@ -534,6 +534,18 @@ The `raw/oracle_audit.jsonl` summary rows also carry `rounding_band_factor`,
 category scores as avoidable) and `rounding_band_legacy`, `rounding_band_candidate`,
 `rounding_band_qf` (those of them inside the band).
 
+The oracle writes a `rounding_band` record for every method whose failure lies inside the band,
+whatever caused it. `analyze.py` counts a record as a rounding-band loss only when the failure
+occurred at the step that forms the output component. A record of the direct (LEGACY) or
+quotient-first (QF) calculation whose `probe_category` is `denominator_zero` or
+`quotient_first_loss`, or whose audit record carries the `x2_zero` or `x2_subnormal` flag, is a
+loss caused by the underflow of `X₂` and stays an avoidable loss. Every record of the stabilized
+calculation (CANDIDATE) is a final-step failure. This rule was added to the analysis after the
+5.0.0 run: as first implemented, every record counted as a rounding-band loss, which classified
+28 underflow losses per build of the direct calculation, and the same draws of the
+quotient-first diagnostic, as rounding losses. It affects only the diagnostic columns of those
+two calculations; the stabilized calculation's counts and G1 are unchanged.
+
 `exp7_oracle.exe` exits non-zero on any disagreement or conversion failure, and `make oracle`
 propagates that exit status.
 
