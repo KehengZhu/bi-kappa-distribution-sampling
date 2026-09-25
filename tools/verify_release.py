@@ -15,7 +15,8 @@ Steps, each reported pass/fail and none of them skipped silently:
   3. the released library compiles as strict C++11 under every available compiler;
   4. its regression suite passes under every available compiler;
   5. the experiment's checksum manifests verify (`make verify`);
-  6. the experiment's derived artifacts regenerate byte-identically (`make reverify`).
+  6. the experiment's derived artifacts regenerate (`make reverify`: exact apart from a
+     relative tolerance of 1e-9 on floating-point numbers).
 
 Usage:
     tools/verify_release.py dist/bi-kappa-v2.0.0-<sha>.tar.gz
@@ -154,10 +155,10 @@ def main() -> int:
                         out.strip()[-300:] if rc else "")
                 rc, out = sh(["make", "-s", "reverify"], cwd=exp)
                 if "No rule to make target" in out:
-                    rep.add(None, "derived artifacts regenerate byte-identically",
+                    rep.add(None, "derived artifacts regenerate",
                             "no `reverify` target")
                 else:
-                    rep.add(rc == 0, "derived artifacts regenerate byte-identically",
+                    rep.add(rc == 0, "derived artifacts regenerate",
                             out.strip()[-300:] if rc else "")
             else:
                 rep.add(None, "experiment bundle present", "exp4_finite_precision not archived")

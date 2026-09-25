@@ -20,9 +20,9 @@
 // component sits within an ulp of the type's limit, which is inside the fully audited
 // within-margin stratum and is adjudicated at 100 digits from the primitives themselves.
 //
-// C++14, because Boost.Multiprecision requires it.  That is also why the oracle is a
-// separate program: the probe and the sampling headers stay strictly C++11, and the
-// dependency cannot leak into them.
+// C++14, because Boost.Multiprecision requires it, and linked against MPFR and GMP.  That is
+// also why the oracle is a separate program: the probe and the sampling headers stay strictly
+// C++11, and the dependency cannot leak into them.
 //
 // Four questions per audited attempt:
 //
@@ -48,7 +48,7 @@
 
 #include "exp7_common.H"
 
-#include <boost/multiprecision/cpp_dec_float.hpp>
+#include <boost/multiprecision/mpfr.hpp>
 
 #include <cmath>
 #include <cstdio>
@@ -57,7 +57,8 @@
 #include <string>
 #include <vector>
 
-using boost::multiprecision::cpp_dec_float_100;
+// 100 significant decimal digits, evaluated by MPFR, whose functions are correctly rounded.
+typedef boost::multiprecision::mpfr_float_100 mp100;
 using namespace exp7;
 
 namespace
@@ -66,24 +67,24 @@ namespace
 /// Exact conversion check.  A double is a dyadic rational; for every magnitude this
 /// experiment produces, 100 decimal digits hold it exactly.  Round-tripping back and
 /// demanding bitwise equality turns that assumption into a test.
-bool exactFromDouble(double v, cpp_dec_float_100 *out)
+bool exactFromDouble(double v, mp100 *out)
 {
-    *out= cpp_dec_float_100(v);
+    *out= mp100(v);
     return static_cast<double>(*out) == v;
 }
 
-cpp_dec_float_100 logExact(const cpp_dec_float_100 &x) { return log(x); }
+mp100 logExact(const mp100 &x) { return log(x); }
 
 /// log of the exact real threshold at which a value rounds to infinity in a type with
 /// `digits` bits of precision and maximum exponent `emax`.
-cpp_dec_float_100 logOverflowExact(int digits, int emax)
+mp100 logOverflowExact(int digits, int emax)
 {
-    cpp_dec_float_100 two(2);
-    cpp_dec_float_100 half_ulp= cpp_dec_float_100(1);
+    mp100 two(2);
+    mp100 half_ulp= mp100(1);
     for (int i= 0; i < digits; ++i)
         half_ulp/= two; // 2^-p
-    cpp_dec_float_100 mant= two - half_ulp;
-    return log(mant) + cpp_dec_float_100(emax) * log(two);
+    mp100 mant= two - half_ulp;
+    return log(mant) + mp100(emax) * log(two);
 }
 
 /// Working-precision recomputation, written independently of the probe.  The audit stream
@@ -139,9 +140,13 @@ WorkingOutcome<T> recomputeWorking(double kappa, double x1d, double yd, double u
     o.legacy_finite= std::isfinite(sp0) && std::isfinite(sp1) && std::isfinite(sp2);
 
     // CANDIDATE: build g first, then materialize each component and decide from the
-    // component, which is the predicate the released header applies.  Written out here
-    // rather than included from exp7_loaders.H: the oracle must not share code with the
-    // thing it audits, and an independent transcription of the same rule is the point.
+    // component, which is the predicate the released header applies.  Every quantity is
+    // formed in T, as release 2.3.0 forms it: the log radius from the working-precision
+    // variates, g = sqrt(kappa) n (theta = 1 and no rotation in the audited configuration),
+    // exp(log R), and either R |g_j| or, where R alone overflows, exp(log R + log|g_j|).
+    // Written out here rather than included from exp7_loaders.H: the oracle must not share
+    // code with the thing it audits, and an independent transcription of the same rule is
+    // the point.
     //
     // The released header used to compare `log R` and `log R + log|g_j|` against
     // `log(max())`.  That rule is not the arithmetic it predicts -- `log(max())` is a
@@ -202,7 +207,7 @@ int categoryFor(int method, bool finite, bool representable, double rel_err,
 
 /// |r/R - 1| where r is a working-precision radius and R the exact one, both given as logs.
 /// Evaluated in the log domain so that nothing overflows.
-double relErrFromLogs(double log_r_working, const cpp_dec_float_100 &log_r_exact)
+double relErrFromLogs(double log_r_working, const mp100 &log_r_exact)
 {
     if (!(log_r_working == log_r_working) || std::isinf(log_r_working))
         return std::numeric_limits<double>::quiet_NaN();
@@ -244,11 +249,11 @@ int main(int argc, char **argv)
     const char *path= argv[1];
     const char *disagree_path= 0;
     bool progress= false;
-    // Sharding exists only to use more than one core: at about 1.1 ms a record, adjudicating
-    // the frozen matrix takes hours on one.  A shard reads the whole file and adjudicates the
-    // records congruent to `shard` modulo `shards`, so the union of all shards is exactly the
-    // unsharded run, every record is adjudicated once, and the record index is a property of
-    // the file rather than of how the work was divided.
+    // Sharding exists only to use more than one core: at about 25 us a record, adjudicating
+    // the frozen matrix takes about half an hour on one.  A shard reads the whole file and
+    // adjudicates the records congruent to `shard` modulo `shards`, so the union of all
+    // shards is exactly the unsharded run, every record is adjudicated once, and the record
+    // index is a property of the file rather than of how the work was divided.
     long long shard= 0, shards= 1;
     for (int i= 2; i < argc; ++i)
     {
@@ -316,8 +321,8 @@ int main(int argc, char **argv)
     double worst_margin= 0.0;
     Acc acc[2]; // [0] double, [1] float
 
-    const cpp_dec_float_100 log_ovf_double= logOverflowExact(53, 1023);
-    const cpp_dec_float_100 log_ovf_float= logOverflowExact(24, 127);
+    const mp100 log_ovf_double= logOverflowExact(53, 1023);
+    const mp100 log_ovf_float= logOverflowExact(24, 127);
 
     std::vector<AuditRecord> buf(65536);
     for (;;)
@@ -339,7 +344,7 @@ int main(int argc, char **argv)
             const double max_rel= is_float ? protocol::kMaxRelErrorFloat
                                            : protocol::kMaxRelErrorDouble;
 
-            cpp_dec_float_100 x1, y, u, ct, ph, kap;
+            mp100 x1, y, u, ct, ph, kap;
             bool ok= exactFromDouble(a.x1, &x1) && exactFromDouble(a.y, &y) &&
                      exactFromDouble(a.u, &u) && exactFromDouble(a.cos_theta, &ct) &&
                      exactFromDouble(a.phi, &ph) && exactFromDouble(a.kappa, &kap);
@@ -353,29 +358,29 @@ int main(int argc, char **argv)
             const double a_work= is_float
                                      ? static_cast<double>(static_cast<float>(a.kappa) - 0.5f)
                                      : (a.kappa - 0.5);
-            cpp_dec_float_100 alpha;
+            mp100 alpha;
             if (!exactFromDouble(a_work, &alpha))
             {
                 ++conversion_failures;
                 continue;
             }
 
-            const cpp_dec_float_100 log_x1= logExact(x1);
-            const cpp_dec_float_100 log_x2= logExact(y) + logExact(u) / alpha;
-            const cpp_dec_float_100 log_r= (log_x1 - log_x2) / cpp_dec_float_100(2);
+            const mp100 log_x1= logExact(x1);
+            const mp100 log_x2= logExact(y) + logExact(u) / alpha;
+            const mp100 log_r= (log_x1 - log_x2) / mp100(2);
 
-            const cpp_dec_float_100 one(1);
-            const cpp_dec_float_100 st= sqrt(one - ct * ct);
-            const cpp_dec_float_100 sk= sqrt(kap);
-            const cpp_dec_float_100 g0= sk * st * cos(ph);
-            const cpp_dec_float_100 g1= sk * st * sin(ph);
-            const cpp_dec_float_100 g2= sk * ct;
+            const mp100 one(1);
+            const mp100 st= sqrt(one - ct * ct);
+            const mp100 sk= sqrt(kap);
+            const mp100 g0= sk * st * cos(ph);
+            const mp100 g1= sk * st * sin(ph);
+            const mp100 g2= sk * ct;
 
-            const cpp_dec_float_100 &log_ovf= is_float ? log_ovf_float : log_ovf_double;
-            cpp_dec_float_100 max_comp= log_r + logExact(abs(g0));
+            const mp100 &log_ovf= is_float ? log_ovf_float : log_ovf_double;
+            mp100 max_comp= log_r + logExact(abs(g0));
             {
-                const cpp_dec_float_100 c1= log_r + logExact(abs(g1));
-                const cpp_dec_float_100 c2= log_r + logExact(abs(g2));
+                const mp100 c1= log_r + logExact(abs(g1));
+                const mp100 c2= log_r + logExact(abs(g2));
                 if (c1 > max_comp) max_comp= c1;
                 if (c2 > max_comp) max_comp= c2;
             }
@@ -516,7 +521,7 @@ int main(int argc, char **argv)
             continue;
         std::printf(
             "{\"tool\":\"exp7_oracle\","
-            "\"oracle\":\"boost::multiprecision::cpp_dec_float_100\","
+            "\"oracle\":\"boost::multiprecision::mpfr_float_100\","
             "\"file\":\"%s\",\"file_sha256\":\"%s\",\"protocol_sha256\":\"%s\","
             "\"precision\":\"%s\",\"n_records\":%lld,\"n_records_total\":%lld,"
             "\"n_classified\":%lld,\"disagreements\":%lld,\"conversion_failures\":%lld,"

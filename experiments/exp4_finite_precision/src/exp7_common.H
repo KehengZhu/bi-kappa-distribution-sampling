@@ -841,17 +841,9 @@ inline double zFromLogR(double log_r, double a)
 // ---------------------------------------------------------------------------
 template <typename T> struct Geometry
 {
-    /// The accumulator release 2.2.0 forms the deterministic map in; `double` for a `float`
-    /// run, and the working type otherwise.  The replica has to use the same one or it is
-    /// no longer a replica.
-    typedef typename bikappa_detail::log_accumulator<T>::type acc_type;
-
     T kappa;
-    /// `sqrt(kappa)` in the working precision, as release 1.0.0 forms it.  The LEGACY
-    /// replica must keep using this one: `(T)sqrt((acc_type)k)` is not `sqrt(k)` in `T`.
+    /// `sqrt(kappa)` in the working precision, as both released headers form it.
     T sqrt_kappa;
-    /// `sqrt(kappa)` in the accumulator, as release 2.2.0 forms it.
-    acc_type sqrt_kappa_acc;
     T theta_perp;
     T theta_par;
     std::array<T, 3> ub;
@@ -861,27 +853,25 @@ template <typename T> struct Geometry
     /// Loop invariants of the capped branch, hoisted exactly as the released class hoists
     /// them, so that the replica matches its cost profile and not only its arithmetic.
     /// `log_g_bound` is the rotation-invariant bound
-    /// max_j |g_j| <= |g| <= sqrt(kappa) max(theta_perp, theta_par).
-    acc_type log_sqrt_kappa;
-    acc_type log_g_bound;
-    acc_type log_max_finite;
+    /// max_j |g_j| <= |g| <= sqrt(kappa) max(theta_perp, theta_par).  All three are formed
+    /// in T, as the released class forms them.
+    T log_sqrt_kappa;
+    T log_g_bound;
+    T log_max_finite;
 
     Geometry(T k, T tperp, T tpar, const std::array<T, 3> &b)
-        : kappa(k), sqrt_kappa(std::sqrt(k)),
-          sqrt_kappa_acc(std::sqrt(static_cast<acc_type>(k))), theta_perp(tperp),
-          theta_par(tpar), ub(b),
+        : kappa(k), sqrt_kappa(std::sqrt(k)), theta_perp(tperp), theta_par(tpar), ub(b),
           identity_rotation(b[0] == T(0) && b[1] == T(0) && b[2] == T(1)),
           rotator(k, tperp, tpar, b, bi_kappa_distribution<T>::no_cap()),
-          log_sqrt_kappa(std::log(std::sqrt(static_cast<acc_type>(k)))),
-          log_g_bound(std::log(std::sqrt(static_cast<acc_type>(k))) +
-                      std::log(static_cast<acc_type>(std::max(tperp, tpar)))),
-          log_max_finite(std::log(static_cast<acc_type>(std::numeric_limits<T>::max())))
+          log_sqrt_kappa(std::log(std::sqrt(k))),
+          log_g_bound(std::log(std::sqrt(k)) + std::log(std::max(tperp, tpar))),
+          log_max_finite(std::log(std::numeric_limits<T>::max()))
     {
     }
 
     /// Unit direction from an angle pair, in the field-aligned frame.  This is release
     /// 1.0.0's construction and the paired diagnostic layer's declared direction primitive;
-    /// release 2.0.0 draws its direction by disc rejection instead and does not come
+    /// release 2.0.0 and later draw the direction by disc rejection instead and do not come
     /// through here.  It evaluates sin(phi) and cos(phi) of one argument, which a compiler
     /// may fuse into a combined routine whose sine differs by an ulp -- and it must keep
     /// doing so, because reproducing 1.0.0 exactly means reproducing that too.
@@ -895,22 +885,9 @@ template <typename T> struct Geometry
         return n;
     }
 
-    /// The same direction, from the same two working-precision variates, evaluated in the
-    /// accumulator.  This is the stabilized candidate's direction under 2.2.0: the angle
-    /// pair is what was drawn, the trigonometry is part of the deterministic map.
-    static std::array<acc_type, 3> directionAcc(T cos_theta, T phi)
-    {
-        const acc_type ct= static_cast<acc_type>(cos_theta);
-        const acc_type ph= static_cast<acc_type>(phi);
-        const acc_type st= std::sqrt(std::max(acc_type(0), acc_type(1) - ct * ct));
-        std::array<acc_type, 3> n;
-        n[0]= st * std::cos(ph);
-        n[1]= st * std::sin(ph);
-        n[2]= ct;
-        return n;
-    }
-
-    /// g = Q(ub) diag(sqrt(kappa) theta_perp, sqrt(kappa) theta_perp, sqrt(kappa) theta_par) n
+    /// g = Q(ub) diag(sqrt(kappa) theta_perp, sqrt(kappa) theta_perp, sqrt(kappa) theta_par) n,
+    /// in T, with the operation order of the released class's `fieldAlignedG` followed by
+    /// its rotation.
     std::array<T, 3> gVector(const std::array<T, 3> &n) const
     {
         std::array<T, 3> local;
@@ -920,23 +897,6 @@ template <typename T> struct Geometry
         if (identity_rotation)
             return local;
         return rotator.rotate_from_fieldAligned_frame(local, ub);
-    }
-
-    /// `g` in the accumulator, mirroring 2.2.0's `fieldAlignedG` and its widened rotation.
-    std::array<acc_type, 3> gVectorAcc(const std::array<acc_type, 3> &n) const
-    {
-        std::array<acc_type, 3> local;
-        local[0]= sqrt_kappa_acc * static_cast<acc_type>(theta_perp) * n[0];
-        local[1]= sqrt_kappa_acc * static_cast<acc_type>(theta_perp) * n[1];
-        local[2]= sqrt_kappa_acc * static_cast<acc_type>(theta_par) * n[2];
-        if (identity_rotation)
-            return local;
-        std::array<acc_type, 3> uba;
-        uba[0]= static_cast<acc_type>(ub[0]);
-        uba[1]= static_cast<acc_type>(ub[1]);
-        uba[2]= static_cast<acc_type>(ub[2]);
-        return bi_kappa_distribution<T>::template rotateFromFieldAlignedFrameIn<acc_type>(
-            local, uba);
     }
 };
 
@@ -1013,37 +973,40 @@ inline std::vector<double> kappaLadder()
 /// no declaration; both blocks here are written out, and no seed anywhere in this
 /// experiment is computed from another.
 ///
-/// Protocol 3.0.0 governs the THIRD holdout and uses 9001-9010.  The block follows from the
+/// Protocol 4.0.0 governs the FOURTH run and uses 10001-10010.  The block follows from the
 /// rule in PROTOCOL.md Sec. 3 rather than from a choice: the highest seed declared anywhere
-/// in this repository is 8010, rounded up to the next multiple of 1000 gives 9000, and the
+/// in this repository is 9010, rounded up to the next multiple of 1000 gives 10000, and the
 /// next ten integers are taken.  7001-7010 and 8001-8010 belong to the first and second
-/// holdouts, whose NO-GO results are preserved in commits 45d3ef8 and e5c9837; Sec. 8
-/// forbids recomputing any result on either.
+/// holdouts, whose NO-GO results are preserved in commits 45d3ef8 and e5c9837, and
+/// 9001-9010 to the third, whose GO result under protocol 3.0.0 is preserved in commit
+/// abdd295; Sec. 8 forbids recomputing any result on any of them.
 inline std::vector<unsigned> productionSeeds()
 {
     std::vector<unsigned> s;
-    s.push_back(9001u); s.push_back(9002u); s.push_back(9003u); s.push_back(9004u);
-    s.push_back(9005u);
+    s.push_back(10001u); s.push_back(10002u); s.push_back(10003u); s.push_back(10004u);
+    s.push_back(10005u);
     return s;
 }
 
 inline std::vector<unsigned> performanceSeeds()
 {
     std::vector<unsigned> s;
-    s.push_back(9006u); s.push_back(9007u); s.push_back(9008u); s.push_back(9009u);
-    s.push_back(9010u);
+    s.push_back(10006u); s.push_back(10007u); s.push_back(10008u); s.push_back(10009u);
+    s.push_back(10010u);
     return s;
 }
 
-/// Both spent blocks.  Declared so that a rerun on one is a compile-time-visible mistake
-/// rather than an accident, and so that `spentSeeds()` can be asserted disjoint from the
-/// block actually in use.
+/// The three spent blocks.  Declared so that a rerun on one is a compile-time-visible
+/// mistake rather than an accident, and so that `spentSeeds()` can be asserted disjoint from
+/// the block actually in use.
 inline std::vector<unsigned> spentSeeds()
 {
     std::vector<unsigned> s;
     for (unsigned v= 7001u; v <= 7010u; ++v)
         s.push_back(v);
     for (unsigned v= 8001u; v <= 8010u; ++v)
+        s.push_back(v);
+    for (unsigned v= 9001u; v <= 9010u; ++v)
         s.push_back(v);
     return s;
 }

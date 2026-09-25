@@ -17,6 +17,7 @@ experiments/exp4_finite_precision/checksums.sha256                export-ignore
 experiments/exp4_finite_precision/g6_evidence.json                export-ignore
 experiments/exp4_finite_precision/preflight.py                    export-ignore
 experiments/exp4_finite_precision/analyze.py                      export-ignore
+experiments/exp4_finite_precision/compare_regenerated.py          export-ignore
 experiments/exp4_finite_precision/exp7_*.py                       export-ignore
 experiments/exp4_finite_precision/results/*                       export-ignore
 experiments/exp4_finite_precision/results/failure_envelope.csv    -export-ignore

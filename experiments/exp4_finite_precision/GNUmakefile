@@ -15,13 +15,14 @@
 #   make p3             conditioning: per-attempt intended state vs success
 #   make p4             complete anisotropic, rotated, capped 3-D loader, C0-C6
 #   make p5             portability: CANDIDATE, full ladder, one tagged environment
-#   make p6             performance: timed blocks, B0-B4, seeds 9006-9010
+#   make p6             performance: timed blocks, B0-B4, seeds 10006-10010
 #   make oracle         recompute every recorded attempt at 100 decimal digits
 #   make analyze        results/*.csv, results/analysis_report.md, the acceptance-criteria table
 #   make figures        figures/*.{pdf,svg,png}
 #   make checksums      write both checksum manifests
 #   make verify         re-check every checksum manifest
-#   make reverify       regenerate the derived artifacts and check they are byte-identical
+#   make reverify       regenerate the derived artifacts and compare them with the committed ones
+#                       (STRICT=1 for byte-for-byte; also accepted by protocol-check)
 #
 # A production run is:
 #   make preflight && make selftest && make p1 p2 p3 p4 p5 p6 && make oracle && \
@@ -44,6 +45,8 @@ BOOST_INC     ?= /opt/homebrew/include
 # contraction on, the instrumented replica stops reproducing the released class bit for bit.
 BASE_FLAGS    := -Wall -Wextra -std=c++11 -O2 -ffp-contract=off -I src
 ORACLE_FLAGS  := -Wall -Wextra -std=c++14 -O2 -ffp-contract=off -I src -I $(BOOST_INC)
+MPFR_PREFIX   ?= /opt/homebrew
+ORACLE_LIBS   := -L $(MPFR_PREFIX)/lib -lmpfr -lgmp
 
 # The flags are compiled into the binary, so the manifest records what the build actually
 # used rather than what the analysis later guesses it used.
@@ -76,7 +79,7 @@ endif
 # Frozen production sizes (PROTOCOL.md Sec. 4).  Overriding them makes a run exploratory,
 # and the probe records the size it was given in every row.
 N_P1          ?= 1000000
-N_P2          ?= 1000000
+N_P2          ?= 10000000
 N_P3          ?= 1000000
 N_P4          ?= 100000
 N_P5          ?= 1000000
@@ -98,6 +101,9 @@ STAMP     :=
 RAWROOT   := raw
 endif
 
+# STRICT=1 makes protocol-check and reverify require byte-for-byte equality.
+STRICTARG := $(if $(STRICT),--strict)
+
 .PHONY: all cxx11-check selftest preflight protocol-check check-legacy \
         p1 p2 p3 p4 p5 p6 oracle analyze figures checksums verify \
         reverify clean distclean
@@ -118,7 +124,7 @@ exp7_probe_libstdcxx.exe: $(PROBE_SRC) $(PROBE_HDR)
 
 exp7_oracle.exe: src/exp7_oracle.cpp src/exp7_common.H src/exp7_loaders.H src/exp7_digest.H \
                  $(GENERATED)
-	$(CXX_LIBCXX) $(ORACLE_FLAGS) -stdlib=libc++ -o $@ $<
+	$(CXX_LIBCXX) $(ORACLE_FLAGS) -I $(MPFR_PREFIX)/include -stdlib=libc++ -o $@ $< $(ORACLE_LIBS)
 
 # The sampling sources must keep compiling as strict C++11 with no extensions, because the
 # released loader is a header-only C++11 reference implementation.  The oracle is exempt by
@@ -140,27 +146,14 @@ selftest: $(TARGETS) cxx11-check
 check-legacy:
 	@$(PY) src/check_legacy.py
 
-# config/protocol.json must be exactly what config/make_protocol.py produces.  Regenerating
-# into a scratch copy and diffing is what makes "the analysis reads the protocol" mean
-# something: a hand-edited JSON would otherwise pass every hash check in the run.
+# config/protocol.json must be what config/make_protocol.py produces.  Regenerating it and
+# comparing is what makes "the analysis reads the protocol" mean something: a hand-edited
+# JSON would otherwise pass every hash check in the run.  The comparison, and why its only
+# random part is compared statistically, is described in compare_regenerated.py.  STRICT=1
+# asks for byte-for-byte equality, which holds under the package versions recorded in
+# raw/environment.json.  The committed file is never overwritten.
 protocol-check:
-	@cp config/protocol.json config/.protocol.json.committed
-	@if $(PY) config/make_protocol.py > /dev/null; then :; else \
-	   cp config/.protocol.json.committed config/protocol.json; \
-	   rm -f config/.protocol.json.committed; \
-	   echo "  protocol-check: config/make_protocol.py failed to run"; \
-	   exit 1; \
-	 fi
-	@if cmp -s config/protocol.json config/.protocol.json.committed; then \
-	   rm -f config/.protocol.json.committed; \
-	   echo "  protocol-check: config/protocol.json matches config/make_protocol.py"; \
-	 else \
-	   echo "  protocol-check: config/protocol.json is NOT what config/make_protocol.py produces"; \
-	   diff config/.protocol.json.committed config/protocol.json | head -40; \
-	   cp config/.protocol.json.committed config/protocol.json; \
-	   rm -f config/.protocol.json.committed; \
-	   exit 1; \
-	 fi
+	@$(PY) compare_regenerated.py protocol $(STRICTARG)
 
 preflight: $(TARGETS) exp7_oracle.exe protocol-check check-legacy
 	$(PY) preflight.py $(if $(ALLOW_DIRTY_DEV),--allow-dirty,)
@@ -217,9 +210,9 @@ p6: $(TARGETS) preflight
 # ORACLE_JOBS shards each audit stream across processes.  Sharding is a scheduling device
 # only: shard i adjudicates the records congruent to i modulo N, so the union is exactly the
 # unsharded run and every record is adjudicated exactly once.  Verified on the smoke stream --
-# 2294 records unsharded, 574+574+573+573 across four shards.  At about 1.1 ms a record the
-# frozen matrix is hours on one core, and there are only a handful of audit files, so
-# parallelising over files alone would leave most of the machine idle.
+# 2294 records unsharded, 574+574+573+573 across four shards.  At about 25 us a record the
+# frozen matrix is about half an hour on one core, and there are only a handful of audit
+# files, so parallelising over files alone would leave most of the machine idle.
 ORACLE_JOBS ?= $(shell sysctl -n hw.perflevel0.logicalcpu 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null || echo 4)
 
 oracle: exp7_oracle.exe
@@ -294,41 +287,31 @@ verify:
 	else echo "  checksums.sha256 missing"; fail=1; fi; \
 	exit $$fail
 
-# reverify checks that every derived artifact regenerates byte for byte from the same raw
-# data.  It copies results/ and figures/ to .reverify/, re-runs the analysis and the
-# figures in place, and diffs the new files against the copies.  It never touches raw/.
+# reverify checks that every derived artifact regenerates from the same raw data.  It copies
+# results/ and figures/ to .reverify/, re-runs the analysis and the figures, moves the new
+# files to .reverify/*_after, and puts the committed files back.  It never touches raw/.
 #
-# `results/` -- the CSVs, the JSON and the report -- must regenerate byte for byte: they are
-# the scientific tables, they are deterministic, and a difference there is a real finding.
-# `figure_manifest.json` must match exactly too, because it records each figure's source
-# data.  The rendered bytes of the PDF, SVG and PNG files are diffed and reported but do
-# not fail the target: no result rests on a rendered byte, and requiring one would tie the
-# release to a particular matplotlib and font stack.  On the machine that produced the
-# committed files they also reproduce byte for byte.  Comparing them at all means that a
-# figure that stops reproducing -- an embedded timestamp, a hash-ordered element id, a font
-# path -- is reported, rather than silently invalidating checksums.sha256, which hashes it.
+# `results/` -- the CSVs, the JSON and the report -- and `figure_manifest.json`, which records
+# each figure's source data, must agree with the committed files: every word, integer and
+# row exactly, every floating-point number to a relative tolerance of 1e-9.  A different
+# numpy or scipy moves the last digits of some p-values, and that is not a finding; a changed
+# count or verdict is.  STRICT=1 requires byte-for-byte equality instead, which holds under
+# the package versions recorded in raw/environment.json.  The rendered bytes of the PDF, SVG
+# and PNG files are compared and reported but do not fail the target: no result rests on a
+# rendered byte, and requiring one would tie the release to a particular matplotlib and font
+# stack.  Comparing them at all means that a figure that stops reproducing -- an embedded
+# timestamp, a hash-ordered element id, a font path -- is reported, rather than silently
+# invalidating checksums.sha256, which hashes it.  On a failure .reverify/ is kept for
+# inspection.
 reverify:
 	@rm -rf .reverify && mkdir -p .reverify
 	@cp -R results .reverify/results_before
 	@cp -R figures .reverify/figures_before
-	@$(PY) analyze.py $(SMOKEARG)
-	@$(PY) make_figures.py $(SMOKEARG)
-	@fail=0; \
-	 diff -r --brief .reverify/results_before results || fail=1; \
-	 diff --brief .reverify/figures_before/figure_manifest.json \
-	      figures/figure_manifest.json || fail=1; \
-	 if diff -r --brief .reverify/figures_before figures > .reverify/figdiff 2>&1; then \
-	   echo "  reverify: rendered figures also reproduced byte for byte"; \
-	 else \
-	   echo "  reverify: NOTE -- rendered figure bytes differ; not a gate."; \
-	   sed 's/^/    /' .reverify/figdiff | head -8; \
-	 fi; \
-	 if [ $$fail -eq 0 ]; then \
-	   echo "  reverify: every derived artifact regenerated byte for byte"; \
-	   rm -rf .reverify; \
-	 else \
-	   echo "  reverify: a derived artifact did not reproduce"; exit 1; \
-	 fi
+	@$(PY) analyze.py $(SMOKEARG) && $(PY) make_figures.py $(SMOKEARG); rc=$$?; \
+	 mv results .reverify/results_after && mv figures .reverify/figures_after && \
+	 cp -R .reverify/results_before results && cp -R .reverify/figures_before figures; \
+	 if [ $$rc -ne 0 ]; then echo "  reverify: the analysis or the figures failed to run"; exit 1; fi
+	@$(PY) compare_regenerated.py outputs $(STRICTARG) && rm -rf .reverify
 
 clean:
 	rm -f $(TARGETS) exp7_oracle.exe $(GENERATED)

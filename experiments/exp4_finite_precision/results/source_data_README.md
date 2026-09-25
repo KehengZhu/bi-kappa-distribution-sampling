@@ -258,7 +258,7 @@ One row per `precision` x `kappa`. A reference curve, not a measurement: it has 
 | `audited` | records this configuration contributed to the audit stream | count |
 | `audit_<stratum>_total`, `_audited`, `_rate` | attempts that fell in each of the seven strata, how many were written, and the protocol's declared rate. Assignment is by priority and the first match wins, so the counts partition the sample | count, count, probability |
 | `seed_homogeneity_chi2`, `seed_homogeneity_p` | exact-table homogeneity of the failure rate across seeds, on `pooled` rows. A required diagnostic, reported with its p-value | dimensionless, probability |
-| `cross_phase_native_agrees` | on a `native` row, whether P1's row for the same configuration, seed and stream reports the same counters. `NA` on a `paired` row | -- |
+| `cross_phase_native_agrees` | on a `native` row, whether P1's row for the same configuration, seed and stream reports the same counters. The comparison is made only when the two rows ran the same number of attempts; under protocol 4.0.0 P2 runs 10⁷ attempts per seed and P1 10⁶, so it is `NA` there. `NA` on a `paired` row | -- |
 | `boot_*` | cluster-bootstrap interval for the pooled failure rate (see §0) | -- |
 
 ---

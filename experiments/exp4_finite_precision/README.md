@@ -140,7 +140,7 @@ make analyze                  # write results/
 make figures                  # write figures/
 make checksums                # rewrite raw/raw_checksums.sha256 and checksums.sha256
 make verify                   # check both checksum files
-make reverify                 # regenerate results/ and figures/ and compare them byte for byte
+make reverify                 # regenerate results/ and figures/ and compare them with the committed files
 ```
 
 Three further targets check the sources: `make cxx11-check` compiles the probe as strict
@@ -148,6 +148,15 @@ C++11 under both compilers, `make check-legacy` confirms that the vendored compa
 `cpp/bi_kappa_distribution.H` at commit `0fc2c95` apart from its include guard and namespace, and
 `make protocol-check` confirms that `config/protocol.json` is what `config/make_protocol.py`
 produces.
+
+`make reverify` and `make protocol-check` compare every word, integer and row exactly and
+every floating-point number to a relative tolerance of 1e-9, so that a different numpy or
+scipy, which moves the last digits of some p-values, does not fail them. The protocol's one
+Monte Carlo estimate, the F2 miss-count distribution, is checked by re-deriving the protocol
+from its committed counts and by testing a fresh run's counts for consistency with them,
+because numpy does not keep that random stream fixed across versions. `STRICT=1` requires
+byte-for-byte equality instead; the committed files meet it under the package versions
+recorded in `raw/environment.json`. `compare_regenerated.py` does both comparisons.
 
 - Every simulation target runs `preflight` first. `preflight` stops if any source file the
   experiment depends on has uncommitted changes. `ALLOW_DIRTY_DEV=1 make preflight` overrides

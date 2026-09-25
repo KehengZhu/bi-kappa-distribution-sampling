@@ -22,17 +22,18 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 # --- frozen matrix ---------------------------------------------------------------------
 KAPPA_LADDER = [0.5001, 0.501, 0.505, 0.51, 0.55, 0.60, 0.75, 1.0, 1.25, 1.49, 1.5, 2.0, 5.0]
 PRECISIONS = ["float", "double"]
-# Seed blocks.  7001-7010 and 8001-8010 were used by earlier runs of this experiment under
-# protocol versions 1.3.0 and 2.0.0 and are not reused; they are listed so that the selftest
-# can check that no block in use overlaps them.  The production and performance blocks,
-# 9001-9010, follow the rule stated in PROTOCOL.md section 3: take the highest seed declared
-# anywhere in this repository, round up to the next multiple of 1000, and take the next ten
-# integers.  The rule admits exactly one answer, so the block is disjoint from every other
-# by construction.
+# Seed blocks.  7001-7010, 8001-8010 and 9001-9010 were used by earlier runs of this
+# experiment under protocol versions 1.3.0, 2.0.0 and 3.0.0 and are not reused; they are
+# listed so that the selftest can check that no block in use overlaps them.  The production
+# and performance blocks, 10001-10010, follow the rule stated in PROTOCOL.md section 3: take
+# the highest seed declared anywhere in this repository, round up to the next multiple of
+# 1000, and take the next ten integers.  The rule admits exactly one answer, so the block is
+# disjoint from every other by construction.
 SEEDS_FIRST_HOLDOUT = [7001, 7002, 7003, 7004, 7005, 7006, 7007, 7008, 7009, 7010]
 SEEDS_SECOND_HOLDOUT = [8001, 8002, 8003, 8004, 8005, 8006, 8007, 8008, 8009, 8010]
-SEEDS_PRODUCTION = [9001, 9002, 9003, 9004, 9005]
-SEEDS_PERFORMANCE = [9006, 9007, 9008, 9009, 9010]
+SEEDS_THIRD_HOLDOUT = [9001, 9002, 9003, 9004, 9005, 9006, 9007, 9008, 9009, 9010]
+SEEDS_PRODUCTION = [10001, 10002, 10003, 10004, 10005]
+SEEDS_PERFORMANCE = [10006, 10007, 10008, 10009, 10010]
 
 # Protocol 3.0.0: P1 and P5 give every (precision, kappa) configuration of a replicate its
 # own engine stream, so that the 26 configurations of a replicate are independent rather
@@ -43,14 +44,17 @@ SEEDS_PERFORMANCE = [9006, 9007, 9008, 9009, 9010]
 # with precision_index 0 for double and 1 for float, and kappa_index the 0-based position in
 # KAPPA_LADDER.  The formula is declared here, in PROTOCOL.md section 3, and in
 # src/exp7_common.H, it admits exactly one answer for each configuration, and every value it
-# produces is 9001-9005 modulo 10000, so it cannot collide with a declared block anywhere in
-# this repository.
+# produces is congruent to a production seed (10001-10005) modulo 10000, so it cannot collide
+# with a declared block anywhere in this repository.
 P1_STREAM_SEED_STRIDE = 10_000
 QUANTILE_LEVELS = [0.5, 0.9, 0.99, 0.999, 0.9999]
 TAIL_Q0 = [1e-2, 1e-3, 1e-4]
 
 N_SCALAR = 1_000_000
-N_MECHANISM = 1_000_000
+# Protocol 4.0.0: 10^7 attempts per seed in the mechanism phase, 5 x 10^7 per setting over the
+# five seeds, so that a setting with no failure has a one-sided 95% upper bound of 6.0e-8
+# rather than 6.0e-7; see the 4.0.0 amendment.
+N_MECHANISM = 10_000_000
 N_CONDITIONING = 1_000_000
 N_LOADER = 100_000
 
@@ -132,7 +136,8 @@ def achieved_coverage(n: int, p: float, lo: int, hi: int) -> float:
 
 
 # Monte Carlo settings for the per-configuration miss-count law.  Fixed here so that
-# `make protocol-check` regenerates config/protocol.json byte for byte.
+# config/protocol.json regenerates byte for byte under the same numpy
+# (`make protocol-check STRICT=1`).
 F2_GROUP_MC_REPLICATES = 20_000_000
 F2_GROUP_MC_SEED = 20260920
 
@@ -283,11 +288,88 @@ def f2_cells() -> tuple[list[dict], dict]:
 def main() -> None:
     cells, f2 = f2_cells()
     protocol = {
-        "protocol_version": "3.0.0",
+        "protocol_version": "4.0.0",
         "amendments": [
+            {"version": "4.0.0",
+             "before_any_data": False,
+             "governs": "the fourth run, on seeds 10001-10010",
+             "reason":
+                 "The third holdout, on seeds 9001-9010 under protocol 3.0.0, returned GO "
+                 "and is preserved in commit abdd295. This amendment is not a response to a "
+                 "failure: no gate failed and no defect was found. It changes the candidate "
+                 "implementation, the size of the mechanism phase and the oracle's "
+                 "arithmetic backend. Because the implementation changes after data exist, "
+                 "it follows the terms of PROTOCOL.md section 8: a new implementation hash, "
+                 "a new protocol document, a new disjoint seed block, and a complete rerun.\n"
+                 "\n"
+                 "(1) IMPLEMENTATION. Release 2.3.0 computes in the working precision in "
+                 "every instantiation. Release 2.2.0, the candidate under 3.0.0, formed the "
+                 "logarithm of the radius, the direction, the thermal scaling, the rotation "
+                 "and each component of a float instantiation in double and rounded each "
+                 "component once to float. The change is a design decision with two "
+                 "reasons: the header must work where only single precision is available, "
+                 "and a run labelled single precision should perform all of its arithmetic "
+                 "in single precision. A double instantiation is unaffected: 2.3.0 performs "
+                 "the same operations in the same order as 2.2.0 and returns the same bits, "
+                 "which was checked by rerunning phases P1, P2, P4 and P5 in double on seeds "
+                 "9001-9005 under both standard libraries and comparing every counter and "
+                 "digest with the committed third-holdout records. In float the relative "
+                 "error of the radius is about eps |log R|, about 1e-5 near FLT_MAX, while "
+                 "neighbouring floats there are 6e-8 apart. A float draw whose largest exact "
+                 "component lies within that error of the float overflow threshold can "
+                 "therefore be returned non-finite although the type can hold it, and the "
+                 "paired layer scores it as avoidable loss, which gate G1 requires to be "
+                 "exactly zero. The second holdout recorded one such draw, at float "
+                 "kappa = 0.505 (section 2.7.1). A run of the 2.2.0 header at 10^7 attempts "
+                 "per seed on seeds 9001-9005, made while preparing this amendment and not "
+                 "analysed, found three float attempts -- two at kappa = 0.505 and one at "
+                 "kappa = 0.51, all within 4e-6 relative of FLT_MAX -- on which a float "
+                 "calculation and the double one reach different outcomes; in each the "
+                 "double calculation agreed with the exact value. No gate rule is changed. "
+                 "For a float run the candidate's radius is again a float "
+                 "calculation, distinct from the paired layer's double reference, so the "
+                 "narrowing recorded in section 2.7.1 no longer applies: the paired layer "
+                 "measures the float candidate's accuracy, and a float FINITE_BUT_WRONG "
+                 "verdict from it counts. The two selftest regressions frozen under 3.0.0 "
+                 "are restated for float arithmetic: the recorded float draw of section "
+                 "2.7.1 must be returned non-finite and scored as avoidable loss, and the "
+                 "float boundary sweep takes float inputs, allows either answer within the "
+                 "float error band of the threshold (4 eps where the radius is "
+                 "representable, 4 eps |log V| where it is not) and requires the exact "
+                 "answer outside it.\n"
+                 "\n"
+                 "(2) PROTOCOL. The mechanism phase P2 runs 10^7 attempts per seed instead "
+                 "of 10^6, 5 x 10^7 per setting over the five seeds. With 5 x 10^6 attempts "
+                 "a setting with no failure has a one-sided 95% upper bound of "
+                 "1 - 0.05^(1/N) = 6.0e-7, which lay above nonzero fractions observed at "
+                 "neighbouring kappa (for example 4e-7 for the candidate at double "
+                 "kappa = 0.51, beside a zero at 0.55), so a zero-failure setting could not "
+                 "be resolved below its neighbours. At 5 x 10^7 the bound is 6.0e-8. P2's "
+                 "native layer runs at the same size on P1's streams, so its counters are no "
+                 "longer comparable with P1's, and the cross-phase check "
+                 "cross_phase_native_agrees reports NA instead. The sizes of P1, P3, P4, P5 "
+                 "and P6, the audit rule and every threshold are unchanged.\n"
+                 "\n"
+                 "(3) ORACLE. The 100-digit recomputation uses "
+                 "boost::multiprecision::mpfr_float_100 (MPFR, correctly rounded) instead "
+                 "of cpp_dec_float_100, and is about 35 times faster. On a complete audit "
+                 "file the two gave identical classifications and identical maximum "
+                 "statistics; two mean-error statistics differed in the third to fourth "
+                 "digit, because cpp_dec_float's conversion to double is not correctly "
+                 "rounded. The oracle's independent working-precision model of the candidate "
+                 "computes entirely in the working type, which is what 2.3.0 does.\n"
+                 "\n"
+                 "SEEDS. 10001-10005 for production and 10006-10010 for the performance "
+                 "block, by the rule of section 3. 9001-9010 are added to the spent "
+                 "blocks.\n"
+                 "\n"
+                 "SCOPE is unchanged: arm64 macOS under both standard libraries, "
+                 "cross-architecture withdrawn. No threshold is relaxed, no cell removed, "
+                 "no family alpha changed, no result excluded. Every change was made and "
+                 "committed before any datum on seeds 10001-10010 existed."},
             {"version": "3.0.0",
              "before_any_data": False,
-             "governs": "the third confirmatory holdout, on seeds 9001-9010",
+             "governs": "the third confirmatory holdout, on seeds 9001-9010 (superseded)",
              "reason":
                  "The second holdout, on seeds 8001-8010 under protocol 2.0.0, returned "
                  "NO-GO on gate G1 and is preserved unmodified in commit e5c9837. Four of "
@@ -456,13 +538,12 @@ def main() -> None:
         "frozen_before_any_data": True,
         "candidate": {
             "name": "CANDIDATE",
-            "description": "released loader cpp/bi_kappa_distribution.H at version 2.2.0, "
-                           "radius built in the log domain and carried, with the rest of "
-                           "the deterministic map, in the accumulator of "
-                           "bikappa_detail::log_accumulator -- double for a float "
-                           "instantiation, the working type otherwise -- with one rounding "
-                           "at materialization",
-            "version": "2.2.0",
+            "description": "released loader cpp/bi_kappa_distribution.H at version 2.3.0, "
+                           "radius built in the log domain; every quantity, from the "
+                           "variates to the returned components, is computed in the "
+                           "working precision of the instantiation, and representability "
+                           "is decided from the materialized component",
+            "version": "2.3.0",
             "log_gamma_primitive": "LOG-ID",
             "log_gamma_citation": "Ahrens, J.H. and Dieter, U. (1974), Computing 12, 223-246",
             "boosted_gamma_primitive": "Marsaglia-Tsang",
@@ -482,15 +563,15 @@ def main() -> None:
             "performance": SEEDS_PERFORMANCE,
             "declared_not_derived": True,
             "derivation_rule":
-                "The highest seed declared anywhere in this repository is 8010 (the second "
+                "The highest seed declared anywhere in this repository is 9010 (the third "
                 "holdout's performance block). Round up to the next multiple of 1000, "
-                "which is 9000, and take the next ten integers: 9001-9005 for production "
-                "and 9006-9010 for the performance block. The rule admits exactly one "
+                "which is 10000, and take the next ten integers: 10001-10005 for production "
+                "and 10006-10010 for the performance block. The rule admits exactly one "
                 "answer, so the block is a consequence of the repository's state and not a "
                 "choice made after seeing a result.",
             "p1_stream_seed_stride": P1_STREAM_SEED_STRIDE,
             "p1_stream_seed_rule":
-                "Protocol 3.0.0 only. In phases P1 and P5 the engine of configuration "
+                "Since protocol 3.0.0. In phases P1 and P5 the engine of configuration "
                 "(precision, kappa) under replicate seed `base` is seeded with "
                 "base + 10000 * (13 * precision_index + kappa_index), precision_index 0 "
                 "for double and 1 for float and kappa_index the 0-based position in the "
@@ -498,8 +579,8 @@ def main() -> None:
                 "independent streams instead of sharing one, which is what family F2's "
                 "global rule requires and what protocol 2.0.0 and earlier did not "
                 "provide. The formula is declared, deterministic and admits exactly one "
-                "answer per configuration; every value it produces is congruent to "
-                "9001-9005 modulo 10000 and so collides with no declared block. It is "
+                "answer per configuration; every value it produces is congruent to a "
+                "production seed modulo 10000 and so collides with no declared block. It is "
                 "recorded per row as `stream_seed` beside the replicate's `seed`, which "
                 "remains the unit the analysis groups and clusters by. P2, P3, P4 and P6 "
                 "are unchanged: their families decide by Holm, by Simes or by an exact "
@@ -508,16 +589,19 @@ def main() -> None:
                 "and no reason to disturb them.",
             "spent_blocks": {"first_holdout": SEEDS_FIRST_HOLDOUT,
                              "second_holdout": SEEDS_SECOND_HOLDOUT,
+                             "third_holdout": SEEDS_THIRD_HOLDOUT,
                              "spent_reason":
                                  "used by the NO-GO holdouts preserved in commits 45d3ef8 "
-                                 "(7001-7010) and e5c9837 (8001-8010); PROTOCOL.md section "
-                                 "8 forbids recomputing any result on them, and they may "
-                                 "now serve only as preserved failure and development "
-                                 "evidence"},
+                                 "(7001-7010) and e5c9837 (8001-8010) and by the GO holdout "
+                                 "under protocol 3.0.0 preserved in commit abdd295 "
+                                 "(9001-9010); PROTOCOL.md section 8 forbids recomputing "
+                                 "any result on them, and they may now serve only as "
+                                 "preserved evidence and development material"},
             "disjoint_from": {"exp1": [1001, 1005], "exp2": [2001, 2005],
                               "exp3": [3001, 3003, 3101], "exp4_exp6": [4001, 4010],
                               "exp7_first_holdout": [7001, 7010],
                               "exp7_second_holdout": [8001, 8010],
+                              "exp7_third_holdout": [9001, 9010],
                               "exp7_selftest": [7501, 7505]},
         },
         "matrix": {

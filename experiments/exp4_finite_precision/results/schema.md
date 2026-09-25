@@ -39,7 +39,7 @@ Every JSONL row carries the run's identity:
 | `rng` | string | always `mt19937` |
 | `kappa` | float | spectral index |
 | `shape_a` | float | `kappa − 1/2` in the working precision, widened to double |
-| `seed` | int | the replicate: one of 9001–9005 (production) or 9006–9010 (P6) |
+| `seed` | int | the replicate: one of 10001–10005 (production) or 10006–10010 (P6) |
 | `stream_seed` | int | the engine this configuration actually ran on. Present on P1 and P5 rows and on P2's `native` rows; `seed + 10000 × (13 × precision_index + kappa_index)` by PROTOCOL.md §3, which gives every configuration of a replicate an independent stream. Absent elsewhere, where the engine seed is the replicate |
 | `n_attempted` | int | attempts the row was asked for. In P4 it is the attempts actually made |
 
@@ -359,9 +359,12 @@ exact rather than implied.
 ### `layer = "native"`
 
 As P1's native rows, minus the scalar summary and the tail file, plus `accounting_ok`. Same
-`stream_seed` and stream as P1's native row for the same configuration, so the two must agree
-exactly; that cross-phase equality is a free consistency check. P2's `paired` rows keep the
-replicate seed, as PROTOCOL.md §3 states — nothing compares them against P1.
+`stream_seed` and stream as P1's native row for the same configuration, so when the two run
+the same number of attempts they must agree exactly, and that cross-phase equality is a free
+consistency check. Under protocol 4.0.0 P2 runs 10⁷ attempts per seed and P1 10⁶, so the
+counters cover different numbers of attempts and the analysis reports the check as `NA`.
+P2's `paired` rows keep the replicate seed, as PROTOCOL.md §3 states — nothing compares them
+against P1.
 
 ### `raw/p2/audit_p2_<tag>.bin`
 
@@ -458,7 +461,7 @@ Timed rows:
 | `attempts_reported` | int | `n_attempts()`; CANDIDATE only, 0 for LEGACY |
 | `seconds` | float | wall time for the block |
 | `seconds_per_returned` | float | the G5 statistic's per-block input |
-| `seed` | int | 9006–9010, indexed by `block mod 5` from the declared vector |
+| `seed` | int | 10006–10010, indexed by `block mod 5` from the declared vector |
 
 Block size is calibrated once per case and method by an **untimed warm-up**, which is never
 reported, so that every timed block clears both floors (≥ 2 s and ≥ 10⁶ attempts).
@@ -482,7 +485,7 @@ plus one `n_records: 0` row for a file with none.
 
 | field | type | meaning |
 |---|---|---|
-| `tool`, `oracle` | string | `exp7_oracle`, `boost::multiprecision::cpp_dec_float_100` |
+| `tool`, `oracle` | string | `exp7_oracle`, `boost::multiprecision::mpfr_float_100` |
 | `file` | string | the audit file |
 | `file_sha256` | string | SHA-256 of that file, so the adjudication is tied to the bytes it adjudicated |
 | `protocol_sha256` | string | |

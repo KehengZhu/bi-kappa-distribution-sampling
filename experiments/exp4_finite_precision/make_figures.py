@@ -193,9 +193,80 @@ def plot_rate_series(ax, xs, rates, style, label):
     return obs
 
 
+def plot_upper_bounds(ax, xs, bounds, style, ms):
+    """Mark settings with no failure at their one-sided 95% upper bound.
+
+    A zero fraction has no place on a logarithmic axis, and leaving the point out reads as
+    missing data.  The bound is drawn as an open marker of the method's shape with a
+    downward arrow, unjoined to the observed series.  `ms` is passed in so that, where
+    both methods have the same bound, the circle can enclose the square.
+    """
+    for x, ub in zip(xs, bounds):
+        if not (np.isfinite(ub) and ub > 0):
+            continue
+        ax.annotate("", xy=(x, ub / 6.0), xytext=(x, ub),
+                    arrowprops=dict(arrowstyle="-|>", color=NEUTRAL, lw=0.8,
+                                    mutation_scale=5, shrinkA=ms * 0.55, shrinkB=0))
+        ax.plot([x], [ub], ls="none", marker=style["marker"], ms=ms, mfc="white",
+                mec=style["color"], mew=0.9, zorder=3)
+
+
 # ---------------------------------------------------------------------------
 # FP1 - failure envelope and mechanism decomposition
 # ---------------------------------------------------------------------------
+XMAX_FP1 = 0.15
+
+
+def tex_count(n: float) -> str:
+    """An attempt count as `a\\times10^b` (or `10^b` when a = 1), for a caption."""
+    if not (np.isfinite(n) and n > 0):
+        return "?"
+    e = int(math.floor(math.log10(n)))
+    m = n / 10.0 ** e
+    if abs(m - round(m)) < 1e-9:
+        m = round(m)
+    if m == 1:
+        return f"$10^{{{e}}}$"
+    return f"${m:g}\\times10^{{{e}}}$"
+
+
+def fp1_summary(ctx: dict) -> dict:
+    """What the FP1 caption states, read from the source data rather than written in.
+
+    The number of attempts behind each point, and the stabilized calculation's avoidable
+    losses on the paired layer (the draws whose final velocity could be stored but which
+    came back non-finite), by precision and kappa.
+    """
+    rows = [r for r in load(ctx, "failure_envelope.csv")
+            if r["layer"] == "paired" and r["tag"] == PRIMARY_TAG]
+    sizes = sorted({num(r, "n_attempted") for r in rows
+                    if r["scope"] == "pooled" and r["method"] in ("LEGACY", "CANDIDATE")
+                    and np.isfinite(num(r, "n_attempted"))})
+    avoidable: dict = {}
+    for r in rows:
+        if r["scope"] == "seed" and r["method"] == "CANDIDATE" and num(r, "n_avoidable", 0) > 0:
+            key = (r["precision"], num(r, "kappa"))
+            avoidable[key] = avoidable.get(key, 0) + int(num(r, "n_avoidable"))
+    return {"n_per_point": sizes[0] if len(sizes) == 1 else float("nan"),
+            "candidate_avoidable": avoidable}
+
+
+def fp1_candidate_sentence(summary: dict) -> str:
+    av = summary["candidate_avoidable"]
+    if not av:
+        return ("The stabilized calculation returned all such draws. Its remaining failures "
+                "occurred only when a final velocity component was too large for the output "
+                "type.")
+    total = sum(av.values())
+    parts = []
+    for (precision, kappa) in sorted(av, key=lambda k: (k[0] != "double", k[1])):
+        prec = "double" if precision == "double" else "single"
+        parts.append(f"{av[(precision, kappa)]} in {prec} precision at $\\kappa={kappa:g}$")
+    return (f"The stabilized calculation returned all such draws except {total} "
+            f"({'; '.join(parts)}). Its other failures occurred only when a final velocity "
+            "component was too large for the output type.")
+
+
 def figure_fp1(ctx: dict) -> None:
     rows = [r for r in load(ctx, "failure_envelope.csv")
             if r["scope"] == "pooled" and r["layer"] == "paired"
@@ -222,6 +293,13 @@ def figure_fp1(ctx: dict) -> None:
             plot_rate_series(
                 ax, xs, [num(r, "failure_rate") for r in ms],
                 STYLE[method], method)
+            zero = [r for r in ms if num(r, "failure_count") == 0
+                    and truthy(r, "failure_is_upper_bound")
+                    and num(r, "kappa") - 0.5 <= XMAX_FP1]
+            plot_upper_bounds(
+                ax, [num(r, "kappa") - 0.5 for r in zero],
+                [num(r, "failure_ci_hi") for r in zero], STYLE[method],
+                ms=6.2 if method == "LEGACY" else 3.6)
 
         ax.set_xscale("log")
         ax.set_yscale("log")
@@ -229,24 +307,34 @@ def figure_fp1(ctx: dict) -> None:
         panel_label(ax, f"({letter})", "double precision" if precision == "double"
                     else "single precision")
     for ax in axes:
-        ax.set_xlim(8e-5, 0.15)
+        ax.set_xlim(8e-5, XMAX_FP1)
         ax.set_ylim(max(ymin * 0.2, 1e-320), 3.0)
     axes[0].set_ylabel("Non-finite fraction")
     handles = [Line2D([], [], label="Direct calculation",
                       **STYLE["LEGACY"]),
-               Line2D([], [], label="Stabilized calculation", **STYLE["CANDIDATE"])]
+               Line2D([], [], label="Stabilized calculation", **STYLE["CANDIDATE"]),
+               Line2D([], [], ls="none", marker=r"$\downarrow$", ms=6, color=NEUTRAL,
+                      label="No non-finite output (95% upper bound)")]
     fig.legend(handles=handles, frameon=False, loc="lower center",
-               bbox_to_anchor=(0.5, 0.01), ncol=2, columnspacing=1.8,
+               bbox_to_anchor=(0.5, 0.01), ncol=3, columnspacing=1.8,
                handletextpad=0.5)
     fig.tight_layout(pad=0.4, rect=(0, 0.10, 1, 1))
-    export(ctx, fig, "fp1_failure_envelope", 2,
-           "The stabilized log-scale calculation removes the intermediate failures of "
-           "direct square-root evaluation. Every remaining non-finite output contains a "
-           "component that is too large for the output type.",
+    summary = fp1_summary(ctx)
+    conclusion = ("The stabilized log-scale calculation removes the intermediate failures "
+                  "of direct square-root evaluation. ")
+    if summary["candidate_avoidable"]:
+        conclusion += ("Apart from the draws listed in the caption, every remaining "
+                       "non-finite output contains a component that is too large for the "
+                       "output type.")
+    else:
+        conclusion += ("Every remaining non-finite output contains a component that is too "
+                       "large for the output type.")
+    export(ctx, fig, "fp1_failure_envelope", 2, conclusion,
            ["failure_envelope.csv"], WIDTH_MM, 78,
-           "no interval is drawn; the failure count and its two-sided 95% Clopper-Pearson "
-           "interval are published for every setting in failure_envelope.csv, and settings "
-           "with zero failures are not plotted")
+           "no interval is drawn for an observed fraction; the failure count and its "
+           "two-sided 95% Clopper-Pearson interval are published for every setting in "
+           "failure_envelope.csv, and a setting with zero failures is drawn as an open "
+           "marker with a downward arrow at its one-sided 95% upper bound")
 
 
 # ---------------------------------------------------------------------------
@@ -670,16 +758,19 @@ def figure_sfp3(ctx: dict) -> None:
 
 # ---------------------------------------------------------------------------
 def write_captions(ctx: dict) -> None:
+    fp1 = fp1_summary(ctx)
+    n_fp1 = tex_count(fp1["n_per_point"])
     caps = {
         "fp1_failure_envelope":
             "Fraction of attempts that returned a non-finite velocity under direct square-"
             "root evaluation and stabilized log-scale evaluation in (a) double and (b) "
             "single precision. Direct evaluation lost additional draws near "
-            "$\\kappa=1/2$ even when their final velocities could be stored. The stabilized "
-            "calculation returned all such draws. Its remaining failures occurred only when "
-            "a final velocity component was too large for the output type. Each point pools "
-            "$5\\times10^6$ attempts across five independent seeds. A point is omitted "
-            "when all $5\\times10^6$ attempts returned finite values. Failure counts and "
+            "$\\kappa=1/2$ even when their final velocities could be stored. "
+            + fp1_candidate_sentence(fp1) + " Each point pools "
+            f"{n_fp1} attempts across five independent seeds. Where all "
+            f"{n_fp1} attempts returned finite values, an open symbol with a downward "
+            "arrow marks the one-sided 95 per cent upper confidence bound on the fraction. "
+            "Failure counts and "
             "their two-sided 95 per cent binomial confidence intervals are given for every "
             "setting in `failure_envelope.csv`.",
         "fp2_conditioning_tail":
@@ -701,7 +792,7 @@ def write_captions(ctx: dict) -> None:
             "cent cluster-bootstrap percentile intervals over the seed block from 10\\,000 "
             "resamples; the black line marks the target itself.",
         "sfp1_scalar_validation":
-            "Scalar validation of the 2.2.0 candidate. (a, b) Residuals of the empirical CDF "
+            "Scalar validation of the 2.3.0 candidate. (a, b) Residuals of the empirical CDF "
             "of $Z=-\\log I_W(a,3/2)$ from the unit-exponential CDF, where "
             "$W=X_2/(X_1+X_2)\\sim\\mathrm{Beta}(a,3/2)$ and $a=\\kappa-1/2$; $Z$ is the "
             "diagnostic of record because $W$ itself rounds to zero at the smallest shapes "

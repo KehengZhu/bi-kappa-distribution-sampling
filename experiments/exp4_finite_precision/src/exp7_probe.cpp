@@ -1252,7 +1252,8 @@ static void p4One(const Options &o, const RunContext &rc, JsonlWriter &w, const 
     Geometry<T> geom(static_cast<T>(cs.kappa), T(1), static_cast<T>(cs.theta_ratio), ub);
     const bool capped= (cs.cap != std::numeric_limits<double>::infinity());
     const T lambda= static_cast<T>(cs.cap);
-    const T log_cap= capped ? static_cast<T>(std::log(cs.cap)) : T(0);
+    // log(cap) taken in T, as the released class takes it.
+    const T log_cap= capped ? std::log(lambda) : T(0);
 
     CountingEngine gen(seed);
     LegacyNative<T> legacy(cs.kappa);
@@ -2236,9 +2237,9 @@ static int phaseSelftest(const Options &o)
         check(true, "declared ladder and seed blocks agree with config/protocol.json");
     }
 
-    // 13. Both spent seed blocks stay spent.  PROTOCOL.md Sec. 8 forbids recomputing any
-    //     result on 7001-7010 or 8001-8010, and the cheapest place to enforce that is
-    //     here, where a rerun on them fails before it writes a byte.  The derived P1/P5
+    // 13. The spent seed blocks stay spent.  PROTOCOL.md Sec. 8 forbids recomputing any
+    //     result on 7001-7010, 8001-8010 or 9001-9010, and the cheapest place to enforce
+    //     that is here, where a rerun on them fails before it writes a byte.  The derived P1/P5
     //     streams are checked against the same blocks, because a derivation that landed on
     //     a spent seed would reuse it just as effectively as a declaration would.
     {
@@ -2256,8 +2257,8 @@ static int phaseSelftest(const Options &o)
             for (size_t j= 0; j < fixt.size(); ++j)
                 clash= clash || (spent[i] == fixt[j]);
         }
-        check(!clash && spent.size() == 20,
-              "both holdout seed blocks are spent and appear in no block in use");
+        check(!clash && spent.size() == 30,
+              "the three spent seed blocks appear in no block in use");
     }
 
     // 14. The P1/P5 stream derivation.  Family F2's null is exact only if the
@@ -2299,21 +2300,21 @@ static int phaseSelftest(const Options &o)
         check(derived.size() == expected && distinct && !collides, msg);
     }
 
-    // 14. The avoidable loss the second holdout found, replayed from frozen bit patterns.
+    // 14. A float draw near the overflow threshold, replayed from frozen bit patterns.
     //
-    //     Seeds 8001-8010 are spent, so this cannot be a rerun of the configuration; the
-    //     five `float` variates of the losing attempt are written down instead, as the bit
-    //     patterns the run recorded, and the arithmetic under them is replayed directly.
-    //     That makes the regression independent of the engine, of the phase and of the
-    //     ladder: it keeps failing if the stabilization is reverted, whatever else moves.
-    //
-    //     The draw: p2, CANDIDATE, float, kappa = 0.505, seed 8005, attempt 157855, seen
-    //     identically in both standard-library streams.  Its largest intended component
-    //     lies 3.12e-08 natural-log units below `log(FLT_MAX)` -- about half an ulp -- so
-    //     the correctly rounded `float` is finite and the draw is returnable.  Release
-    //     2.1.0 carried `log R` in `float`, whose error at that scale is 3.5e-06 after the
-    //     division by `a = 0.005`, and formed `g` in `float` too, worth another 3.9e-08;
-    //     neither resolves the margin, and the draw came back `(-inf, +inf, +inf)`.
+    //     The draw: p2, CANDIDATE, float, kappa = 0.505, seed 8005, attempt 157855 of the
+    //     second holdout, seen identically in both standard-library streams.  Its largest
+    //     intended component lies 3.12e-08 natural-log units below the float overflow
+    //     threshold -- about half an ulp -- so the correctly rounded `float` is finite.  The
+    //     `float` log radius carries about 3.5e-06 of error after the division by
+    //     a = 0.005, so a calculation carried out in `float` cannot resolve that margin.
+    //     PROTOCOL.md Sec. 2.8 states the consequence: the stabilized calculation, which
+    //     since release 2.3.0 computes in the working precision, returns this draw
+    //     non-finite, and the paired layer scores it as avoidable loss.  Both are asserted,
+    //     together with the reference's classification of the draw, so that the scoring of
+    //     such draws is fixed before the run rather than read off it.  The variates are the
+    //     bit patterns the run recorded, so the fixture does not depend on an engine, a
+    //     phase or the ladder.
     {
         const unsigned bits_x1= 0x3f128ad2u, bits_y= 0x3f795a38u, bits_u= 0x3ed12d4eu;
         const unsigned bits_ct= 0xbf0bc1cau, bits_phi= 0x40c530f9u;
@@ -2347,106 +2348,95 @@ static int phaseSelftest(const Options &o)
         const bool ref_says_representable= ref.representable;
         const bool margin_is_subulp= ref.overflow_margin < 0.0 &&
                                      ref.overflow_margin > -1.0e-7;
-        const bool candidate_returns_it= pr.finite[kMethodCandidate];
-        const bool not_scored_as_loss= pr.cat[kMethodCandidate] != kCatLogPrimFail;
+        const bool candidate_nonfinite= !pr.finite[kMethodCandidate];
+        const bool scored_avoidable= pr.cat[kMethodCandidate] == kCatLogPrimFail &&
+                                     isAvoidable(pr.cat[kMethodCandidate]);
 
         char msg[300];
         std::snprintf(msg, sizeof(msg),
-                      "holdout-2 regression: float kappa=0.505 seed 8005 attempt 157855 "
-                      "(margin %.3g log units below FLT_MAX) is returned, not lost",
-                      ref.overflow_margin);
-        check(ref_says_representable && margin_is_subulp && candidate_returns_it &&
-                  not_scored_as_loss,
+                      "float kappa=0.505 recorded draw (margin %.3g log units below the "
+                      "threshold) is returned non-finite by the float calculation and scored "
+                      "as avoidable loss",
+                      -ref.overflow_margin);
+        check(ref_says_representable && margin_is_subulp && candidate_nonfinite &&
+                  scored_avoidable,
               msg);
     }
 
-    // 15. The representability boundary itself, swept.
+    // 15. The float representability boundary, swept, in the two regimes a float
+    //     calculation has.
     //
-    //     The fixture above is one point on a boundary; this walks across it.  For each
-    //     offset the target magnitude is built first, as an exact `double`, and what the
-    //     loader must decide is compared against the hardware's own `float` conversion of
-    //     that magnitude -- not against the loader's `exp`, which would make the check
-    //     circular.  The offsets step in eighths of an ulp of FLT_MAX, so the grid
-    //     straddles the rounding midpoint at +4/8 ulp, where round-to-nearest carries the
-    //     value past the largest finite `float` and IEEE-754 returns an infinity.
+    //     The log radius is fixed at a float value that puts `R g` at the float overflow
+    //     threshold for g = g_mid, and g steps through values around g_mid.  The exact
+    //     magnitude of each product is formed in double from the same float inputs and
+    //     decides the expected answer -- never the loader's own `exp`, which would make the
+    //     check circular.  Away from the threshold the loader must decide as the exact value
+    //     does; within the float error band of the threshold either answer is allowed.  The
+    //     bands are twice the error budget of each regime and are fixed from the error
+    //     model, not fitted to the outcome:
     //
-    //     The geometry is the losing draw's own: the largest |g_j| is 0.591, so the radius
-    //     that puts a component at the limit is well inside the range where `exp` is
-    //     defined and the multiply, not the exponential, decides the answer.
+    //      (a) |g| > 1, so R is representable and the component is R * |g|: expf and the
+    //          multiply, band 4 eps, g stepping through consecutive floats;
+    //      (b) |g| < 1, the case of every draw in the matrix: R exceeds FLT_MAX and the
+    //          component is exp(log R + log|g|), whose argument carries the rounding of a
+    //          sum of size 88.7, band 4 eps |log V| = 4.2e-5, g stepping by 2e-6 relative.
     {
-        const float fmax= std::numeric_limits<float>::max();
-        const double fmaxd= static_cast<double>(fmax);
-        const double ulp= fmaxd - static_cast<double>(std::nextafter(fmax, 0.0f));
-        const double g0= 0.5910424350180431;   // the recorded draw's largest |g_j|
-        const double g1= -0.071841542754834328;
-        const double g2= -0.38795312600129428;
-
-        // Offsets in eighths of an ulp, plus the two points that bracket the midpoint at
-        // a relative distance of 1e-12 -- a hundred times the accumulator's resolution and
-        // four thousand times finer than an ulp.  The midpoint itself, +4/8 ulp exactly, is
-        // not in the grid: it is the one magnitude whose correct answer depends on the
-        // round-half-to-even rule rather than on an inequality, and no finite-precision
-        // reconstruction of it can be relied on to land on the right side.  A target that
-        // is an exact tie has probability zero under a continuous law, and the two
-        // bracketing points show the boundary is decided correctly to within 1e-12 of it.
-        double targets[36];
-        bool expect[36];
-        int nt= 0;
-        for (int j= -16; j <= 16; ++j)
+        const double thresh= static_cast<double>(std::numeric_limits<float>::max()) *
+                             (1.0 + std::ldexp(1.0, -25));
+        const double eps= static_cast<double>(std::numeric_limits<float>::epsilon());
+        for (int regime= 0; regime < 2; ++regime)
         {
-            if (j == 4)
-                continue;
-            targets[nt]= fmaxd + static_cast<double>(j) * (ulp / 8.0);
-            expect[nt]= std::isfinite(static_cast<float>(targets[nt]));
-            ++nt;
-        }
-        const double mid= fmaxd + 4.0 * (ulp / 8.0);
-        targets[nt]= mid * (1.0 - 1.0e-12);
-        expect[nt]= true;
-        ++nt;
-        targets[nt]= mid * (1.0 + 1.0e-12);
-        expect[nt]= false;
-        ++nt;
-
-        bool all_ok= true;
-        int first_bad= 0;
-        double first_bad_target= 0.0;
-        for (int i= 0; i < nt; ++i)
-        {
-            const double log_r= std::log(targets[i]) - std::log(g0);
-            std::array<double, 3> g= {{g0, g1, g2}};
-            std::array<float, 3> v;
-            const bool overflow=
-                bikappa_detail::materializeComponents<float>(log_r, g, v);
-            const bool got_finite= !overflow && std::isfinite(v[0]) &&
-                                   std::isfinite(v[1]) && std::isfinite(v[2]);
-            if (got_finite != expect[i] && all_ok)
+            const float g_mid= (regime == 0) ? 1.9f : 0.59104243f;
+            const double band= (regime == 0) ? 4.0 * eps : 4.0 * eps * std::log(thresh);
+            const float log_r=
+                static_cast<float>(std::log(thresh) - std::log(static_cast<double>(g_mid)));
+            const double r_exact= std::exp(static_cast<double>(log_r));
+            int outside= 0, bad= 0, inside= 0;
+            bool saw_finite= false, saw_inf= false;
+            float gv= g_mid;
+            if (regime == 0)
+                for (int i= 0; i < 64; ++i)
+                    gv= std::nextafter(gv, 0.0f);
+            for (int i= 0; i <= 128; ++i)
             {
-                all_ok= false;
-                first_bad= i;
-                first_bad_target= targets[i];
+                if (regime == 1)
+                    gv= static_cast<float>(static_cast<double>(g_mid) *
+                                           (1.0 + 2.0e-6 * static_cast<double>(i - 64)));
+                const double m= r_exact * static_cast<double>(gv);
+                std::array<float, 3> g= {{gv, -0.071841543f, -0.38795313f}};
+                std::array<float, 3> v;
+                const bool overflow= bikappa_detail::materializeComponents<float>(log_r, g, v);
+                const bool got_finite= !overflow && std::isfinite(v[0]);
+                saw_finite= saw_finite || got_finite;
+                saw_inf= saw_inf || !got_finite;
+                if (regime == 0)
+                    gv= std::nextafter(gv, 2.0f);
+                const double rel= m / thresh - 1.0;
+                if (std::fabs(rel) <= band)
+                {
+                    ++inside;
+                    continue;
+                }
+                ++outside;
+                if (got_finite != (rel < 0.0))
+                    ++bad;
             }
+            char msg[300];
+            std::snprintf(msg, sizeof(msg),
+                          "float representability boundary (%s): %d magnitudes outside "
+                          "+/-%.2g of the threshold decided as the exact value is (%d wrong); "
+                          "%d inside the band",
+                          regime == 0 ? "R representable" : "R beyond FLT_MAX", outside, band,
+                          bad, inside);
+            check(bad == 0 && saw_finite && saw_inf && outside >= 64, msg);
         }
-        char msg[300];
-        if (all_ok)
-            std::snprintf(msg, sizeof(msg),
-                          "float representability boundary: %d magnitudes from -2 to +2 ulp "
-                          "of FLT_MAX, and 1e-12 either side of the rounding midpoint, "
-                          "decided as the hardware rounds them",
-                          nt);
-        else
-            std::snprintf(msg, sizeof(msg),
-                          "float representability boundary: disagreement at target %d, "
-                          "%.17g (expected %s)",
-                          first_bad, first_bad_target, expect[first_bad] ? "finite" : "inf");
-        check(all_ok, msg);
     }
 
     // 16. The same sweep in `double`, at the resolution `double` can actually deliver.
     //
-    //     A `double` run has no wider accumulator to fall back on, so `log R` carries about
-    //     eps |log R| = 1.6e-13 of relative error on the radius near the overflow threshold
-    //     and the boundary is not resolvable to an ulp -- it is resolvable to about 1e-13,
+    //     In `double`, `log R` carries about eps |log R| = 1.6e-13 of relative error on the
+    //     radius near the overflow threshold, so the boundary is not resolvable to an ulp --
+    //     it is resolvable to about 1e-13,
     //     which is five orders of magnitude finer than the 1.05e-08 accuracy the protocol
     //     requires of the returned radius.  The sweep is therefore stated at 1e-10, a
     //     thousand times the resolution and a hundred times finer than the requirement, and

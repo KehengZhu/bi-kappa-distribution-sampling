@@ -1068,6 +1068,7 @@ def analyse_p2(ctx: Context, p1: dict) -> dict:
     stratum_totals = {st: [0, 0] for st in AUDIT_STRATA}
     per_cfg: dict = defaultdict(dict)
     cross_phase_disagreements = 0
+    cross_phase_compared = 0
 
     for r in sorted(rows, key=lambda r: (r.get("layer"), r.get("tag"), r.get("method"),
                                          r.get("precision"), jnum(r, "kappa"),
@@ -1132,9 +1133,14 @@ def analyse_p2(ctx: Context, p1: dict) -> dict:
                 stratum_totals[st][1] += au or 0
 
         if layer == "native":
+            # P2's native layer runs on P1's stream, so its counters must equal P1's --
+            # but only when the two ran the same number of attempts.  Protocol 4.0.0 runs
+            # P2 at 10^7 attempts per seed against P1's 10^6, and counters over different
+            # attempt counts are not comparable, so the column is NA (None) there.
             k1 = p1_native.get((tag, method, precision, round(kappa, 12), seed))
             agree = None
-            if k1 is not None:
+            if k1 is not None and jint(k1, "n_attempted") == n:
+                cross_phase_compared += 1
                 agree = bool(jint(k1, "n_finite") == n_fin
                              and jint(k1, "nonfinite_output") == nonfinite
                              and jint(k1, "engine_calls") == jint(r, "engine_calls"))
@@ -1188,6 +1194,7 @@ def analyse_p2(ctx: Context, p1: dict) -> dict:
             "honest_minus_ref_total": honest_minus_ref_total,
             "stratum_totals": stratum_totals, "audit_coverage": coverage,
             "cross_phase_disagreements": cross_phase_disagreements,
+            "cross_phase_compared": cross_phase_compared,
             "paired_rows": paired, "native_rows": native}
 
 
@@ -3019,6 +3026,7 @@ def run(ctx: Context, g6_override: str | None) -> int:
         "performance": {"ratio": p6["ratio"], "lo": p6["ratio_lo"], "hi": p6["ratio_hi"],
                         "bound": p6["bound"]},
         "cross_phase_native_disagreements": p2["cross_phase_disagreements"],
+        "cross_phase_native_comparisons": p2["cross_phase_compared"],
         "primary_environment_tag": PRIMARY_TAG,
     }
     with open(ctx.out("exp7_results.json"), "w", encoding="utf-8") as fh:
