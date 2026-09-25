@@ -2238,10 +2238,11 @@ static int phaseSelftest(const Options &o)
     }
 
     // 13. The spent seed blocks stay spent.  PROTOCOL.md Sec. 8 forbids recomputing any
-    //     result on 7001-7010, 8001-8010 or 9001-9010, and the cheapest place to enforce
-    //     that is here, where a rerun on them fails before it writes a byte.  The derived P1/P5
-    //     streams are checked against the same blocks, because a derivation that landed on
-    //     a spent seed would reuse it just as effectively as a declaration would.
+    //     result on 7001-7010, 8001-8010, 9001-9010 or 10001-10010, and the cheapest place
+    //     to enforce that is here, where a rerun on them fails before it writes a byte.  The
+    //     derived P1/P5 streams are checked against the same blocks, because a derivation
+    //     that landed on a spent seed would reuse it just as effectively as a declaration
+    //     would.
     {
         const std::vector<unsigned> spent= spentSeeds();
         const std::vector<unsigned> prod= productionSeeds();
@@ -2257,8 +2258,8 @@ static int phaseSelftest(const Options &o)
             for (size_t j= 0; j < fixt.size(); ++j)
                 clash= clash || (spent[i] == fixt[j]);
         }
-        check(!clash && spent.size() == 30,
-              "the three spent seed blocks appear in no block in use");
+        check(!clash && spent.size() == 40,
+              "the four spent seed blocks appear in no block in use");
     }
 
     // 14. The P1/P5 stream derivation.  Family F2's null is exact only if the
@@ -2309,8 +2310,9 @@ static int phaseSelftest(const Options &o)
     //     `float` log radius carries about 3.5e-06 of error after the division by
     //     a = 0.005, so a calculation carried out in `float` cannot resolve that margin.
     //     PROTOCOL.md Sec. 2.8 states the consequence: the stabilized calculation, which
-    //     since release 2.3.0 computes in the working precision, returns this draw
-    //     non-finite, and the paired layer scores it as avoidable loss.  Both are asserted,
+    //     since release 3.0.0 computes in the working precision, returns this draw
+    //     non-finite, and the paired layer scores it as avoidable loss (the oracle places
+    //     it in the rounding band of Sec. 2.9 when it adjudicates).  Both are asserted,
     //     together with the reference's classification of the draw, so that the scoring of
     //     such draws is fixed before the run rather than read off it.  The variates are the
     //     bit patterns the run recorded, so the fixture does not depend on an engine, a

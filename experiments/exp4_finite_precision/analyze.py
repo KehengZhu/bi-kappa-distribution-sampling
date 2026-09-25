@@ -36,6 +36,7 @@ only, and the two modes refuse to read each other's data.
 from __future__ import annotations
 
 import argparse
+import bisect
 import csv
 import hashlib
 import concurrent.futures
@@ -509,6 +510,8 @@ class Context:
         self.manifest: list[dict] = []
         self.interval_conf = float(proto.get("statistics", "interval_conf"))
         self.notes: list[str] = []
+        # Amendment 5.0.0: rounding-band attempts per configuration, from the oracle.
+        self.rounding_band: dict = {}
         self._phase_cache: dict = {}
 
     # -- paths -------------------------------------------------------------
@@ -596,6 +599,16 @@ class Context:
                 "per audited file whether or not anything disagreed, so that an empty "
                 "adjudication is distinguishable from an oracle that never ran.")
         return IO.read_jsonl(audit), IO.read_jsonl(disag)
+
+    def rounding_band_rows(self) -> list[dict]:
+        """The oracle's rounding-band records (amendment 5.0.0), header and footer included."""
+        path = os.path.join(self.raw_root, "oracle_rounding_band.jsonl")
+        if not os.path.exists(path):
+            raise AnalysisError(
+                f"{self.rel(path)} does not exist. Amendment 5.0.0 scores a failure inside "
+                "the rounding band from the oracle's exact margin, so G1 cannot be evaluated "
+                f"without it. Run `make {'SMOKE=1 ' if self.smoke else ''}oracle`.")
+        return IO.read_jsonl(path)
 
 
 # ---------------------------------------------------------------------------
@@ -1024,6 +1037,80 @@ AUDIT_STRATA = ("within_margin_of_a_type_limit", "method_disagreement",
                 "unambiguous_failure_beyond_margin", "uniform_sample")
 
 
+def rounding_band_by_config(ctx: Context, band_rows: list[dict],
+                            oracle_audit: list[dict]) -> dict:
+    """Attribute every rounding-band record of the oracle to the configuration it came from.
+
+    Amendment 5.0.0.  An audit stream spans a whole phase and its records carry kappa and
+    precision but not the seed.  The probe writes them in the order it runs the
+    configurations, and every paired counter row records how many records its configuration
+    contributed (`audited`), so the cumulative counts give each configuration an exact range
+    of record indices, and the ranges must add up to the number of records in the stream.
+    Each record's margin is re-checked against the band of `rounding_band` in the protocol,
+    so the analysis does not take the oracle's classification on trust.
+
+    Returns {(phase, tag, method, precision, round(kappa, 12), seed): count}.
+    """
+    band = ctx.proto.get("rounding_band")
+    factor = float(band["factor"])
+    eps = {k: float(v) for k, v in band["eps"].items()}
+    # The number of records each audit stream holds, from its file header as the oracle
+    # read it.  (`n_records_total` in the summary rows counts one shard, not the file.)
+    totals = {}
+    for r in band_rows:
+        if r.get("kind") == "header":
+            totals[r["file"]] = int(r["n_records_declared"])
+    audited_files = {r["file"] for r in oracle_audit if "file" in r}
+    missing = sorted(audited_files - set(totals))
+    if missing:
+        raise AnalysisError(f"raw/oracle_rounding_band.jsonl has no header record for "
+                            f"{missing}; an absent adjudication cannot be told from an empty one")
+
+    ranges: dict = {}
+    for f, n_total in totals.items():
+        base = os.path.basename(f)                     # audit_<phase>_<tag>.bin
+        stem = base[len("audit_"):-len(".bin")]
+        phase, tag = stem.split("_", 1)
+        rows = IO.read_jsonl(os.path.join(ctx.raw_root, phase, f"{phase}_{tag}.jsonl"))
+        starts, keys, pos = [], [], 0
+        for r in rows:
+            if r.get("layer") != "paired" or r.get("method") != "CANDIDATE":
+                continue
+            starts.append(pos)
+            keys.append((r.get("precision"), round(jnum(r, "kappa"), 12), jint(r, "seed")))
+            pos += jint(r, "audited", 0)
+        if pos != n_total:
+            raise AnalysisError(
+                f"{f}: the paired rows of {phase}_{tag}.jsonl account for {pos} audit "
+                f"records, and the oracle read {n_total}; the record-to-configuration map "
+                "does not close")
+        ranges[f] = (phase, tag, starts, keys)
+
+    out: dict = defaultdict(int)
+    for r in band_rows:
+        if r.get("kind") != "rounding_band":
+            continue
+        f = r["file"]
+        if f not in ranges:
+            raise AnalysisError(f"a rounding-band record names {f}, which the oracle summary "
+                                "does not list")
+        phase, tag, starts, keys = ranges[f]
+        idx = int(r["record_index"]) - 1
+        i = bisect.bisect_right(starts, idx) - 1
+        precision, kappa, seed = keys[i]
+        if precision != r["precision"] or abs(kappa - float(r["kappa"])) > 1e-12:
+            raise AnalysisError(
+                f"{f} record {idx + 1} maps to ({precision}, {kappa}) but carries "
+                f"({r['precision']}, {r['kappa']})")
+        b = factor * eps[precision] * max(1.0, abs(float(r["log_v"])))
+        m = float(r["relative_margin_below_threshold"])
+        if not (0.0 < m <= b) or int(r["oracle_category"]) != int(r["probe_category"]):
+            raise AnalysisError(f"{f} record {idx + 1}: margin {m} is not inside the band {b}, "
+                                "or the oracle and the probe disagree on its category")
+        out[(phase, tag, r["method"], precision, kappa, seed)] += 1
+    return dict(out)
+
+
 def analyse_p2(ctx: Context, p1: dict) -> dict:
     proto = ctx.proto
     rows = ctx.load_phase("p2")
@@ -1048,7 +1135,7 @@ def analyse_p2(ctx: Context, p1: dict) -> dict:
                 "audit_margin_assertion_failures", "audit_min_unambiguous_margin",
                 "audited", "seed_homogeneity_chi2", "seed_homogeneity_p",
                 "cross_phase_native_agrees", "protocol_sha256"]
-    for pref in ("failure", "avoidable", "honest"):
+    for pref in ("failure", "avoidable", "honest", "rounding_band", "avoidable_outside_band"):
         columns += [f"{pref}_count", f"{pref}_n", f"{pref}_rate", f"{pref}_ci_lo",
                     f"{pref}_ci_hi", f"{pref}_interval_kind", f"{pref}_is_upper_bound"]
     columns += ["boot_estimate", "boot_lo", "boot_hi", "boot_conf", "boot_resamples",
@@ -1069,6 +1156,8 @@ def analyse_p2(ctx: Context, p1: dict) -> dict:
     per_cfg: dict = defaultdict(dict)
     cross_phase_disagreements = 0
     cross_phase_compared = 0
+    candidate_band_p2 = 0
+    band = ctx.rounding_band
 
     for r in sorted(rows, key=lambda r: (r.get("layer"), r.get("tag"), r.get("method"),
                                          r.get("precision"), jnum(r, "kappa"),
@@ -1123,6 +1212,18 @@ def analyse_p2(ctx: Context, p1: dict) -> dict:
         row.update(rate_columns(nonfinite, n, "failure", ctx.interval_conf))
         row.update(rate_columns(n_av, n, "avoidable", ctx.interval_conf))
         row.update(rate_columns(n_hon, n, "honest", ctx.interval_conf))
+        # Amendment 5.0.0: the paired layer's avoidable losses, split by the oracle's exact
+        # margin into those inside the rounding band and those outside it.  The native layer
+        # has no per-attempt adjudication, so the split is NA there.
+        n_band = 0
+        if layer == "paired":
+            n_band = band.get(("p2", tag, method, precision, round(kappa, 12), seed), 0)
+            if n_band > n_av:
+                raise AnalysisError(f"p2 {tag} {method} {precision} kappa={kappa} seed={seed}: "
+                                    f"{n_band} rounding-band records against {n_av} avoidable")
+            row.update(rate_columns(n_band, n, "rounding_band", ctx.interval_conf))
+            row.update(rate_columns(n_av - n_band, n, "avoidable_outside_band",
+                                    ctx.interval_conf))
         for st in AUDIT_STRATA:
             t, au = jint(r, f"audit_{st}_total"), jint(r, f"audit_{st}_audited")
             row[f"audit_{st}_total"] = t
@@ -1149,11 +1250,13 @@ def analyse_p2(ctx: Context, p1: dict) -> dict:
             row["cross_phase_native_agrees"] = agree
 
         if layer == "paired" and method == "CANDIDATE":
-            candidate_avoidable_p2 += n_av
+            candidate_avoidable_p2 += n_av - n_band
+            candidate_band_p2 += n_band
             if ref_nonrep is not None:
                 honest_minus_ref_total += abs(n_hon - ref_nonrep)
 
-        per_cfg[(layer, tag, method, precision, round(kappa, 12))][seed] = (nonfinite, n)
+        per_cfg[(layer, tag, method, precision, round(kappa, 12))][seed] = (
+            nonfinite, n, n_av, n_band)
         out_rows.append(row)
 
     # --- pooled rows, with the seed-homogeneity diagnostic and a cluster bootstrap ---
@@ -1162,6 +1265,8 @@ def analyse_p2(ctx: Context, p1: dict) -> dict:
         by_seed = per_cfg[key]
         counts = {s: by_seed[s][0] for s in by_seed}
         sizes = {s: by_seed[s][1] for s in by_seed}
+        k_av = sum(by_seed[s][2] for s in by_seed)
+        k_band = sum(by_seed[s][3] for s in by_seed)
         n = sum(sizes.values())
         k = sum(counts.values())
         floor = honest_floor(kappa, precision)
@@ -1179,6 +1284,11 @@ def analyse_p2(ctx: Context, p1: dict) -> dict:
                "seed_homogeneity_chi2": chi2, "seed_homogeneity_p": p_hom,
                "protocol_sha256": proto.sha256}
         row.update(rate_columns(k, n, "failure", ctx.interval_conf))
+        if layer == "paired":
+            row.update(rate_columns(k_av, n, "avoidable", ctx.interval_conf))
+            row.update(rate_columns(k_band, n, "rounding_band", ctx.interval_conf))
+            row.update(rate_columns(k_av - k_band, n, "avoidable_outside_band",
+                                    ctx.interval_conf))
         row.update(cluster_rate_interval(counts, sizes, proto, "p2", layer, tag, method,
                                          precision, f"{kappa:.12g}"))
         out_rows.append(row)
@@ -1191,6 +1301,7 @@ def analyse_p2(ctx: Context, p1: dict) -> dict:
         coverage[st] = (audited / total) if total > 0 else float("nan")
     return {"rows": out_rows, "accounting_failures": accounting_failures,
             "candidate_avoidable_p2": candidate_avoidable_p2,
+            "candidate_rounding_band_p2": candidate_band_p2,
             "honest_minus_ref_total": honest_minus_ref_total,
             "stratum_totals": stratum_totals, "audit_coverage": coverage,
             "cross_phase_disagreements": cross_phase_disagreements,
@@ -1234,6 +1345,7 @@ def analyse_p3(ctx: Context, p2: dict) -> dict:
     tail_rows: list[dict] = []
     stratum_totals = {st: [0, 0] for st in AUDIT_STRATA}
     candidate_avoidable_p3 = 0
+    candidate_band_p3 = 0
     accounting_failures = 0
     honest_minus_ref_total = 0
 
@@ -1244,7 +1356,11 @@ def analyse_p3(ctx: Context, p2: dict) -> dict:
         if not (bool(r.get("accounting_ok")) and residual == 0):
             accounting_failures += 1
         if r.get("method") == "CANDIDATE":
-            candidate_avoidable_p3 += jint(r, "n_avoidable", 0)
+            # Amendment 5.0.0: the oracle's rounding-band attempts leave the count.
+            nb = ctx.rounding_band.get(("p3", r.get("tag"), "CANDIDATE", r.get("precision"),
+                                        round(jnum(r, "kappa"), 12), jint(r, "seed")), 0)
+            candidate_avoidable_p3 += jint(r, "n_avoidable", 0) - nb
+            candidate_band_p3 += nb
             ref = jint(r, "ref_nonrepresentable")
             if ref is not None:
                 honest_minus_ref_total += abs(jint(r, "n_honest", 0) - ref)
@@ -1394,6 +1510,7 @@ def analyse_p3(ctx: Context, p2: dict) -> dict:
 
     return {"bin_rows": bin_rows, "tail_rows": tail_rows, "audit_coverage": coverage,
             "candidate_avoidable_p3": candidate_avoidable_p3,
+            "candidate_rounding_band_p3": candidate_band_p3,
             "accounting_failures": accounting_failures,
             "honest_minus_ref_total": honest_minus_ref_total}
 
@@ -2927,6 +3044,7 @@ def run(ctx: Context, g6_override: str | None) -> int:
             os.remove(stale)
 
     oracle_audit, oracle_disag = ctx.oracle_rows()
+    ctx.rounding_band = rounding_band_by_config(ctx, ctx.rounding_band_rows(), oracle_audit)
 
     p1 = analyse_p1(ctx)
     print(f"  P1: {len(p1['scalar_rows'])} scalar rows")
@@ -2975,6 +3093,8 @@ def run(ctx: Context, g6_override: str | None) -> int:
     evidence = {
         "log_q_worst_abs_error": worst_log_q,
         "candidate_avoidable_total": int(candidate_avoidable),
+        "candidate_rounding_band_total": int(p2["candidate_rounding_band_p2"]
+                                             + p3["candidate_rounding_band_p3"]),
         "benign_control_exercises_candidate": benign_ok,
         "accounting_failures": int(p2["accounting_failures"] + p3["accounting_failures"]),
         "oracle_disagreements": int(oracle_disagreements),

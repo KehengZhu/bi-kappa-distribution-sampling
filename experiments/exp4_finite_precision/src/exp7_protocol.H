@@ -7,7 +7,7 @@
 // else the protocol fixes is a decision rule, and decision rules belong to the
 // analysis, which reads the JSON directly.
 //
-// config/protocol.json SHA-256: 664d906899b1726ae6d0bd3856483c4590af875a9dfdc3fee14fdcb79dbc4e34
+// config/protocol.json SHA-256: 8fa713c11bebc4a76f9d1a412633a7fdb72f7be1ddce397112801c1b400f3596
 
 #ifndef EXP7_PROTOCOL_H
 #define EXP7_PROTOCOL_H
@@ -17,8 +17,8 @@ namespace exp7
 namespace protocol
 {
 
-static const char *const kProtocolVersion= "4.0.0";
-static const char *const kProtocolSha256= "664d906899b1726ae6d0bd3856483c4590af875a9dfdc3fee14fdcb79dbc4e34";
+static const char *const kProtocolVersion= "5.0.0";
+static const char *const kProtocolSha256= "8fa713c11bebc4a76f9d1a412633a7fdb72f7be1ddce397112801c1b400f3596";
 
 /// Intended attempts per seed, by phase, exactly as PROTOCOL.md Sec. 4 freezes them.
 static const long long kNScalar= 1000000;
@@ -53,6 +53,14 @@ static const double kLogQSwitch= -30.0;
 static const double kMaxRelErrorDouble= 1.0536712127723509e-08;
 static const double kMaxRelErrorFloat= 0.000244140625;
 
+/// Amendment 5.0.0: the rounding band B = factor * eps * max(1, |log V|).  A failure
+/// whose exact largest component lies below the overflow threshold by a relative
+/// distance of at most B is a rounding-band loss, not an avoidable one.  Applied by
+/// the oracle from the exact margin; the probe's categories do not use it.
+static const double kRoundingBandFactor= 4.0;
+static const double kEpsFloat= 1.1920928955078125e-07;
+static const double kEpsDouble= 2.220446049250313e-16;
+
 /// Amendment 1.2.0: the audit stratum sampling rates and the decision-relevance
 /// margin are protocol data, not implementation details.  A rate of 1 means the
 /// stratum is adjudicated in full.
@@ -76,10 +84,10 @@ static const double kKappaLadder[kNumKappa]= {
     0.5001, 0.501, 0.505, 0.51, 0.55, 0.6, 0.75, 1.0, 1.25, 1.49, 1.5, 2.0, 5.0};
 static const int kNumProductionSeeds= 5;
 static const unsigned kProductionSeeds[kNumProductionSeeds]= {
-    10001u, 10002u, 10003u, 10004u, 10005u};
+    11001u, 11002u, 11003u, 11004u, 11005u};
 static const int kNumPerformanceSeeds= 5;
 static const unsigned kPerformanceSeeds[kNumPerformanceSeeds]= {
-    10006u, 10007u, 10008u, 10009u, 10010u};
+    11006u, 11007u, 11008u, 11009u, 11010u};
 
 } // namespace protocol
 } // namespace exp7

@@ -252,38 +252,60 @@ def tex_count(n: float) -> str:
 def fp1_summary(ctx: dict) -> dict:
     """What the FP1 caption states, read from the source data rather than written in.
 
-    The number of attempts behind each point, and the stabilized calculation's avoidable
-    losses on the paired layer (the draws whose final velocity could be stored but which
-    came back non-finite), by precision and kappa.
+    The number of attempts behind each point, and the stabilized calculation's losses on the
+    paired layer of draws whose final velocity could be stored, by precision and kappa:
+    those inside the rounding band of the overflow threshold (amendment 5.0.0) and the
+    avoidable losses outside it.
     """
     rows = [r for r in load(ctx, "failure_envelope.csv")
             if r["layer"] == "paired" and r["tag"] == PRIMARY_TAG]
     sizes = sorted({num(r, "n_attempted") for r in rows
                     if r["scope"] == "pooled" and r["method"] in ("LEGACY", "CANDIDATE")
                     and np.isfinite(num(r, "n_attempted"))})
-    avoidable: dict = {}
+    outside: dict = {}
+    band: dict = {}
     for r in rows:
-        if r["scope"] == "seed" and r["method"] == "CANDIDATE" and num(r, "n_avoidable", 0) > 0:
-            key = (r["precision"], num(r, "kappa"))
-            avoidable[key] = avoidable.get(key, 0) + int(num(r, "n_avoidable"))
+        if r["scope"] != "seed" or r["method"] != "CANDIDATE":
+            continue
+        key = (r["precision"], num(r, "kappa"))
+        for target, col in ((outside, "avoidable_outside_band_count"),
+                            (band, "rounding_band_count")):
+            k = num(r, col, 0)
+            if k > 0:
+                target[key] = target.get(key, 0) + int(k)
     return {"n_per_point": sizes[0] if len(sizes) == 1 else float("nan"),
-            "candidate_avoidable": avoidable}
+            "candidate_avoidable": outside, "candidate_rounding_band": band}
+
+
+def _where(counts: dict) -> str:
+    parts = []
+    for (precision, kappa) in sorted(counts, key=lambda k: (k[0] != "double", k[1])):
+        prec = "double" if precision == "double" else "single"
+        parts.append(f"{counts[(precision, kappa)]} in {prec} precision at $\\kappa={kappa:g}$")
+    return "; ".join(parts)
 
 
 def fp1_candidate_sentence(summary: dict) -> str:
     av = summary["candidate_avoidable"]
-    if not av:
+    band = summary.get("candidate_rounding_band", {})
+    if not av and not band:
         return ("The stabilized calculation returned all such draws. Its remaining failures "
                 "occurred only when a final velocity component was too large for the output "
                 "type.")
-    total = sum(av.values())
-    parts = []
-    for (precision, kappa) in sorted(av, key=lambda k: (k[0] != "double", k[1])):
-        prec = "double" if precision == "double" else "single"
-        parts.append(f"{av[(precision, kappa)]} in {prec} precision at $\\kappa={kappa:g}$")
-    return (f"The stabilized calculation returned all such draws except {total} "
-            f"({'; '.join(parts)}). Its other failures occurred only when a final velocity "
-            "component was too large for the output type.")
+    text = ""
+    if av:
+        text += (f"The stabilized calculation lost {sum(av.values())} such draws "
+                 f"({_where(av)}). ")
+    else:
+        text += ("The stabilized calculation returned all such draws except those whose "
+                 "final component lay within rounding error of the largest value the output "
+                 "type can hold. ")
+    if band:
+        text += (f"Within that rounding error of the limit it returned {sum(band.values())} "
+                 f"draws as non-finite ({_where(band)}). ")
+    text += ("Its other failures occurred only when a final velocity component was too large "
+             "for the output type.")
+    return text
 
 
 def figure_fp1(ctx: dict) -> None:
@@ -352,7 +374,7 @@ def figure_fp1(ctx: dict) -> None:
     summary = fp1_summary(ctx)
     conclusion = ("The stabilized log-scale calculation removes the intermediate failures "
                   "of direct square-root evaluation. ")
-    if summary["candidate_avoidable"]:
+    if summary["candidate_avoidable"] or summary["candidate_rounding_band"]:
         conclusion += ("Apart from the draws listed in the caption, every remaining "
                        "non-finite output contains a component that is too large for the "
                        "output type.")
@@ -824,7 +846,7 @@ def write_captions(ctx: dict) -> None:
             "cent cluster-bootstrap percentile intervals over the seed block from 10\\,000 "
             "resamples; the black line marks the target itself.",
         "sfp1_scalar_validation":
-            "Scalar validation of the 2.3.0 candidate. (a, b) Residuals of the empirical CDF "
+            "Scalar validation of the 3.0.0 candidate. (a, b) Residuals of the empirical CDF "
             "of $Z=-\\log I_W(a,3/2)$ from the unit-exponential CDF, where "
             "$W=X_2/(X_1+X_2)\\sim\\mathrm{Beta}(a,3/2)$ and $a=\\kappa-1/2$; $Z$ is the "
             "diagnostic of record because $W$ itself rounds to zero at the smallest shapes "

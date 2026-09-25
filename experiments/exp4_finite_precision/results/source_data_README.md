@@ -240,7 +240,7 @@ One row per `precision` x `kappa`. A reference curve, not a measurement: it has 
 | column | meaning | unit |
 |---|---|---|
 | `cat_*`, `n_finite`, `n_avoidable`, `n_honest`, `nonfinite_output` | the terminal-category decomposition | count |
-| `candidate_avoidable_count` | the candidate's avoidable-loss count for this configuration, `NA` on a row that is not the candidate's. G1 requires the total to be **exactly zero**, with no tolerance proportional to a data-dependent count | count |
+| `candidate_avoidable_count` | the candidate's avoidable-loss count for this configuration as the probe classifies it, `NA` on a row that is not the candidate's. Since protocol 5.0.0 G1 counts only the part outside the rounding band (`avoidable_outside_band_count`) and requires that total to be **exactly zero** | count |
 | `accounting_ok` | the probe's own evaluation of `n_attempted = n_finite + n_avoidable + n_honest` | -- |
 | `accounting_residual` | the same identity recomputed here: `n_attempted - (finite + avoidable + honest)`. Zero when the identity holds exactly. Both are reported so that the check is not taken on trust | count |
 | `ref_nonrepresentable` | attempts whose intended vector has no representation in the type — the oracle floor of this configuration | count |
@@ -251,6 +251,8 @@ One row per `precision` x `kappa`. A reference curve, not a measurement: it has 
 | `max_rel_error_threshold` | the FINITE_BUT_WRONG threshold for the type, from the protocol: 1.05e-8 in `double`, 2.44e-4 in `float` | dimensionless |
 | `max_log_r_ref`, `max_finite_log_component` | largest intended `log R`, and largest intended `max_j log|V_j|` among successes | log units |
 | `failure_*`, `avoidable_*`, `honest_*` | rate blocks (see §0) | probability |
+| `rounding_band_*` | rate block for the avoidable losses whose exact (100-digit) largest component lies below the overflow threshold by a relative distance of at most `B = 4 eps max(1, |log V|)` (PROTOCOL.md §2.9): 4.2e-5 in `float`, 6.3e-13 in `double`. Taken from the oracle's `raw/oracle_rounding_band.jsonl`. `paired` rows only; `NA` on `native` rows, which have no per-attempt adjudication | probability |
+| `avoidable_outside_band_*` | rate block for `n_avoidable` minus the rounding-band count: the avoidable losses G1 counts. `paired` rows only | probability |
 | `honest_floor_rate`, `honest_floor_log10`, `observed_over_floor` | the analytic floor (see §0) | -- |
 | `audit_margin_log_units` | 20.0, the margin within which an attempt is decision-relevant | log units |
 | `audit_margin_assertions`, `audit_margin_assertion_failures` | attempts declared unambiguous, each of which had its margin evaluated in working precision, and how many failed the inequality. **Must be zero** | count |

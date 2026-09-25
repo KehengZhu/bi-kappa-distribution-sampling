@@ -231,6 +231,10 @@ struct Acc
     double max_rel_candidate= 0.0, sum_rel_candidate= 0.0;
     double max_rel_legacy_sub= 0.0, max_rel_candidate_sub= 0.0;
     long long fbw_legacy= 0, fbw_candidate= 0;
+    /// Amendment 5.0.0: per method (legacy, candidate, qf), the attempts scored as avoidable
+    /// loss, and those of them whose exact largest component lies inside the rounding band.
+    long long avoidable[3]= {0, 0, 0};
+    long long rounding_band[3]= {0, 0, 0};
     long long returned_finite_legacy= 0, returned_finite_candidate= 0;
 };
 
@@ -241,13 +245,15 @@ int main(int argc, char **argv)
     if (argc < 2)
     {
         std::fprintf(stderr,
-                     "usage: %s <audit.bin> [--disagreements out.jsonl] [--progress]\n"
+                     "usage: %s <audit.bin> [--disagreements out.jsonl] [--rounding-band out.jsonl]\n"
+                     "       [--progress]\n"
                      "       [--shard I --shards N]\n",
                      argv[0]);
         return 2;
     }
     const char *path= argv[1];
     const char *disagree_path= 0;
+    const char *band_path= 0;
     bool progress= false;
     // Sharding exists only to use more than one core: at about 25 us a record, adjudicating
     // the frozen matrix takes about half an hour on one.  A shard reads the whole file and
@@ -259,6 +265,8 @@ int main(int argc, char **argv)
     {
         if (std::strcmp(argv[i], "--disagreements") == 0 && i + 1 < argc)
             disagree_path= argv[++i];
+        else if (std::strcmp(argv[i], "--rounding-band") == 0 && i + 1 < argc)
+            band_path= argv[++i];
         else if (std::strcmp(argv[i], "--progress") == 0)
             progress= true;
         else if (std::strcmp(argv[i], "--shard") == 0 && i + 1 < argc)
@@ -299,6 +307,21 @@ int main(int argc, char **argv)
         std::fclose(f);
         return 1;
     }
+
+    // Amendment 5.0.0.  One record per audited attempt that a method's category scores as
+    // avoidable loss while its exact largest component lies within the rounding band
+    // B = factor * eps * max(1, |log V|) below the overflow threshold.  Written with a header
+    // and a footer for the same reason as the disagreement file.
+    FILE *bj= band_path ? std::fopen(band_path, "wb") : 0;
+    if (bj)
+        std::fprintf(bj,
+                     "{\"kind\":\"header\",\"tool\":\"exp7_oracle\",\"file\":\"%s\","
+                     "\"file_sha256\":\"%s\",\"n_records_declared\":%lld,"
+                     "\"protocol_sha256\":\"%s\",\"rounding_band_factor\":%.17g,"
+                     "\"eps_float\":%.17g,\"eps_double\":%.17g}\n",
+                     path, file_sha.c_str(), static_cast<long long>(hdr.n_records),
+                     protocol::kProtocolSha256, protocol::kRoundingBandFactor,
+                     protocol::kEpsFloat, protocol::kEpsDouble);
 
     FILE *dj= disagree_path ? std::fopen(disagree_path, "wb") : 0;
     if (dj)
@@ -480,6 +503,43 @@ int main(int argc, char **argv)
                 }
             }
 
+            // The rounding band, from the exact margin.  `rel_below` is 1 - V/threshold, the
+            // relative distance of the exact largest component below the threshold at which a
+            // real rounds to infinity in the working type; it is positive exactly when the
+            // draw is representable.
+            {
+                const double eps_t= is_float ? protocol::kEpsFloat : protocol::kEpsDouble;
+                const double log_v= static_cast<double>(max_comp);
+                const double band=
+                    protocol::kRoundingBandFactor * eps_t * std::max(1.0, std::fabs(log_v));
+                const double rel_below= static_cast<double>(-expm1(max_comp - log_ovf));
+                const bool in_band= representable && rel_below <= band;
+                const int cls[3]= {cl_legacy, cl_candidate, cl_qf};
+                const int prb[3]= {static_cast<int>(a.cat_legacy),
+                                   static_cast<int>(a.cat_candidate),
+                                   static_cast<int>(a.cat_qf)};
+                static const char *const names[3]= {"LEGACY", "CANDIDATE", "QF"};
+                for (int m= 0; m < 3; ++m)
+                {
+                    if (!isAvoidable(cls[m]))
+                        continue;
+                    ++A.avoidable[m];
+                    if (!in_band)
+                        continue;
+                    ++A.rounding_band[m];
+                    if (bj)
+                        std::fprintf(bj,
+                                     "{\"kind\":\"rounding_band\",\"file\":\"%s\","
+                                     "\"record_index\":%lld,\"kappa\":%.17g,"
+                                     "\"precision\":\"%s\",\"method\":\"%s\","
+                                     "\"oracle_category\":%d,\"probe_category\":%d,"
+                                     "\"log_v\":%.17g,\"relative_margin_below_threshold\":%.17g,"
+                                     "\"band\":%.17g}\n",
+                                     path, record_index, a.kappa, is_float ? "float" : "double",
+                                     names[m], cls[m], prb[m], log_v, rel_below, band);
+                }
+            }
+
             ++cat_checked;
             const bool same= (cl_legacy == static_cast<int>(a.cat_legacy)) &&
                              (cl_candidate == static_cast<int>(a.cat_candidate)) &&
@@ -505,6 +565,18 @@ int main(int argc, char **argv)
     }
     std::fclose(f);
 
+    if (bj)
+    {
+        long long nb= 0;
+        for (int pi= 0; pi < 2; ++pi)
+            for (int m= 0; m < 3; ++m)
+                nb+= acc[pi].rounding_band[m];
+        std::fprintf(bj,
+                     "{\"kind\":\"footer\",\"file\":\"%s\",\"file_sha256\":\"%s\","
+                     "\"n_records\":%lld,\"rounding_band_records\":%lld}\n",
+                     path, file_sha.c_str(), n, nb);
+        std::fclose(bj);
+    }
     if (dj)
     {
         std::fprintf(dj,
@@ -534,7 +606,11 @@ int main(int argc, char **argv)
             "\"max_rel_err_legacy\":%.6g,\"mean_rel_err_legacy\":%.6g,"
             "\"max_rel_err_candidate\":%.6g,\"mean_rel_err_candidate\":%.6g,"
             "\"max_rel_err_legacy_subnormal_denominator\":%.6g,"
-            "\"max_rel_err_candidate_subnormal_denominator\":%.6g}\n",
+            "\"max_rel_err_candidate_subnormal_denominator\":%.6g,"
+            "\"rounding_band_factor\":%.17g,"
+            "\"avoidable_legacy\":%lld,\"avoidable_candidate\":%lld,\"avoidable_qf\":%lld,"
+            "\"rounding_band_legacy\":%lld,\"rounding_band_candidate\":%lld,"
+            "\"rounding_band_qf\":%lld}\n",
             path, file_sha.c_str(), protocol::kProtocolSha256, pi ? "float" : "double", A.n,
             n, cat_checked, disagreements, conversion_failures, near_limit, worst_margin,
             A.n_subnormal, A.max_log_x2_err, A.n ? A.sum_log_x2_err / A.n : 0.0, A.n_cmp,
@@ -543,7 +619,9 @@ int main(int argc, char **argv)
             A.fbw_candidate, A.max_rel_legacy,
             A.n_cmp ? A.sum_rel_legacy / A.n_cmp : 0.0, A.max_rel_candidate,
             A.n_cmp ? A.sum_rel_candidate / A.n_cmp : 0.0, A.max_rel_legacy_sub,
-            A.max_rel_candidate_sub);
+            A.max_rel_candidate_sub, protocol::kRoundingBandFactor, A.avoidable[0],
+            A.avoidable[1], A.avoidable[2], A.rounding_band[0], A.rounding_band[1],
+            A.rounding_band[2]);
     }
 
     if (n == 0)

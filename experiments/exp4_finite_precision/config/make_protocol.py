@@ -22,18 +22,19 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 # --- frozen matrix ---------------------------------------------------------------------
 KAPPA_LADDER = [0.5001, 0.501, 0.505, 0.51, 0.55, 0.60, 0.75, 1.0, 1.25, 1.49, 1.5, 2.0, 5.0]
 PRECISIONS = ["float", "double"]
-# Seed blocks.  7001-7010, 8001-8010 and 9001-9010 were used by earlier runs of this
-# experiment under protocol versions 1.3.0, 2.0.0 and 3.0.0 and are not reused; they are
-# listed so that the selftest can check that no block in use overlaps them.  The production
-# and performance blocks, 10001-10010, follow the rule stated in PROTOCOL.md section 3: take
-# the highest seed declared anywhere in this repository, round up to the next multiple of
-# 1000, and take the next ten integers.  The rule admits exactly one answer, so the block is
-# disjoint from every other by construction.
+# Seed blocks.  7001-7010, 8001-8010, 9001-9010 and 10001-10010 were used by earlier runs of
+# this experiment under protocol versions 1.3.0, 2.0.0, 3.0.0 and 4.0.0 and are not reused;
+# they are listed so that the selftest can check that no block in use overlaps them.  The
+# production and performance blocks, 11001-11010, follow the rule stated in PROTOCOL.md
+# section 3: take the highest seed declared anywhere in this repository, round up to the
+# next multiple of 1000, and take the next ten integers.  The rule admits exactly one
+# answer, so the block is disjoint from every other by construction.
 SEEDS_FIRST_HOLDOUT = [7001, 7002, 7003, 7004, 7005, 7006, 7007, 7008, 7009, 7010]
 SEEDS_SECOND_HOLDOUT = [8001, 8002, 8003, 8004, 8005, 8006, 8007, 8008, 8009, 8010]
 SEEDS_THIRD_HOLDOUT = [9001, 9002, 9003, 9004, 9005, 9006, 9007, 9008, 9009, 9010]
-SEEDS_PRODUCTION = [10001, 10002, 10003, 10004, 10005]
-SEEDS_PERFORMANCE = [10006, 10007, 10008, 10009, 10010]
+SEEDS_FOURTH_RUN = [10001, 10002, 10003, 10004, 10005, 10006, 10007, 10008, 10009, 10010]
+SEEDS_PRODUCTION = [11001, 11002, 11003, 11004, 11005]
+SEEDS_PERFORMANCE = [11006, 11007, 11008, 11009, 11010]
 
 # Protocol 3.0.0: P1 and P5 give every (precision, kappa) configuration of a replicate its
 # own engine stream, so that the 26 configurations of a replicate are independent rather
@@ -44,7 +45,7 @@ SEEDS_PERFORMANCE = [10006, 10007, 10008, 10009, 10010]
 # with precision_index 0 for double and 1 for float, and kappa_index the 0-based position in
 # KAPPA_LADDER.  The formula is declared here, in PROTOCOL.md section 3, and in
 # src/exp7_common.H, it admits exactly one answer for each configuration, and every value it
-# produces is congruent to a production seed (10001-10005) modulo 10000, so it cannot collide
+# produces is congruent to a production seed (11001-11005) modulo 10000, so it cannot collide
 # with a declared block anywhere in this repository.
 P1_STREAM_SEED_STRIDE = 10_000
 QUANTILE_LEVELS = [0.5, 0.9, 0.99, 0.999, 0.9999]
@@ -88,6 +89,19 @@ INFORMATIVE_WIDTH_LOG_UNITS = 1.0
 # own error is about eps*|log R|, which is 1.5e-13 at the double overflow threshold and
 # 5.3e-6 at the float one.
 ACCURACY_MAX_REL_ERROR_BITS_LOST_FRACTION = 0.5
+
+# Protocol 5.0.0: the rounding band of a working-precision evaluation at the overflow
+# threshold.  A failure whose exact largest component V lies below the threshold by a
+# relative distance of at most B = ROUNDING_BAND_FACTOR * eps * max(1, |log V|) is published
+# as a rounding-band loss and does not count as avoidable loss under G1.  eps is
+# numeric_limits<T>::epsilon() of the working type.  The factor comes from the first-order
+# error bound of the stabilized calculation, (3 |log V| + 4.5) eps; see the 5.0.0 amendment.
+ROUNDING_BAND_FACTOR = 4.0
+EPS = {"float": 2.0 ** -23, "double": 2.0 ** -52}
+# log of the overflow threshold (2 - 2^-p) 2^emax, the value at which a real rounds to
+# infinity: 88.72 (float), 709.78 (double).
+LOG_THRESHOLD = {"float": 127 * float(np.log(2.0)) + float(np.log(2.0 - 2.0 ** -24)),
+                 "double": 1023 * float(np.log(2.0)) + float(np.log(2.0 - 2.0 ** -53))}
 
 # Upper bound on candidate/LEGACY time per returned sample (acceptance criterion gates.G5).
 PERFORMANCE_BOUND = 2.0
@@ -288,11 +302,70 @@ def f2_cells() -> tuple[list[dict], dict]:
 def main() -> None:
     cells, f2 = f2_cells()
     protocol = {
-        "protocol_version": "4.0.0",
+        "protocol_version": "5.0.0",
         "amendments": [
+            {"version": "5.0.0",
+             "before_any_data": False,
+             "governs": "the fifth run, on seeds 11001-11010",
+             "reason":
+                 "The fourth run, on seeds 10001-10010 under protocol 4.0.0, returned "
+                 "NO-GO on gate G1 alone and is recorded in commit 84130b5, which is not "
+                 "edited or reinterpreted. The stabilized calculation, computing in float, "
+                 "returned three single-precision draws non-finite whose exact largest "
+                 "component was representable: at kappa = 0.505 on seeds 10001 and 10003, "
+                 "4.3e-6 and 9.8e-6 (relative) below the float overflow threshold, and at "
+                 "kappa = 0.51 on seed 10005, 5.2e-7 below it. The same three draws "
+                 "occurred in both standard-library builds, so G1 counted six. A fourth "
+                 "draw, at kappa = 0.51 on seed 10003, lay 6.2e-6 above the threshold and "
+                 "was returned finite, an unavoidable loss. Amendment 4.0.0 had stated this "
+                 "consequence in advance and changed no gate rule.\n"
+                 "\n"
+                 "(1) GATE G1. A working-precision calculation cannot decide the side of the "
+                 "overflow threshold on which a component falls when the exact component "
+                 "lies within the calculation's rounding error of the threshold. G1 as "
+                 "written required such draws to be returned, which no calculation in the "
+                 "working type can guarantee. From 5.0.0 a failure of any method counts as "
+                 "avoidable loss only if the exact (100-digit) largest component lies below "
+                 "the overflow threshold by a relative distance greater than "
+                 "B = 4 eps max(1, |log V|), where eps is the machine epsilon of the working "
+                 "type (2^-23 for float, 2^-52 for double) and V the exact largest "
+                 "component. At the threshold B is 4.2e-5 in float and 6.3e-13 in double. "
+                 "A failure within B is a ROUNDING-BAND LOSS: it is counted and published "
+                 "per setting with its rate, and it does not enter G1. G1 requires zero "
+                 "avoidable losses outside the band. The constant is fixed from the error "
+                 "analysis of the stabilized calculation, not from the observed margins: "
+                 "with libm's log and exp within one ulp and each arithmetic operation "
+                 "within half an ulp, the first-order error bound on log R is "
+                 "2.5 eps |log V| when |log U|/a dominates the sum, the addition of log|g| "
+                 "and the rounding of g add about 0.5 eps |log V| + 3.5 eps, and exp adds "
+                 "eps, so a component near the threshold carries a relative error of at "
+                 "most about (3 |log V| + 4.5) eps. 4 eps |log V| exceeds that for "
+                 "|log V| > 4.5, and |log V| is 88.7 in float and 709.8 in double at the "
+                 "threshold. It is the band stated in the header documentation and used by "
+                 "selftest check 15 and by test S6 of the regression suite. The band is "
+                 "applied from the exact margin, by the oracle and re-checked by the "
+                 "analysis. The probe's categories are unchanged, and so are P1's native "
+                 "counts, which enter G1 as before.\n"
+                 "\n"
+                 "This rule was written after the fourth run was read, and the three draws "
+                 "above fall inside it. It is therefore tested on a new seed block and the "
+                 "fourth run is not re-scored under it.\n"
+                 "\n"
+                 "(2) VERSION. The candidate implementation is unchanged from amendment "
+                 "4.0.0 except for its version macros. It is released as 3.0.0 instead of "
+                 "2.3.0 because a given seed produces different single-precision output, "
+                 "which the changelog's versioning rule counts as a breaking change.\n"
+                 "\n"
+                 "SEEDS. 11001-11005 for production and 11006-11010 for the performance "
+                 "block, by the rule of section 3. 10001-10010 are added to the spent "
+                 "blocks.\n"
+                 "\n"
+                 "SCOPE and every other rule, size and threshold are unchanged from 4.0.0. "
+                 "Every change was made and committed before any datum on seeds "
+                 "11001-11010 existed."},
             {"version": "4.0.0",
              "before_any_data": False,
-             "governs": "the fourth run, on seeds 10001-10010",
+             "governs": "the fourth run, on seeds 10001-10010 (superseded)",
              "reason":
                  "The third holdout, on seeds 9001-9010 under protocol 3.0.0, returned GO "
                  "and is preserved in commit abdd295. This amendment is not a response to a "
@@ -538,12 +611,12 @@ def main() -> None:
         "frozen_before_any_data": True,
         "candidate": {
             "name": "CANDIDATE",
-            "description": "released loader cpp/bi_kappa_distribution.H at version 2.3.0, "
+            "description": "released loader cpp/bi_kappa_distribution.H at version 3.0.0, "
                            "radius built in the log domain; every quantity, from the "
                            "variates to the returned components, is computed in the "
                            "working precision of the instantiation, and representability "
                            "is decided from the materialized component",
-            "version": "2.3.0",
+            "version": "3.0.0",
             "log_gamma_primitive": "LOG-ID",
             "log_gamma_citation": "Ahrens, J.H. and Dieter, U. (1974), Computing 12, 223-246",
             "boosted_gamma_primitive": "Marsaglia-Tsang",
@@ -563,10 +636,10 @@ def main() -> None:
             "performance": SEEDS_PERFORMANCE,
             "declared_not_derived": True,
             "derivation_rule":
-                "The highest seed declared anywhere in this repository is 9010 (the third "
-                "holdout's performance block). Round up to the next multiple of 1000, "
-                "which is 10000, and take the next ten integers: 10001-10005 for production "
-                "and 10006-10010 for the performance block. The rule admits exactly one "
+                "The highest seed declared anywhere in this repository is 10010 (the fourth "
+                "run's performance block). Round up to the next multiple of 1000, "
+                "which is 11000, and take the next ten integers: 11001-11005 for production "
+                "and 11006-11010 for the performance block. The rule admits exactly one "
                 "answer, so the block is a consequence of the repository's state and not a "
                 "choice made after seeing a result.",
             "p1_stream_seed_stride": P1_STREAM_SEED_STRIDE,
@@ -590,18 +663,22 @@ def main() -> None:
             "spent_blocks": {"first_holdout": SEEDS_FIRST_HOLDOUT,
                              "second_holdout": SEEDS_SECOND_HOLDOUT,
                              "third_holdout": SEEDS_THIRD_HOLDOUT,
+                             "fourth_run": SEEDS_FOURTH_RUN,
                              "spent_reason":
                                  "used by the NO-GO holdouts preserved in commits 45d3ef8 "
-                                 "(7001-7010) and e5c9837 (8001-8010) and by the GO holdout "
+                                 "(7001-7010) and e5c9837 (8001-8010), by the GO holdout "
                                  "under protocol 3.0.0 preserved in commit abdd295 "
-                                 "(9001-9010); PROTOCOL.md section 8 forbids recomputing "
-                                 "any result on them, and they may now serve only as "
-                                 "preserved evidence and development material"},
+                                 "(9001-9010), and by the NO-GO run under protocol 4.0.0 "
+                                 "recorded in commit 84130b5 (10001-10010); PROTOCOL.md "
+                                 "section 8 forbids recomputing any result on them, and "
+                                 "they may now serve only as preserved evidence and "
+                                 "development material"},
             "disjoint_from": {"exp1": [1001, 1005], "exp2": [2001, 2005],
                               "exp3": [3001, 3003, 3101], "exp4_exp6": [4001, 4010],
                               "exp7_first_holdout": [7001, 7010],
                               "exp7_second_holdout": [8001, 8010],
                               "exp7_third_holdout": [9001, 9010],
+                              "exp7_fourth_run": [10001, 10010],
                               "exp7_selftest": [7501, 7505]},
         },
         "matrix": {
@@ -648,6 +725,34 @@ def main() -> None:
             "controls": ["NC1_radius_direction_coupling", "NC2_capped_vs_uncapped_weak_cap",
                          "NC3_survivor_conditioning"],
             "missing_control_is_failure": True,
+        },
+        "rounding_band": {
+            "factor": ROUNDING_BAND_FACTOR,
+            "eps": EPS,
+            "formula": "B = factor * eps * max(1, |log V|)",
+            "V": "the exact (100-digit) magnitude of the attempt's largest intended "
+                 "component, in the frame the loader returns",
+            "rule": "an attempt that a method returned non-finite or inaccurate, and that "
+                    "the frozen classifier scores as avoidable loss, is a ROUNDING-BAND LOSS "
+                    "instead when its exact largest component lies below the overflow "
+                    "threshold of the working type by a relative distance "
+                    "1 - V / threshold of at most B. Rounding-band losses are counted and "
+                    "published per setting and are excluded from G1",
+            "applied_by": "the oracle, from the exact margin, for every audited attempt; the "
+                          "analysis re-checks each reported attempt against B and maps it to "
+                          "its configuration through the probe's per-configuration audit "
+                          "counts. The probe's categories are unchanged",
+            "justification":
+                "First-order error bound of the stabilized calculation near the threshold, "
+                "with libm's log and exp within one ulp and each arithmetic operation within "
+                "half an ulp: 2.5 eps |log V| in log R when |log U|/a dominates, about "
+                "0.5 eps |log V| + 3.5 eps from adding log|g| and rounding g, and eps from "
+                "exp, in total about (3 |log V| + 4.5) eps relative on the component. The "
+                "factor 4 bounds that for |log V| > 4.5; |log V| is 88.7 (float) and 709.8 "
+                "(double) at the threshold, where B is 4.2e-5 and 6.3e-13.",
+            "log_threshold": LOG_THRESHOLD,
+            "band_at_threshold": {t: ROUNDING_BAND_FACTOR * EPS[t] * LOG_THRESHOLD[t]
+                                  for t in ("float", "double")},
         },
         "accuracy": {
             "bits_lost_fraction": ACCURACY_MAX_REL_ERROR_BITS_LOST_FRACTION,
@@ -824,6 +929,14 @@ def main() -> None:
                     "counts and excesses, not only an ECDF grid.",
         },
         "gates": {
+            "G1": {"avoidable_loss_required": 0,
+                   "rounding_band_excluded": True,
+                   "rule": "F1-F4 pass, the benign control exercises the candidate, and the "
+                           "candidate's avoidable loss OUTSIDE the rounding band of "
+                           "rounding_band is exactly zero: P1's native avoidable count plus "
+                           "the paired P2 and P3 avoidable counts less the attempts the "
+                           "oracle places inside the band. Rounding-band losses are "
+                           "published and do not enter the gate."},
             "G4": {"cross_stdlib_rule": "bitwise equality, no tolerance",
                    "cross_arch_rule": "two one-sided tests on the log rate ratio",
                    "log_ratio_margin": PORTABILITY_LOG_RATIO_MARGIN,

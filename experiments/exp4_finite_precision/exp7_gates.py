@@ -87,7 +87,10 @@ def gate_G0(proto: F.Protocol, ev: dict) -> Gate:
 
 def gate_G1(proto: F.Protocol, fams: dict, ev: dict) -> Gate:
     """F1-F4 pass on in-domain configurations, the benign control exercises the candidate,
-    and avoidable loss is exactly zero with no elastic band."""
+    and avoidable loss outside the rounding band of amendment 5.0.0 is exactly zero.
+
+    The band is the protocol's `rounding_band`, applied from the oracle's exact margin.
+    Rounding-band losses are reported beside the count and do not enter it."""
     needed = ("F1_radial_law", "F2_quantile_coverage", "F3_quantile_direction",
               "F4_upper_tail_mass")
     absent = [f for f in needed if f not in fams]
@@ -101,14 +104,19 @@ def gate_G1(proto: F.Protocol, fams: dict, ev: dict) -> Gate:
     if benign is None:
         return _missing("G1", "no record of whether the benign control exercised the "
                               "candidate rather than a fallback")
+    in_band = ev.get("candidate_rounding_band_total")
+    if in_band is None:
+        return _missing("G1", "the oracle's rounding-band adjudication was never read")
     ok = not failed and int(avoidable) == 0 and bool(benign)
     return Gate("G1", "PASS" if ok else "FAIL",
                 f"{len(needed) - len(failed)}/{len(needed)} scalar families pass"
                 + (f" (failed: {failed})" if failed else "")
-                + f"; candidate avoidable loss {avoidable} (required exactly 0)"
+                + f"; candidate avoidable loss outside the rounding band {avoidable} "
+                  "(required exactly 0)"
+                + f"; rounding-band loss {in_band} (published, not counted)"
                 + f"; benign control exercises the candidate: {bool(benign)}",
                 {"failed_families": failed, "avoidable": avoidable,
-                 "benign_control_ok": bool(benign)})
+                 "rounding_band": in_band, "benign_control_ok": bool(benign)})
 
 
 def gate_G2(proto: F.Protocol, ev: dict) -> Gate:

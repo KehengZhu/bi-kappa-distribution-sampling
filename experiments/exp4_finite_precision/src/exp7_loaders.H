@@ -7,7 +7,7 @@
 //   LEGACY     the shipped 1.0.0 loader.  R = sqrt(X1)/sqrt(X2) with X2 materialized by
 //              std::gamma_distribution, the unit direction multiplied by R, the thermal
 //              scaling applied, and the rotation last.
-//   CANDIDATE  the released 2.3.0 loader, which computes in the working precision
+//   CANDIDATE  the released 3.0.0 loader, which computes in the working precision
 //              throughout.  log X2 = log Y + log(U)/a with Y ~ Ga(a+1,1)
 //              (Ahrens-Dieter shape boosting), log R = (log X1 - log X2)/2, the order-unity
 //              vector g = Q(ub) diag(sqrt(kappa) theta) n built first, and each component

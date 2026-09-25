@@ -518,6 +518,22 @@ oracle that never ran.
 | `disagreement` | `file`, `file_sha256`, `kappa`, `precision`, `x1`, `y`, `u`, `cos_theta`, `phi`, `probe` (3 category indices), `oracle` (3 indices), `margin_log_units` |
 | `footer` | `file`, `file_sha256`, `n_records`, `disagreements`, `conversion_failures` |
 
+`raw/oracle_rounding_band.jsonl` (protocol 5.0.0) carries a `header` and a `footer` record
+per audit file and one `rounding_band` record per audited attempt and method whose category
+is an avoidable one while its exact largest component `V` lies below the overflow threshold by
+a relative distance of at most `B = factor · eps · max(1, |log V|)`.
+
+| `kind` | fields |
+|---|---|
+| `header` | `tool`, `file`, `file_sha256`, `n_records_declared`, `protocol_sha256`, `rounding_band_factor`, `eps_float`, `eps_double` |
+| `rounding_band` | `file`, `record_index` (1-based position in the audit file), `kappa`, `precision`, `method`, `oracle_category`, `probe_category`, `log_v` (exact `log V`), `relative_margin_below_threshold` (`1 − V/threshold`), `band` (`B`) |
+| `footer` | `file`, `file_sha256`, `n_records` (records this shard adjudicated), `rounding_band_records` |
+
+The `raw/oracle_audit.jsonl` summary rows also carry `rounding_band_factor`,
+`avoidable_legacy`, `avoidable_candidate`, `avoidable_qf` (audited attempts each method's
+category scores as avoidable) and `rounding_band_legacy`, `rounding_band_candidate`,
+`rounding_band_qf` (those of them inside the band).
+
 `exp7_oracle.exe` exits non-zero on any disagreement or conversion failure, and `make oracle`
 propagates that exit status.
 

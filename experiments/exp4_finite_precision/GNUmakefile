@@ -15,7 +15,7 @@
 #   make p3             conditioning: per-attempt intended state vs success
 #   make p4             complete anisotropic, rotated, capped 3-D loader, C0-C6
 #   make p5             portability: CANDIDATE, full ladder, one tagged environment
-#   make p6             performance: timed blocks, B0-B4, seeds 10006-10010
+#   make p6             performance: timed blocks, B0-B4, seeds 11006-11010
 #   make oracle         recompute every recorded attempt at 100 decimal digits
 #   make analyze        results/*.csv, results/analysis_report.md, the acceptance-criteria table
 #   make figures        figures/*.{pdf,svg,png}
@@ -217,7 +217,8 @@ ORACLE_JOBS ?= $(shell sysctl -n hw.perflevel0.logicalcpu 2>/dev/null || getconf
 
 oracle: exp7_oracle.exe
 	@mkdir -p results $(RAWROOT)
-	@rm -f $(RAWROOT)/oracle_audit.jsonl $(RAWROOT)/oracle_disagreements.jsonl
+	@rm -f $(RAWROOT)/oracle_audit.jsonl $(RAWROOT)/oracle_disagreements.jsonl \
+	       $(RAWROOT)/oracle_rounding_band.jsonl
 	@found=0; rc=0; J=$(ORACLE_JOBS); \
 	for f in $(RAWROOT)/p2/audit_*.bin $(RAWROOT)/p3/audit_*.bin; do \
 	  test -f "$$f" || continue; found=1; \
@@ -226,6 +227,7 @@ oracle: exp7_oracle.exe
 	  while [ $$i -lt $$J ]; do \
 	    ( ./exp7_oracle.exe "$$f" --shard $$i --shards $$J \
 	        --disagreements $(RAWROOT)/oracle_dis_$$i.tmp \
+	        --rounding-band $(RAWROOT)/oracle_band_$$i.tmp \
 	        > $(RAWROOT)/oracle_aud_$$i.tmp ; echo $$? > $(RAWROOT)/oracle_rc_$$i.tmp ) & \
 	    pids="$$pids $$!"; i=$$((i+1)); \
 	  done; \
@@ -235,9 +237,12 @@ oracle: exp7_oracle.exe
 	    cat $(RAWROOT)/oracle_aud_$$i.tmp >> $(RAWROOT)/oracle_audit.jsonl; \
 	    test -f $(RAWROOT)/oracle_dis_$$i.tmp && \
 	      cat $(RAWROOT)/oracle_dis_$$i.tmp >> $(RAWROOT)/oracle_disagreements.jsonl; \
+	    test -f $(RAWROOT)/oracle_band_$$i.tmp && \
+	      cat $(RAWROOT)/oracle_band_$$i.tmp >> $(RAWROOT)/oracle_rounding_band.jsonl; \
 	    if [ "$$(cat $(RAWROOT)/oracle_rc_$$i.tmp 2>/dev/null)" != "0" ]; then \
 	      rc=1; echo "    DISAGREEMENTS OR CONVERSION FAILURES in $$f (shard $$i)"; fi; \
 	    rm -f $(RAWROOT)/oracle_aud_$$i.tmp $(RAWROOT)/oracle_dis_$$i.tmp \
+	          $(RAWROOT)/oracle_band_$$i.tmp \
 	          $(RAWROOT)/oracle_rc_$$i.tmp; \
 	    i=$$((i+1)); \
 	  done; \
@@ -245,6 +250,7 @@ oracle: exp7_oracle.exe
 	if [ $$found -ne 1 ]; then \
 	  echo "  no audit streams under $(RAWROOT) - run p2 and p3 first"; exit 1; fi; \
 	echo "  oracle: $$(grep -c '"kind":"disagreement"' $(RAWROOT)/oracle_disagreements.jsonl || true) disagreement record(s)"; \
+	echo "  oracle: $$(grep -c '"kind":"rounding_band"' $(RAWROOT)/oracle_rounding_band.jsonl || true) rounding-band record(s)"; \
 	exit $$rc
 
 # ---------------------------------------------------------------------------
@@ -320,4 +326,5 @@ clean:
 distclean: clean
 	rm -rf raw/smoke raw/p1 raw/p2 raw/p3 raw/p4 raw/p5 raw/p6 \
 	       raw/manifest.csv raw/oracle_audit.jsonl raw/oracle_disagreements.jsonl \
+	       raw/oracle_rounding_band.jsonl \
 	       raw/raw_checksums.sha256 checksums.sha256

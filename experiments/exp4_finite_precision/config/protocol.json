@@ -1,10 +1,16 @@
 {
-  "protocol_version": "4.0.0",
+  "protocol_version": "5.0.0",
   "amendments": [
+    {
+      "version": "5.0.0",
+      "before_any_data": false,
+      "governs": "the fifth run, on seeds 11001-11010",
+      "reason": "The fourth run, on seeds 10001-10010 under protocol 4.0.0, returned NO-GO on gate G1 alone and is recorded in commit 84130b5, which is not edited or reinterpreted. The stabilized calculation, computing in float, returned three single-precision draws non-finite whose exact largest component was representable: at kappa = 0.505 on seeds 10001 and 10003, 4.3e-6 and 9.8e-6 (relative) below the float overflow threshold, and at kappa = 0.51 on seed 10005, 5.2e-7 below it. The same three draws occurred in both standard-library builds, so G1 counted six. A fourth draw, at kappa = 0.51 on seed 10003, lay 6.2e-6 above the threshold and was returned finite, an unavoidable loss. Amendment 4.0.0 had stated this consequence in advance and changed no gate rule.\n\n(1) GATE G1. A working-precision calculation cannot decide the side of the overflow threshold on which a component falls when the exact component lies within the calculation's rounding error of the threshold. G1 as written required such draws to be returned, which no calculation in the working type can guarantee. From 5.0.0 a failure of any method counts as avoidable loss only if the exact (100-digit) largest component lies below the overflow threshold by a relative distance greater than B = 4 eps max(1, |log V|), where eps is the machine epsilon of the working type (2^-23 for float, 2^-52 for double) and V the exact largest component. At the threshold B is 4.2e-5 in float and 6.3e-13 in double. A failure within B is a ROUNDING-BAND LOSS: it is counted and published per setting with its rate, and it does not enter G1. G1 requires zero avoidable losses outside the band. The constant is fixed from the error analysis of the stabilized calculation, not from the observed margins: with libm's log and exp within one ulp and each arithmetic operation within half an ulp, the first-order error bound on log R is 2.5 eps |log V| when |log U|/a dominates the sum, the addition of log|g| and the rounding of g add about 0.5 eps |log V| + 3.5 eps, and exp adds eps, so a component near the threshold carries a relative error of at most about (3 |log V| + 4.5) eps. 4 eps |log V| exceeds that for |log V| > 4.5, and |log V| is 88.7 in float and 709.8 in double at the threshold. It is the band stated in the header documentation and used by selftest check 15 and by test S6 of the regression suite. The band is applied from the exact margin, by the oracle and re-checked by the analysis. The probe's categories are unchanged, and so are P1's native counts, which enter G1 as before.\n\nThis rule was written after the fourth run was read, and the three draws above fall inside it. It is therefore tested on a new seed block and the fourth run is not re-scored under it.\n\n(2) VERSION. The candidate implementation is unchanged from amendment 4.0.0 except for its version macros. It is released as 3.0.0 instead of 2.3.0 because a given seed produces different single-precision output, which the changelog's versioning rule counts as a breaking change.\n\nSEEDS. 11001-11005 for production and 11006-11010 for the performance block, by the rule of section 3. 10001-10010 are added to the spent blocks.\n\nSCOPE and every other rule, size and threshold are unchanged from 4.0.0. Every change was made and committed before any datum on seeds 11001-11010 existed."
+    },
     {
       "version": "4.0.0",
       "before_any_data": false,
-      "governs": "the fourth run, on seeds 10001-10010",
+      "governs": "the fourth run, on seeds 10001-10010 (superseded)",
       "reason": "The third holdout, on seeds 9001-9010 under protocol 3.0.0, returned GO and is preserved in commit abdd295. This amendment is not a response to a failure: no gate failed and no defect was found. It changes the candidate implementation, the size of the mechanism phase and the oracle's arithmetic backend. Because the implementation changes after data exist, it follows the terms of PROTOCOL.md section 8: a new implementation hash, a new protocol document, a new disjoint seed block, and a complete rerun.\n\n(1) IMPLEMENTATION. Release 2.3.0 computes in the working precision in every instantiation. Release 2.2.0, the candidate under 3.0.0, formed the logarithm of the radius, the direction, the thermal scaling, the rotation and each component of a float instantiation in double and rounded each component once to float. The change is a design decision with two reasons: the header must work where only single precision is available, and a run labelled single precision should perform all of its arithmetic in single precision. A double instantiation is unaffected: 2.3.0 performs the same operations in the same order as 2.2.0 and returns the same bits, which was checked by rerunning phases P1, P2, P4 and P5 in double on seeds 9001-9005 under both standard libraries and comparing every counter and digest with the committed third-holdout records. In float the relative error of the radius is about eps |log R|, about 1e-5 near FLT_MAX, while neighbouring floats there are 6e-8 apart. A float draw whose largest exact component lies within that error of the float overflow threshold can therefore be returned non-finite although the type can hold it, and the paired layer scores it as avoidable loss, which gate G1 requires to be exactly zero. The second holdout recorded one such draw, at float kappa = 0.505 (section 2.7.1). A run of the 2.2.0 header at 10^7 attempts per seed on seeds 9001-9005, made while preparing this amendment and not analysed, found three float attempts -- two at kappa = 0.505 and one at kappa = 0.51, all within 4e-6 relative of FLT_MAX -- on which a float calculation and the double one reach different outcomes; in each the double calculation agreed with the exact value. No gate rule is changed. For a float run the candidate's radius is again a float calculation, distinct from the paired layer's double reference, so the narrowing recorded in section 2.7.1 no longer applies: the paired layer measures the float candidate's accuracy, and a float FINITE_BUT_WRONG verdict from it counts. The two selftest regressions frozen under 3.0.0 are restated for float arithmetic: the recorded float draw of section 2.7.1 must be returned non-finite and scored as avoidable loss, and the float boundary sweep takes float inputs, allows either answer within the float error band of the threshold (4 eps where the radius is representable, 4 eps |log V| where it is not) and requires the exact answer outside it.\n\n(2) PROTOCOL. The mechanism phase P2 runs 10^7 attempts per seed instead of 10^6, 5 x 10^7 per setting over the five seeds. With 5 x 10^6 attempts a setting with no failure has a one-sided 95% upper bound of 1 - 0.05^(1/N) = 6.0e-7, which lay above nonzero fractions observed at neighbouring kappa (for example 4e-7 for the candidate at double kappa = 0.51, beside a zero at 0.55), so a zero-failure setting could not be resolved below its neighbours. At 5 x 10^7 the bound is 6.0e-8. P2's native layer runs at the same size on P1's streams, so its counters are no longer comparable with P1's, and the cross-phase check cross_phase_native_agrees reports NA instead. The sizes of P1, P3, P4, P5 and P6, the audit rule and every threshold are unchanged.\n\n(3) ORACLE. The 100-digit recomputation uses boost::multiprecision::mpfr_float_100 (MPFR, correctly rounded) instead of cpp_dec_float_100, and is about 35 times faster. On a complete audit file the two gave identical classifications and identical maximum statistics; two mean-error statistics differed in the third to fourth digit, because cpp_dec_float's conversion to double is not correctly rounded. The oracle's independent working-precision model of the candidate computes entirely in the working type, which is what 2.3.0 does.\n\nSEEDS. 10001-10005 for production and 10006-10010 for the performance block, by the rule of section 3. 9001-9010 are added to the spent blocks.\n\nSCOPE is unchanged: arm64 macOS under both standard libraries, cross-architecture withdrawn. No threshold is relaxed, no cell removed, no family alpha changed, no result excluded. Every change was made and committed before any datum on seeds 10001-10010 existed."
     },
     {
@@ -39,8 +45,8 @@
   "frozen_before_any_data": true,
   "candidate": {
     "name": "CANDIDATE",
-    "description": "released loader cpp/bi_kappa_distribution.H at version 2.3.0, radius built in the log domain; every quantity, from the variates to the returned components, is computed in the working precision of the instantiation, and representability is decided from the materialized component",
-    "version": "2.3.0",
+    "description": "released loader cpp/bi_kappa_distribution.H at version 3.0.0, radius built in the log domain; every quantity, from the variates to the returned components, is computed in the working precision of the instantiation, and representability is decided from the materialized component",
+    "version": "3.0.0",
     "log_gamma_primitive": "LOG-ID",
     "log_gamma_citation": "Ahrens, J.H. and Dieter, U. (1974), Computing 12, 223-246",
     "boosted_gamma_primitive": "Marsaglia-Tsang",
@@ -55,21 +61,21 @@
   },
   "seeds": {
     "production": [
-      10001,
-      10002,
-      10003,
-      10004,
-      10005
+      11001,
+      11002,
+      11003,
+      11004,
+      11005
     ],
     "performance": [
-      10006,
-      10007,
-      10008,
-      10009,
-      10010
+      11006,
+      11007,
+      11008,
+      11009,
+      11010
     ],
     "declared_not_derived": true,
-    "derivation_rule": "The highest seed declared anywhere in this repository is 9010 (the third holdout's performance block). Round up to the next multiple of 1000, which is 10000, and take the next ten integers: 10001-10005 for production and 10006-10010 for the performance block. The rule admits exactly one answer, so the block is a consequence of the repository's state and not a choice made after seeing a result.",
+    "derivation_rule": "The highest seed declared anywhere in this repository is 10010 (the fourth run's performance block). Round up to the next multiple of 1000, which is 11000, and take the next ten integers: 11001-11005 for production and 11006-11010 for the performance block. The rule admits exactly one answer, so the block is a consequence of the repository's state and not a choice made after seeing a result.",
     "p1_stream_seed_stride": 10000,
     "p1_stream_seed_rule": "Since protocol 3.0.0. In phases P1 and P5 the engine of configuration (precision, kappa) under replicate seed `base` is seeded with base + 10000 * (13 * precision_index + kappa_index), precision_index 0 for double and 1 for float and kappa_index the 0-based position in the kappa ladder. The 26 configurations of a replicate therefore run on independent streams instead of sharing one, which is what family F2's global rule requires and what protocol 2.0.0 and earlier did not provide. The formula is declared, deterministic and admits exactly one answer per configuration; every value it produces is congruent to a production seed modulo 10000 and so collides with no declared block. It is recorded per row as `stream_seed` beside the replicate's `seed`, which remains the unit the analysis groups and clusters by. P2, P3, P4 and P6 are unchanged: their families decide by Holm, by Simes or by an exact per-attempt identity, all of which are valid under arbitrary dependence between configurations, so there is nothing for the change to fix there and no reason to disturb them.",
     "spent_blocks": {
@@ -109,7 +115,19 @@
         9009,
         9010
       ],
-      "spent_reason": "used by the NO-GO holdouts preserved in commits 45d3ef8 (7001-7010) and e5c9837 (8001-8010) and by the GO holdout under protocol 3.0.0 preserved in commit abdd295 (9001-9010); PROTOCOL.md section 8 forbids recomputing any result on them, and they may now serve only as preserved evidence and development material"
+      "fourth_run": [
+        10001,
+        10002,
+        10003,
+        10004,
+        10005,
+        10006,
+        10007,
+        10008,
+        10009,
+        10010
+      ],
+      "spent_reason": "used by the NO-GO holdouts preserved in commits 45d3ef8 (7001-7010) and e5c9837 (8001-8010), by the GO holdout under protocol 3.0.0 preserved in commit abdd295 (9001-9010), and by the NO-GO run under protocol 4.0.0 recorded in commit 84130b5 (10001-10010); PROTOCOL.md section 8 forbids recomputing any result on them, and they may now serve only as preserved evidence and development material"
     },
     "disjoint_from": {
       "exp1": [
@@ -140,6 +158,10 @@
       "exp7_third_holdout": [
         9001,
         9010
+      ],
+      "exp7_fourth_run": [
+        10001,
+        10010
       ],
       "exp7_selftest": [
         7501,
@@ -282,7 +304,7 @@
     {
       "precision": "float",
       "kappa": 0.5001,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -292,7 +314,7 @@
     {
       "precision": "float",
       "kappa": 0.5001,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -302,7 +324,7 @@
     {
       "precision": "float",
       "kappa": 0.5001,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -312,7 +334,7 @@
     {
       "precision": "float",
       "kappa": 0.5001,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -322,7 +344,7 @@
     {
       "precision": "float",
       "kappa": 0.5001,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -332,7 +354,7 @@
     {
       "precision": "float",
       "kappa": 0.5001,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -342,7 +364,7 @@
     {
       "precision": "float",
       "kappa": 0.5001,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -352,7 +374,7 @@
     {
       "precision": "float",
       "kappa": 0.5001,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -362,7 +384,7 @@
     {
       "precision": "float",
       "kappa": 0.5001,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -372,7 +394,7 @@
     {
       "precision": "float",
       "kappa": 0.5001,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -382,7 +404,7 @@
     {
       "precision": "float",
       "kappa": 0.5001,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -392,7 +414,7 @@
     {
       "precision": "float",
       "kappa": 0.5001,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -402,7 +424,7 @@
     {
       "precision": "float",
       "kappa": 0.5001,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -412,7 +434,7 @@
     {
       "precision": "float",
       "kappa": 0.5001,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -422,7 +444,7 @@
     {
       "precision": "float",
       "kappa": 0.5001,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -432,7 +454,7 @@
     {
       "precision": "float",
       "kappa": 0.5001,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -442,7 +464,7 @@
     {
       "precision": "float",
       "kappa": 0.5001,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -452,7 +474,7 @@
     {
       "precision": "float",
       "kappa": 0.5001,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -462,7 +484,7 @@
     {
       "precision": "float",
       "kappa": 0.5001,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -472,7 +494,7 @@
     {
       "precision": "float",
       "kappa": 0.5001,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -482,7 +504,7 @@
     {
       "precision": "float",
       "kappa": 0.5001,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -492,7 +514,7 @@
     {
       "precision": "float",
       "kappa": 0.5001,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -502,7 +524,7 @@
     {
       "precision": "float",
       "kappa": 0.5001,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -512,7 +534,7 @@
     {
       "precision": "float",
       "kappa": 0.5001,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -522,7 +544,7 @@
     {
       "precision": "float",
       "kappa": 0.5001,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -532,7 +554,7 @@
     {
       "precision": "float",
       "kappa": 0.501,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -542,7 +564,7 @@
     {
       "precision": "float",
       "kappa": 0.501,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -552,7 +574,7 @@
     {
       "precision": "float",
       "kappa": 0.501,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -562,7 +584,7 @@
     {
       "precision": "float",
       "kappa": 0.501,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -572,7 +594,7 @@
     {
       "precision": "float",
       "kappa": 0.501,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -582,7 +604,7 @@
     {
       "precision": "float",
       "kappa": 0.501,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -592,7 +614,7 @@
     {
       "precision": "float",
       "kappa": 0.501,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -602,7 +624,7 @@
     {
       "precision": "float",
       "kappa": 0.501,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -612,7 +634,7 @@
     {
       "precision": "float",
       "kappa": 0.501,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -622,7 +644,7 @@
     {
       "precision": "float",
       "kappa": 0.501,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -632,7 +654,7 @@
     {
       "precision": "float",
       "kappa": 0.501,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -642,7 +664,7 @@
     {
       "precision": "float",
       "kappa": 0.501,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -652,7 +674,7 @@
     {
       "precision": "float",
       "kappa": 0.501,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -662,7 +684,7 @@
     {
       "precision": "float",
       "kappa": 0.501,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -672,7 +694,7 @@
     {
       "precision": "float",
       "kappa": 0.501,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -682,7 +704,7 @@
     {
       "precision": "float",
       "kappa": 0.501,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -692,7 +714,7 @@
     {
       "precision": "float",
       "kappa": 0.501,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -702,7 +724,7 @@
     {
       "precision": "float",
       "kappa": 0.501,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -712,7 +734,7 @@
     {
       "precision": "float",
       "kappa": 0.501,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -722,7 +744,7 @@
     {
       "precision": "float",
       "kappa": 0.501,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -732,7 +754,7 @@
     {
       "precision": "float",
       "kappa": 0.501,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -742,7 +764,7 @@
     {
       "precision": "float",
       "kappa": 0.501,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -752,7 +774,7 @@
     {
       "precision": "float",
       "kappa": 0.501,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -762,7 +784,7 @@
     {
       "precision": "float",
       "kappa": 0.501,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -772,7 +794,7 @@
     {
       "precision": "float",
       "kappa": 0.501,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -782,7 +804,7 @@
     {
       "precision": "float",
       "kappa": 0.505,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -792,7 +814,7 @@
     {
       "precision": "float",
       "kappa": 0.505,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -802,7 +824,7 @@
     {
       "precision": "float",
       "kappa": 0.505,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -812,7 +834,7 @@
     {
       "precision": "float",
       "kappa": 0.505,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -822,7 +844,7 @@
     {
       "precision": "float",
       "kappa": 0.505,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -832,7 +854,7 @@
     {
       "precision": "float",
       "kappa": 0.505,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -842,7 +864,7 @@
     {
       "precision": "float",
       "kappa": 0.505,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -852,7 +874,7 @@
     {
       "precision": "float",
       "kappa": 0.505,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -862,7 +884,7 @@
     {
       "precision": "float",
       "kappa": 0.505,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -872,7 +894,7 @@
     {
       "precision": "float",
       "kappa": 0.505,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -882,7 +904,7 @@
     {
       "precision": "float",
       "kappa": 0.505,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -892,7 +914,7 @@
     {
       "precision": "float",
       "kappa": 0.505,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -902,7 +924,7 @@
     {
       "precision": "float",
       "kappa": 0.505,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -912,7 +934,7 @@
     {
       "precision": "float",
       "kappa": 0.505,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -922,7 +944,7 @@
     {
       "precision": "float",
       "kappa": 0.505,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -932,7 +954,7 @@
     {
       "precision": "float",
       "kappa": 0.505,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -942,7 +964,7 @@
     {
       "precision": "float",
       "kappa": 0.505,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -952,7 +974,7 @@
     {
       "precision": "float",
       "kappa": 0.505,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -962,7 +984,7 @@
     {
       "precision": "float",
       "kappa": 0.505,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -972,7 +994,7 @@
     {
       "precision": "float",
       "kappa": 0.505,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -982,7 +1004,7 @@
     {
       "precision": "float",
       "kappa": 0.505,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -992,7 +1014,7 @@
     {
       "precision": "float",
       "kappa": 0.505,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -1002,7 +1024,7 @@
     {
       "precision": "float",
       "kappa": 0.505,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -1012,7 +1034,7 @@
     {
       "precision": "float",
       "kappa": 0.505,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -1022,7 +1044,7 @@
     {
       "precision": "float",
       "kappa": 0.505,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -1032,7 +1054,7 @@
     {
       "precision": "float",
       "kappa": 0.51,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -1042,7 +1064,7 @@
     {
       "precision": "float",
       "kappa": 0.51,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -1052,7 +1074,7 @@
     {
       "precision": "float",
       "kappa": 0.51,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -1062,7 +1084,7 @@
     {
       "precision": "float",
       "kappa": 0.51,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -1072,7 +1094,7 @@
     {
       "precision": "float",
       "kappa": 0.51,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -1082,7 +1104,7 @@
     {
       "precision": "float",
       "kappa": 0.51,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -1092,7 +1114,7 @@
     {
       "precision": "float",
       "kappa": 0.51,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -1102,7 +1124,7 @@
     {
       "precision": "float",
       "kappa": 0.51,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -1112,7 +1134,7 @@
     {
       "precision": "float",
       "kappa": 0.51,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -1122,7 +1144,7 @@
     {
       "precision": "float",
       "kappa": 0.51,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -1132,7 +1154,7 @@
     {
       "precision": "float",
       "kappa": 0.51,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -1142,7 +1164,7 @@
     {
       "precision": "float",
       "kappa": 0.51,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -1152,7 +1174,7 @@
     {
       "precision": "float",
       "kappa": 0.51,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -1162,7 +1184,7 @@
     {
       "precision": "float",
       "kappa": 0.51,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -1172,7 +1194,7 @@
     {
       "precision": "float",
       "kappa": 0.51,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -1182,7 +1204,7 @@
     {
       "precision": "float",
       "kappa": 0.51,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -1192,7 +1214,7 @@
     {
       "precision": "float",
       "kappa": 0.51,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -1202,7 +1224,7 @@
     {
       "precision": "float",
       "kappa": 0.51,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -1212,7 +1234,7 @@
     {
       "precision": "float",
       "kappa": 0.51,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -1222,7 +1244,7 @@
     {
       "precision": "float",
       "kappa": 0.51,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -1232,7 +1254,7 @@
     {
       "precision": "float",
       "kappa": 0.51,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -1242,7 +1264,7 @@
     {
       "precision": "float",
       "kappa": 0.51,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -1252,7 +1274,7 @@
     {
       "precision": "float",
       "kappa": 0.51,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -1262,7 +1284,7 @@
     {
       "precision": "float",
       "kappa": 0.51,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -1272,7 +1294,7 @@
     {
       "precision": "float",
       "kappa": 0.51,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -1282,7 +1304,7 @@
     {
       "precision": "float",
       "kappa": 0.55,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -1292,7 +1314,7 @@
     {
       "precision": "float",
       "kappa": 0.55,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -1302,7 +1324,7 @@
     {
       "precision": "float",
       "kappa": 0.55,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -1312,7 +1334,7 @@
     {
       "precision": "float",
       "kappa": 0.55,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -1322,7 +1344,7 @@
     {
       "precision": "float",
       "kappa": 0.55,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -1332,7 +1354,7 @@
     {
       "precision": "float",
       "kappa": 0.55,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -1342,7 +1364,7 @@
     {
       "precision": "float",
       "kappa": 0.55,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -1352,7 +1374,7 @@
     {
       "precision": "float",
       "kappa": 0.55,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -1362,7 +1384,7 @@
     {
       "precision": "float",
       "kappa": 0.55,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -1372,7 +1394,7 @@
     {
       "precision": "float",
       "kappa": 0.55,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -1382,7 +1404,7 @@
     {
       "precision": "float",
       "kappa": 0.55,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -1392,7 +1414,7 @@
     {
       "precision": "float",
       "kappa": 0.55,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -1402,7 +1424,7 @@
     {
       "precision": "float",
       "kappa": 0.55,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -1412,7 +1434,7 @@
     {
       "precision": "float",
       "kappa": 0.55,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -1422,7 +1444,7 @@
     {
       "precision": "float",
       "kappa": 0.55,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -1432,7 +1454,7 @@
     {
       "precision": "float",
       "kappa": 0.55,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -1442,7 +1464,7 @@
     {
       "precision": "float",
       "kappa": 0.55,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -1452,7 +1474,7 @@
     {
       "precision": "float",
       "kappa": 0.55,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -1462,7 +1484,7 @@
     {
       "precision": "float",
       "kappa": 0.55,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -1472,7 +1494,7 @@
     {
       "precision": "float",
       "kappa": 0.55,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -1482,7 +1504,7 @@
     {
       "precision": "float",
       "kappa": 0.55,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -1492,7 +1514,7 @@
     {
       "precision": "float",
       "kappa": 0.55,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -1502,7 +1524,7 @@
     {
       "precision": "float",
       "kappa": 0.55,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -1512,7 +1534,7 @@
     {
       "precision": "float",
       "kappa": 0.55,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -1522,7 +1544,7 @@
     {
       "precision": "float",
       "kappa": 0.55,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -1532,7 +1554,7 @@
     {
       "precision": "float",
       "kappa": 0.6,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -1542,7 +1564,7 @@
     {
       "precision": "float",
       "kappa": 0.6,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -1552,7 +1574,7 @@
     {
       "precision": "float",
       "kappa": 0.6,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -1562,7 +1584,7 @@
     {
       "precision": "float",
       "kappa": 0.6,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -1572,7 +1594,7 @@
     {
       "precision": "float",
       "kappa": 0.6,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -1582,7 +1604,7 @@
     {
       "precision": "float",
       "kappa": 0.6,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -1592,7 +1614,7 @@
     {
       "precision": "float",
       "kappa": 0.6,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -1602,7 +1624,7 @@
     {
       "precision": "float",
       "kappa": 0.6,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -1612,7 +1634,7 @@
     {
       "precision": "float",
       "kappa": 0.6,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -1622,7 +1644,7 @@
     {
       "precision": "float",
       "kappa": 0.6,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -1632,7 +1654,7 @@
     {
       "precision": "float",
       "kappa": 0.6,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -1642,7 +1664,7 @@
     {
       "precision": "float",
       "kappa": 0.6,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -1652,7 +1674,7 @@
     {
       "precision": "float",
       "kappa": 0.6,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -1662,7 +1684,7 @@
     {
       "precision": "float",
       "kappa": 0.6,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -1672,7 +1694,7 @@
     {
       "precision": "float",
       "kappa": 0.6,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -1682,7 +1704,7 @@
     {
       "precision": "float",
       "kappa": 0.6,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -1692,7 +1714,7 @@
     {
       "precision": "float",
       "kappa": 0.6,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -1702,7 +1724,7 @@
     {
       "precision": "float",
       "kappa": 0.6,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -1712,7 +1734,7 @@
     {
       "precision": "float",
       "kappa": 0.6,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -1722,7 +1744,7 @@
     {
       "precision": "float",
       "kappa": 0.6,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -1732,7 +1754,7 @@
     {
       "precision": "float",
       "kappa": 0.6,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -1742,7 +1764,7 @@
     {
       "precision": "float",
       "kappa": 0.6,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -1752,7 +1774,7 @@
     {
       "precision": "float",
       "kappa": 0.6,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -1762,7 +1784,7 @@
     {
       "precision": "float",
       "kappa": 0.6,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -1772,7 +1794,7 @@
     {
       "precision": "float",
       "kappa": 0.6,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -1782,7 +1804,7 @@
     {
       "precision": "float",
       "kappa": 0.75,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -1792,7 +1814,7 @@
     {
       "precision": "float",
       "kappa": 0.75,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -1802,7 +1824,7 @@
     {
       "precision": "float",
       "kappa": 0.75,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -1812,7 +1834,7 @@
     {
       "precision": "float",
       "kappa": 0.75,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -1822,7 +1844,7 @@
     {
       "precision": "float",
       "kappa": 0.75,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -1832,7 +1854,7 @@
     {
       "precision": "float",
       "kappa": 0.75,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -1842,7 +1864,7 @@
     {
       "precision": "float",
       "kappa": 0.75,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -1852,7 +1874,7 @@
     {
       "precision": "float",
       "kappa": 0.75,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -1862,7 +1884,7 @@
     {
       "precision": "float",
       "kappa": 0.75,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -1872,7 +1894,7 @@
     {
       "precision": "float",
       "kappa": 0.75,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -1882,7 +1904,7 @@
     {
       "precision": "float",
       "kappa": 0.75,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -1892,7 +1914,7 @@
     {
       "precision": "float",
       "kappa": 0.75,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -1902,7 +1924,7 @@
     {
       "precision": "float",
       "kappa": 0.75,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -1912,7 +1934,7 @@
     {
       "precision": "float",
       "kappa": 0.75,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -1922,7 +1944,7 @@
     {
       "precision": "float",
       "kappa": 0.75,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -1932,7 +1954,7 @@
     {
       "precision": "float",
       "kappa": 0.75,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -1942,7 +1964,7 @@
     {
       "precision": "float",
       "kappa": 0.75,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -1952,7 +1974,7 @@
     {
       "precision": "float",
       "kappa": 0.75,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -1962,7 +1984,7 @@
     {
       "precision": "float",
       "kappa": 0.75,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -1972,7 +1994,7 @@
     {
       "precision": "float",
       "kappa": 0.75,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -1982,7 +2004,7 @@
     {
       "precision": "float",
       "kappa": 0.75,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -1992,7 +2014,7 @@
     {
       "precision": "float",
       "kappa": 0.75,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -2002,7 +2024,7 @@
     {
       "precision": "float",
       "kappa": 0.75,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -2012,7 +2034,7 @@
     {
       "precision": "float",
       "kappa": 0.75,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -2022,7 +2044,7 @@
     {
       "precision": "float",
       "kappa": 0.75,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -2032,7 +2054,7 @@
     {
       "precision": "float",
       "kappa": 1.0,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -2042,7 +2064,7 @@
     {
       "precision": "float",
       "kappa": 1.0,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -2052,7 +2074,7 @@
     {
       "precision": "float",
       "kappa": 1.0,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -2062,7 +2084,7 @@
     {
       "precision": "float",
       "kappa": 1.0,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -2072,7 +2094,7 @@
     {
       "precision": "float",
       "kappa": 1.0,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -2082,7 +2104,7 @@
     {
       "precision": "float",
       "kappa": 1.0,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -2092,7 +2114,7 @@
     {
       "precision": "float",
       "kappa": 1.0,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -2102,7 +2124,7 @@
     {
       "precision": "float",
       "kappa": 1.0,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -2112,7 +2134,7 @@
     {
       "precision": "float",
       "kappa": 1.0,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -2122,7 +2144,7 @@
     {
       "precision": "float",
       "kappa": 1.0,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -2132,7 +2154,7 @@
     {
       "precision": "float",
       "kappa": 1.0,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -2142,7 +2164,7 @@
     {
       "precision": "float",
       "kappa": 1.0,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -2152,7 +2174,7 @@
     {
       "precision": "float",
       "kappa": 1.0,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -2162,7 +2184,7 @@
     {
       "precision": "float",
       "kappa": 1.0,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -2172,7 +2194,7 @@
     {
       "precision": "float",
       "kappa": 1.0,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -2182,7 +2204,7 @@
     {
       "precision": "float",
       "kappa": 1.0,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -2192,7 +2214,7 @@
     {
       "precision": "float",
       "kappa": 1.0,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -2202,7 +2224,7 @@
     {
       "precision": "float",
       "kappa": 1.0,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -2212,7 +2234,7 @@
     {
       "precision": "float",
       "kappa": 1.0,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -2222,7 +2244,7 @@
     {
       "precision": "float",
       "kappa": 1.0,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -2232,7 +2254,7 @@
     {
       "precision": "float",
       "kappa": 1.0,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -2242,7 +2264,7 @@
     {
       "precision": "float",
       "kappa": 1.0,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -2252,7 +2274,7 @@
     {
       "precision": "float",
       "kappa": 1.0,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -2262,7 +2284,7 @@
     {
       "precision": "float",
       "kappa": 1.0,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -2272,7 +2294,7 @@
     {
       "precision": "float",
       "kappa": 1.0,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -2282,7 +2304,7 @@
     {
       "precision": "float",
       "kappa": 1.25,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -2292,7 +2314,7 @@
     {
       "precision": "float",
       "kappa": 1.25,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -2302,7 +2324,7 @@
     {
       "precision": "float",
       "kappa": 1.25,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -2312,7 +2334,7 @@
     {
       "precision": "float",
       "kappa": 1.25,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -2322,7 +2344,7 @@
     {
       "precision": "float",
       "kappa": 1.25,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -2332,7 +2354,7 @@
     {
       "precision": "float",
       "kappa": 1.25,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -2342,7 +2364,7 @@
     {
       "precision": "float",
       "kappa": 1.25,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -2352,7 +2374,7 @@
     {
       "precision": "float",
       "kappa": 1.25,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -2362,7 +2384,7 @@
     {
       "precision": "float",
       "kappa": 1.25,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -2372,7 +2394,7 @@
     {
       "precision": "float",
       "kappa": 1.25,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -2382,7 +2404,7 @@
     {
       "precision": "float",
       "kappa": 1.25,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -2392,7 +2414,7 @@
     {
       "precision": "float",
       "kappa": 1.25,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -2402,7 +2424,7 @@
     {
       "precision": "float",
       "kappa": 1.25,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -2412,7 +2434,7 @@
     {
       "precision": "float",
       "kappa": 1.25,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -2422,7 +2444,7 @@
     {
       "precision": "float",
       "kappa": 1.25,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -2432,7 +2454,7 @@
     {
       "precision": "float",
       "kappa": 1.25,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -2442,7 +2464,7 @@
     {
       "precision": "float",
       "kappa": 1.25,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -2452,7 +2474,7 @@
     {
       "precision": "float",
       "kappa": 1.25,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -2462,7 +2484,7 @@
     {
       "precision": "float",
       "kappa": 1.25,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -2472,7 +2494,7 @@
     {
       "precision": "float",
       "kappa": 1.25,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -2482,7 +2504,7 @@
     {
       "precision": "float",
       "kappa": 1.25,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -2492,7 +2514,7 @@
     {
       "precision": "float",
       "kappa": 1.25,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -2502,7 +2524,7 @@
     {
       "precision": "float",
       "kappa": 1.25,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -2512,7 +2534,7 @@
     {
       "precision": "float",
       "kappa": 1.25,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -2522,7 +2544,7 @@
     {
       "precision": "float",
       "kappa": 1.25,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -2532,7 +2554,7 @@
     {
       "precision": "float",
       "kappa": 1.49,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -2542,7 +2564,7 @@
     {
       "precision": "float",
       "kappa": 1.49,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -2552,7 +2574,7 @@
     {
       "precision": "float",
       "kappa": 1.49,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -2562,7 +2584,7 @@
     {
       "precision": "float",
       "kappa": 1.49,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -2572,7 +2594,7 @@
     {
       "precision": "float",
       "kappa": 1.49,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -2582,7 +2604,7 @@
     {
       "precision": "float",
       "kappa": 1.49,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -2592,7 +2614,7 @@
     {
       "precision": "float",
       "kappa": 1.49,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -2602,7 +2624,7 @@
     {
       "precision": "float",
       "kappa": 1.49,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -2612,7 +2634,7 @@
     {
       "precision": "float",
       "kappa": 1.49,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -2622,7 +2644,7 @@
     {
       "precision": "float",
       "kappa": 1.49,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -2632,7 +2654,7 @@
     {
       "precision": "float",
       "kappa": 1.49,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -2642,7 +2664,7 @@
     {
       "precision": "float",
       "kappa": 1.49,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -2652,7 +2674,7 @@
     {
       "precision": "float",
       "kappa": 1.49,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -2662,7 +2684,7 @@
     {
       "precision": "float",
       "kappa": 1.49,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -2672,7 +2694,7 @@
     {
       "precision": "float",
       "kappa": 1.49,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -2682,7 +2704,7 @@
     {
       "precision": "float",
       "kappa": 1.49,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -2692,7 +2714,7 @@
     {
       "precision": "float",
       "kappa": 1.49,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -2702,7 +2724,7 @@
     {
       "precision": "float",
       "kappa": 1.49,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -2712,7 +2734,7 @@
     {
       "precision": "float",
       "kappa": 1.49,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -2722,7 +2744,7 @@
     {
       "precision": "float",
       "kappa": 1.49,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -2732,7 +2754,7 @@
     {
       "precision": "float",
       "kappa": 1.49,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -2742,7 +2764,7 @@
     {
       "precision": "float",
       "kappa": 1.49,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -2752,7 +2774,7 @@
     {
       "precision": "float",
       "kappa": 1.49,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -2762,7 +2784,7 @@
     {
       "precision": "float",
       "kappa": 1.49,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -2772,7 +2794,7 @@
     {
       "precision": "float",
       "kappa": 1.49,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -2782,7 +2804,7 @@
     {
       "precision": "float",
       "kappa": 1.5,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -2792,7 +2814,7 @@
     {
       "precision": "float",
       "kappa": 1.5,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -2802,7 +2824,7 @@
     {
       "precision": "float",
       "kappa": 1.5,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -2812,7 +2834,7 @@
     {
       "precision": "float",
       "kappa": 1.5,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -2822,7 +2844,7 @@
     {
       "precision": "float",
       "kappa": 1.5,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -2832,7 +2854,7 @@
     {
       "precision": "float",
       "kappa": 1.5,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -2842,7 +2864,7 @@
     {
       "precision": "float",
       "kappa": 1.5,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -2852,7 +2874,7 @@
     {
       "precision": "float",
       "kappa": 1.5,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -2862,7 +2884,7 @@
     {
       "precision": "float",
       "kappa": 1.5,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -2872,7 +2894,7 @@
     {
       "precision": "float",
       "kappa": 1.5,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -2882,7 +2904,7 @@
     {
       "precision": "float",
       "kappa": 1.5,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -2892,7 +2914,7 @@
     {
       "precision": "float",
       "kappa": 1.5,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -2902,7 +2924,7 @@
     {
       "precision": "float",
       "kappa": 1.5,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -2912,7 +2934,7 @@
     {
       "precision": "float",
       "kappa": 1.5,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -2922,7 +2944,7 @@
     {
       "precision": "float",
       "kappa": 1.5,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -2932,7 +2954,7 @@
     {
       "precision": "float",
       "kappa": 1.5,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -2942,7 +2964,7 @@
     {
       "precision": "float",
       "kappa": 1.5,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -2952,7 +2974,7 @@
     {
       "precision": "float",
       "kappa": 1.5,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -2962,7 +2984,7 @@
     {
       "precision": "float",
       "kappa": 1.5,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -2972,7 +2994,7 @@
     {
       "precision": "float",
       "kappa": 1.5,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -2982,7 +3004,7 @@
     {
       "precision": "float",
       "kappa": 1.5,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -2992,7 +3014,7 @@
     {
       "precision": "float",
       "kappa": 1.5,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -3002,7 +3024,7 @@
     {
       "precision": "float",
       "kappa": 1.5,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -3012,7 +3034,7 @@
     {
       "precision": "float",
       "kappa": 1.5,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -3022,7 +3044,7 @@
     {
       "precision": "float",
       "kappa": 1.5,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -3032,7 +3054,7 @@
     {
       "precision": "float",
       "kappa": 2.0,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -3042,7 +3064,7 @@
     {
       "precision": "float",
       "kappa": 2.0,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -3052,7 +3074,7 @@
     {
       "precision": "float",
       "kappa": 2.0,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -3062,7 +3084,7 @@
     {
       "precision": "float",
       "kappa": 2.0,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -3072,7 +3094,7 @@
     {
       "precision": "float",
       "kappa": 2.0,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -3082,7 +3104,7 @@
     {
       "precision": "float",
       "kappa": 2.0,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -3092,7 +3114,7 @@
     {
       "precision": "float",
       "kappa": 2.0,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -3102,7 +3124,7 @@
     {
       "precision": "float",
       "kappa": 2.0,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -3112,7 +3134,7 @@
     {
       "precision": "float",
       "kappa": 2.0,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -3122,7 +3144,7 @@
     {
       "precision": "float",
       "kappa": 2.0,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -3132,7 +3154,7 @@
     {
       "precision": "float",
       "kappa": 2.0,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -3142,7 +3164,7 @@
     {
       "precision": "float",
       "kappa": 2.0,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -3152,7 +3174,7 @@
     {
       "precision": "float",
       "kappa": 2.0,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -3162,7 +3184,7 @@
     {
       "precision": "float",
       "kappa": 2.0,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -3172,7 +3194,7 @@
     {
       "precision": "float",
       "kappa": 2.0,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -3182,7 +3204,7 @@
     {
       "precision": "float",
       "kappa": 2.0,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -3192,7 +3214,7 @@
     {
       "precision": "float",
       "kappa": 2.0,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -3202,7 +3224,7 @@
     {
       "precision": "float",
       "kappa": 2.0,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -3212,7 +3234,7 @@
     {
       "precision": "float",
       "kappa": 2.0,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -3222,7 +3244,7 @@
     {
       "precision": "float",
       "kappa": 2.0,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -3232,7 +3254,7 @@
     {
       "precision": "float",
       "kappa": 2.0,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -3242,7 +3264,7 @@
     {
       "precision": "float",
       "kappa": 2.0,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -3252,7 +3274,7 @@
     {
       "precision": "float",
       "kappa": 2.0,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -3262,7 +3284,7 @@
     {
       "precision": "float",
       "kappa": 2.0,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -3272,7 +3294,7 @@
     {
       "precision": "float",
       "kappa": 2.0,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -3282,7 +3304,7 @@
     {
       "precision": "float",
       "kappa": 5.0,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -3292,7 +3314,7 @@
     {
       "precision": "float",
       "kappa": 5.0,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -3302,7 +3324,7 @@
     {
       "precision": "float",
       "kappa": 5.0,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -3312,7 +3334,7 @@
     {
       "precision": "float",
       "kappa": 5.0,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -3322,7 +3344,7 @@
     {
       "precision": "float",
       "kappa": 5.0,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -3332,7 +3354,7 @@
     {
       "precision": "float",
       "kappa": 5.0,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -3342,7 +3364,7 @@
     {
       "precision": "float",
       "kappa": 5.0,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -3352,7 +3374,7 @@
     {
       "precision": "float",
       "kappa": 5.0,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -3362,7 +3384,7 @@
     {
       "precision": "float",
       "kappa": 5.0,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -3372,7 +3394,7 @@
     {
       "precision": "float",
       "kappa": 5.0,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -3382,7 +3404,7 @@
     {
       "precision": "float",
       "kappa": 5.0,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -3392,7 +3414,7 @@
     {
       "precision": "float",
       "kappa": 5.0,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -3402,7 +3424,7 @@
     {
       "precision": "float",
       "kappa": 5.0,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -3412,7 +3434,7 @@
     {
       "precision": "float",
       "kappa": 5.0,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -3422,7 +3444,7 @@
     {
       "precision": "float",
       "kappa": 5.0,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -3432,7 +3454,7 @@
     {
       "precision": "float",
       "kappa": 5.0,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -3442,7 +3464,7 @@
     {
       "precision": "float",
       "kappa": 5.0,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -3452,7 +3474,7 @@
     {
       "precision": "float",
       "kappa": 5.0,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -3462,7 +3484,7 @@
     {
       "precision": "float",
       "kappa": 5.0,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -3472,7 +3494,7 @@
     {
       "precision": "float",
       "kappa": 5.0,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -3482,7 +3504,7 @@
     {
       "precision": "float",
       "kappa": 5.0,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -3492,7 +3514,7 @@
     {
       "precision": "float",
       "kappa": 5.0,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -3502,7 +3524,7 @@
     {
       "precision": "float",
       "kappa": 5.0,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -3512,7 +3534,7 @@
     {
       "precision": "float",
       "kappa": 5.0,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -3522,7 +3544,7 @@
     {
       "precision": "float",
       "kappa": 5.0,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -3532,7 +3554,7 @@
     {
       "precision": "double",
       "kappa": 0.5001,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -3542,7 +3564,7 @@
     {
       "precision": "double",
       "kappa": 0.5001,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -3552,7 +3574,7 @@
     {
       "precision": "double",
       "kappa": 0.5001,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -3562,7 +3584,7 @@
     {
       "precision": "double",
       "kappa": 0.5001,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -3572,7 +3594,7 @@
     {
       "precision": "double",
       "kappa": 0.5001,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -3582,7 +3604,7 @@
     {
       "precision": "double",
       "kappa": 0.5001,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -3592,7 +3614,7 @@
     {
       "precision": "double",
       "kappa": 0.5001,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -3602,7 +3624,7 @@
     {
       "precision": "double",
       "kappa": 0.5001,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -3612,7 +3634,7 @@
     {
       "precision": "double",
       "kappa": 0.5001,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -3622,7 +3644,7 @@
     {
       "precision": "double",
       "kappa": 0.5001,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -3632,7 +3654,7 @@
     {
       "precision": "double",
       "kappa": 0.5001,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -3642,7 +3664,7 @@
     {
       "precision": "double",
       "kappa": 0.5001,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -3652,7 +3674,7 @@
     {
       "precision": "double",
       "kappa": 0.5001,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -3662,7 +3684,7 @@
     {
       "precision": "double",
       "kappa": 0.5001,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -3672,7 +3694,7 @@
     {
       "precision": "double",
       "kappa": 0.5001,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -3682,7 +3704,7 @@
     {
       "precision": "double",
       "kappa": 0.5001,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -3692,7 +3714,7 @@
     {
       "precision": "double",
       "kappa": 0.5001,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -3702,7 +3724,7 @@
     {
       "precision": "double",
       "kappa": 0.5001,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -3712,7 +3734,7 @@
     {
       "precision": "double",
       "kappa": 0.5001,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -3722,7 +3744,7 @@
     {
       "precision": "double",
       "kappa": 0.5001,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -3732,7 +3754,7 @@
     {
       "precision": "double",
       "kappa": 0.5001,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -3742,7 +3764,7 @@
     {
       "precision": "double",
       "kappa": 0.5001,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -3752,7 +3774,7 @@
     {
       "precision": "double",
       "kappa": 0.5001,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -3762,7 +3784,7 @@
     {
       "precision": "double",
       "kappa": 0.5001,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -3772,7 +3794,7 @@
     {
       "precision": "double",
       "kappa": 0.5001,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -3782,7 +3804,7 @@
     {
       "precision": "double",
       "kappa": 0.501,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -3792,7 +3814,7 @@
     {
       "precision": "double",
       "kappa": 0.501,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -3802,7 +3824,7 @@
     {
       "precision": "double",
       "kappa": 0.501,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -3812,7 +3834,7 @@
     {
       "precision": "double",
       "kappa": 0.501,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -3822,7 +3844,7 @@
     {
       "precision": "double",
       "kappa": 0.501,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -3832,7 +3854,7 @@
     {
       "precision": "double",
       "kappa": 0.501,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -3842,7 +3864,7 @@
     {
       "precision": "double",
       "kappa": 0.501,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -3852,7 +3874,7 @@
     {
       "precision": "double",
       "kappa": 0.501,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -3862,7 +3884,7 @@
     {
       "precision": "double",
       "kappa": 0.501,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -3872,7 +3894,7 @@
     {
       "precision": "double",
       "kappa": 0.501,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -3882,7 +3904,7 @@
     {
       "precision": "double",
       "kappa": 0.501,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -3892,7 +3914,7 @@
     {
       "precision": "double",
       "kappa": 0.501,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -3902,7 +3924,7 @@
     {
       "precision": "double",
       "kappa": 0.501,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -3912,7 +3934,7 @@
     {
       "precision": "double",
       "kappa": 0.501,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -3922,7 +3944,7 @@
     {
       "precision": "double",
       "kappa": 0.501,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -3932,7 +3954,7 @@
     {
       "precision": "double",
       "kappa": 0.501,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -3942,7 +3964,7 @@
     {
       "precision": "double",
       "kappa": 0.501,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -3952,7 +3974,7 @@
     {
       "precision": "double",
       "kappa": 0.501,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -3962,7 +3984,7 @@
     {
       "precision": "double",
       "kappa": 0.501,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -3972,7 +3994,7 @@
     {
       "precision": "double",
       "kappa": 0.501,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -3982,7 +4004,7 @@
     {
       "precision": "double",
       "kappa": 0.501,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -3992,7 +4014,7 @@
     {
       "precision": "double",
       "kappa": 0.501,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -4002,7 +4024,7 @@
     {
       "precision": "double",
       "kappa": 0.501,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -4012,7 +4034,7 @@
     {
       "precision": "double",
       "kappa": 0.501,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -4022,7 +4044,7 @@
     {
       "precision": "double",
       "kappa": 0.501,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -4032,7 +4054,7 @@
     {
       "precision": "double",
       "kappa": 0.505,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -4042,7 +4064,7 @@
     {
       "precision": "double",
       "kappa": 0.505,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -4052,7 +4074,7 @@
     {
       "precision": "double",
       "kappa": 0.505,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -4062,7 +4084,7 @@
     {
       "precision": "double",
       "kappa": 0.505,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -4072,7 +4094,7 @@
     {
       "precision": "double",
       "kappa": 0.505,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -4082,7 +4104,7 @@
     {
       "precision": "double",
       "kappa": 0.505,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -4092,7 +4114,7 @@
     {
       "precision": "double",
       "kappa": 0.505,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -4102,7 +4124,7 @@
     {
       "precision": "double",
       "kappa": 0.505,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -4112,7 +4134,7 @@
     {
       "precision": "double",
       "kappa": 0.505,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -4122,7 +4144,7 @@
     {
       "precision": "double",
       "kappa": 0.505,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -4132,7 +4154,7 @@
     {
       "precision": "double",
       "kappa": 0.505,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -4142,7 +4164,7 @@
     {
       "precision": "double",
       "kappa": 0.505,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -4152,7 +4174,7 @@
     {
       "precision": "double",
       "kappa": 0.505,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -4162,7 +4184,7 @@
     {
       "precision": "double",
       "kappa": 0.505,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -4172,7 +4194,7 @@
     {
       "precision": "double",
       "kappa": 0.505,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -4182,7 +4204,7 @@
     {
       "precision": "double",
       "kappa": 0.505,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -4192,7 +4214,7 @@
     {
       "precision": "double",
       "kappa": 0.505,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -4202,7 +4224,7 @@
     {
       "precision": "double",
       "kappa": 0.505,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -4212,7 +4234,7 @@
     {
       "precision": "double",
       "kappa": 0.505,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -4222,7 +4244,7 @@
     {
       "precision": "double",
       "kappa": 0.505,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -4232,7 +4254,7 @@
     {
       "precision": "double",
       "kappa": 0.505,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -4242,7 +4264,7 @@
     {
       "precision": "double",
       "kappa": 0.505,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -4252,7 +4274,7 @@
     {
       "precision": "double",
       "kappa": 0.505,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -4262,7 +4284,7 @@
     {
       "precision": "double",
       "kappa": 0.505,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -4272,7 +4294,7 @@
     {
       "precision": "double",
       "kappa": 0.505,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -4282,7 +4304,7 @@
     {
       "precision": "double",
       "kappa": 0.51,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -4292,7 +4314,7 @@
     {
       "precision": "double",
       "kappa": 0.51,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -4302,7 +4324,7 @@
     {
       "precision": "double",
       "kappa": 0.51,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -4312,7 +4334,7 @@
     {
       "precision": "double",
       "kappa": 0.51,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -4322,7 +4344,7 @@
     {
       "precision": "double",
       "kappa": 0.51,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -4332,7 +4354,7 @@
     {
       "precision": "double",
       "kappa": 0.51,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -4342,7 +4364,7 @@
     {
       "precision": "double",
       "kappa": 0.51,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -4352,7 +4374,7 @@
     {
       "precision": "double",
       "kappa": 0.51,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -4362,7 +4384,7 @@
     {
       "precision": "double",
       "kappa": 0.51,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -4372,7 +4394,7 @@
     {
       "precision": "double",
       "kappa": 0.51,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -4382,7 +4404,7 @@
     {
       "precision": "double",
       "kappa": 0.51,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -4392,7 +4414,7 @@
     {
       "precision": "double",
       "kappa": 0.51,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -4402,7 +4424,7 @@
     {
       "precision": "double",
       "kappa": 0.51,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -4412,7 +4434,7 @@
     {
       "precision": "double",
       "kappa": 0.51,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -4422,7 +4444,7 @@
     {
       "precision": "double",
       "kappa": 0.51,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -4432,7 +4454,7 @@
     {
       "precision": "double",
       "kappa": 0.51,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -4442,7 +4464,7 @@
     {
       "precision": "double",
       "kappa": 0.51,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -4452,7 +4474,7 @@
     {
       "precision": "double",
       "kappa": 0.51,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -4462,7 +4484,7 @@
     {
       "precision": "double",
       "kappa": 0.51,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -4472,7 +4494,7 @@
     {
       "precision": "double",
       "kappa": 0.51,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -4482,7 +4504,7 @@
     {
       "precision": "double",
       "kappa": 0.51,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -4492,7 +4514,7 @@
     {
       "precision": "double",
       "kappa": 0.51,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -4502,7 +4524,7 @@
     {
       "precision": "double",
       "kappa": 0.51,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -4512,7 +4534,7 @@
     {
       "precision": "double",
       "kappa": 0.51,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -4522,7 +4544,7 @@
     {
       "precision": "double",
       "kappa": 0.51,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -4532,7 +4554,7 @@
     {
       "precision": "double",
       "kappa": 0.55,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -4542,7 +4564,7 @@
     {
       "precision": "double",
       "kappa": 0.55,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -4552,7 +4574,7 @@
     {
       "precision": "double",
       "kappa": 0.55,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -4562,7 +4584,7 @@
     {
       "precision": "double",
       "kappa": 0.55,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -4572,7 +4594,7 @@
     {
       "precision": "double",
       "kappa": 0.55,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -4582,7 +4604,7 @@
     {
       "precision": "double",
       "kappa": 0.55,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -4592,7 +4614,7 @@
     {
       "precision": "double",
       "kappa": 0.55,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -4602,7 +4624,7 @@
     {
       "precision": "double",
       "kappa": 0.55,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -4612,7 +4634,7 @@
     {
       "precision": "double",
       "kappa": 0.55,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -4622,7 +4644,7 @@
     {
       "precision": "double",
       "kappa": 0.55,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -4632,7 +4654,7 @@
     {
       "precision": "double",
       "kappa": 0.55,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -4642,7 +4664,7 @@
     {
       "precision": "double",
       "kappa": 0.55,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -4652,7 +4674,7 @@
     {
       "precision": "double",
       "kappa": 0.55,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -4662,7 +4684,7 @@
     {
       "precision": "double",
       "kappa": 0.55,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -4672,7 +4694,7 @@
     {
       "precision": "double",
       "kappa": 0.55,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -4682,7 +4704,7 @@
     {
       "precision": "double",
       "kappa": 0.55,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -4692,7 +4714,7 @@
     {
       "precision": "double",
       "kappa": 0.55,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -4702,7 +4724,7 @@
     {
       "precision": "double",
       "kappa": 0.55,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -4712,7 +4734,7 @@
     {
       "precision": "double",
       "kappa": 0.55,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -4722,7 +4744,7 @@
     {
       "precision": "double",
       "kappa": 0.55,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -4732,7 +4754,7 @@
     {
       "precision": "double",
       "kappa": 0.55,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -4742,7 +4764,7 @@
     {
       "precision": "double",
       "kappa": 0.55,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -4752,7 +4774,7 @@
     {
       "precision": "double",
       "kappa": 0.55,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -4762,7 +4784,7 @@
     {
       "precision": "double",
       "kappa": 0.55,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -4772,7 +4794,7 @@
     {
       "precision": "double",
       "kappa": 0.55,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -4782,7 +4804,7 @@
     {
       "precision": "double",
       "kappa": 0.6,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -4792,7 +4814,7 @@
     {
       "precision": "double",
       "kappa": 0.6,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -4802,7 +4824,7 @@
     {
       "precision": "double",
       "kappa": 0.6,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -4812,7 +4834,7 @@
     {
       "precision": "double",
       "kappa": 0.6,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -4822,7 +4844,7 @@
     {
       "precision": "double",
       "kappa": 0.6,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -4832,7 +4854,7 @@
     {
       "precision": "double",
       "kappa": 0.6,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -4842,7 +4864,7 @@
     {
       "precision": "double",
       "kappa": 0.6,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -4852,7 +4874,7 @@
     {
       "precision": "double",
       "kappa": 0.6,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -4862,7 +4884,7 @@
     {
       "precision": "double",
       "kappa": 0.6,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -4872,7 +4894,7 @@
     {
       "precision": "double",
       "kappa": 0.6,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -4882,7 +4904,7 @@
     {
       "precision": "double",
       "kappa": 0.6,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -4892,7 +4914,7 @@
     {
       "precision": "double",
       "kappa": 0.6,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -4902,7 +4924,7 @@
     {
       "precision": "double",
       "kappa": 0.6,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -4912,7 +4934,7 @@
     {
       "precision": "double",
       "kappa": 0.6,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -4922,7 +4944,7 @@
     {
       "precision": "double",
       "kappa": 0.6,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -4932,7 +4954,7 @@
     {
       "precision": "double",
       "kappa": 0.6,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -4942,7 +4964,7 @@
     {
       "precision": "double",
       "kappa": 0.6,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -4952,7 +4974,7 @@
     {
       "precision": "double",
       "kappa": 0.6,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -4962,7 +4984,7 @@
     {
       "precision": "double",
       "kappa": 0.6,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -4972,7 +4994,7 @@
     {
       "precision": "double",
       "kappa": 0.6,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -4982,7 +5004,7 @@
     {
       "precision": "double",
       "kappa": 0.6,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -4992,7 +5014,7 @@
     {
       "precision": "double",
       "kappa": 0.6,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -5002,7 +5024,7 @@
     {
       "precision": "double",
       "kappa": 0.6,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -5012,7 +5034,7 @@
     {
       "precision": "double",
       "kappa": 0.6,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -5022,7 +5044,7 @@
     {
       "precision": "double",
       "kappa": 0.6,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -5032,7 +5054,7 @@
     {
       "precision": "double",
       "kappa": 0.75,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -5042,7 +5064,7 @@
     {
       "precision": "double",
       "kappa": 0.75,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -5052,7 +5074,7 @@
     {
       "precision": "double",
       "kappa": 0.75,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -5062,7 +5084,7 @@
     {
       "precision": "double",
       "kappa": 0.75,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -5072,7 +5094,7 @@
     {
       "precision": "double",
       "kappa": 0.75,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -5082,7 +5104,7 @@
     {
       "precision": "double",
       "kappa": 0.75,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -5092,7 +5114,7 @@
     {
       "precision": "double",
       "kappa": 0.75,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -5102,7 +5124,7 @@
     {
       "precision": "double",
       "kappa": 0.75,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -5112,7 +5134,7 @@
     {
       "precision": "double",
       "kappa": 0.75,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -5122,7 +5144,7 @@
     {
       "precision": "double",
       "kappa": 0.75,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -5132,7 +5154,7 @@
     {
       "precision": "double",
       "kappa": 0.75,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -5142,7 +5164,7 @@
     {
       "precision": "double",
       "kappa": 0.75,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -5152,7 +5174,7 @@
     {
       "precision": "double",
       "kappa": 0.75,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -5162,7 +5184,7 @@
     {
       "precision": "double",
       "kappa": 0.75,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -5172,7 +5194,7 @@
     {
       "precision": "double",
       "kappa": 0.75,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -5182,7 +5204,7 @@
     {
       "precision": "double",
       "kappa": 0.75,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -5192,7 +5214,7 @@
     {
       "precision": "double",
       "kappa": 0.75,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -5202,7 +5224,7 @@
     {
       "precision": "double",
       "kappa": 0.75,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -5212,7 +5234,7 @@
     {
       "precision": "double",
       "kappa": 0.75,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -5222,7 +5244,7 @@
     {
       "precision": "double",
       "kappa": 0.75,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -5232,7 +5254,7 @@
     {
       "precision": "double",
       "kappa": 0.75,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -5242,7 +5264,7 @@
     {
       "precision": "double",
       "kappa": 0.75,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -5252,7 +5274,7 @@
     {
       "precision": "double",
       "kappa": 0.75,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -5262,7 +5284,7 @@
     {
       "precision": "double",
       "kappa": 0.75,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -5272,7 +5294,7 @@
     {
       "precision": "double",
       "kappa": 0.75,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -5282,7 +5304,7 @@
     {
       "precision": "double",
       "kappa": 1.0,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -5292,7 +5314,7 @@
     {
       "precision": "double",
       "kappa": 1.0,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -5302,7 +5324,7 @@
     {
       "precision": "double",
       "kappa": 1.0,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -5312,7 +5334,7 @@
     {
       "precision": "double",
       "kappa": 1.0,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -5322,7 +5344,7 @@
     {
       "precision": "double",
       "kappa": 1.0,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -5332,7 +5354,7 @@
     {
       "precision": "double",
       "kappa": 1.0,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -5342,7 +5364,7 @@
     {
       "precision": "double",
       "kappa": 1.0,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -5352,7 +5374,7 @@
     {
       "precision": "double",
       "kappa": 1.0,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -5362,7 +5384,7 @@
     {
       "precision": "double",
       "kappa": 1.0,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -5372,7 +5394,7 @@
     {
       "precision": "double",
       "kappa": 1.0,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -5382,7 +5404,7 @@
     {
       "precision": "double",
       "kappa": 1.0,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -5392,7 +5414,7 @@
     {
       "precision": "double",
       "kappa": 1.0,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -5402,7 +5424,7 @@
     {
       "precision": "double",
       "kappa": 1.0,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -5412,7 +5434,7 @@
     {
       "precision": "double",
       "kappa": 1.0,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -5422,7 +5444,7 @@
     {
       "precision": "double",
       "kappa": 1.0,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -5432,7 +5454,7 @@
     {
       "precision": "double",
       "kappa": 1.0,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -5442,7 +5464,7 @@
     {
       "precision": "double",
       "kappa": 1.0,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -5452,7 +5474,7 @@
     {
       "precision": "double",
       "kappa": 1.0,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -5462,7 +5484,7 @@
     {
       "precision": "double",
       "kappa": 1.0,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -5472,7 +5494,7 @@
     {
       "precision": "double",
       "kappa": 1.0,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -5482,7 +5504,7 @@
     {
       "precision": "double",
       "kappa": 1.0,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -5492,7 +5514,7 @@
     {
       "precision": "double",
       "kappa": 1.0,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -5502,7 +5524,7 @@
     {
       "precision": "double",
       "kappa": 1.0,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -5512,7 +5534,7 @@
     {
       "precision": "double",
       "kappa": 1.0,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -5522,7 +5544,7 @@
     {
       "precision": "double",
       "kappa": 1.0,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -5532,7 +5554,7 @@
     {
       "precision": "double",
       "kappa": 1.25,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -5542,7 +5564,7 @@
     {
       "precision": "double",
       "kappa": 1.25,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -5552,7 +5574,7 @@
     {
       "precision": "double",
       "kappa": 1.25,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -5562,7 +5584,7 @@
     {
       "precision": "double",
       "kappa": 1.25,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -5572,7 +5594,7 @@
     {
       "precision": "double",
       "kappa": 1.25,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -5582,7 +5604,7 @@
     {
       "precision": "double",
       "kappa": 1.25,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -5592,7 +5614,7 @@
     {
       "precision": "double",
       "kappa": 1.25,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -5602,7 +5624,7 @@
     {
       "precision": "double",
       "kappa": 1.25,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -5612,7 +5634,7 @@
     {
       "precision": "double",
       "kappa": 1.25,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -5622,7 +5644,7 @@
     {
       "precision": "double",
       "kappa": 1.25,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -5632,7 +5654,7 @@
     {
       "precision": "double",
       "kappa": 1.25,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -5642,7 +5664,7 @@
     {
       "precision": "double",
       "kappa": 1.25,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -5652,7 +5674,7 @@
     {
       "precision": "double",
       "kappa": 1.25,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -5662,7 +5684,7 @@
     {
       "precision": "double",
       "kappa": 1.25,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -5672,7 +5694,7 @@
     {
       "precision": "double",
       "kappa": 1.25,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -5682,7 +5704,7 @@
     {
       "precision": "double",
       "kappa": 1.25,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -5692,7 +5714,7 @@
     {
       "precision": "double",
       "kappa": 1.25,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -5702,7 +5724,7 @@
     {
       "precision": "double",
       "kappa": 1.25,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -5712,7 +5734,7 @@
     {
       "precision": "double",
       "kappa": 1.25,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -5722,7 +5744,7 @@
     {
       "precision": "double",
       "kappa": 1.25,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -5732,7 +5754,7 @@
     {
       "precision": "double",
       "kappa": 1.25,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -5742,7 +5764,7 @@
     {
       "precision": "double",
       "kappa": 1.25,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -5752,7 +5774,7 @@
     {
       "precision": "double",
       "kappa": 1.25,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -5762,7 +5784,7 @@
     {
       "precision": "double",
       "kappa": 1.25,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -5772,7 +5794,7 @@
     {
       "precision": "double",
       "kappa": 1.25,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -5782,7 +5804,7 @@
     {
       "precision": "double",
       "kappa": 1.49,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -5792,7 +5814,7 @@
     {
       "precision": "double",
       "kappa": 1.49,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -5802,7 +5824,7 @@
     {
       "precision": "double",
       "kappa": 1.49,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -5812,7 +5834,7 @@
     {
       "precision": "double",
       "kappa": 1.49,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -5822,7 +5844,7 @@
     {
       "precision": "double",
       "kappa": 1.49,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -5832,7 +5854,7 @@
     {
       "precision": "double",
       "kappa": 1.49,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -5842,7 +5864,7 @@
     {
       "precision": "double",
       "kappa": 1.49,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -5852,7 +5874,7 @@
     {
       "precision": "double",
       "kappa": 1.49,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -5862,7 +5884,7 @@
     {
       "precision": "double",
       "kappa": 1.49,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -5872,7 +5894,7 @@
     {
       "precision": "double",
       "kappa": 1.49,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -5882,7 +5904,7 @@
     {
       "precision": "double",
       "kappa": 1.49,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -5892,7 +5914,7 @@
     {
       "precision": "double",
       "kappa": 1.49,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -5902,7 +5924,7 @@
     {
       "precision": "double",
       "kappa": 1.49,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -5912,7 +5934,7 @@
     {
       "precision": "double",
       "kappa": 1.49,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -5922,7 +5944,7 @@
     {
       "precision": "double",
       "kappa": 1.49,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -5932,7 +5954,7 @@
     {
       "precision": "double",
       "kappa": 1.49,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -5942,7 +5964,7 @@
     {
       "precision": "double",
       "kappa": 1.49,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -5952,7 +5974,7 @@
     {
       "precision": "double",
       "kappa": 1.49,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -5962,7 +5984,7 @@
     {
       "precision": "double",
       "kappa": 1.49,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -5972,7 +5994,7 @@
     {
       "precision": "double",
       "kappa": 1.49,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -5982,7 +6004,7 @@
     {
       "precision": "double",
       "kappa": 1.49,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -5992,7 +6014,7 @@
     {
       "precision": "double",
       "kappa": 1.49,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -6002,7 +6024,7 @@
     {
       "precision": "double",
       "kappa": 1.49,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -6012,7 +6034,7 @@
     {
       "precision": "double",
       "kappa": 1.49,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -6022,7 +6044,7 @@
     {
       "precision": "double",
       "kappa": 1.49,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -6032,7 +6054,7 @@
     {
       "precision": "double",
       "kappa": 1.5,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -6042,7 +6064,7 @@
     {
       "precision": "double",
       "kappa": 1.5,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -6052,7 +6074,7 @@
     {
       "precision": "double",
       "kappa": 1.5,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -6062,7 +6084,7 @@
     {
       "precision": "double",
       "kappa": 1.5,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -6072,7 +6094,7 @@
     {
       "precision": "double",
       "kappa": 1.5,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -6082,7 +6104,7 @@
     {
       "precision": "double",
       "kappa": 1.5,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -6092,7 +6114,7 @@
     {
       "precision": "double",
       "kappa": 1.5,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -6102,7 +6124,7 @@
     {
       "precision": "double",
       "kappa": 1.5,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -6112,7 +6134,7 @@
     {
       "precision": "double",
       "kappa": 1.5,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -6122,7 +6144,7 @@
     {
       "precision": "double",
       "kappa": 1.5,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -6132,7 +6154,7 @@
     {
       "precision": "double",
       "kappa": 1.5,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -6142,7 +6164,7 @@
     {
       "precision": "double",
       "kappa": 1.5,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -6152,7 +6174,7 @@
     {
       "precision": "double",
       "kappa": 1.5,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -6162,7 +6184,7 @@
     {
       "precision": "double",
       "kappa": 1.5,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -6172,7 +6194,7 @@
     {
       "precision": "double",
       "kappa": 1.5,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -6182,7 +6204,7 @@
     {
       "precision": "double",
       "kappa": 1.5,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -6192,7 +6214,7 @@
     {
       "precision": "double",
       "kappa": 1.5,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -6202,7 +6224,7 @@
     {
       "precision": "double",
       "kappa": 1.5,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -6212,7 +6234,7 @@
     {
       "precision": "double",
       "kappa": 1.5,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -6222,7 +6244,7 @@
     {
       "precision": "double",
       "kappa": 1.5,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -6232,7 +6254,7 @@
     {
       "precision": "double",
       "kappa": 1.5,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -6242,7 +6264,7 @@
     {
       "precision": "double",
       "kappa": 1.5,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -6252,7 +6274,7 @@
     {
       "precision": "double",
       "kappa": 1.5,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -6262,7 +6284,7 @@
     {
       "precision": "double",
       "kappa": 1.5,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -6272,7 +6294,7 @@
     {
       "precision": "double",
       "kappa": 1.5,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -6282,7 +6304,7 @@
     {
       "precision": "double",
       "kappa": 2.0,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -6292,7 +6314,7 @@
     {
       "precision": "double",
       "kappa": 2.0,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -6302,7 +6324,7 @@
     {
       "precision": "double",
       "kappa": 2.0,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -6312,7 +6334,7 @@
     {
       "precision": "double",
       "kappa": 2.0,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -6322,7 +6344,7 @@
     {
       "precision": "double",
       "kappa": 2.0,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -6332,7 +6354,7 @@
     {
       "precision": "double",
       "kappa": 2.0,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -6342,7 +6364,7 @@
     {
       "precision": "double",
       "kappa": 2.0,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -6352,7 +6374,7 @@
     {
       "precision": "double",
       "kappa": 2.0,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -6362,7 +6384,7 @@
     {
       "precision": "double",
       "kappa": 2.0,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -6372,7 +6394,7 @@
     {
       "precision": "double",
       "kappa": 2.0,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -6382,7 +6404,7 @@
     {
       "precision": "double",
       "kappa": 2.0,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -6392,7 +6414,7 @@
     {
       "precision": "double",
       "kappa": 2.0,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -6402,7 +6424,7 @@
     {
       "precision": "double",
       "kappa": 2.0,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -6412,7 +6434,7 @@
     {
       "precision": "double",
       "kappa": 2.0,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -6422,7 +6444,7 @@
     {
       "precision": "double",
       "kappa": 2.0,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -6432,7 +6454,7 @@
     {
       "precision": "double",
       "kappa": 2.0,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -6442,7 +6464,7 @@
     {
       "precision": "double",
       "kappa": 2.0,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -6452,7 +6474,7 @@
     {
       "precision": "double",
       "kappa": 2.0,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -6462,7 +6484,7 @@
     {
       "precision": "double",
       "kappa": 2.0,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -6472,7 +6494,7 @@
     {
       "precision": "double",
       "kappa": 2.0,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -6482,7 +6504,7 @@
     {
       "precision": "double",
       "kappa": 2.0,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -6492,7 +6514,7 @@
     {
       "precision": "double",
       "kappa": 2.0,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -6502,7 +6524,7 @@
     {
       "precision": "double",
       "kappa": 2.0,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -6512,7 +6534,7 @@
     {
       "precision": "double",
       "kappa": 2.0,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -6522,7 +6544,7 @@
     {
       "precision": "double",
       "kappa": 2.0,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -6532,7 +6554,7 @@
     {
       "precision": "double",
       "kappa": 5.0,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -6542,7 +6564,7 @@
     {
       "precision": "double",
       "kappa": 5.0,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -6552,7 +6574,7 @@
     {
       "precision": "double",
       "kappa": 5.0,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -6562,7 +6584,7 @@
     {
       "precision": "double",
       "kappa": 5.0,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -6572,7 +6594,7 @@
     {
       "precision": "double",
       "kappa": 5.0,
-      "seed": 10001,
+      "seed": 11001,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -6582,7 +6604,7 @@
     {
       "precision": "double",
       "kappa": 5.0,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -6592,7 +6614,7 @@
     {
       "precision": "double",
       "kappa": 5.0,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -6602,7 +6624,7 @@
     {
       "precision": "double",
       "kappa": 5.0,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -6612,7 +6634,7 @@
     {
       "precision": "double",
       "kappa": 5.0,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -6622,7 +6644,7 @@
     {
       "precision": "double",
       "kappa": 5.0,
-      "seed": 10002,
+      "seed": 11002,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -6632,7 +6654,7 @@
     {
       "precision": "double",
       "kappa": 5.0,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -6642,7 +6664,7 @@
     {
       "precision": "double",
       "kappa": 5.0,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -6652,7 +6674,7 @@
     {
       "precision": "double",
       "kappa": 5.0,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -6662,7 +6684,7 @@
     {
       "precision": "double",
       "kappa": 5.0,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -6672,7 +6694,7 @@
     {
       "precision": "double",
       "kappa": 5.0,
-      "seed": 10003,
+      "seed": 11003,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -6682,7 +6704,7 @@
     {
       "precision": "double",
       "kappa": 5.0,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -6692,7 +6714,7 @@
     {
       "precision": "double",
       "kappa": 5.0,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -6702,7 +6724,7 @@
     {
       "precision": "double",
       "kappa": 5.0,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -6712,7 +6734,7 @@
     {
       "precision": "double",
       "kappa": 5.0,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -6722,7 +6744,7 @@
     {
       "precision": "double",
       "kappa": 5.0,
-      "seed": 10004,
+      "seed": 11004,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -6732,7 +6754,7 @@
     {
       "precision": "double",
       "kappa": 5.0,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.5,
       "resolved": true,
       "lo_index": 498711,
@@ -6742,7 +6764,7 @@
     {
       "precision": "double",
       "kappa": 5.0,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9,
       "resolved": true,
       "lo_index": 899226,
@@ -6752,7 +6774,7 @@
     {
       "precision": "double",
       "kappa": 5.0,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.99,
       "resolved": true,
       "lo_index": 989742,
@@ -6762,7 +6784,7 @@
     {
       "precision": "double",
       "kappa": 5.0,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.999,
       "resolved": true,
       "lo_index": 998917,
@@ -6772,7 +6794,7 @@
     {
       "precision": "double",
       "kappa": 5.0,
-      "seed": 10005,
+      "seed": 11005,
       "p": 0.9999,
       "resolved": true,
       "lo_index": 999872,
@@ -6798,6 +6820,26 @@
       "NC3_survivor_conditioning"
     ],
     "missing_control_is_failure": true
+  },
+  "rounding_band": {
+    "factor": 4.0,
+    "eps": {
+      "float": 1.1920928955078125e-07,
+      "double": 2.220446049250313e-16
+    },
+    "formula": "B = factor * eps * max(1, |log V|)",
+    "V": "the exact (100-digit) magnitude of the attempt's largest intended component, in the frame the loader returns",
+    "rule": "an attempt that a method returned non-finite or inaccurate, and that the frozen classifier scores as avoidable loss, is a ROUNDING-BAND LOSS instead when its exact largest component lies below the overflow threshold of the working type by a relative distance 1 - V / threshold of at most B. Rounding-band losses are counted and published per setting and are excluded from G1",
+    "applied_by": "the oracle, from the exact margin, for every audited attempt; the analysis re-checks each reported attempt against B and maps it to its configuration through the probe's per-configuration audit counts. The probe's categories are unchanged",
+    "justification": "First-order error bound of the stabilized calculation near the threshold, with libm's log and exp within one ulp and each arithmetic operation within half an ulp: 2.5 eps |log V| in log R when |log U|/a dominates, about 0.5 eps |log V| + 3.5 eps from adding log|g| and rounding g, and eps from exp, in total about (3 |log V| + 4.5) eps relative on the component. The factor 4 bounds that for |log V| > 4.5; |log V| is 88.7 (float) and 709.8 (double) at the threshold, where B is 4.2e-5 and 6.3e-13.",
+    "log_threshold": {
+      "float": 88.72283908187067,
+      "double": 709.782712893384
+    },
+    "band_at_threshold": {
+      "float": 4.230634645551237e-05,
+      "double": 6.304136882681135e-13
+    }
   },
   "accuracy": {
     "bits_lost_fraction": 0.5,
@@ -6862,6 +6904,11 @@
     "note": "Anderson-Darling, KS and Cramer-von Mises on Z are blind to survivor conditioning below a 1e-3 loss fraction at the frozen n; the F4 exceedance tests are not. P1 output must therefore carry exceedance counts and excesses, not only an ECDF grid."
   },
   "gates": {
+    "G1": {
+      "avoidable_loss_required": 0,
+      "rounding_band_excluded": true,
+      "rule": "F1-F4 pass, the benign control exercises the candidate, and the candidate's avoidable loss OUTSIDE the rounding band of rounding_band is exactly zero: P1's native avoidable count plus the paired P2 and P3 avoidable counts less the attempts the oracle places inside the band. Rounding-band losses are published and do not enter the gate."
+    },
     "G4": {
       "cross_stdlib_rule": "bitwise equality, no tolerance",
       "cross_arch_rule": "two one-sided tests on the log rate ratio",

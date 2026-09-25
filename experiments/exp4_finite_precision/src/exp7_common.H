@@ -973,30 +973,31 @@ inline std::vector<double> kappaLadder()
 /// no declaration; both blocks here are written out, and no seed anywhere in this
 /// experiment is computed from another.
 ///
-/// Protocol 4.0.0 governs the FOURTH run and uses 10001-10010.  The block follows from the
+/// Protocol 5.0.0 governs the FIFTH run and uses 11001-11010.  The block follows from the
 /// rule in PROTOCOL.md Sec. 3 rather than from a choice: the highest seed declared anywhere
-/// in this repository is 9010, rounded up to the next multiple of 1000 gives 10000, and the
-/// next ten integers are taken.  7001-7010 and 8001-8010 belong to the first and second
-/// holdouts, whose NO-GO results are preserved in commits 45d3ef8 and e5c9837, and
-/// 9001-9010 to the third, whose GO result under protocol 3.0.0 is preserved in commit
-/// abdd295; Sec. 8 forbids recomputing any result on any of them.
+/// in this repository is 10010, rounded up to the next multiple of 1000 gives 11000, and
+/// the next ten integers are taken.  7001-7010 and 8001-8010 belong to the first and second
+/// holdouts, whose NO-GO results are preserved in commits 45d3ef8 and e5c9837, 9001-9010 to
+/// the third, whose GO result under protocol 3.0.0 is preserved in commit abdd295, and
+/// 10001-10010 to the fourth run, whose NO-GO result under protocol 4.0.0 is recorded in
+/// commit 84130b5; Sec. 8 forbids recomputing any result on any of them.
 inline std::vector<unsigned> productionSeeds()
 {
     std::vector<unsigned> s;
-    s.push_back(10001u); s.push_back(10002u); s.push_back(10003u); s.push_back(10004u);
-    s.push_back(10005u);
+    s.push_back(11001u); s.push_back(11002u); s.push_back(11003u); s.push_back(11004u);
+    s.push_back(11005u);
     return s;
 }
 
 inline std::vector<unsigned> performanceSeeds()
 {
     std::vector<unsigned> s;
-    s.push_back(10006u); s.push_back(10007u); s.push_back(10008u); s.push_back(10009u);
-    s.push_back(10010u);
+    s.push_back(11006u); s.push_back(11007u); s.push_back(11008u); s.push_back(11009u);
+    s.push_back(11010u);
     return s;
 }
 
-/// The three spent blocks.  Declared so that a rerun on one is a compile-time-visible
+/// The four spent blocks.  Declared so that a rerun on one is a compile-time-visible
 /// mistake rather than an accident, and so that `spentSeeds()` can be asserted disjoint from
 /// the block actually in use.
 inline std::vector<unsigned> spentSeeds()
@@ -1007,6 +1008,8 @@ inline std::vector<unsigned> spentSeeds()
     for (unsigned v= 8001u; v <= 8010u; ++v)
         s.push_back(v);
     for (unsigned v= 9001u; v <= 9010u; ++v)
+        s.push_back(v);
+    for (unsigned v= 10001u; v <= 10010u; ++v)
         s.push_back(v);
     return s;
 }

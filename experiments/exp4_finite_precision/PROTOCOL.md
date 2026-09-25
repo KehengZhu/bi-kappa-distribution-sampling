@@ -1,23 +1,24 @@
 # Experiment 7 — pre-registered confirmatory protocol
 
-**Protocol 4.0.0. Status: frozen before any datum on seeds 10001–10010 existed.** This document
+**Protocol 5.0.0. Status: frozen before any datum on seeds 11001–11010 existed.** This document
 and `config/protocol.json` are committed in a source-only commit. The analysis refuses to run
 unless the SHA-256 of both files matches the values recorded in the run manifest, and every
 decision rule below is evaluated by code that reads `config/protocol.json` rather than by a
 constant written into the analysis.
 
-**This is the fourth run of the experiment.** The first ran on seeds 7001–7010 under
-protocol 1.3.0 and returned **NO-GO**; the second ran on 8001–8010 under protocol 2.0.0 and
-also returned **NO-GO**, on gate G1 alone; the third ran on 9001–9010 under protocol 3.0.0 and
-returned **GO**. All three are preserved unmodified, in commits `45d3ef8`, `e5c9837` and
-`abdd295`, none is reopened, and all three seed blocks are spent. §2.7 records the two
-defects the second holdout found. §2.8 records amendment 4.0.0, which is not a response to a
-failure: it changes the candidate to compute in the working precision in every
-instantiation, enlarges the mechanism phase, and changes the oracle's arithmetic backend.
-Because the implementation changes after data exist, it takes the path of §8 — a new
-implementation hash, a new protocol document, a further disjoint seed block, and a complete
-rerun. Nothing in 4.0.0 relaxes a threshold, removes a cell, changes a family's α, or excludes
-a result.
+**This is the fifth run of the experiment.** The first ran on seeds 7001–7010 under protocol
+1.3.0 and returned **NO-GO**; the second ran on 8001–8010 under protocol 2.0.0 and also
+returned **NO-GO**, on gate G1 alone; the third ran on 9001–9010 under protocol 3.0.0 and
+returned **GO**; the fourth ran on 10001–10010 under protocol 4.0.0 and returned **NO-GO**, on
+gate G1 alone. All four are recorded unmodified, in commits `45d3ef8`, `e5c9837`, `abdd295`
+and `84130b5`, none is reopened, and all four seed blocks are spent. §2.7 records the two
+defects the second holdout found. §2.8 records amendment 4.0.0, which changed the candidate to
+compute in the working precision in every instantiation, enlarged the mechanism phase, and
+changed the oracle's arithmetic backend. §2.9 records amendment 5.0.0, which restates gate G1
+for failures that lie within rounding error of the overflow threshold. It was written after
+the fourth run was read, so it is tested on a further disjoint seed block. Apart from that
+restatement, nothing in 5.0.0 relaxes a threshold, removes a cell, changes a family's α, or
+excludes a result.
 
 ---
 
@@ -52,10 +53,11 @@ different implementation.
 
 ## 2. What is under test
 
-The candidate is the released loader `cpp/bi_kappa_distribution.H` at version **2.3.0**, whose
+The candidate is the released loader `cpp/bi_kappa_distribution.H` at version **3.0.0**, whose
 radius is built in the log domain and which computes every quantity — the variates, the log
 radius, the direction, the thermal scaling, the rotation and the returned components — in the
-working precision of the instantiation (§2.8.1). Representability is decided from the
+working precision of the instantiation (§2.8.1). It is the implementation of §2.8, which was
+versioned 2.3.0 there, with only its version macros changed (§2.9.3). Representability is decided from the
 materialized component (§2.6.1). 2.0.0 carried the representability defect of §2.6.1; 2.1.0
 corrected it; 2.2.0 formed the map of a `float` instantiation in `double` (§2.7.1) and was the
 candidate under protocol 3.0.0. None of them is the candidate here. The comparator is the same
@@ -653,24 +655,106 @@ join the spent blocks. Scope is unchanged from §2.6.4: arm64 macOS under both s
 libraries, cross-architecture withdrawn and published as a limitation. Every change above was
 made and committed before any datum on seeds 10001–10010 existed.
 
+## 2.9 Amendment 5.0.0 — failures within rounding error of the overflow threshold
+
+Made **after** the fourth run was read. That run, on seeds 10001–10010 under protocol 4.0.0,
+returned NO-GO on gate G1 alone and is recorded in commit `84130b5`; it is not edited,
+reinterpreted or re-scored under the rule below. Its data were replaced in the working tree by
+this run's, as the third holdout's were; the commit keeps them.
+
+### 2.9.1 What the fourth run found
+
+The stabilized calculation, computing in `float`, returned three single-precision draws
+non-finite although their exact largest component was representable:
+
+| κ | seed | exact largest component, relative distance below the `float` overflow threshold |
+|---:|---:|---:|
+| 0.505 | 10001 | 4.3e-6 |
+| 0.505 | 10003 | 9.8e-6 |
+| 0.51 | 10005 | 5.2e-7 |
+
+The same three draws occurred in both standard-library builds, so G1 counted six avoidable
+losses. A fourth draw, at κ = 0.51 on seed 10003, lay 6.2e-6 above the threshold and was
+returned finite, which the frozen rules score as an unavoidable loss. There was no avoidable
+loss in `double`, and every other gate and family passed. §2.8.1 had stated this consequence of
+working-precision arithmetic in advance and changed no gate rule.
+
+### 2.9.2 The rule
+
+A working-precision calculation cannot decide on which side of the overflow threshold a
+component falls when the exact component lies within the calculation's rounding error of the
+threshold. G1 as written required such draws to be returned, which no calculation in the
+working type can guarantee. From 5.0.0:
+
+- An attempt that a method returned non-finite or inaccurate, and that the frozen classifier
+  scores as avoidable loss, is a **rounding-band loss** instead when its exact (100-digit)
+  largest component `V` lies below the overflow threshold of the working type by a relative
+  distance `1 − V/threshold` of at most
+
+      B = 4 eps max(1, |log V|),
+
+  with `eps` the machine epsilon of the working type (`2^-23` for `float`, `2^-52` for
+  `double`). At the threshold `|log V|` is 88.72 in `float` and 709.78 in `double`, so `B` is
+  `4.2e-5` and `6.3e-13`.
+- Rounding-band losses are counted and published per setting, with their rate, in the columns
+  `rounding_band_*` of `results/failure_envelope.csv`; the remaining avoidable losses are in
+  `avoidable_outside_band_*`. The rule is the same for every method and both precisions.
+- **G1 requires zero avoidable losses outside the band.** Rounding-band losses do not enter G1.
+  P1's native avoidable counts, which have no per-attempt adjudication, enter G1 unchanged.
+
+**The constant comes from the error analysis, not from the observed margins.** With libm's
+`log` and `exp` within one ulp and each arithmetic operation within half an ulp, the
+first-order error bound on `log R = (log X1 − log Y − (log U)/a)/2` is `2.5 eps |log V|` when
+`|log U|/a` dominates the sum, as it does for every draw near the threshold at small `a`.
+Adding `log|g_j|` and the rounding of `g_j` contribute about `0.5 eps |log V| + 3.5 eps`, and
+`exp` contributes `eps`. A component near the threshold therefore carries a relative error of
+at most about `(3 |log V| + 4.5) eps`, and `4 eps |log V|` exceeds that for every
+`|log V| > 4.5`. It is the band the header documentation states for a component near the
+largest finite value, and the band selftest check 15 and regression test S6 use.
+
+**The band is applied from the exact margin.** For every audited attempt the oracle computes
+`V` at 100 digits, and where a method's category is an avoidable one and `V` lies inside the
+band it writes a record to `raw/oracle_rounding_band.jsonl`. Every avoidable loss of every
+method falls in a stratum audited at rate 1 (§2.3), so every one of them is adjudicated. The
+analysis maps each record to its configuration through the probe's per-configuration audit
+counts, re-checks its margin against `B` from `config/protocol.json`, and refuses to run if a
+margin lies outside the band or the record-to-configuration map does not close. The probe's
+categories, counters and accounting identity are unchanged.
+
+**The rule was written after seeing the fourth run.** The three draws of §2.9.1 lie inside the
+band. That is why it is tested on a new seed block, and why the fourth run is not re-scored.
+
+### 2.9.3 Version
+
+The candidate is unchanged from §2.8 except for its version macros. It is released as 3.0.0
+instead of 2.3.0, because a given seed produces different single-precision output and the
+changelog's versioning rule counts that as a breaking change.
+
+### 2.9.4 Seeds and scope
+
+Production seeds 11001–11005 and performance seeds 11006–11010, by the rule of §3; 10001–10010
+join the spent blocks. Scope and every other rule, size and threshold are unchanged from 4.0.0.
+Every change above was made and committed before any datum on seeds 11001–11010 existed.
+
 ## 3. Seeds
 
-**Production seeds: 10001–10005. Performance-block seeds: 10006–10010.** Both blocks are
+**Production seeds: 11001–11005. Performance-block seeds: 11006–11010.** Both blocks are
 declared here, in `config/protocol.json`, and in `src/exp7_common.H`, and are disjoint from
 every seed used anywhere else in this repository (exp1 1001–1005, exp2 2001–2005, exp3
 3001–3003 and 3101, exp4 and exp6 4001–4010, the first holdout 7001–7010, the second holdout
-8001–8010, the third holdout 9001–9010, the Experiment 7 selftest fixtures 7501–7505).
+8001–8010, the third holdout 9001–9010, the fourth run 10001–10010, the Experiment 7 selftest
+fixtures 7501–7505).
 Experiment 6 derived five of its performance seeds implicitly as `4001 + block`, which is why
 4006–4010 appear in its manifest and in no declaration; the second block above exists so that
 no replicate in Experiment 7 is derived rather than declared.
 
 **How this block was drawn.** Not by choice. The rule is: take the highest seed declared
-anywhere in this repository — 9010, the third holdout's performance block — round up to the
-next multiple of 1000, which is 10000, and take the next ten integers. The rule admits exactly
+anywhere in this repository — 10010, the fourth run's performance block — round up to the
+next multiple of 1000, which is 11000, and take the next ten integers. The rule admits exactly
 one answer, so the block is a consequence of the repository's state rather than a selection
 made after a result was seen, and it remains disjoint from anything a future experiment adds
-below it. `make selftest` asserts that 7001–7010, 8001–8010 and 9001–9010 appear in no block in
-use, so a rerun on a spent block fails before it writes a byte.
+below it. `make selftest` asserts that 7001–7010, 8001–8010, 9001–9010 and 10001–10010
+appear in no block in use, so a rerun on a spent block fails before it writes a byte.
 
 **Configuration streams in P1 and P5.** Since 3.0.0 the replicate seed is not the engine seed.
 The configuration `(precision, κ)` of replicate `base` runs on
@@ -696,10 +780,11 @@ attempts as P1 (§2.8.2), so the check reports NA.
 families decide by Holm, by Simes or by an exact per-attempt identity, all valid under
 arbitrary dependence between configurations.
 
-**7001–7010, 8001–8010 and 9001–9010 are spent.** The first two carry the preserved NO-GO
-holdouts and the third the GO holdout under protocol 3.0.0. No result may be recomputed on any
-of them; they may now serve only as preserved evidence and as development material, which is
-what §2.6, §2.7 and §2.8 used them for. If this run fails, the recovery path is in §8.
+**7001–7010, 8001–8010, 9001–9010 and 10001–10010 are spent.** The first two carry the
+preserved NO-GO holdouts, the third the GO holdout under protocol 3.0.0, and the fourth the
+NO-GO run under protocol 4.0.0. No result may be recomputed on any of them; they may now serve
+only as preserved evidence and as development material, which is what §2.6 to §2.9 used them
+for. If this run fails, the recovery path is in §8.
 
 ## 4. Test matrix
 
@@ -712,7 +797,7 @@ Frozen sizes. `N` is intended attempts, never returned samples, except where sta
 | **P3 conditioning** | LEGACY, CANDIDATE, oracle | double kappa ∈ {0.501, 0.505, 0.51, 0.75}; float kappa ∈ {0.55, 0.60, 0.75} | 10^6 × 5 seeds |
 | **P4 loader** | LEGACY, CANDIDATE | C0–C6 of §4.1 | uncapped 10^5 intended × 5 seeds; capped 10^5 **returned** × 5 seeds, all attempts retained |
 | **P5 portability** | CANDIDATE | full P1 ladder on every available environment | 10^6 × 5 seeds |
-| **P6 performance** | LEGACY, CANDIDATE | B0–B4 of §4.2 | 10 timed blocks ≥ 2 s and ≥ 10^6 attempts each, seeds 10006–10010 |
+| **P6 performance** | LEGACY, CANDIDATE | B0–B4 of §4.2 | 10 timed blocks ≥ 2 s and ≥ 10^6 attempts each, seeds 11006–11010 |
 
 The ladder adds **1.25 and 1.49** to Experiment 6's. They exist because that is where the
 rejected primitive's cost diverges, and a ladder that steps over the only region where a
@@ -842,7 +927,7 @@ or by a number being finite.
 | gate | passes iff |
 |---|---|
 | **G0** primary-source audit | the `log q` evaluator agrees with an arbitrary-precision incomplete beta to < 1e−10 on the declared grid; the attribution checklist in `config/protocol.json` — equation, stated domain, output scale, limitation, DOI — is machine-checked present for every cited method; and the pre-registered acceptance-rate predictor for any rejection-based primitive is named **in this document before the run** |
-| **G1** scalar correctness | F1, F2, F3 and F4 all pass on in-domain configurations including a benign control that exercises the candidate itself; and the candidate's avoidable loss is **exactly zero** at every configuration, with no tolerance proportional to a data-dependent count |
+| **G1** scalar correctness | F1, F2, F3 and F4 all pass on in-domain configurations including a benign control that exercises the candidate itself; and the candidate's avoidable loss outside the rounding band of §2.9.2 is **exactly zero** at every configuration, with no tolerance proportional to a data-dependent count; rounding-band losses are published and do not enter the gate |
 | **G2** mechanism closure | the accounting identity `N = finite + avoidable + honest` holds exactly per seed and configuration; oracle disagreements and conversion failures are zero; the candidate's honest count equals the oracle floor exactly, or each discrepancy is individually adjudicated and listed |
 | **G3** complete-loader fidelity | F5 passes jointly; F6 power thresholds are met and the expected number of control cells exists; every conditional cell is labelled with its loss fraction |
 | **G4** portability | within the scope §2.6.4 declares: every environment in `gates.G4.supported_environments` completed **natively**, F7 passed, and at least one cross-standard-library comparison was actually made and was **bitwise** equal, with no tolerance. A supported environment that did not run FAILS the gate. A cross-architecture comparison is not required — the claim is withdrawn — but one that is filed and **disagrees** still fails |
@@ -864,7 +949,7 @@ resulting bound; the analysis recomputes and prints it.
 ## 8. What counts as a holdout failure, and what may follow
 
 Any pre-registered family or gate rule failing at its pre-registered level on seeds
-10001–10010 is a holdout failure. No re-pooling, no post-hoc exclusion of out-of-domain or near-limit
+11001–11010 is a holdout failure. No re-pooling, no post-hoc exclusion of out-of-domain or near-limit
 cells, no change to the seeds, the levels, the family membership, or the informativeness
 threshold after the holdout is read.
 
