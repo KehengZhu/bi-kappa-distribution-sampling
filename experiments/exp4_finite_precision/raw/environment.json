@@ -1,17 +1,17 @@
 {
   "experiment": "exp7_confirmatory",
-  "generated_utc": "2026-09-20T20:47:04+00:00",
+  "generated_utc": "2026-09-25T05:51:50+00:00",
   "exploratory": false,
   "git": {
-    "commit": "a53f5f6a9b4f6a6c4cc675cac63839fb4cbdd16d",
+    "commit": "60ef3438ea0dfebaa9f4eae9b4bd1f089be2fb03",
     "repo_dirty": true,
     "dependencies_clean": true,
     "unclean_dependencies": []
   },
   "dependencies": {
     "../../cpp/bi_kappa_distribution.H": {
-      "sha256": "d9cb44ca956a00c9d3a82bd9808ab2f51b454c3dd6d7cb4c4c7eb86e78c9a5f0",
-      "head_sha256": "d9cb44ca956a00c9d3a82bd9808ab2f51b454c3dd6d7cb4c4c7eb86e78c9a5f0",
+      "sha256": "4c7c95ea76d6c65eada4936cfd3a635f499a4d74c87dfacea7ffc600d6763deb",
+      "head_sha256": "4c7c95ea76d6c65eada4936cfd3a635f499a4d74c87dfacea7ffc600d6763deb",
       "state": "clean"
     },
     "src/legacy/bi_kappa_distribution_v1.H": {
@@ -20,13 +20,13 @@
       "state": "clean"
     },
     "src/exp7_common.H": {
-      "sha256": "9fe013d693602b6315cf9904f70e54a952b544033481d43c0b2d961ba68c3d4f",
-      "head_sha256": "9fe013d693602b6315cf9904f70e54a952b544033481d43c0b2d961ba68c3d4f",
+      "sha256": "c0f5e9e4903c494036a309e2969f8767f9dc6c47d4237ac15d57af1c78cab390",
+      "head_sha256": "c0f5e9e4903c494036a309e2969f8767f9dc6c47d4237ac15d57af1c78cab390",
       "state": "clean"
     },
     "src/exp7_loaders.H": {
-      "sha256": "9b12d116bda44c6d786995d8112e7cd9eff62880e66ec78443a2240a86078a46",
-      "head_sha256": "9b12d116bda44c6d786995d8112e7cd9eff62880e66ec78443a2240a86078a46",
+      "sha256": "8f4a34f809c99d58da20b56cee14e583b8cffc543b93d2cd60ffd0a114cc552e",
+      "head_sha256": "8f4a34f809c99d58da20b56cee14e583b8cffc543b93d2cd60ffd0a114cc552e",
       "state": "clean"
     },
     "src/exp7_digest.H": {
@@ -35,28 +35,28 @@
       "state": "clean"
     },
     "src/exp7_probe.cpp": {
-      "sha256": "44df0d78cdf5cd4885f1b1c6d3a98e70c9308f3d2dc9ba59f6387b37db5cfedb",
-      "head_sha256": "44df0d78cdf5cd4885f1b1c6d3a98e70c9308f3d2dc9ba59f6387b37db5cfedb",
+      "sha256": "58688448081964e9d9ba3d1302b04a949f985b8af5e1735f2a112fa452a34185",
+      "head_sha256": "58688448081964e9d9ba3d1302b04a949f985b8af5e1735f2a112fa452a34185",
       "state": "clean"
     },
     "src/exp7_protocol.H": {
-      "sha256": "06c3d1c7aa53564db1791bdb779358d5f3a2b0bcccc4bfc82451bcbf337d7774",
-      "head_sha256": "06c3d1c7aa53564db1791bdb779358d5f3a2b0bcccc4bfc82451bcbf337d7774",
+      "sha256": "9f420da502c198210fa1adf429617957b2a75040b4b724887e46ecf3603e4f2e",
+      "head_sha256": "9f420da502c198210fa1adf429617957b2a75040b4b724887e46ecf3603e4f2e",
       "state": "clean"
     },
     "PROTOCOL.md": {
-      "sha256": "45992ff0ce8f877b58ec7e5e6af4574a45f964c6b53117864dc30bb42756dd7c",
-      "head_sha256": "45992ff0ce8f877b58ec7e5e6af4574a45f964c6b53117864dc30bb42756dd7c",
+      "sha256": "018ce02e01e33939ae6b14eed1f7844a392bb3602183ddcf1f7ae852a19b9768",
+      "head_sha256": "018ce02e01e33939ae6b14eed1f7844a392bb3602183ddcf1f7ae852a19b9768",
       "state": "clean"
     },
     "config/protocol.json": {
-      "sha256": "c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6",
-      "head_sha256": "c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6",
+      "sha256": "664d906899b1726ae6d0bd3856483c4590af875a9dfdc3fee14fdcb79dbc4e34",
+      "head_sha256": "664d906899b1726ae6d0bd3856483c4590af875a9dfdc3fee14fdcb79dbc4e34",
       "state": "clean"
     },
     "src/exp7_oracle.cpp": {
-      "sha256": "73b3111818422dde81e048d3f2638192d5b02ef45ceee23f2456e9b4e857d13c",
-      "head_sha256": "73b3111818422dde81e048d3f2638192d5b02ef45ceee23f2456e9b4e857d13c",
+      "sha256": "f579d765cd61c162ba6d67faf230d24c3c398643d8cdd2e60909b755f857df96",
+      "head_sha256": "f579d765cd61c162ba6d67faf230d24c3c398643d8cdd2e60909b755f857df96",
       "state": "clean"
     },
     "src/gen_protocol_header.py": {
@@ -70,23 +70,23 @@
       "state": "clean"
     },
     "GNUmakefile": {
-      "sha256": "799e2af4ea9d4e59351662369beb5945f1214d4c716edefefd4f997b532a66c6",
-      "head_sha256": "799e2af4ea9d4e59351662369beb5945f1214d4c716edefefd4f997b532a66c6",
+      "sha256": "64eb237045bdaeb0c2ec7e022138a825ba08766768b64c8e909272c815f50c11",
+      "head_sha256": "64eb237045bdaeb0c2ec7e022138a825ba08766768b64c8e909272c815f50c11",
       "state": "clean"
     },
     "analyze.py": {
-      "sha256": "b9c757af4b64e645bc0091facc28a8f5727ca8b9aba24e1da134cffacb886c14",
-      "head_sha256": "b9c757af4b64e645bc0091facc28a8f5727ca8b9aba24e1da134cffacb886c14",
+      "sha256": "1faac741f55a6160f293b92eab32d6d71cfe6af76c83fc2923715092d3455fa7",
+      "head_sha256": "1faac741f55a6160f293b92eab32d6d71cfe6af76c83fc2923715092d3455fa7",
       "state": "clean"
     },
     "make_figures.py": {
-      "sha256": "46bc5c3cc3fb1fcdac605d4f06498b3e62b36ed6a361270be3352436cd09d30f",
-      "head_sha256": "46bc5c3cc3fb1fcdac605d4f06498b3e62b36ed6a361270be3352436cd09d30f",
+      "sha256": "58fe1e143e0381410cb241d27ab3d5cc8a4111cbf5bd74008ab09636100a600f",
+      "head_sha256": "58fe1e143e0381410cb241d27ab3d5cc8a4111cbf5bd74008ab09636100a600f",
       "state": "clean"
     },
     "preflight.py": {
-      "sha256": "ff60fcb30030cf299516cd71299b3cf4ce2fd48c858ea85e37ac7e374ba9fb0c",
-      "head_sha256": "ff60fcb30030cf299516cd71299b3cf4ce2fd48c858ea85e37ac7e374ba9fb0c",
+      "sha256": "37780668825b23bfa23a615903c7991c4203067f741fa2fa29cc084859a024a2",
+      "head_sha256": "37780668825b23bfa23a615903c7991c4203067f741fa2fa29cc084859a024a2",
       "state": "clean"
     },
     "exp7_stats.py": {
@@ -100,8 +100,8 @@
       "state": "clean"
     },
     "exp7_censoring.py": {
-      "sha256": "ec88e90d7170baa9ba83429e29a70eac3670b84be988dc999ae09ee51b25380c",
-      "head_sha256": "ec88e90d7170baa9ba83429e29a70eac3670b84be988dc999ae09ee51b25380c",
+      "sha256": "2dd7e7c8d0970f5e2cd11b1d16e1a7acc1c8e4318f4c8121b7f03327b4ea7f2e",
+      "head_sha256": "2dd7e7c8d0970f5e2cd11b1d16e1a7acc1c8e4318f4c8121b7f03327b4ea7f2e",
       "state": "clean"
     },
     "exp7_families.py": {
@@ -110,8 +110,8 @@
       "state": "clean"
     },
     "exp7_gates.py": {
-      "sha256": "c149b2cdb0b626ff8ffca873d7e070d35b87795e694a5a7b8dcb15c1f224645a",
-      "head_sha256": "c149b2cdb0b626ff8ffca873d7e070d35b87795e694a5a7b8dcb15c1f224645a",
+      "sha256": "7a7ab5f51aed01008d451816ba6c40cc348e275f63b73ea3fb99cbbe7530426d",
+      "head_sha256": "7a7ab5f51aed01008d451816ba6c40cc348e275f63b73ea3fb99cbbe7530426d",
       "state": "clean"
     },
     "exp7_portability.py": {
@@ -120,13 +120,13 @@
       "state": "clean"
     },
     "config/make_protocol.py": {
-      "sha256": "5eb2c2fe86a0c9cc02202af6fcf6642bfd7bb6868c0b1f18a7fd68180cb017a3",
-      "head_sha256": "5eb2c2fe86a0c9cc02202af6fcf6642bfd7bb6868c0b1f18a7fd68180cb017a3",
+      "sha256": "f966473a0a2049fb70cbc670b55d71ffb9c389eb2effe132d44bbf68262cd645",
+      "head_sha256": "f966473a0a2049fb70cbc670b55d71ffb9c389eb2effe132d44bbf68262cd645",
       "state": "clean"
     }
   },
   "continuity": {
-    "previous_preflight_utc": "2026-09-20T20:37:17+00:00",
+    "previous_preflight_utc": "2026-09-25T05:51:04+00:00",
     "dependency_hashes_unchanged_since_previous_preflight": true,
     "sampling_dependency_hashes_unchanged_since_previous_preflight": true,
     "note": "Raw draws depend only on the sampling dependencies. If those hashes are unchanged since the preflight a raw file was produced under, that file came from this content, whatever else was edited afterwards."
@@ -187,9 +187,9 @@
       "arch": "arm64",
       "precision": "n/a",
       "rng": "mt19937",
-      "bi_kappa_version": "2.2.0",
-      "protocol_version": "3.0.0",
-      "protocol_sha256": "c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6",
+      "bi_kappa_version": "2.3.0",
+      "protocol_version": "4.0.0",
+      "protocol_sha256": "664d906899b1726ae6d0bd3856483c4590af875a9dfdc3fee14fdcb79dbc4e34",
       "cxxflags": "-Wall -Wextra -std=c++11 -O2 -ffp-contract=off -I src",
       "rounding_mode": "FE_TONEAREST",
       "flt_eval_method": 0,
@@ -212,9 +212,9 @@
       "arch": "arm64",
       "precision": "n/a",
       "rng": "mt19937",
-      "bi_kappa_version": "2.2.0",
-      "protocol_version": "3.0.0",
-      "protocol_sha256": "c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6",
+      "bi_kappa_version": "2.3.0",
+      "protocol_version": "4.0.0",
+      "protocol_sha256": "664d906899b1726ae6d0bd3856483c4590af875a9dfdc3fee14fdcb79dbc4e34",
       "cxxflags": "-Wall -Wextra -std=c++11 -O2 -ffp-contract=off -I src",
       "rounding_mode": "FE_TONEAREST",
       "flt_eval_method": 0,
@@ -233,10 +233,10 @@
     }
   },
   "python_packages": {
-    "numpy": "2.5.3",
-    "scipy": "1.18.1",
-    "matplotlib": "3.11.2",
-    "pandas": "3.0.6",
+    "numpy": "2.4.3",
+    "scipy": "1.17.1",
+    "matplotlib": "3.10.8",
+    "pandas": "3.0.1",
     "mpmath": "1.4.1"
   },
   "commands": {
@@ -257,22 +257,22 @@
   },
   "frozen_sizes": {
     "n_scalar": 1000000,
-    "n_mechanism": 1000000,
+    "n_mechanism": 10000000,
     "n_conditioning": 1000000,
     "n_loader": 100000,
     "production_seeds": [
-      9001,
-      9002,
-      9003,
-      9004,
-      9005
+      10001,
+      10002,
+      10003,
+      10004,
+      10005
     ],
     "performance_seeds": [
-      9006,
-      9007,
-      9008,
-      9009,
-      9010
+      10006,
+      10007,
+      10008,
+      10009,
+      10010
     ],
     "kappa_ladder": [
       0.5001,
@@ -291,8 +291,8 @@
     ]
   },
   "protocol": {
-    "version": "3.0.0",
-    "sha256": "c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6",
+    "version": "4.0.0",
+    "sha256": "664d906899b1726ae6d0bd3856483c4590af875a9dfdc3fee14fdcb79dbc4e34",
     "path": "config/protocol.json"
   }
 }

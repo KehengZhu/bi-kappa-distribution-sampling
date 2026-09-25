@@ -1,7 +1,7 @@
 {
   "F2": {
-    "informative_intervals": 443,
-    "observed_misses": 7,
+    "informative_intervals": 441,
+    "observed_misses": 3,
     "resolved_intervals": 650,
     "total_intervals": 650
   },
@@ -28,313 +28,313 @@
       "conditional": false,
       "label": "C0|CANDIDATE|direction_uniformity",
       "loss_fraction": 0.0,
-      "p": 0.5426700572503531
+      "p": 0.9633171628270529
     },
     {
       "conditional": false,
       "label": "C0|CANDIDATE|independence",
       "loss_fraction": 0.0,
-      "p": 0.42971793494889876
+      "p": 0.6157116752272893
     },
     {
       "conditional": false,
       "label": "C0|CANDIDATE|frame_invariance",
       "loss_fraction": 0.0,
-      "p": 0.7300192094658127
+      "p": 0.8825771427049872
     },
     {
       "conditional": false,
       "label": "C0|CANDIDATE|anisotropy",
       "loss_fraction": 0.0,
-      "p": 0.8780840720218812
+      "p": 0.7742540261052369
     },
     {
       "conditional": false,
       "label": "C0|CANDIDATE|tail_1em2_count",
       "loss_fraction": 0.0,
-      "p": 0.4995896754943313
+      "p": 0.9094685802714144
     },
     {
       "conditional": false,
       "label": "C0|CANDIDATE|tail_1em2_excess",
       "loss_fraction": 0.0,
-      "p": 0.5138486194533122
+      "p": 0.6159334988585881
     },
     {
       "conditional": false,
       "label": "C0|CANDIDATE|tail_1em3_count",
       "loss_fraction": 0.0,
-      "p": 0.006773309947656938
+      "p": 0.4739767889671951
     },
     {
       "conditional": false,
       "label": "C0|CANDIDATE|tail_1em3_excess",
       "loss_fraction": 0.0,
-      "p": 0.4975289328161817
+      "p": 0.7337250463035259
     },
     {
       "conditional": false,
       "label": "C0|CANDIDATE|tail_1em4_count",
       "loss_fraction": 0.0,
-      "p": 0.03346962698482202
+      "p": 0.1568151038881775
     },
     {
       "conditional": false,
       "label": "C0|CANDIDATE|tail_1em4_excess",
       "loss_fraction": 0.0,
-      "p": 0.8683959825315519
+      "p": 0.6087976848900348
     },
     {
       "conditional": false,
       "label": "C1|CANDIDATE|direction_uniformity",
       "loss_fraction": 0.0,
-      "p": 0.7369355525871211
+      "p": 0.9776992969121782
     },
     {
       "conditional": false,
       "label": "C1|CANDIDATE|independence",
       "loss_fraction": 0.0,
-      "p": 0.7512168907810024
+      "p": 0.9150488862276874
     },
     {
       "conditional": false,
       "label": "C1|CANDIDATE|frame_invariance",
       "loss_fraction": 0.0,
-      "p": 0.9601969203586155
+      "p": 0.301177062283295
     },
     {
       "conditional": false,
       "label": "C1|CANDIDATE|anisotropy",
       "loss_fraction": 0.0,
-      "p": 0.5306458791092297
+      "p": 0.6872616318392005
     },
     {
       "conditional": false,
       "label": "C1|CANDIDATE|tail_1em2_count",
       "loss_fraction": 0.0,
-      "p": 0.06260768259763128
+      "p": 0.20586862392724228
     },
     {
       "conditional": false,
       "label": "C1|CANDIDATE|tail_1em2_excess",
       "loss_fraction": 0.0,
-      "p": 0.6184468000544151
+      "p": 0.004210821971916023
     },
     {
       "conditional": false,
       "label": "C1|CANDIDATE|tail_1em3_count",
       "loss_fraction": 0.0,
-      "p": 0.33601939656333224
+      "p": 0.5164806426800619
     },
     {
       "conditional": false,
       "label": "C1|CANDIDATE|tail_1em3_excess",
       "loss_fraction": 0.0,
-      "p": 0.7935672752109895
+      "p": 0.7218734671709992
     },
     {
       "conditional": false,
       "label": "C1|CANDIDATE|tail_1em4_count",
       "loss_fraction": 0.0,
-      "p": 0.5245396914913278
+      "p": 1.0
     },
     {
       "conditional": false,
       "label": "C1|CANDIDATE|tail_1em4_excess",
       "loss_fraction": 0.0,
-      "p": 0.5952881553049261
+      "p": 0.3845084049507719
     },
     {
       "conditional": false,
       "label": "C2|CANDIDATE|direction_uniformity",
       "loss_fraction": 0.0,
-      "p": 0.7369355525871257
+      "p": 0.9776992969121656
     },
     {
       "conditional": false,
       "label": "C2|CANDIDATE|independence",
       "loss_fraction": 0.0,
-      "p": 0.7512168907810024
+      "p": 0.9150488862276874
     },
     {
       "conditional": false,
       "label": "C2|CANDIDATE|frame_invariance",
       "loss_fraction": 0.0,
-      "p": 0.9601969203586236
+      "p": 0.301177062283302
     },
     {
       "conditional": false,
       "label": "C2|CANDIDATE|anisotropy",
       "loss_fraction": 0.0,
-      "p": 0.5306458791092297
+      "p": 0.6872616318392005
     },
     {
       "conditional": false,
       "label": "C2|CANDIDATE|tail_1em2_count",
       "loss_fraction": 0.0,
-      "p": 0.06260768259763128
+      "p": 0.20586862392724228
     },
     {
       "conditional": false,
       "label": "C2|CANDIDATE|tail_1em2_excess",
       "loss_fraction": 0.0,
-      "p": 0.61843394052923
+      "p": 0.0042107013796982146
     },
     {
       "conditional": false,
       "label": "C2|CANDIDATE|tail_1em3_count",
       "loss_fraction": 0.0,
-      "p": 0.33601939656333224
+      "p": 0.5164806426800619
     },
     {
       "conditional": false,
       "label": "C2|CANDIDATE|tail_1em3_excess",
       "loss_fraction": 0.0,
-      "p": 0.7935096983676453
+      "p": 0.7217744958573165
     },
     {
       "conditional": false,
       "label": "C2|CANDIDATE|tail_1em4_count",
       "loss_fraction": 0.0,
-      "p": 0.5245396914913278
+      "p": 1.0
     },
     {
       "conditional": false,
       "label": "C2|CANDIDATE|tail_1em4_excess",
       "loss_fraction": 0.0,
-      "p": 0.5950895625361776
+      "p": 0.38596626921883137
     },
     {
       "conditional": true,
       "label": "C3|CANDIDATE|direction_uniformity",
-      "loss_fraction": 0.000128,
-      "p": 0.9408798187885811
+      "loss_fraction": 0.000148,
+      "p": 0.16550821803641091
     },
     {
       "conditional": true,
       "label": "C3|CANDIDATE|independence",
-      "loss_fraction": 0.000128,
-      "p": 0.23031701886158057
+      "loss_fraction": 0.000148,
+      "p": 0.8637639551474051
     },
     {
       "conditional": true,
       "label": "C3|CANDIDATE|frame_invariance",
-      "loss_fraction": 0.000128,
-      "p": 0.6063615761401409
+      "loss_fraction": 0.000148,
+      "p": 0.5140036604189588
     },
     {
       "conditional": true,
       "label": "C3|CANDIDATE|anisotropy",
-      "loss_fraction": 0.000128,
-      "p": 0.3908131742120544
+      "loss_fraction": 0.000148,
+      "p": 0.001646103841265285
     },
     {
       "conditional": true,
       "label": "C3|CANDIDATE|tail_1em2_count",
-      "loss_fraction": 0.000128,
-      "p": 0.4950786019704201
+      "loss_fraction": 0.000148,
+      "p": 0.7816579855968948
     },
     {
       "conditional": true,
       "label": "C3|CANDIDATE|tail_1em2_excess",
-      "loss_fraction": 0.000128,
-      "p": 0.9813827102122658
+      "loss_fraction": 0.000148,
+      "p": 0.3678196612296889
     },
     {
       "conditional": true,
       "label": "C3|CANDIDATE|tail_1em3_count",
-      "loss_fraction": 0.000128,
-      "p": 0.6385053731543806
+      "loss_fraction": 0.000148,
+      "p": 0.3473319057871157
     },
     {
       "conditional": true,
       "label": "C3|CANDIDATE|tail_1em3_excess",
-      "loss_fraction": 0.000128,
-      "p": 0.5667573623871841
+      "loss_fraction": 0.000148,
+      "p": 0.1592871738011825
     },
     {
       "conditional": true,
       "label": "C3|CANDIDATE|tail_1em4_count",
-      "loss_fraction": 0.000128,
-      "p": 0.22865677420535843
+      "loss_fraction": 0.000148,
+      "p": 0.5709222414565954
     },
     {
       "conditional": true,
       "label": "C4|CANDIDATE|direction_uniformity",
-      "loss_fraction": 0.000766,
-      "p": 0.8344847385811054
+      "loss_fraction": 0.000796,
+      "p": 0.9894111072721523
     },
     {
       "conditional": true,
       "label": "C4|CANDIDATE|independence",
-      "loss_fraction": 0.000766,
-      "p": 0.5949935052712545
+      "loss_fraction": 0.000796,
+      "p": 0.9437376051733517
     },
     {
       "conditional": true,
       "label": "C4|CANDIDATE|frame_invariance",
-      "loss_fraction": 0.000766,
-      "p": 0.5129552880041774
+      "loss_fraction": 0.000796,
+      "p": 0.0837507276546261
     },
     {
       "conditional": true,
       "label": "C4|CANDIDATE|anisotropy",
-      "loss_fraction": 0.000766,
-      "p": 0.8094711918729908
+      "loss_fraction": 0.000796,
+      "p": 0.870093688593714
     },
     {
       "conditional": true,
       "label": "C4|CANDIDATE|tail_1em2_count",
-      "loss_fraction": 0.000766,
-      "p": 0.06672273094847969
+      "loss_fraction": 0.000796,
+      "p": 0.29945957805944934
     },
     {
       "conditional": true,
       "label": "C4|CANDIDATE|tail_1em2_excess",
-      "loss_fraction": 0.000766,
-      "p": 0.7622423749040113
+      "loss_fraction": 0.000796,
+      "p": 0.00484965112231342
     },
     {
       "conditional": true,
       "label": "C4|CANDIDATE|tail_1em3_count",
-      "loss_fraction": 0.000766,
-      "p": 0.25382624014041116
+      "loss_fraction": 0.000796,
+      "p": 0.33601939656333224
     },
     {
       "conditional": true,
       "label": "C4|CANDIDATE|tail_1em3_excess",
-      "loss_fraction": 0.000766,
-      "p": 0.16002059222482934
+      "loss_fraction": 0.000796,
+      "p": 0.25138449329968626
     },
     {
       "conditional": true,
       "label": "C4|CANDIDATE|tail_1em4_count",
-      "loss_fraction": 0.000766,
-      "p": 0.620734867833729
+      "loss_fraction": 0.000796,
+      "p": 0.8873444670950759
     },
     {
       "conditional": false,
       "label": "C5|CANDIDATE|anisotropy",
       "loss_fraction": 0.0,
-      "p": 0.1304015849546576
+      "p": 0.39365207826980997
     },
     {
       "conditional": false,
       "label": "C5|CANDIDATE|cap_law",
       "loss_fraction": 0.0,
-      "p": 0.6819453793268808
+      "p": 0.0858228934364651
     },
     {
       "conditional": false,
       "label": "C6|CANDIDATE|anisotropy",
       "loss_fraction": 0.0,
-      "p": 0.37997379942818543
+      "p": 0.4438093731840682
     },
     {
       "conditional": false,
       "label": "C6|CANDIDATE|cap_law",
       "loss_fraction": 0.0,
-      "p": 0.9848393050768874
+      "p": 0.20336527324414522
     }
   ],
   "F6_controls": [
@@ -370,6 +370,7 @@
     }
   ],
   "amendments": [
+    "4.0.0",
     "3.0.0",
     "2.0.0",
     "1.3.0",
@@ -383,22 +384,23 @@
     "G5_interval": "0.99, the cluster-bootstrap level in statistics.bootstrap.conf. Section 6 said 95 per cent in prose; the machine-readable value governs and is the conservative choice for a gate on an upper limit.",
     "NC3_effect": "the largest loss fraction among the UNCAPPED LOADER CELLS (C0-C4), not the global maximum over the scalar ladder. The earlier wording said 'whose loss is not dominated by honest overflow', which is unusable: G1 requires the candidate's avoidable loss to be exactly zero, so every loss it has is honest overflow and that qualifier empties the set. What it was there to exclude is the degenerate scalar configurations -- float kappa = 0.5001 loses 98 per cent of its draws, where detection is trivial and says nothing -- not any cell from among C0-C4."
   },
+  "cross_phase_native_comparisons": 0,
   "cross_phase_native_disagreements": 0,
   "evidence": {
     "accounting_failures": 0,
-    "archive_identifier": "bi-kappa 2.2.0 @ 62f4568b08077937475b65775366a6719adcb6af",
+    "archive_identifier": "bi-kappa 2.3.0 @ 60ef3438ea0dfebaa9f4eae9b4bd1f089be2fb03",
     "audit_coverage": {
       "avoidable_loss_candidate": "nan",
       "finite_but_wrong_candidate": "nan",
       "method_disagreement": 1.0,
       "subnormal_or_zero_denominator_representable_target": 1.0,
-      "unambiguous_failure_beyond_margin": 0.0010020554292123386,
-      "uniform_sample": 0.00010018621960105557,
+      "unambiguous_failure_beyond_margin": 0.001000202091399003,
+      "uniform_sample": 0.00010002999945146408,
       "within_margin_of_a_type_limit": 1.0
     },
     "baseline_comparison_resolved": true,
     "benign_control_exercises_candidate": true,
-    "candidate_avoidable_total": 0,
+    "candidate_avoidable_total": 6,
     "conditional_cells_without_loss_fraction": 0,
     "dependencies_clean": true,
     "environments": [
@@ -447,20 +449,20 @@
         "stdlib": "libstdcxx"
       }
     ],
-    "g6_receipt": "accepted: measured at a53f5f6a9b4f6a6c4cc675cac63839fb4cbdd16d under protocol c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6",
+    "g6_receipt": "accepted: measured at 60ef3438ea0dfebaa9f4eae9b4bd1f089be2fb03 under protocol 664d906899b1726ae6d0bd3856483c4590af875a9dfdc3fee14fdcb79dbc4e34",
     "honest_minus_floor_unadjudicated": 0,
     "log_q_worst_abs_error": 2.842170943040401e-14,
     "make_reverify_identical": true,
     "make_verify_exit_code": 0,
-    "oracle_audited_records": 14244766,
+    "oracle_audited_records": 115029238,
     "oracle_conversion_failures": 0,
     "oracle_disagreements": 0,
-    "protocol_sha256": "c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6",
+    "protocol_sha256": "664d906899b1726ae6d0bd3856483c4590af875a9dfdc3fee14fdcb79dbc4e34",
     "raw_manifest_verified": true,
     "rng_stream_break_documented": true,
     "same_seed_reproducible": true,
-    "time_per_return_ratio": 0.879713925168738,
-    "time_per_return_ratio_hi": 0.9063631000143955
+    "time_per_return_ratio": 0.8540850373890946,
+    "time_per_return_ratio_hi": 0.9066457536393603
   },
   "expected_false_failure_bound": 0.05,
   "experiment": "exp7_confirmatory",
@@ -470,45 +472,45 @@
       "detail": "Simes over 26 configurations; 0 identified by Holm on rejection",
       "family": "F1_radial_law",
       "offenders": [],
-      "p_value": 0.9350236397586255,
+      "p_value": 0.9898281239599174,
       "passed": true,
-      "statistic": 0.9350236397586255
+      "statistic": 0.9898281239599174
     },
     "F2_quantile_coverage": {
       "alpha": 0.005,
-      "detail": "7 misses of 650 resolved intervals in 130 independently streamed configurations; expected 6.22; fail above 14",
+      "detail": "3 misses of 650 resolved intervals in 130 independently streamed configurations; expected 6.22; fail above 14",
       "family": "F2_quantile_coverage",
       "offenders": [],
-      "p_value": 0.4285426327503453,
+      "p_value": 0.943617616850876,
       "passed": true,
-      "statistic": 7.0
+      "statistic": 3.0
     },
     "F3_quantile_direction": {
       "alpha": 0.01,
       "detail": "Holm over 130 (kappa, precision, p) cells",
       "family": "F3_quantile_direction",
       "offenders": [],
-      "p_value": 0.6117639868475644,
+      "p_value": 0.24210085014123248,
       "passed": true,
-      "statistic": 0.6117639868475644
+      "statistic": 0.24210085014123248
     },
     "F4_upper_tail_mass": {
       "alpha": 0.01,
       "detail": "Simes over 780 exceedance statistics",
       "family": "F4_upper_tail_mass",
       "offenders": [],
-      "p_value": 0.16038402975874522,
+      "p_value": 0.6778996058821818,
       "passed": true,
-      "statistic": 0.16038402975874522
+      "statistic": 0.6778996058821818
     },
     "F5_loader_battery": {
       "alpha": 0.01,
       "detail": "Holm jointly over 52 tests across all cells; 18 cells are conditional on success and are labelled as such",
       "family": "F5_loader_battery",
       "offenders": [],
-      "p_value": 0.35221211727816076,
+      "p_value": 0.06304546459007446,
       "passed": true,
-      "statistic": 0.35221211727816076
+      "statistic": 0.06304546459007446
     },
     "F6_negative_controls": {
       "alpha": "nan",
@@ -542,18 +544,18 @@
       "title": "primary-source audit"
     },
     "G1": {
-      "evidence": "4/4 scalar families pass; candidate avoidable loss 0 (required exactly 0); benign control exercises the candidate: True",
+      "evidence": "4/4 scalar families pass; candidate avoidable loss 6 (required exactly 0); benign control exercises the candidate: True",
       "gate": "G1",
       "inputs": {
-        "avoidable": 0,
+        "avoidable": 6,
         "benign_control_ok": true,
         "failed_families": []
       },
-      "status": "PASS",
+      "status": "FAIL",
       "title": "scalar correctness"
     },
     "G2": {
-      "evidence": "0 accounting-identity failures; 0 oracle disagreements in 14244766 adjudicated attempts; 0 honest-count discrepancies left unadjudicated",
+      "evidence": "0 accounting-identity failures; 0 oracle disagreements in 115029238 adjudicated attempts; 0 honest-count discrepancies left unadjudicated",
       "gate": "G2",
       "inputs": {
         "audit_coverage": {
@@ -561,8 +563,8 @@
           "finite_but_wrong_candidate": "nan",
           "method_disagreement": 1.0,
           "subnormal_or_zero_denominator_representable_target": 1.0,
-          "unambiguous_failure_beyond_margin": 0.0010020554292123386,
-          "uniform_sample": 0.00010018621960105557,
+          "unambiguous_failure_beyond_margin": 0.001000202091399003,
+          "uniform_sample": 0.00010002999945146408,
           "within_margin_of_a_type_limit": 1.0
         },
         "declared_rates": {
@@ -587,9 +589,9 @@
           "detail": "Holm jointly over 52 tests across all cells; 18 cells are conditional on success and are labelled as such",
           "family": "F5_loader_battery",
           "offenders": [],
-          "p_value": 0.35221211727816076,
+          "p_value": 0.06304546459007446,
           "passed": true,
-          "statistic": 0.35221211727816076
+          "statistic": 0.06304546459007446
         },
         "F6": {
           "alpha": "nan",
@@ -622,22 +624,22 @@
       "title": "portability"
     },
     "G5": {
-      "evidence": "candidate/LEGACY time per returned sample 0.88 (cluster-bootstrap upper limit 0.906; pre-registered bound 2); same-seed reproducible: True; RNG-stream break documented: True",
+      "evidence": "candidate/LEGACY time per returned sample 0.854 (cluster-bootstrap upper limit 0.907; pre-registered bound 2); same-seed reproducible: True; RNG-stream break documented: True",
       "gate": "G5",
       "inputs": {
         "bound": 2.0,
-        "hi": 0.9063631000143955,
-        "ratio": 0.879713925168738
+        "hi": 0.9066457536393603,
+        "ratio": 0.8540850373890946
       },
       "status": "PASS",
       "title": "operational viability"
     },
     "G6": {
-      "evidence": "raw manifest verifies against the bytes read: True; make verify exit 0; derived artifacts regenerate byte-identically: True; dependency set clean: True; baseline comparison resolved: True; protocol hash matches the frozen document: True; archive identifier bi-kappa 2.2.0 @ 62f4568b08077937475b65775366a6719adcb6af; receipt: accepted: measured at a53f5f6a9b4f6a6c4cc675cac63839fb4cbdd16d under protocol c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6",
+      "evidence": "raw manifest verifies against the bytes read: True; make verify exit 0; derived artifacts regenerate byte-identically: True; dependency set clean: True; baseline comparison resolved: True; protocol hash matches the frozen document: True; archive identifier bi-kappa 2.3.0 @ 60ef3438ea0dfebaa9f4eae9b4bd1f089be2fb03; receipt: accepted: measured at 60ef3438ea0dfebaa9f4eae9b4bd1f089be2fb03 under protocol 664d906899b1726ae6d0bd3856483c4590af875a9dfdc3fee14fdcb79dbc4e34",
       "gate": "G6",
       "inputs": {
-        "archive_identifier": "bi-kappa 2.2.0 @ 62f4568b08077937475b65775366a6719adcb6af",
-        "g6_receipt": "accepted: measured at a53f5f6a9b4f6a6c4cc675cac63839fb4cbdd16d under protocol c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6",
+        "archive_identifier": "bi-kappa 2.3.0 @ 60ef3438ea0dfebaa9f4eae9b4bd1f089be2fb03",
+        "g6_receipt": "accepted: measured at 60ef3438ea0dfebaa9f4eae9b4bd1f089be2fb03 under protocol 664d906899b1726ae6d0bd3856483c4590af875a9dfdc3fee14fdcb79dbc4e34",
         "protocol_sha256_matches": true
       },
       "status": "PASS",
@@ -647,12 +649,12 @@
   "mode": "production",
   "performance": {
     "bound": 2.0,
-    "hi": 0.9063631000143955,
-    "lo": 0.8534763039306354,
-    "ratio": 0.879713925168738
+    "hi": 0.9066457536393603,
+    "lo": 0.8028083336788505,
+    "ratio": 0.8540850373890946
   },
   "primary_environment_tag": "libcxx",
-  "protocol_sha256": "c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6",
-  "protocol_version": "3.0.0",
-  "verdict": "GO"
+  "protocol_sha256": "664d906899b1726ae6d0bd3856483c4590af875a9dfdc3fee14fdcb79dbc4e34",
+  "protocol_version": "4.0.0",
+  "verdict": "NO-GO"
 }

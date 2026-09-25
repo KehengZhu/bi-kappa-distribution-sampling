@@ -50,7 +50,7 @@ GitHub repository.
 |---|---|
 | κ | 0.5001, 0.501, 0.505, 0.51, 0.55, 0.6, 0.75, 1, 1.25, 1.49, 1.5, 2, 5 |
 | precision | `float` and `double` |
-| attempts | 10⁶ per seed and setting, seeds 9001–9005 (5 × 10⁶ per setting); timing on seeds 9006–9010 |
+| attempts | 10⁶ per seed and setting, seeds 10001–10005 (5 × 10⁶ per setting); `p2` 10⁷ per seed (5 × 10⁷ per setting); timing on seeds 10006–10010 |
 | builds | Apple clang with libc++, and GCC 15 with libstdc++, both on arm64 (Apple silicon) |
 | flags | `-Wall -Wextra -std=c++11 -O2 -ffp-contract=off`; RNG `std::mt19937` |
 
@@ -71,7 +71,7 @@ The comparison is made in two ways.
   user receives.
 
 **Recomputation at 100 digits.** The probe records the random variates of selected attempts.
-`src/exp7_oracle.cpp`, a separate program built on `boost::multiprecision::cpp_dec_float_100`
+`src/exp7_oracle.cpp`, a separate program built on `boost::multiprecision::mpfr_float_100` (MPFR)
 that shares no arithmetic with the probe, recomputes each recorded attempt from its variates and
 classifies it again. The recorded attempts are:
 
@@ -100,30 +100,52 @@ The experiment runs in six phases, each a make target.
 
 ## Results
 
-The committed results were produced with release 2.2.0 of `cpp/bi_kappa_distribution.H`.
-`raw/environment.json` records its SHA-256 (beginning `d9cb44ca`) and the SHA-256 of every other
-source file, and `results/provenance.md` records the compilers and run times.
+The committed results were produced with release 2.3.0 of `cpp/bi_kappa_distribution.H`, which
+computes in the working precision in every instantiation: in `float` all arithmetic is done in
+`float`. `raw/environment.json` records its SHA-256 (beginning `4c7c95ea`) and the SHA-256 of
+every other source file, and `results/provenance.md` records the compilers and run times.
 
-- The stabilized calculation had no avoidable loss in any setting. Every non-finite output it
-  returned had a component too large for the output type.
+- In double precision the stabilized calculation had no avoidable loss in any setting. Every
+  non-finite output it returned had a component too large for `double`.
+- In single precision it returned three draws as non-finite whose largest component could have
+  been stored: two at κ = 0.505 and one at κ = 0.51, out of 5 × 10⁷ attempts per setting, the
+  same three draws in both builds. Their exact largest components lay 4.3 × 10⁻⁶, 9.8 × 10⁻⁶
+  and 5.2 × 10⁻⁷ (relative) below the value at which a `float` overflows. The single-precision
+  radius carries a relative error of about 10⁻⁵ at that size, so such a component can round
+  either way; one draw at κ = 0.51 rounded the other way and was returned finite although its
+  exact value lay 6.2 × 10⁻⁶ above the limit. These three draws are avoidable losses under the
+  protocol. Every other non-finite output had a component too large for `float`.
 - The direct calculation lost additional draws near κ = 1/2. In double precision at κ = 0.505,
-  for example, it failed on 2.4% of attempts, against 0.081% for the stabilized calculation. In
-  single precision at κ = 0.55 the two rates were 0.57% and 0.013%.
-- Unavoidable losses dominate at the smallest κ. At κ = 0.5001 they affect 87% of attempts in
-  double precision and 98% in single precision.
-- The 100-digit recomputation agreed with the probe's classification on all 14 244 766 recorded
-  attempts.
+  for example, it failed on 2.4% of attempts, against 0.083% for the stabilized calculation. In
+  single precision at κ = 0.55 the two rates were 0.57% and 0.014%.
+- Unavoidable losses dominate at the smallest κ. At κ = 0.5001 they affect 86.8% of attempts in
+  double precision and 98.2% in single precision.
+- The 100-digit recomputation agreed with the probe's classification on all 115 029 238
+  recorded attempts.
 - The tests of the radial distribution (`p1`) and of the complete loader (`p4`) found no
   departure from the target distribution at the significance levels set in `PROTOCOL.md`.
+- The pre-registered verdict in `results/analysis_report.md` is NO-GO, because gate G1 requires
+  the stabilized calculation to have no avoidable loss at all, and the three single-precision
+  draws above fail it. The gate counts them once per build, as six.
 - The two builds returned bitwise identical output for the stabilized calculation in all 130
   configurations compared. The direct calculation, which draws its Gamma variates from the
   standard library, differed between the builds in all 130.
-- With libc++ the stabilized calculation took 0.80 to 0.91 times as long per returned sample as
-  the direct one, depending on the benchmark case. With libstdc++ it took 1.15 to 1.61 times as
-  long.
+- With libc++ the stabilized calculation took 0.70 to 0.91 times as long per returned sample as
+  the direct one, depending on the benchmark case. With libstdc++ it took 1.15 to 1.40 times as
+  long. The single-precision case is the fastest of the five.
 
 Only one processor architecture (64-bit ARM) was tested. `results/portability_remote.md` gives
 the commands for running the comparison on x86_64.
+
+**2026-09-25, protocol 4.0.0.** The results above replace those of protocol 3.0.0, which were
+produced with release 2.2.0 on seeds 9001–9010. Release 2.2.0 computed a `float` sample in
+`double` and rounded each component once; release 2.3.0 computes it in `float`, so that the
+header works where only single precision is available. `double` output is unchanged. The
+mechanism phase `p2` now runs 10⁷ attempts per seed instead of 10⁶. With 5 × 10⁶ attempts per
+setting a setting with no failure could only be bounded at 6.0 × 10⁻⁷ (one-sided 95%), above the
+nonzero fractions observed at neighbouring κ; with 5 × 10⁷ the bound is 6.0 × 10⁻⁸. The
+recomputation now uses MPFR instead of `cpp_dec_float_100`. `PROTOCOL.md` §2.8 records the
+amendment.
 
 ## Rerunning
 
@@ -168,10 +190,12 @@ recorded in `raw/environment.json`. `compare_regenerated.py` does both compariso
 - `ORACLE_JOBS` sets the number of processes that share the 100-digit recomputation. On macOS
   the default is the number of performance cores.
 
-**Runtime and disk use.** On the test machine the six phases took 11 minutes for both builds
-together. The 100-digit recomputation takes about 1.1 ms per recorded attempt, about 4.5 hours
-of single-core time, divided among `ORACLE_JOBS` processes. The phases write about 4.3 GB of
-per-attempt binary files under `raw/`. These `.bin` files are not committed.
+**Runtime and disk use.** On the test machine (Apple silicon, 12 performance cores) the six
+phases took 34 minutes for both builds together, 21 of them in `p2`. The 100-digit
+recomputation takes about 29 µs per recorded attempt, about 55 minutes of single-core time for
+the 115 million recorded attempts, and took 4 minutes with `ORACLE_JOBS=16`. The analysis takes
+about 7 minutes. The phases write about 11 GB of per-attempt binary files under `raw/`, most of
+it the two `p2` audit streams. These `.bin` files are not committed.
 
 **Checking the committed files.** `shasum -a 256 -c checksums.sha256` checks the committed
 sources, settings, results and figures. `make verify` also checks `raw/raw_checksums.sha256`,

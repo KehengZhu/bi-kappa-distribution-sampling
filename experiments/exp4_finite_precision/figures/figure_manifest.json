@@ -1,6 +1,6 @@
 [
   {
-    "core_conclusion": "The stabilized log-scale calculation removes the intermediate failures of direct square-root evaluation. Every remaining non-finite output contains a component that is too large for the output type.",
+    "core_conclusion": "The stabilized log-scale calculation removes the intermediate failures of direct square-root evaluation. Apart from the draws listed in the caption, every remaining non-finite output contains a component that is too large for the output type.",
     "figure": "fp1_failure_envelope",
     "formats": [
       "pdf",
@@ -8,12 +8,12 @@
       "png@600dpi"
     ],
     "height_mm": 78,
-    "interval_definition": "no interval is drawn; the failure count and its two-sided 95% Clopper-Pearson interval are published for every setting in failure_envelope.csv, and settings with zero failures are not plotted",
+    "interval_definition": "no interval is drawn for an observed fraction; the failure count and its two-sided 95% Clopper-Pearson interval are published for every setting in failure_envelope.csv, and a setting with zero failures is drawn as an open marker with a downward arrow at its one-sided 95% upper bound",
     "panels": 2,
-    "protocol_sha256": "c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6",
-    "script_sha256": "eae052b5c20fd05bb7ce828d7cc53d8fcc977c983f518ae2a9070cd351d64cc6",
+    "protocol_sha256": "664d906899b1726ae6d0bd3856483c4590af875a9dfdc3fee14fdcb79dbc4e34",
+    "script_sha256": "58fe1e143e0381410cb241d27ab3d5cc8a4111cbf5bd74008ab09636100a600f",
     "source_csv_sha256s": {
-      "failure_envelope.csv": "3d9758ee85069f0f749bcd64011f959bfd36b5c70bfcbe3bb647f71809118284"
+      "failure_envelope.csv": "b7e90deb8e14b9c10a0f4927c51df07bf70cdabad97c7b933eed37a0f344e27a"
     },
     "source_csvs": [
       "failure_envelope.csv"
@@ -31,11 +31,11 @@
     "height_mm": 118,
     "interval_definition": "95% Clopper-Pearson for per-bin success rates (one-sided 95% upper limits where a bin saw no success); 99% cluster-bootstrap percentile intervals over seeds, 10000 resamples, for the tail ratios",
     "panels": 4,
-    "protocol_sha256": "c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6",
-    "script_sha256": "eae052b5c20fd05bb7ce828d7cc53d8fcc977c983f518ae2a9070cd351d64cc6",
+    "protocol_sha256": "664d906899b1726ae6d0bd3856483c4590af875a9dfdc3fee14fdcb79dbc4e34",
+    "script_sha256": "58fe1e143e0381410cb241d27ab3d5cc8a4111cbf5bd74008ab09636100a600f",
     "source_csv_sha256s": {
-      "conditioning_bins.csv": "a9961d3c94bf88cafdd58098bf7936265c2007df0ff52f3607535ce5c1bd89ea",
-      "tail_metrics.csv": "e6e4bdd9a70799f31381ea6fb784face910b2b0d3b0f3c6ace9a455e0976e2ae"
+      "conditioning_bins.csv": "c9ccb20aafcb50cbca2d4aa721866742407024e1b85c917752cd98b0e9c1039a",
+      "tail_metrics.csv": "ecf7201105084b9b39731fc11eb12424e680a31802bd3b468d5a2685092016ee"
     },
     "source_csvs": [
       "conditioning_bins.csv",
@@ -54,11 +54,11 @@
     "height_mm": 118,
     "interval_definition": "dotted lines are simultaneous Kolmogorov bands at the frozen F1 level; quantile brackets are exact binomial order-statistic intervals, Bonferroni-corrected over the five levels",
     "panels": 4,
-    "protocol_sha256": "c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6",
-    "script_sha256": "eae052b5c20fd05bb7ce828d7cc53d8fcc977c983f518ae2a9070cd351d64cc6",
+    "protocol_sha256": "664d906899b1726ae6d0bd3856483c4590af875a9dfdc3fee14fdcb79dbc4e34",
+    "script_sha256": "58fe1e143e0381410cb241d27ab3d5cc8a4111cbf5bd74008ab09636100a600f",
     "source_csv_sha256s": {
-      "scalar_ecdf.csv": "95f5261de1821083292e411c0b9c7d4f5b822f018922030c022517a0b49a4074",
-      "scalar_validation.csv": "d5a40c9a9021a81db52b31903824b0091f2afe515c6b279ddefd133919f11794"
+      "scalar_ecdf.csv": "5157e60ebd0cb7733dbd10b3a5e3fb1804cad562183048ec35766dc8917e897f",
+      "scalar_validation.csv": "7c3a40996538c39004e5514c7e54fad9a58c06f5835eefc1b8198f0cd4ab1aa6"
     },
     "source_csvs": [
       "scalar_ecdf.csv",
@@ -77,10 +77,10 @@
     "height_mm": 104,
     "interval_definition": "Holm-corrected jointly over all cells and tests at the frozen F5 familywise alpha; a conditional cell cannot support the fidelity claim on its own",
     "panels": 1,
-    "protocol_sha256": "c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6",
-    "script_sha256": "eae052b5c20fd05bb7ce828d7cc53d8fcc977c983f518ae2a9070cd351d64cc6",
+    "protocol_sha256": "664d906899b1726ae6d0bd3856483c4590af875a9dfdc3fee14fdcb79dbc4e34",
+    "script_sha256": "58fe1e143e0381410cb241d27ab3d5cc8a4111cbf5bd74008ab09636100a600f",
     "source_csv_sha256s": {
-      "loader_validation.csv": "f8d38ec3000e225e8796fecf964afd1c27cf890738de3c4aa7388ada0838b3a2"
+      "loader_validation.csv": "ea0ec1e6f8da83a363e5dbd169297e8f7ce21d3c73eba1cc23a1255c70a58e2a"
     },
     "source_csvs": [
       "loader_validation.csv"
@@ -98,11 +98,11 @@
     "height_mm": 84,
     "interval_definition": "99% cluster-bootstrap percentile interval over seeds, 10000 resamples, for the paired blockwise time ratio; the bitwise comparison is exact and has no interval",
     "panels": 2,
-    "protocol_sha256": "c3b4a0a07877c0f8e2370ff7fdae98d3f3d96c15465aadb9eae00a280391c6a6",
-    "script_sha256": "eae052b5c20fd05bb7ce828d7cc53d8fcc977c983f518ae2a9070cd351d64cc6",
+    "protocol_sha256": "664d906899b1726ae6d0bd3856483c4590af875a9dfdc3fee14fdcb79dbc4e34",
+    "script_sha256": "58fe1e143e0381410cb241d27ab3d5cc8a4111cbf5bd74008ab09636100a600f",
     "source_csv_sha256s": {
-      "performance.csv": "d64c136583b80e61254c427ae7c19f6b1aea03a313dde5da9f83fe349db489d3",
-      "portability.csv": "ead809c7dfaaacac08d1b2921729bf8aff60180db49d507603b2df4ce9698b16"
+      "performance.csv": "75b32018191035b6206ded3a060fd95140769a750b02d4447998396601073955",
+      "portability.csv": "79ce6a1748a4e484eeabfef868812b7287ffc4cbf000dd673901b26c0220055d"
     },
     "source_csvs": [
       "portability.csv",

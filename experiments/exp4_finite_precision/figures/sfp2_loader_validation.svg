@@ -201,7 +201,7 @@ L 501.15814 83.900992
      </g>
      <g id="line2d_30"/>
      <g id="text_15">
-      <text style="font-size: 6.5px; font-family: 'DejaVu Sans', 'Helvetica', 'Arial', sans-serif; text-anchor: end" x="187.001172" y="86.370484" transform="rotate(-0 187.001172 86.370484)">C1 LEGACY  (n=499,712; conditional, loss 0.00058)</text>
+      <text style="font-size: 6.5px; font-family: 'DejaVu Sans', 'Helvetica', 'Arial', sans-serif; text-anchor: end" x="187.001172" y="86.370484" transform="rotate(-0 187.001172 86.370484)">C1 LEGACY  (n=499,684; conditional, loss 0.00063)</text>
      </g>
     </g>
     <g id="ytick_5">
@@ -223,7 +223,7 @@ L 501.15814 114.162534
      </g>
      <g id="line2d_34"/>
      <g id="text_17">
-      <text style="font-size: 6.5px; font-family: 'DejaVu Sans', 'Helvetica', 'Arial', sans-serif; text-anchor: end" x="187.001172" y="116.632026" transform="rotate(-0 187.001172 116.632026)">C2 LEGACY  (n=499,712; conditional, loss 0.00058)</text>
+      <text style="font-size: 6.5px; font-family: 'DejaVu Sans', 'Helvetica', 'Arial', sans-serif; text-anchor: end" x="187.001172" y="116.632026" transform="rotate(-0 187.001172 116.632026)">C2 LEGACY  (n=499,684; conditional, loss 0.00063)</text>
      </g>
     </g>
     <g id="ytick_7">
@@ -234,7 +234,7 @@ L 501.15814 129.293304
      </g>
      <g id="line2d_36"/>
      <g id="text_18">
-      <text style="font-size: 6.5px; font-family: 'DejaVu Sans', 'Helvetica', 'Arial', sans-serif; text-anchor: end" x="187.001172" y="131.762796" transform="rotate(-0 187.001172 131.762796)">C3 CANDIDATE  (n=499,936; conditional, loss 0.00013)</text>
+      <text style="font-size: 6.5px; font-family: 'DejaVu Sans', 'Helvetica', 'Arial', sans-serif; text-anchor: end" x="187.001172" y="131.762796" transform="rotate(-0 187.001172 131.762796)">C3 CANDIDATE  (n=499,926; conditional, loss 0.00015)</text>
      </g>
     </g>
     <g id="ytick_8">
@@ -245,7 +245,7 @@ L 501.15814 144.424075
      </g>
      <g id="line2d_38"/>
      <g id="text_19">
-      <text style="font-size: 6.5px; font-family: 'DejaVu Sans', 'Helvetica', 'Arial', sans-serif; text-anchor: end" x="187.001172" y="146.893567" transform="rotate(-0 187.001172 146.893567)">C3 LEGACY  (n=497,223; conditional, loss 0.0056)</text>
+      <text style="font-size: 6.5px; font-family: 'DejaVu Sans', 'Helvetica', 'Arial', sans-serif; text-anchor: end" x="187.001172" y="146.893567" transform="rotate(-0 187.001172 146.893567)">C3 LEGACY  (n=497,263; conditional, loss 0.0055)</text>
      </g>
     </g>
     <g id="ytick_9">
@@ -256,7 +256,7 @@ L 501.15814 159.554846
      </g>
      <g id="line2d_40"/>
      <g id="text_20">
-      <text style="font-size: 6.5px; font-family: 'DejaVu Sans', 'Helvetica', 'Arial', sans-serif; text-anchor: end" x="187.001172" y="162.024338" transform="rotate(-0 187.001172 162.024338)">C4 CANDIDATE  (n=499,617; conditional, loss 0.00077)</text>
+      <text style="font-size: 6.5px; font-family: 'DejaVu Sans', 'Helvetica', 'Arial', sans-serif; text-anchor: end" x="187.001172" y="162.024338" transform="rotate(-0 187.001172 162.024338)">C4 CANDIDATE  (n=499,602; conditional, loss 0.0008)</text>
      </g>
     </g>
     <g id="ytick_10">
@@ -267,7 +267,7 @@ L 501.15814 174.685616
      </g>
      <g id="line2d_42"/>
      <g id="text_21">
-      <text style="font-size: 6.5px; font-family: 'DejaVu Sans', 'Helvetica', 'Arial', sans-serif; text-anchor: end" x="187.001172" y="177.155108" transform="rotate(-0 187.001172 177.155108)">C4 LEGACY  (n=488,129; conditional, loss 0.024)</text>
+      <text style="font-size: 6.5px; font-family: 'DejaVu Sans', 'Helvetica', 'Arial', sans-serif; text-anchor: end" x="187.001172" y="177.155108" transform="rotate(-0 187.001172 177.155108)">C4 LEGACY  (n=487,906; conditional, loss 0.024)</text>
      </g>
     </g>
     <g id="ytick_11">
