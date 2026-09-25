@@ -3360,20 +3360,14 @@ static bool test_boundary_fixtures(const BoundaryFixture<T> *fx, int n, const ch
     for (int i= 0; i < n; ++i)
     {
         const BoundaryFixture<T> &f= fx[i];
-        // Release 2.2.0 hands `materializeComponents` the accumulator of
-        // `bikappa_detail::log_accumulator<T>` -- `double` for a `float` run, the working
-        // type otherwise -- because the one rounding belongs on the product `R g_j` and
-        // not on its two factors.  Widening is exact, so the fixtures below are the same
-        // mathematical inputs they always were and their 100-digit adjudications still
-        // stand; what changes is that the loader can now resolve them.
-        typedef typename bikappa_detail::log_accumulator<T>::type A;
-        std::array<A, 3> g;
+        // `materializeComponents<T>` computes in `T`, so the fixture's inputs are passed
+        // exactly as written; their 100-digit adjudications are of those same inputs.
+        std::array<T, 3> g;
         std::array<T, 3> v;
         for (int j= 0; j < 3; ++j)
-            g[j]= static_cast<A>(f.g[j]);
+            g[j]= f.g[j];
 
-        const bool any=
-            bikappa_detail::materializeComponents<T>(static_cast<A>(f.log_r), g, v);
+        const bool any= bikappa_detail::materializeComponents<T>(f.log_r, g, v);
 
         bool ok= (any == f.any_overflow);
         bool any_nonfinite= false;
@@ -3523,25 +3517,24 @@ static int test_representability_boundary()
                      "velocity): " << (ok ? "PASS" : "FAIL") << std::endl;
     }
 
-    // S5: a draw that release 2.1.0 lost in float at kappa = 0.505, replayed from its
-    // recorded variates.
+    // S5: a draw near the float overflow threshold, replayed from its recorded variates.
     //
-    // The defect this locks down is resolution, not a wrong comparison.  Release 2.1.0
-    // already decided representability from the materialized component; what it could not
-    // do was resolve the margin.  At `float kappa = 0.505`, seed 8005, attempt 157855, the
-    // largest intended component lies 3.12e-08 natural-log units below `log(FLT_MAX)` --
-    // about half an ulp -- so the correctly rounded `float` is finite and the type can
-    // hold the draw.  Two working-precision quantities on the path to it are coarser than
-    // that margin: `log R = (log X1 - log X2)/2` carries about 3.5e-06 once `log U` has
-    // been divided by `a = 0.005`, and `g_j = sqrt(kappa) n_j` formed in `float` carries
-    // another 3.9e-08, against a `float` ulp of 6.0e-08 at the overflow threshold.  2.1.0
-    // therefore exponentiated one ulp high and returned `+inf` for a returnable draw.
+    // At `float kappa = 0.505`, seed 8005, attempt 157855 of an earlier run, the largest
+    // intended component lies 3.12e-08 natural-log units below the float overflow threshold
+    // (FLT_MAX plus half an ulp), so its correctly rounded `float` is FLT_MAX.  The `float`
+    // log radius carries about 3.5e-06 of error once `log U` has been divided by
+    // `a = 0.005`, a hundred times that margin, so the float calculation cannot resolve which
+    // side of the threshold this component falls on.  The header documents that such a
+    // component may be returned finite or infinite.
     //
-    // 2.2.0 draws the same `float` variates in the same order -- the law is unchanged --
-    // and evaluates the deterministic map from them to the returned velocity in the
-    // accumulator, rounding once.  Both halves are asserted: the stabilized formation must
-    // reproduce the 120-digit values below, and the previous working-precision formation
-    // must lose the draw, so that a revert cannot pass this test quietly.
+    // What is asserted: (1) the flag agrees with the returned values; (2) the exact largest
+    // component lies inside the documented float error band of the threshold, so whichever
+    // way it is returned is within the stated accuracy; (3) the two components that are not
+    // near the threshold match their 120-digit values within the documented budget; and
+    // (4) the all-float calculation returns this draw non-finite, as working-precision
+    // arithmetic on this platform does.  (4) records the arithmetic of the float
+    // instantiation: evaluating the map in a wider type returns the draw instead, so a
+    // change of the working type does not pass this test unnoticed.
     //
     // The five variates are the bit patterns the run recorded.  The expected components
     // were computed at 120 decimal digits with mpmath from the exact definition
@@ -3562,132 +3555,153 @@ static int test_representability_boundary()
         // 120-digit adjudication, correctly rounded to float.  The first component is
         // FLT_MAX itself: the exact magnitude is 0.99999999860 of it.
         const float expected[3]= {3.4028235e+38f, -4.1361512e+37f, -2.2335724e+38f};
+        // Its exact distance below the overflow threshold, in natural-log units.
+        const double margin_below_threshold= 3.12e-08;
 
-        // --- the stabilized formation, as 2.2.0 performs it ---------------------
-        typedef bikappa_detail::log_accumulator<float>::type A;
-        const A log_x2= std::log(static_cast<A>(y)) +
-                        std::log(static_cast<A>(u)) / static_cast<A>(a);
-        const A log_r= A(0.5) * (std::log(static_cast<A>(x1)) - log_x2);
-        const A st= std::sqrt(A(1) - static_cast<A>(ct) * static_cast<A>(ct));
-        const A sk= std::sqrt(static_cast<A>(kappa));
-        std::array<A, 3> g;
-        g[0]= sk * st * std::cos(static_cast<A>(phi));
-        g[1]= sk * st * std::sin(static_cast<A>(phi));
-        g[2]= sk * static_cast<A>(ct);
+        // --- the float calculation, as the header performs it ---------------------
+        const float log_x2= std::log(y) + std::log(u) / a;
+        const float log_r= 0.5f * (std::log(x1) - log_x2);
+        const float st= std::sqrt(1.0f - ct * ct);
+        const float sk= std::sqrt(kappa);
+        std::array<float, 3> g;
+        g[0]= sk * st * std::cos(phi);
+        g[1]= sk * st * std::sin(phi);
+        g[2]= sk * ct;
         std::array<float, 3> v;
         const bool any= bikappa_detail::materializeComponents<float>(log_r, g, v);
 
-        bool ok= !any;
+        bool any_nonfinite= false;
         for (int j= 0; j < 3; ++j)
-            ok= ok && (v[j] == expected[j]);
+            any_nonfinite= any_nonfinite || !std::isfinite(v[j]);
+        const bool contract= (any == any_nonfinite);
 
-        // --- the previous working-precision formation --------------------------
-        const float f_log_x2= std::log(y) + std::log(u) / a;
-        const float f_log_r= 0.5f * (std::log(x1) - f_log_x2);
-        const float f_st= std::sqrt(1.0f - ct * ct);
-        const float f_sk= std::sqrt(kappa);
-        const float f_g0= f_sk * f_st * std::cos(phi);
-        const float f_R= std::exp(f_log_r);
-        const bool previous_lost=
-            !(f_R <= std::numeric_limits<float>::max()) ||
-            !(f_R * std::abs(f_g0) <= std::numeric_limits<float>::max());
+        // The documented error band of a float component near FLT_MAX: eps |log R|, with a
+        // factor of four for the terms the model leaves out.
+        const double band= 4.0 * double(std::numeric_limits<float>::epsilon()) *
+                           std::abs(double(log_r));
+        const bool inside_band= margin_below_threshold < band;
 
-        ok= ok && previous_lost;
+        bool others_ok= true;
+        for (int j= 1; j < 3; ++j)
+        {
+            const double rel= std::abs(double(v[j]) / double(expected[j]) - 1.0);
+            others_ok= others_ok && std::isfinite(v[j]) &&
+                       rel <= test_component_tolerance<float>(log_r, g[j]);
+        }
+
+        const bool ok= contract && inside_band && others_ok && any;
         all_ok= all_ok && ok;
-        std::cout << "  S5 recorded draw (float kappa=0.505, seed 8005, attempt 157855): "
-                  << "stabilized returns " << (any ? "non-finite" : "the 120-digit values")
-                  << ", previous form " << (previous_lost ? "loses it" : "also returns it")
+        std::cout << "  S5 recorded draw (float kappa=0.505, largest component "
+                  << margin_below_threshold << " log units below the threshold, band "
+                  << band << "): returned " << (any ? "non-finite" : "finite")
+                  << ", flag agrees " << (contract ? "yes" : "NO")
+                  << ", other components within budget " << (others_ok ? "yes" : "NO")
                   << ": " << (ok ? "PASS" : "FAIL") << std::endl;
     }
 
     // S6: the float representability boundary, swept.
     //
-    // S5 is one point on a boundary; this walks across it.  Each target magnitude is built
-    // first, as an exact `double` -- FLT_MAX plus an integer number of eighths of an ulp,
-    // which needs 27 bits of mantissa -- and what the loader must decide is compared
-    // against the hardware's own `float` conversion of that magnitude, never against the
-    // loader's own `exp`.  The rounding midpoint at +4/8 ulp is excluded and the exclusion
-    // is part of the rule: it is the one magnitude whose answer comes from
-    // round-half-to-even rather than from an inequality, no finite-precision
-    // reconstruction of it can be relied on to land on the right side, and an exact tie has
-    // probability zero under a continuous law.  The two points 1e-12 either side of it --
-    // a hundred times the accumulator's resolution, four thousand times finer than an ulp
-    // -- are included instead, and they are what a working-precision `log R` could not
-    // have decided.
+    // S5 is one point on the boundary; this walks across it, in the two regimes the float
+    // calculation has.  In each, the log radius is fixed at a float value that puts `R g`
+    // at FLT_MAX for g = g_mid, and g steps through values around g_mid.  The exact
+    // magnitude of each product is formed in double from the same float inputs, and decides
+    // the expected answer -- never the loader's own `exp`.  Away from the threshold the
+    // loader must decide as the exact value does.  Within the float error band of the
+    // threshold either answer is allowed.  Each band is twice the error budget of its
+    // regime and is fixed here from the error model, not fitted to the outcome.
+    //
+    //  (a) |g| > 1, so `R` itself is representable and the component is `R * |g|`: two
+    //      roundings (libm's `expf`, under an ulp on the platforms tested, and the multiply),
+    //      band 4 eps.  g steps through consecutive floats.
+    //  (b) |g| < 1, the usual case: `R` exceeds FLT_MAX, and the component is
+    //      `exp(log R + log|g|)`, whose argument carries the rounding of a sum of size 88.7.
+    //      Budget 2 eps |log V|, band 4 eps |log V| = 4.2e-5.  g steps by 2e-6 relative.
     {
-        const float fmax= std::numeric_limits<float>::max();
-        const double fmaxd= static_cast<double>(fmax);
-        const double ulp= fmaxd - static_cast<double>(std::nextafter(fmax, 0.0f));
-        const double g0= 0.59104243501804303857;   // the S5 draw's largest |g_j|
-        const double g1= -0.071841542754834329151;
-        const double g2= -0.38795312600129426096;
-
-        int checked= 0, bad= 0;
-        for (int i= 0; i <= 34; ++i)
+        const double thresh= static_cast<double>(std::numeric_limits<float>::max()) *
+                             (1.0 + std::ldexp(1.0, -25));  // FLT_MAX plus half an ulp
+        const double eps= double(std::numeric_limits<float>::epsilon());
+        bool ok= true;
+        for (int regime= 0; regime < 2; ++regime)
         {
-            const int j= i - 16;
-            double m;
-            bool expect_finite;
-            if (i <= 32)
+            const float g_mid= (regime == 0) ? 1.9f : 0.59104243f;
+            const double band= (regime == 0) ? 4.0 * eps : 4.0 * eps * std::log(thresh);
+            const float log_r=
+                static_cast<float>(std::log(thresh) - std::log(static_cast<double>(g_mid)));
+            const double r_exact= std::exp(static_cast<double>(log_r));
+            int outside= 0, bad= 0, inside= 0, inside_finite= 0;
+            bool saw_finite= false, saw_inf= false;
+            float gv= g_mid;
+            if (regime == 0)
+                for (int i= 0; i < 64; ++i)
+                    gv= std::nextafter(gv, 0.0f);
+            for (int i= 0; i <= 128; ++i)
             {
-                if (j == 4)
-                    continue;                       // the exact tie; see above
-                m= fmaxd + static_cast<double>(j) * (ulp / 8.0);
-                expect_finite= std::isfinite(static_cast<float>(m));
+                if (regime == 1)
+                    gv= static_cast<float>(static_cast<double>(g_mid) *
+                                           (1.0 + 2.0e-6 * static_cast<double>(i - 64)));
+                const double m= r_exact * static_cast<double>(gv);
+                std::array<float, 3> g;
+                g[0]= gv;
+                g[1]= -0.071841543f;
+                g[2]= -0.38795313f;
+                std::array<float, 3> v;
+                const bool over= bikappa_detail::materializeComponents<float>(log_r, g, v);
+                const bool got= !over && std::isfinite(v[0]);
+                saw_finite= saw_finite || got;
+                saw_inf= saw_inf || !got;
+                const double rel= m / thresh - 1.0;
+                if (regime == 0)
+                    gv= std::nextafter(gv, 2.0f);
+                if (std::abs(rel) <= band)
+                {
+                    ++inside;
+                    if (got)
+                        ++inside_finite;
+                    continue;
+                }
+                ++outside;
+                if (got != (rel < 0.0))
+                    ++bad;
             }
-            else
-            {
-                const double mid= fmaxd + 4.0 * (ulp / 8.0);
-                expect_finite= (i == 33);
-                m= mid * (expect_finite ? (1.0 - 1.0e-12) : (1.0 + 1.0e-12));
-            }
-            const double log_r= std::log(m) - std::log(g0);
-            std::array<double, 3> g;
-            g[0]= g0;
-            g[1]= g1;
-            g[2]= g2;
-            std::array<float, 3> v;
-            const bool over= bikappa_detail::materializeComponents<float>(log_r, g, v);
-            const bool got= !over && std::isfinite(v[0]) && std::isfinite(v[1]) &&
-                            std::isfinite(v[2]);
-            ++checked;
-            if (got != expect_finite)
-                ++bad;
+            const bool rok= (bad == 0) && saw_finite && saw_inf && outside >= 64;
+            ok= ok && rok;
+            std::cout << "  S6" << (regime == 0 ? "a" : "b") << " float boundary sweep, "
+                      << (regime == 0 ? "R representable" : "R beyond FLT_MAX") << ": "
+                      << outside << " magnitudes outside the band of +/-" << band
+                      << " decided as the exact value is, " << bad << " wrong; " << inside
+                      << " inside the band, " << inside_finite << " of them returned finite: "
+                      << (rok ? "PASS" : "FAIL") << std::endl;
         }
-        const bool ok= (bad == 0) && (checked == 34);
         all_ok= all_ok && ok;
-        std::cout << "  S6 float boundary sweep: " << checked
-                  << " magnitudes from -2 to +2 ulp of FLT_MAX and 1e-12 either side of "
-                     "the rounding midpoint, " << bad << " decided against the hardware: "
-                  << (ok ? "PASS" : "FAIL") << std::endl;
     }
 
-    // S7: the accumulator is the working type for `double` and wider only for `float`.
+    // S7: every instantiation computes in its own type.
     //
-    // This is what makes "a `double` instantiation of 2.2.0 returns the same bits as
-    // 2.1.0" a statement about the source rather than a measurement: with
-    // `log_accumulator<double>::type == double`, every expression 2.2.0 widened is the
-    // expression 2.1.0 evaluated, character for character, so there is no `double`
-    // arithmetic to re-validate.  Only `float` gets a wider accumulator, and it must be
-    // strictly wider or the fix is not there at all.  A digest against the 2.1.0 binary
-    // is not used here: it would depend on the compiler and on `-ffp-contract`, and the
-    // equality it would test is checked once, against both released headers, in the
-    // release record rather than in a portable unit test.
+    // The primitives that carry the log radius and materialize the components take and
+    // return `RealType`, so a `float` instantiation does its arithmetic in `float` and a
+    // `double` one in `double`.  Checked on the types of the functions rather than on a
+    // sample, so that it does not depend on a compiler or on `-ffp-contract`.
     {
-        const bool d_is_working=
-            std::is_same<bikappa_detail::log_accumulator<double>::type, double>::value;
-        const bool f_is_double=
-            std::is_same<bikappa_detail::log_accumulator<float>::type, double>::value;
-        const bool wider= std::numeric_limits<
-                              bikappa_detail::log_accumulator<float>::type>::digits >
-                          std::numeric_limits<float>::digits;
-        const bool ok= d_is_working && f_is_double && wider;
+        typedef bool (*materialize_f)(float, const std::array<float, 3> &,
+                                      std::array<float, 3> &);
+        typedef bool (*materialize_d)(double, const std::array<double, 3> &,
+                                      std::array<double, 3> &);
+        typedef float (*log_gamma_f)(float, std::mt19937 &, float &, bool &);
+        typedef double (*log_gamma_d)(double, std::mt19937 &, double &, bool &);
+        const bool mf= std::is_same<decltype(&bikappa_detail::materializeComponents<float>),
+                                    materialize_f>::value;
+        const bool md= std::is_same<decltype(&bikappa_detail::materializeComponents<double>),
+                                    materialize_d>::value;
+        const bool lf=
+            std::is_same<decltype(&bikappa_detail::logGamma<float, std::mt19937>),
+                         log_gamma_f>::value;
+        const bool ld=
+            std::is_same<decltype(&bikappa_detail::logGamma<double, std::mt19937>),
+                         log_gamma_d>::value;
+        const bool ok= mf && md && lf && ld;
         all_ok= all_ok && ok;
-        std::cout << "  S7 accumulator: double -> double (working type, so the double path "
-                     "is 2.1.0 unchanged), float -> double ("
-                  << std::numeric_limits<
-                         bikappa_detail::log_accumulator<float>::type>::digits
-                  << " bits against " << std::numeric_limits<float>::digits << "): "
+        std::cout << "  S7 working type: logGamma and materializeComponents take and return "
+                     "float for float and double for double: "
                   << (ok ? "PASS" : "FAIL") << std::endl;
     }
 

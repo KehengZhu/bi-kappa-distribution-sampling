@@ -99,6 +99,12 @@ speeds above the largest representable floating-point number. For
 `kappa = 0.51` in `double`, and about `1.4e-4` at `kappa = 0.55` and `1.9e-8` at `kappa = 0.60`
 in `float`.
 
+The sampler computes in the type it is instantiated with: `bi_kappa_distribution<float>` does
+all of its arithmetic in `float`. The relative error of a large radius grows like
+`eps |log R|`, which near `FLT_MAX` is about `1e-5`. A `float` component whose exact value lies
+within that distance of `FLT_MAX` may therefore be returned either as a finite number or as an
+infinity.
+
 - Without a cap, such a draw is returned with infinite components.
 - With a cap, it is rejected and redrawn.
 - In both cases `n_nonfinite()` counts it, and `n_attempts()` counts every attempt, including

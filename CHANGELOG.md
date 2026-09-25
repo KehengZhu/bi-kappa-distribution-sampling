@@ -3,6 +3,27 @@
 This project follows [Semantic Versioning](https://semver.org/). A change in the random numbers
 that a given seed produces counts as a breaking change.
 
+## 2.3.0 — 2026-09-25
+
+### Changed
+
+- `bi_kappa_distribution<float>` does all of its arithmetic in `float`, and
+  `bi_kappa_distribution<double>` all of it in `double`. In 2.2.1 a `float` instantiation formed
+  the logarithm of the radius, the direction, the thermal scaling, the rotation and each
+  component in `double` and rounded each component once to `float`. The header now needs no
+  wider type than the one it is instantiated with.
+- `double` samples are unchanged. A `double` instantiation performs the same operations in the
+  same order as in 2.2.1, capped and uncapped, and returns the same bits for every seed.
+- `float` samples come from the same variate generators, and the sampled distribution is
+  unchanged. For a given seed a returned `float` component usually differs from 2.2.1 only in
+  its last bits. The acceptance test of the direction, `d1^2 + d2^2 < 1`, is now also
+  evaluated in `float`, so on the rare attempt where that sum rounds across 1 the two releases
+  draw a different direction for that sample, and later samples can differ as well.
+- In `float` the relative error of the radius grows like `eps |log R|` and is about `1e-5` near
+  `FLT_MAX`. A component whose exact value lies within that distance of the largest `float`
+  may therefore be returned as a finite number or as an infinity. `n_nonfinite()` counts what
+  is returned.
+
 ## 2.2.1 — 2026-09-24
 
 Changes since 1.0.0, the previous release. Versions 2.0.0 to 2.2.0 were never released.

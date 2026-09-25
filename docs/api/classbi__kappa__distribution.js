@@ -1,7 +1,6 @@
 var classbi__kappa__distribution =
 [
     [ "param_type", "classbi__kappa__distribution_1_1param__type.html", "classbi__kappa__distribution_1_1param__type" ],
-    [ "accum_point", "classbi__kappa__distribution.html#a70026cf87b23ca3d112c7a261dd62e66", null ],
     [ "point_type", "classbi__kappa__distribution.html#af074fc20c80c5001257d16854dd88531", null ],
     [ "result_type", "classbi__kappa__distribution.html#a64162f45ffce3f90655f46c15bb14c30", null ],
     [ "bi_kappa_distribution", "classbi__kappa__distribution.html#ad471e400f09fef7a5211ad97b6daf3ea", null ],
@@ -26,7 +25,7 @@ var classbi__kappa__distribution =
     [ "param", "classbi__kappa__distribution.html#a3b5f39d5e3d59fd76dbbf6f39cd9f1bd", null ],
     [ "reset", "classbi__kappa__distribution.html#a2f8d649fef1d5532d6bd4e3bc45324a8", null ],
     [ "rotate_from_fieldAligned_frame", "classbi__kappa__distribution.html#a93ef6fadd952c439e57c187149ab75ee", null ],
-    [ "rotateFromFieldAlignedFrameIn", "classbi__kappa__distribution.html#af420fc313de1fc181b80928710ad3fbc", null ],
+    [ "rotateFromFieldAlignedFrame", "classbi__kappa__distribution.html#ab5f10c61a560e8b86e87f10cf692f210", null ],
     [ "seed", "classbi__kappa__distribution.html#a004ccef23cf4f1cc3271134c1dde60b8", null ],
     [ "theta_par", "classbi__kappa__distribution.html#a3bfc76c0214f09eceef88469ae3a7277", null ],
     [ "theta_par", "classbi__kappa__distribution.html#a971b78635ab0856bc35c9c9493ffa128", null ],

@@ -31,7 +31,7 @@ mermaid.initialize({ startOnLoad: true, theme: theme });
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">bi-kappa<span id="projectnumber">&#160;2.2.1</span>
+   <div id="projectname">bi-kappa<span id="projectnumber">&#160;2.3.0</span>
    </div>
    <div id="projectbrief">Monte Carlo particle samplers for plasma velocity and position distributions</div>
   </td>
@@ -153,8 +153,8 @@ Quick start (C++)</h1>
 <div class="line">    <span class="keywordflow">return</span> 0;</div>
 <div class="line">}</div>
 <div class="ttc" id="abi__kappa__distribution_8_h_html"><div class="ttname"><a href="bi__kappa__distribution_8_h.html">bi_kappa_distribution.H</a></div></div>
-<div class="ttc" id="aclassbi__kappa__distribution_html"><div class="ttname"><a href="classbi__kappa__distribution.html">bi_kappa_distribution</a></div><div class="ttdoc">Bi-Kappa distribution class for sampling 3D velocity vectors.</div><div class="ttdef"><b>Definition</b> <a href="bi__kappa__distribution_8_h_source.html#l00384">bi_kappa_distribution.H:385</a></div></div>
-<div class="ttc" id="aclassbi__kappa__distribution_html_a138df5909e003c80dc061b63da6d1e76"><div class="ttname"><a href="classbi__kappa__distribution.html#a138df5909e003c80dc061b63da6d1e76">bi_kappa_distribution::define</a></div><div class="ttdeci">void define(const param_type &amp;params)</div><div class="ttdef"><b>Definition</b> <a href="bi__kappa__distribution_8_h_source.html#l00547">bi_kappa_distribution.H:547</a></div></div>
+<div class="ttc" id="aclassbi__kappa__distribution_html"><div class="ttname"><a href="classbi__kappa__distribution.html">bi_kappa_distribution</a></div><div class="ttdoc">Bi-Kappa distribution class for sampling 3D velocity vectors.</div><div class="ttdef"><b>Definition</b> <a href="bi__kappa__distribution_8_h_source.html#l00332">bi_kappa_distribution.H:333</a></div></div>
+<div class="ttc" id="aclassbi__kappa__distribution_html_a138df5909e003c80dc061b63da6d1e76"><div class="ttname"><a href="classbi__kappa__distribution.html#a138df5909e003c80dc061b63da6d1e76">bi_kappa_distribution::define</a></div><div class="ttdeci">void define(const param_type &amp;params)</div><div class="ttdef"><b>Definition</b> <a href="bi__kappa__distribution_8_h_source.html#l00489">bi_kappa_distribution.H:489</a></div></div>
 <div class="ttc" id="amain_8cpp_html_ae66f6b31b5ad750f1fe042a706a4e3d4"><div class="ttname"><a href="main_8cpp.html#ae66f6b31b5ad750f1fe042a706a4e3d4">main</a></div><div class="ttdeci">int main()</div><div class="ttdef"><b>Definition</b> <a href="main_8cpp_source.html#l00015">main.cpp:15</a></div></div>
 </div><!-- fragment --><div class="fragment"><div class="line">g++ -std=c++11 -O2 -I cpp example.cpp -o example</div>
 </div><!-- fragment --><p>To build and run the code shipped in <span class="tt">cpp/</span>:</p>
@@ -245,7 +245,7 @@ Reproducing the paper</h1>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><span class="tt">experiments/exp2_cap_characterization</span>  </td><td class="markdownTableBodyNone">Table II, Fig. 3  </td><td class="markdownTableBodyNone"><span class="tt">make run</span>, then <span class="tt">uv run --project ../../python python exp2_analyze.py</span>  </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><span class="tt">experiments/exp4_finite_precision</span>  </td><td class="markdownTableBodyNone">Fig. 2  </td><td class="markdownTableBodyNone">the run sequence in its README, ending with <span class="tt">make analyze figures</span>  </td></tr>
+<td class="markdownTableBodyNone"><span class="tt">experiments/exp4_finite_precision</span>  </td><td class="markdownTableBodyNone">Fig. 2  </td><td class="markdownTableBodyNone"><span class="tt">make figures</span> redraws it from the committed results; the full study (protocol, sampling, analysis) is in the GitHub repository, see its README  </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><span class="tt">experiments/exp3_benchmark</span>  </td><td class="markdownTableBodyNone">not shown (speed comparison with two other samplers)  </td><td class="markdownTableBodyNone"><span class="tt">make run</span>, then <span class="tt">uv run --project ../../python python exp3_analyze.py</span>  </td></tr>
 </table>

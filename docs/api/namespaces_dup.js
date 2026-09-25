@@ -1,6 +1,13 @@
 var namespaces_dup =
 [
-    [ "bikappa_detail", "namespacebikappa__detail.html", "namespacebikappa__detail" ],
+    [ "bikappa_detail", "namespacebikappa__detail.html", [
+      [ "engineBits", "namespacebikappa__detail.html#a6bdc9e9068ebd6ff7cdb96841d773e76", null ],
+      [ "logGamma", "namespacebikappa__detail.html#a51cd3d2b9c15648ce909ebd1d7b3471b", null ],
+      [ "marsagliaTsangGamma", "namespacebikappa__detail.html#a4c63751621048bea878caeb2f82e3beb", null ],
+      [ "materializeComponents", "namespacebikappa__detail.html#aa718409ff7515f247944daa58a757e2f", null ],
+      [ "openCanonical", "namespacebikappa__detail.html#a580cf46d81ec60c2d6ef06af942d4814", null ],
+      [ "polarNormal", "namespacebikappa__detail.html#a9390e7d740c746600426f622a1087a8b", null ]
+    ] ],
     [ "bikappa_validate", "namespacebikappa__validate.html", [
       [ "_holm", "namespacebikappa__validate.html#a2d01d9cac0f8c4994b8da287c503c035", null ],
       [ "_ks_critical", "namespacebikappa__validate.html#a9e62f21a88fa6674718a9fcf70f346ae", null ],

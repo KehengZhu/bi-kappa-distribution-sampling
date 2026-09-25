@@ -1,6 +1,5 @@
 var NAVTREEINDEX1 =
 {
-"namespacebikappa__validate.html#a555be2af057a6e92cef98459f0ce742a":[5,0,1,16],
 "namespacebikappa__validate.html#a6384ebfa0c0bd774abdb3d93bc8d475d":[5,0,1,5],
 "namespacebikappa__validate.html#a80b6eac9a409c3bd8943dd27c56dd204":[5,0,1,2],
 "namespacebikappa__validate.html#a84a7cd747fd9247689fec86e000db627":[5,0,1,3],
@@ -24,13 +23,5 @@ var NAVTREEINDEX1 =
 "namespaces.html":[5,0],
 "pages.html":[],
 "parameters.html":[2],
-"structbikappa__detail_1_1log__accumulator.html":[4,0,0,0],
-"structbikappa__detail_1_1log__accumulator.html":[5,0,0,0],
-"structbikappa__detail_1_1log__accumulator.html#ab83d6d34314d1996c5d3593f90240c17":[4,0,0,0,0],
-"structbikappa__detail_1_1log__accumulator.html#ab83d6d34314d1996c5d3593f90240c17":[5,0,0,0,0],
-"structbikappa__detail_1_1log__accumulator_3_01float_01_4.html":[4,0,0,1],
-"structbikappa__detail_1_1log__accumulator_3_01float_01_4.html":[5,0,0,1],
-"structbikappa__detail_1_1log__accumulator_3_01float_01_4.html#a4ab4c87ed50199e7c9a8807665675a3e":[4,0,0,1,0],
-"structbikappa__detail_1_1log__accumulator_3_01float_01_4.html#a4ab4c87ed50199e7c9a8807665675a3e":[5,0,0,1,0],
 "usage.html":[3]
 };
