@@ -9,15 +9,15 @@
 /// return at the representability boundary and in what `n_nonfinite()` counts under a cap,
 /// so they are two samplers and are versioned as two; see CHANGELOG.md.
 ///
-/// 2.3.0 does all of its arithmetic in `RealType`: `bi_kappa_distribution<float>` computes
+/// 3.0.0 does all of its arithmetic in `RealType`: `bi_kappa_distribution<float>` computes
 /// in `float` throughout and `bi_kappa_distribution<double>` in `double`.  2.2.x formed the
 /// log-domain radius and the rest of the map of a `float` instantiation in `double`.  The
 /// `double` instantiation returns the same bits as 2.2.x; the `float` one returns different
-/// numbers for the same seed; see CHANGELOG.md.
-#define BI_KAPPA_VERSION_MAJOR 2
-#define BI_KAPPA_VERSION_MINOR 3
+/// numbers for the same seed, which is why the major version changes; see CHANGELOG.md.
+#define BI_KAPPA_VERSION_MAJOR 3
+#define BI_KAPPA_VERSION_MINOR 0
 #define BI_KAPPA_VERSION_PATCH 0
-#define BI_KAPPA_VERSION_STRING "2.3.0"
+#define BI_KAPPA_VERSION_STRING "3.0.0"
 
 #include <array>
 #include <algorithm>

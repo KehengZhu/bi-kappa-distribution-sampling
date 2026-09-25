@@ -31,7 +31,7 @@ mermaid.initialize({ startOnLoad: true, theme: theme });
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">bi-kappa<span id="projectnumber">&#160;2.3.0</span>
+   <div id="projectname">bi-kappa<span id="projectnumber">&#160;3.0.0</span>
    </div>
    <div id="projectbrief">Monte Carlo particle samplers for plasma velocity and position distributions</div>
   </td>
@@ -143,11 +143,11 @@ Namespaces</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-define-members" class="groupheader"><a id="define-members" name="define-members"></a>
 Macros</h2></td></tr>
-<tr class="memitem:a072a411bef8c1b73f52385714babdeff" id="r_a072a411bef8c1b73f52385714babdeff"><td class="memItemLeft">#define&#160;</td><td class="memItemRight"><a class="el" href="#a072a411bef8c1b73f52385714babdeff">BI_KAPPA_VERSION_MAJOR</a>&#160;&#160;&#160;2</td></tr>
+<tr class="memitem:a072a411bef8c1b73f52385714babdeff" id="r_a072a411bef8c1b73f52385714babdeff"><td class="memItemLeft">#define&#160;</td><td class="memItemRight"><a class="el" href="#a072a411bef8c1b73f52385714babdeff">BI_KAPPA_VERSION_MAJOR</a>&#160;&#160;&#160;3</td></tr>
 <tr class="memdesc:a072a411bef8c1b73f52385714babdeff"><td class="mdescLeft">&#160;</td><td class="mdescRight">Release version of this header.  <br /></td></tr>
-<tr class="memitem:ab01206b40f62a73e361294ca58101147" id="r_ab01206b40f62a73e361294ca58101147"><td class="memItemLeft">#define&#160;</td><td class="memItemRight"><a class="el" href="#ab01206b40f62a73e361294ca58101147">BI_KAPPA_VERSION_MINOR</a>&#160;&#160;&#160;3</td></tr>
+<tr class="memitem:ab01206b40f62a73e361294ca58101147" id="r_ab01206b40f62a73e361294ca58101147"><td class="memItemLeft">#define&#160;</td><td class="memItemRight"><a class="el" href="#ab01206b40f62a73e361294ca58101147">BI_KAPPA_VERSION_MINOR</a>&#160;&#160;&#160;0</td></tr>
 <tr class="memitem:a87f2a2db0f5d64e03ee24238646657ef" id="r_a87f2a2db0f5d64e03ee24238646657ef"><td class="memItemLeft">#define&#160;</td><td class="memItemRight"><a class="el" href="#a87f2a2db0f5d64e03ee24238646657ef">BI_KAPPA_VERSION_PATCH</a>&#160;&#160;&#160;0</td></tr>
-<tr class="memitem:abd74c73d3e30c1f0587c0fbd1abe7ac5" id="r_abd74c73d3e30c1f0587c0fbd1abe7ac5"><td class="memItemLeft">#define&#160;</td><td class="memItemRight"><a class="el" href="#abd74c73d3e30c1f0587c0fbd1abe7ac5">BI_KAPPA_VERSION_STRING</a>&#160;&#160;&#160;&quot;2.3.0&quot;</td></tr>
+<tr class="memitem:abd74c73d3e30c1f0587c0fbd1abe7ac5" id="r_abd74c73d3e30c1f0587c0fbd1abe7ac5"><td class="memItemLeft">#define&#160;</td><td class="memItemRight"><a class="el" href="#abd74c73d3e30c1f0587c0fbd1abe7ac5">BI_KAPPA_VERSION_STRING</a>&#160;&#160;&#160;&quot;3.0.0&quot;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-func-members" class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
@@ -178,7 +178,7 @@ Functions</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">#define BI_KAPPA_VERSION_MAJOR&#160;&#160;&#160;2</td>
+          <td class="memname">#define BI_KAPPA_VERSION_MAJOR&#160;&#160;&#160;3</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -186,7 +186,7 @@ Functions</h2></td></tr>
 <p>Release version of this header. </p>
 <p>A consumer that vendors the file can test these to tell which sampler it has; 2.x is the first line whose radius is built in the log domain, and its random stream differs from 1.x for every seed.</p>
 <p>2.1.0 supersedes 2.0.0, which was never released. The two differ in which vectors they return at the representability boundary and in what <span class="tt">n_nonfinite()</span> counts under a cap, so they are two samplers and are versioned as two; see CHANGELOG.md.</p>
-<p>2.3.0 does all of its arithmetic in <span class="tt">RealType</span>: <span class="tt"><a class="el" href="classbi__kappa__distribution.html" title="Bi-Kappa distribution class for sampling 3D velocity vectors.">bi_kappa_distribution</a>&lt;float&gt;</span> computes in <span class="tt">float</span> throughout and <span class="tt"><a class="el" href="classbi__kappa__distribution.html" title="Bi-Kappa distribution class for sampling 3D velocity vectors.">bi_kappa_distribution</a>&lt;double&gt;</span> in <span class="tt">double</span>. 2.2.x formed the log-domain radius and the rest of the map of a <span class="tt">float</span> instantiation in <span class="tt">double</span>. The <span class="tt">double</span> instantiation returns the same bits as 2.2.x; the <span class="tt">float</span> one returns different numbers for the same seed; see CHANGELOG.md. </p>
+<p>3.0.0 does all of its arithmetic in <span class="tt">RealType</span>: <span class="tt"><a class="el" href="classbi__kappa__distribution.html" title="Bi-Kappa distribution class for sampling 3D velocity vectors.">bi_kappa_distribution</a>&lt;float&gt;</span> computes in <span class="tt">float</span> throughout and <span class="tt"><a class="el" href="classbi__kappa__distribution.html" title="Bi-Kappa distribution class for sampling 3D velocity vectors.">bi_kappa_distribution</a>&lt;double&gt;</span> in <span class="tt">double</span>. 2.2.x formed the log-domain radius and the rest of the map of a <span class="tt">float</span> instantiation in <span class="tt">double</span>. The <span class="tt">double</span> instantiation returns the same bits as 2.2.x; the <span class="tt">float</span> one returns different numbers for the same seed, which is why the major version changes; see CHANGELOG.md. </p>
 
 <p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00017">17</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
@@ -199,7 +199,7 @@ Functions</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">#define BI_KAPPA_VERSION_MINOR&#160;&#160;&#160;3</td>
+          <td class="memname">#define BI_KAPPA_VERSION_MINOR&#160;&#160;&#160;0</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -231,7 +231,7 @@ Functions</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">#define BI_KAPPA_VERSION_STRING&#160;&#160;&#160;&quot;2.3.0&quot;</td>
+          <td class="memname">#define BI_KAPPA_VERSION_STRING&#160;&#160;&#160;&quot;3.0.0&quot;</td>
         </tr>
       </table>
 </div><div class="memdoc">
