@@ -380,9 +380,10 @@ def table_moments(exp1_dir):
 
     From the large-sample run (exp1_moments.py: the 100 cell-test runs of 5 x 10^5 at
     kappa = 2, 5, 10).  "Sample" is the mean of the 100 run variances +/- its standard
-    error (sd of the run variances / 10).  The caveat that matters: the variance of the
-    sample variance needs a finite fourth moment, i.e. kappa > 5/2, so at kappa = 2 the
-    standard error has no finite population value and is only a rough scale.
+    error (sd of the run variances / 10).  The variance of the sample variance needs a
+    finite fourth moment, i.e. kappa > 5/2, so at kappa = 2 the standard error has no
+    finite population value; those rows print the mean alone, and the table caption
+    says why.
     """
     res = load_json(exp1_dir, "exp1_moments.json")
     names = {"v_perp1": "$V_{\\perp1}$", "v_perp2": "$V_{\\perp2}$",
@@ -400,10 +401,12 @@ def table_moments(exp1_dir):
             diff = f"{c['diff_percent']:+.2f}"
             if float(diff) == 0.0:
                 diff = "0.00"   # no sign on a difference that rounds to zero
+            sample = fmt(c['mean_run_variance'], 4)
+            if kappa > 2.5:
+                sample += f" $\\pm$ {fmt(c['standard_error'], 4)}"
             out_lines.append(
                 f"${kappa:g}$ & {names[key]} & {fmt(c['expected'], 4)} & "
-                f"{fmt(c['mean_run_variance'], 4)} $\\pm$ {fmt(c['standard_error'], 4)} & "
-                f"{diff} \\\\"
+                f"{sample} & {diff} \\\\"
             )
         out_lines.append("\\hline")
     body = "\n".join(out_lines[:-1])
