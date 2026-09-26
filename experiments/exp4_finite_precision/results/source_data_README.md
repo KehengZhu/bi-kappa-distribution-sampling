@@ -58,8 +58,9 @@ Every rate in this bundle is written as a block of seven columns, `<name>_count`
 
 A zero count is **never** reported as a zero-width interval. The two kinds are not the same
 bound and the column says which one each entry is, so "no failures observed" can never be
-read as "the rate is zero". Figures draw a zero count as a downward triangle at its
-one-sided upper limit and never at zero.
+read as "the rate is zero". No figure draws a zero count at zero: Fig. 2 leaves it out and
+marks the one-sided upper limit, which is the same for every zero count there, with a dotted
+line.
 
 ### Cluster-bootstrap intervals
 
@@ -227,9 +228,9 @@ One row per `precision` x `kappa`. A reference curve, not a measurement: it has 
 
 The floor of `honest_floor.csv` evaluated on 200 points uniform in `log(kappa - 1/2)` from
 1e-4 to 0.15, the horizontal range of `figures/fp1_failure_envelope`, for each precision. It is
-the grey line of that figure: the fraction of attempts whose exact velocity has a component
-larger than the largest finite value of the type, which no calculation returning values in
-that type can return. A reference curve, not a measurement: it has no interval.
+the upper edge of the grey region of that figure: the fraction of attempts whose exact
+velocity has a component larger than the largest finite value of the type, which no
+calculation returning values in that type can return. A reference curve, not a measurement: it has no interval.
 
 | column | meaning | unit |
 |---|---|---|
@@ -238,6 +239,27 @@ that type can return. A reference curve, not a measurement: it has no interval.
 | `shape_a`, `kappa` | the grid point `kappa - 1/2`, and `kappa` | -- |
 | `honest_floor_rate`, `honest_floor_log10` | the floor at that point, and its base-10 logarithm | probability, log10 |
 | `configuration` | isotropic, unrotated, `theta_perp = theta_par = 1`, the configuration of P2's `paired` layer | -- |
+
+### `direct_zero_denominator_curve.csv` — the direct calculation's expected loss, for Fig. 2
+
+The probability that the direct (LEGACY) calculation's denominator `X2 = Y U^(1/a)` rounds to
+zero, on the grid of `honest_floor_curve.csv`, for each precision. `X2` is zero when
+`U^(1/a)` falls below `x0`, half the smallest subnormal, or when its product with `Y < 1`
+does; hence `P(X2 = 0) = x0^a E[max(1, Y^(-a))]`, which has the closed form given in
+`results/schema.md` §4. In P2's `paired` layer this is also the direct calculation's expected
+non-finite fraction, because a non-zero `X2` never makes its radius overflow. It is the dashed
+line of `figures/fp1_failure_envelope`. A reference curve, not a measurement: it has no
+interval.
+
+| column | meaning | unit |
+|---|---|---|
+| `precision` | `float` or `double` | -- |
+| `grid_index` | position on the grid, 0 to 199 | -- |
+| `shape_a`, `kappa` | the grid point `kappa - 1/2`, and `kappa`; the horizontal coordinate, as in `honest_floor_curve.csv` | -- |
+| `working_shape_a` | the shape the calculation uses, `kappa - 1/2` formed in the working precision (`float(kappa) - 0.5f` in float) | -- |
+| `log2_zero_threshold` | `log2 x0`: -1075 in double, -150 in float | -- |
+| `y_factor` | `E[max(1, Y^(-a))]` with `Y ~ Gamma(a+1, 1)` | -- |
+| `x2_zero_rate`, `x2_zero_log10` | `P(X2 = 0)`, and its base-10 logarithm | probability, log10 |
 
 ---
 

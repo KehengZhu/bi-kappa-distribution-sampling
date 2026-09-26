@@ -496,6 +496,53 @@ def honest_floor(kappa: float, precision: str) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# The probability that the direct calculation's X2 rounds to zero (results/schema.md)
+# ---------------------------------------------------------------------------
+# log2 of the rounding-to-zero threshold x0, half the smallest subnormal: a positive result
+# below x0 rounds to zero.  2^-1075 is itself below the smallest double, so it is carried as
+# an exponent.
+LOG2_ZERO_THRESHOLD = {"double": -1075, "float": -150}
+
+
+def working_shape(kappa: float, precision: str) -> float:
+    """``a = kappa - 1/2`` as the probe forms it: in the working precision, then widened
+    (``shapeFromKappa<T>`` in src/exp7_common.H)."""
+    if precision == "float":
+        return float(np.float32(kappa) - np.float32(0.5))
+    return float(kappa) - 0.5
+
+
+def direct_zero_denominator(kappa: float, precision: str) -> dict:
+    """The probability that the direct calculation's ``X2 = Y * pow(U, 1/a)`` rounds to zero.
+
+    ``Y ~ Gamma(a+1, 1)`` and ``U ~ Uniform(0, 1)`` are independent.  ``X2`` is zero when
+    ``U^(1/a)`` falls below the threshold ``x0``, or when the product with ``Y < 1`` does, so
+    ``P(X2 = 0) = P(U^(1/a) < x0 max(1, 1/Y)) = x0^a E[max(1, Y^(-a))]``.  Splitting the
+    expectation at ``Y = 1`` gives it in closed form,
+
+        E[max(1, Y^(-a))] = Q(a+1, 1) + (1 - e^(-1)) / Gamma(a+1),
+
+    where ``Q`` is the regularized upper incomplete gamma function: on ``Y < 1`` the factor
+    ``y^(-a)`` cancels the ``y^a`` of the Gamma(a+1) density.  The draws with ``Y < x0``, for
+    which ``min(1, .)`` would bind, change the result by less than a relative ``x0``.
+
+    In P2's paired layer this is also the direct calculation's non-finite fraction: with
+    ``X2`` at least the smallest subnormal, ``sqrt(X1)/sqrt(X2)`` stays finite, so every
+    non-finite draw of that calculation has ``X2 = 0``.
+    """
+    a = working_shape(kappa, precision)
+    if a <= 0.0:
+        return {"shape": a, "y_factor": float("nan"), "log_rate": float("nan"),
+                "rate": float("nan"), "log10_rate": float("nan")}
+    y_factor = float(special.gammaincc(a + 1.0, 1.0)
+                     + (1.0 - math.exp(-1.0)) / special.gamma(a + 1.0))
+    log_rate = a * LOG2_ZERO_THRESHOLD[precision] * math.log(2.0) + math.log(y_factor)
+    return {"shape": a, "y_factor": y_factor, "log_rate": log_rate,
+            "rate": float(math.exp(log_rate)) if log_rate > -740.0 else 0.0,
+            "log10_rate": log_rate / math.log(10.0)}
+
+
+# ---------------------------------------------------------------------------
 # Context: which tree is being read, which tree is being written, and the hash gate
 # ---------------------------------------------------------------------------
 class Context:
@@ -967,6 +1014,24 @@ def analyse_p1(ctx: Context) -> dict:
                 "configuration": "isotropic, unrotated, theta_perp = theta_par = 1",
                 "protocol_sha256": proto.sha256})
     write_csv(ctx.out("honest_floor_curve.csv"), curve_cols, curve_rows)
+
+    # --- direct_zero_denominator_curve.csv: P(X2 = 0) of the direct calculation, same grid
+    # The direct calculation's expected non-finite fraction in P2's paired layer, for Fig. 2.
+    zero_cols = ["precision", "grid_index", "shape_a", "kappa", "working_shape_a",
+                 "log2_zero_threshold", "y_factor", "x2_zero_rate", "x2_zero_log10",
+                 "protocol_sha256"]
+    zero_rows = []
+    for precision in sorted(proto.get("matrix", "precisions")):
+        for i, s_a in enumerate(grid):
+            kappa = 0.5 + float(s_a)
+            dz = direct_zero_denominator(kappa, precision)
+            zero_rows.append({
+                "precision": precision, "grid_index": i, "shape_a": kappa - 0.5,
+                "kappa": kappa, "working_shape_a": dz["shape"],
+                "log2_zero_threshold": LOG2_ZERO_THRESHOLD[precision],
+                "y_factor": dz["y_factor"], "x2_zero_rate": dz["rate"],
+                "x2_zero_log10": dz["log10_rate"], "protocol_sha256": proto.sha256})
+    write_csv(ctx.out("direct_zero_denominator_curve.csv"), zero_cols, zero_rows)
 
     # --- families ----------------------------------------------------------------
     fam = {}

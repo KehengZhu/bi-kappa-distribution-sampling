@@ -41,6 +41,7 @@ mpl.use("Agg")
 import numpy as np                                          # noqa: E402
 from matplotlib import pyplot as plt                        # noqa: E402
 from matplotlib.lines import Line2D                         # noqa: E402
+from matplotlib.patches import Patch                        # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -175,75 +176,77 @@ def panel_label(ax, letter: str, text: str = "") -> None:
     ax.set_title(f"{letter} {text}".rstrip(), loc="left", fontweight="bold", fontsize=8)
 
 
-def plot_rate_series(ax, xs, rates, style, label):
-    """Draw the positive failure fractions.
+# ---------------------------------------------------------------------------
+# FP1 - failure envelope and mechanism decomposition
+# ---------------------------------------------------------------------------
+XMAX_FP1 = 0.15
+# Measured fractions are markers without a line; the two curves are computed, not measured.
+FP1_MARKER = {m: dict(ls="none", marker=STYLE[m]["marker"], color=STYLE[m]["color"],
+                      mfc=STYLE[m]["mfc"], ms=STYLE[m]["ms"] + 0.8)
+              for m in ("LEGACY", "CANDIDATE")}
+FLOOR_FILL_C, FLOOR_EDGE = "0.88", dict(color=GREY_C, lw=0.6)
+DIRECT_ZERO_STYLE = dict(color=BLUE, lw=0.9, ls=(0, (3.0, 2.2)))
+ZERO_BOUND_STYLE = dict(color=NEUTRAL, lw=0.8, ls=(0, (1.2, 1.8)))
+
+
+def curve_points(rows, key: str) -> tuple[np.ndarray, np.ndarray]:
+    """The (kappa - 1/2, value) pairs of a computed curve, sorted, positive values only."""
+    pts = sorted((num(r, "shape_a"), num(r, key)) for r in rows)
+    pts = [(x, y) for x, y in pts if np.isfinite(x) and np.isfinite(y) and y > 0]
+    return (np.array([p[0] for p in pts], dtype=float),
+            np.array([p[1] for p in pts], dtype=float))
+
+
+def plot_rate_markers(ax, xs, rates, style) -> None:
+    """Draw the positive failure fractions as markers.
 
     The intervals are not drawn here. The panel carries an order-of-magnitude
     comparison over five decades, and at the smallest shapes the stabilized
     rate rests on a handful of events, whose wide relative interval reads as a
     property of the method rather than of a rare-event count. Every failure
     count and its two-sided 95% Clopper-Pearson interval stays in
-    `failure_envelope.csv`.
+    `failure_envelope.csv`. A setting with no failure has no place on a
+    logarithmic axis and is not drawn; the dotted line of the panel is the
+    upper bound its fraction lies below.
     """
     xs = np.asarray(xs, dtype=float)
     rates = np.asarray(rates, dtype=float)
     obs = np.isfinite(rates) & (rates > 0)
     if obs.any():
-        ax.plot(xs[obs], rates[obs], label=label, **style)
-    return obs
+        ax.plot(xs[obs], rates[obs], zorder=3, **style)
 
 
-def plot_upper_bounds(ax, xs, bounds, style, ms):
-    """Mark settings with no failure at their one-sided 95% upper bound.
+def plot_format_floor(ax, rows, ybottom: float) -> None:
+    """The probability that the exact velocity has a component the output format cannot
+    hold, as a grey region beneath the data with a thin upper edge.  The region is filled
+    down to the lower limit of the axes, which clip the edge where it falls below."""
+    xs, ys = curve_points(rows, "honest_floor_rate")
+    if xs.size:
+        ax.fill_between(xs, ybottom, np.maximum(ys, ybottom), color=FLOOR_FILL_C, lw=0,
+                        zorder=0.5)
+        ax.plot(xs, ys, zorder=0.6, **FLOOR_EDGE)
 
-    A zero fraction has no place on a logarithmic axis, and leaving the point out reads as
-    missing data.  The bound is drawn as an open marker of the method's shape with a
-    downward arrow.  `ms` is passed in so that, where both methods have the same bound,
-    the circle can enclose the square.
+
+def plot_direct_zero(ax, rows) -> None:
+    """The probability that the direct calculation's X2 rounds to zero, dashed, beneath
+    the markers."""
+    xs, ys = curve_points(rows, "x2_zero_rate")
+    if xs.size:
+        ax.plot(xs, ys, zorder=1.4, **DIRECT_ZERO_STYLE)
+
+
+def zero_failure_bound(rows) -> float:
+    """The one-sided 95% upper bound shared by every setting with no failure.
+
+    The panels draw it as one horizontal line, which is only a correct statement if every
+    such setting has the same bound, that is the same number of attempts.
     """
-    for x, ub in zip(xs, bounds):
-        if not (np.isfinite(ub) and ub > 0):
-            continue
-        ax.annotate("", xy=(x, ub / 6.0), xytext=(x, ub),
-                    arrowprops=dict(arrowstyle="-|>", color=NEUTRAL, lw=0.8,
-                                    mutation_scale=5, shrinkA=ms * 0.55, shrinkB=0))
-        ax.plot([x], [ub], ls="none", marker=style["marker"], ms=ms, mfc="white",
-                mec=style["color"], mew=0.9, zorder=3)
-
-
-def plot_bound_continuation(ax, xs, rates, bound_xs, bounds, style, offset):
-    """Join the last positive fraction to the upper bounds that follow it, dashed.
-
-    The dashed line runs beneath the markers, one segment per pair of neighbouring
-    points.  Where both methods share a segment, their dash patterns are offset by
-    `offset` so that the two colours alternate instead of one hiding the other.
-    """
-    obs = [(x, r) for x, r in zip(xs, rates) if np.isfinite(r) and r > 0]
-    pts = sorted((x, ub) for x, ub in zip(bound_xs, bounds) if np.isfinite(ub) and ub > 0)
-    if not pts:
-        return
-    before = [p for p in obs if p[0] < pts[0][0]]
-    if before:
-        pts.insert(0, max(before))
-    for (x0, y0), (x1, y1) in zip(pts[:-1], pts[1:]):
-        ax.plot([x0, x1], [y0, y1], color=style["color"], lw=0.9,
-                ls=(offset, (2.2, 3.8)), zorder=1.5)
-
-
-# ---------------------------------------------------------------------------
-# FP1 - failure envelope and mechanism decomposition
-# ---------------------------------------------------------------------------
-XMAX_FP1 = 0.15
-FLOOR_STYLE = dict(color=GREY_C, ls="-", lw=0.8)
-
-
-def plot_format_floor(ax, rows) -> None:
-    """The probability that the exact velocity has a component the output type cannot
-    hold, drawn beneath the data.  The axes clip the part below the lower limit."""
-    pts = sorted((num(r, "shape_a"), num(r, "honest_floor_rate")) for r in rows)
-    pts = [(x, y) for x, y in pts if np.isfinite(x) and np.isfinite(y) and y > 0]
-    if pts:
-        ax.plot([p[0] for p in pts], [p[1] for p in pts], zorder=1, **FLOOR_STYLE)
+    bounds = {num(r, "failure_ci_hi") for r in rows
+              if num(r, "failure_count") == 0 and truthy(r, "failure_is_upper_bound")}
+    if len(bounds) > 1:
+        raise ValueError(f"FP1: the settings with no failure have different upper bounds "
+                         f"{sorted(bounds)}; one dotted line cannot stand for all of them")
+    return bounds.pop() if bounds else float("nan")
 
 
 def tex_count(n: float) -> str:
@@ -259,112 +262,52 @@ def tex_count(n: float) -> str:
     return f"${m:g}\\times10^{{{e}}}$"
 
 
-def fp1_summary(ctx: dict) -> dict:
-    """What the FP1 caption states, read from the source data rather than written in.
-
-    The number of attempts behind each point, and the stabilized calculation's losses on the
-    paired layer of draws whose final velocity could be stored, by precision and kappa:
-    those inside the rounding band of the overflow threshold (amendment 5.0.0) and the
-    avoidable losses outside it.
-    """
-    rows = [r for r in load(ctx, "failure_envelope.csv")
-            if r["layer"] == "paired" and r["tag"] == PRIMARY_TAG]
-    sizes = sorted({num(r, "n_attempted") for r in rows
-                    if r["scope"] == "pooled" and r["method"] in ("LEGACY", "CANDIDATE")
-                    and np.isfinite(num(r, "n_attempted"))})
-    outside: dict = {}
-    band: dict = {}
-    for r in rows:
-        if r["scope"] != "seed" or r["method"] != "CANDIDATE":
-            continue
-        key = (r["precision"], num(r, "kappa"))
-        for target, col in ((outside, "avoidable_outside_band_count"),
-                            (band, "rounding_band_count")):
-            k = num(r, col, 0)
-            if k > 0:
-                target[key] = target.get(key, 0) + int(k)
-    return {"n_per_point": sizes[0] if len(sizes) == 1 else float("nan"),
-            "candidate_avoidable": outside, "candidate_rounding_band": band}
-
-
-def _where(counts: dict) -> str:
-    parts = []
-    for (precision, kappa) in sorted(counts, key=lambda k: (k[0] != "double", k[1])):
-        prec = "double" if precision == "double" else "single"
-        parts.append(f"{counts[(precision, kappa)]} in {prec} precision at $\\kappa={kappa:g}$")
-    return "; ".join(parts)
-
-
-def fp1_candidate_sentence(summary: dict) -> str:
-    av = summary["candidate_avoidable"]
-    band = summary.get("candidate_rounding_band", {})
-    if not av and not band:
-        return ("The stabilized calculation returned all such draws. Its remaining failures "
-                "occurred only when a final velocity component was too large for the output "
-                "type.")
-    text = ""
-    if av:
-        text += (f"The stabilized calculation lost {sum(av.values())} such "
-                 f"draw{'' if sum(av.values()) == 1 else 's'} "
-                 f"({_where(av)}). ")
-    else:
-        text += ("The stabilized calculation returned all such draws except those whose "
-                 "final component lay within rounding error of the largest value the output "
-                 "type can hold. ")
-    text += ("Its other failures occurred only when a final velocity component was too large "
-             "for the output type.")
-    return text
+def fp1_attempts(ctx: dict) -> float:
+    """The number of attempts behind each FP1 marker, read from the source data rather
+    than written into the caption; NaN if the settings differ."""
+    sizes = {num(r, "n_attempted") for r in load(ctx, "failure_envelope.csv")
+             if r["scope"] == "pooled" and r["layer"] == "paired"
+             and r["tag"] == PRIMARY_TAG and r["method"] in ("LEGACY", "CANDIDATE")}
+    sizes = {s for s in sizes if np.isfinite(s)}
+    return sizes.pop() if len(sizes) == 1 else float("nan")
 
 
 def figure_fp1(ctx: dict) -> None:
     rows = [r for r in load(ctx, "failure_envelope.csv")
             if r["scope"] == "pooled" and r["layer"] == "paired"
-            and r["tag"] == PRIMARY_TAG]
+            and r["tag"] == PRIMARY_TAG and r["method"] in ("LEGACY", "CANDIDATE")]
     if not rows:
         print("  FP1: no data")
         return
 
-    # The probability that the exact velocity has a component the output type cannot hold,
-    # on a fine grid, computed by analyze.py (honest_floor_curve.csv).
+    # Both curves are computed by analyze.py on the same fine grid: the fraction the output
+    # format cannot hold, and the probability that the direct calculation's X2 rounds to zero.
     floor = load(ctx, "honest_floor_curve.csv")
+    direct = load(ctx, "direct_zero_denominator_curve.csv")
+
+    bound = zero_failure_bound(rows)
+    observed = [num(r, "failure_rate") for r in rows
+                if num(r, "failure_rate") > 0 and num(r, "kappa") - 0.5 <= XMAX_FP1]
+    # The lower limit keeps the smallest marker and the dotted bound clear of the axis.
+    lows = [min(observed) * 0.2] if observed else [1e-8]
+    if np.isfinite(bound):
+        lows.append(bound * 0.3)
+    ybottom = min(lows)
 
     fig, axes = plt.subplots(1, 2, figsize=(WIDTH_MM * MM, 78 * MM))
-    plotted_rows = [r for r in rows if r["method"] in ("LEGACY", "CANDIDATE")]
-    observed = [num(r, "failure_rate") for r in plotted_rows
-                if num(r, "failure_rate") > 0]
-    ymin = (min(observed) / 10.0) if observed else 1e-8
-    # The arrow below an upper bound ends at a sixth of it; an annotation whose tip leaves
-    # the axes is not drawn at all, so the lower limit must clear the smallest tip.
-    tips = [num(r, "failure_ci_hi") / 6.0 for r in plotted_rows
-            if num(r, "failure_count") == 0 and truthy(r, "failure_is_upper_bound")
-            and num(r, "kappa") - 0.5 <= XMAX_FP1 and num(r, "failure_ci_hi") > 0]
-    ybottom = min([ymin * 0.2] + [t * 0.5 for t in tips])
     for ax, precision, letter in zip(axes, ("double", "float"), ("a", "b")):
         sub = [r for r in rows if r["precision"] == precision]
         if not sub:
             continue
+        plot_format_floor(ax, [r for r in floor if r["precision"] == precision], ybottom)
+        plot_direct_zero(ax, [r for r in direct if r["precision"] == precision])
+        if np.isfinite(bound):
+            ax.axhline(bound, zorder=1.2, **ZERO_BOUND_STYLE)
         for method in ("LEGACY", "CANDIDATE"):
             ms = sorted([r for r in sub if r["method"] == method],
                         key=lambda r: num(r, "kappa"))
-            if not ms:
-                continue
-            xs = [num(r, "kappa") - 0.5 for r in ms]
-            plot_rate_series(
-                ax, xs, [num(r, "failure_rate") for r in ms],
-                STYLE[method], method)
-            zero = [r for r in ms if num(r, "failure_count") == 0
-                    and truthy(r, "failure_is_upper_bound")
-                    and num(r, "kappa") - 0.5 <= XMAX_FP1]
-            plot_bound_continuation(
-                ax, xs, [num(r, "failure_rate") for r in ms],
-                [num(r, "kappa") - 0.5 for r in zero],
-                [num(r, "failure_ci_hi") for r in zero], STYLE[method],
-                offset=0.0 if method == "LEGACY" else 3.0)
-            plot_upper_bounds(
-                ax, [num(r, "kappa") - 0.5 for r in zero],
-                [num(r, "failure_ci_hi") for r in zero], STYLE[method],
-                ms=6.2 if method == "LEGACY" else 3.6)
-        plot_format_floor(ax, [r for r in floor if r["precision"] == precision])
+            plot_rate_markers(ax, [num(r, "kappa") - 0.5 for r in ms],
+                              [num(r, "failure_rate") for r in ms], FP1_MARKER[method])
 
         ax.set_xscale("log")
         ax.set_yscale("log")
@@ -373,47 +316,37 @@ def figure_fp1(ctx: dict) -> None:
                     else "single precision")
     for ax in axes:
         ax.set_xlim(8e-5, XMAX_FP1)
-        ax.set_ylim(max(ybottom, 1e-320), 3.0)
+        ax.set_ylim(ybottom, 3.0)
     axes[0].set_ylabel("Non-finite fraction")
-    handles = [Line2D([], [], label="Direct calculation",
-                      **STYLE["LEGACY"]),
-               Line2D([], [], label="Stabilized calculation", **STYLE["CANDIDATE"]),
-               Line2D([], [], ls="none", marker=r"$\downarrow$", ms=6, color=NEUTRAL,
-                      label="No non-finite output (95% upper bound)")]
-    if floor:
-        handles.append(Line2D([], [], label="Fraction the output format cannot hold",
-                              **FLOOR_STYLE))
-    # Two columns: the two methods, then the two reference marks.
+    # Filled column by column: the two methods, the two lines, the region.
+    handles = [Line2D([], [], label="Direct calculation", **FP1_MARKER["LEGACY"]),
+               Line2D([], [], label="Stabilized calculation", **FP1_MARKER["CANDIDATE"]),
+               Line2D([], [], label="Expected loss of the direct calculation",
+                      **DIRECT_ZERO_STYLE),
+               Line2D([], [], label="95% upper bound for zero losses", **ZERO_BOUND_STYLE),
+               Patch(facecolor=FLOOR_FILL_C, edgecolor=FLOOR_EDGE["color"],
+                     lw=FLOOR_EDGE["lw"], label="Unavoidable loss")]
     fig.legend(handles=handles, frameon=False, loc="lower center",
-               bbox_to_anchor=(0.5, 0.01), ncol=2 if floor else 3, columnspacing=3.0,
-               handletextpad=0.5)
-    fig.tight_layout(pad=0.4, rect=(0, 0.15 if floor else 0.10, 1, 1))
-    summary = fp1_summary(ctx)
-    conclusion = ("The stabilized log-scale calculation removes the intermediate failures "
-                  "of direct square-root evaluation. ")
-    if summary["candidate_avoidable"]:
-        conclusion += ("Apart from the draws listed in the caption, every remaining "
-                       "non-finite output contains a component that is too large for the "
-                       "output type.")
-    elif summary["candidate_rounding_band"]:
-        conclusion += ("Apart from draws whose final component lies within rounding error "
-                       "of the largest finite value, every remaining non-finite output "
-                       "contains a component that is too large for the output type.")
-    else:
-        conclusion += ("Every remaining non-finite output contains a component that is too "
-                       "large for the output type.")
-    export(ctx, fig, "fp1_failure_envelope", 2, conclusion,
-           ["failure_envelope.csv"] + (["honest_floor_curve.csv"] if floor else []),
+               bbox_to_anchor=(0.5, 0.01), ncol=3, columnspacing=2.0, handletextpad=0.5)
+    fig.tight_layout(pad=0.4, rect=(0, 0.15, 1, 1))
+    export(ctx, fig, "fp1_failure_envelope", 2,
+           "The losses of the stabilized calculation agree with the fraction of draws that the "
+           "output format cannot hold, and the additional losses of the direct calculation "
+           "are the draws for which its X2 rounds to zero.",
+           ["failure_envelope.csv", "honest_floor_curve.csv",
+            "direct_zero_denominator_curve.csv"],
            WIDTH_MM, 78,
-           "no interval is drawn for an observed fraction; the failure count and its "
-           "two-sided 95% Clopper-Pearson interval are published for every setting in "
-           "failure_envelope.csv, and a setting with zero failures is drawn as an open "
-           "marker with a downward arrow at its one-sided 95% upper bound, joined to the "
-           "method's last nonzero fraction by a dashed line; the grey line is the "
-           "probability, computed in closed form and without an interval, that the exact "
-           "velocity has a "
-           "component larger than the largest finite value of the output type "
-           "(honest_floor_curve.csv)")
+           "each marker is an observed non-finite fraction, drawn without its interval; "
+           "the failure count and its two-sided 95% Clopper-Pearson interval are published "
+           "for every setting in failure_envelope.csv. A setting with no failure is not "
+           "drawn; the dotted line is the one-sided 95% upper bound on its fraction "
+           "(failure_ci_hi in failure_envelope.csv), which is the same for every such "
+           "setting. The grey region lies below the closed-form probability that the exact "
+           "velocity has a component larger than the largest finite value of the output "
+           "type (honest_floor_curve.csv). The dashed line is the closed-form probability "
+           "that the direct calculation's X2 rounds to zero "
+           "(direct_zero_denominator_curve.csv). The two curves are computed, not measured, "
+           "and have no interval")
 
 
 # ---------------------------------------------------------------------------
@@ -837,26 +770,18 @@ def figure_sfp3(ctx: dict) -> None:
 
 # ---------------------------------------------------------------------------
 def write_captions(ctx: dict) -> None:
-    fp1 = fp1_summary(ctx)
-    n_fp1 = tex_count(fp1["n_per_point"])
+    n_fp1 = tex_count(fp1_attempts(ctx))
     caps = {
         "fp1_failure_envelope":
-            "Fraction of attempts that returned a non-finite velocity under direct square-"
-            "root evaluation and stabilized log-scale evaluation in (a) double and (b) "
-            "single precision. Direct evaluation lost additional draws near "
-            "$\\kappa=1/2$ even when their final velocities could be stored. "
-            + fp1_candidate_sentence(fp1) + " Each point pools "
-            f"{n_fp1} attempts across five independent seeds. Where all "
-            f"{n_fp1} attempts returned finite values, an open symbol with a downward "
-            "arrow marks the one-sided 95 per cent upper confidence bound on the fraction, "
-            "and a dashed line joins it to the method's last nonzero fraction. "
-            "The grey line is the probability, computed in closed form, that the exact "
-            "velocity of an attempt has a component larger than the largest finite value of "
-            "the output type; no calculation that returns values in that type can return "
-            "such a draw. "
-            "Failure counts and "
-            "their two-sided 95 per cent binomial confidence intervals are given for every "
-            "setting in `failure_envelope.csv`.",
+            "Fraction of attempts that returned a non-finite velocity in (a) double and (b) "
+            "single precision, plotted against $\\kappa-1/2$. Each marker is measured from "
+            f"{n_fp1} attempts without a velocity bound; settings with no failure are not "
+            "shown, because their fraction lies below the dotted 95\\% upper bound. The grey "
+            "region is the fraction of draws with a velocity component larger than the "
+            "largest number the floating-point format can store, which no calculation can "
+            "return. The losses of the stabilized calculation follow the upper edge of this "
+            "region. The direct calculation also loses the draws for which $X_2$ rounds to "
+            "zero; the dashed line is the probability of this event.",
         "fp2_conditioning_tail":
             "State-dependent failure and its tail consequence. (a, b) Probability that an "
             "attempt delivers a three-vector to the caller, as a function of the upper-tail "
@@ -987,7 +912,7 @@ def main() -> int:
     expected = ("failure_envelope.csv", "conditioning_bins.csv", "tail_metrics.csv",
                 "scalar_validation.csv", "scalar_ecdf.csv", "loader_validation.csv",
                 "portability.csv", "performance.csv", "honest_floor.csv",
-                "honest_floor_curve.csv")
+                "honest_floor_curve.csv", "direct_zero_denominator_curve.csv")
     absent = [n for n in expected if not os.path.exists(os.path.join(results, n))]
     if len(absent) == len(expected):
         print(f"make_figures.py: {os.path.relpath(results, HERE)} holds none of the source "

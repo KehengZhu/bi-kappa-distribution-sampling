@@ -33,13 +33,15 @@ Source and output files carry the prefix `exp7`.
 ## Paper
 
 Fig. 2 of the paper is `figures/fp1_failure_envelope.pdf`. It is drawn by `make_figures.py` from
-`results/failure_envelope.csv` and `results/honest_floor_curve.csv` and copied into the paper by
+`results/failure_envelope.csv`, `results/honest_floor_curve.csv` and
+`results/direct_zero_denominator_curve.csv` and copied into the paper by
 `paper/figures/make_manuscript_assets.py`. The four other figures in `figures/` are not used in
 the paper.
 
 The release archive (the GitHub and Zenodo downloads) contains only what reproduces Fig. 2 from
 the committed results: this README, `GNUmakefile`, `make_figures.py`,
-`results/failure_envelope.csv` and `results/honest_floor_curve.csv` with their column
+`results/failure_envelope.csv`, `results/honest_floor_curve.csv` and
+`results/direct_zero_denominator_curve.csv` with their column
 description `results/source_data_README.md`, and the figure files. There, `make figures` redraws Fig. 2. The protocol, the analysis code, the
 sampler probe, the 100-digit recomputation and the run records described below are in the
 GitHub repository.

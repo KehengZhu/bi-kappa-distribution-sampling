@@ -356,6 +356,35 @@ Because assignment is by priority, stratum 7 is an unbiased sample of *the attem
 other stratum*, not of all attempts. Both counts are reported for each, so the coverage is
 exact rather than implied.
 
+#### The expected `x2_zero` count
+
+The paired layer forms `x2 = y * std::pow(u, T(1)/a)` in the working precision
+(`drawShared` in `src/exp7_loaders.H`), with `Y ~ Gamma(a+1, 1)` and `U ~ Uniform(0, 1)`
+independent. A positive result below `x0`, half the smallest subnormal (`2^-1075` in double,
+`2^-150` in float), rounds to zero. `x2` is therefore zero when `U^(1/a) < x0 max(1, 1/Y)`,
+and
+
+    P(x2 = 0) = x0^a E[max(1, Y^(-a))] = x0^a [Q(a+1, 1) + (1 - e^(-1)) / Gamma(a+1)],
+
+where `Q` is the regularized upper incomplete gamma function. The second form follows by
+splitting the expectation at `Y = 1`: below it, `y^(-a)` cancels the `y^a` of the
+Gamma(a+1) density. `analyze.py` evaluates it (`direct_zero_denominator`) for
+`results/direct_zero_denominator_curve.csv`.
+
+The same probability is LEGACY's expected non-finite fraction in this layer. A non-zero `x2`
+is at least the smallest subnormal, so `sqrt(x1)/sqrt(x2)` is at most `sqrt(x1) * 2^537` in
+double and `sqrt(x1) * 2^74.5` in float, and the returned component (`sqrt(kappa)` times that,
+with `theta = 1`) cannot overflow for any `x1` the Gamma(3/2) draw produces. Overflow would
+need `x2` below about `x1 * 1e-616` in double and `x1 * 1e-77` in float, both far below `x0`.
+In every paired configuration of the run, LEGACY's non-finite count equals `x2_zero` and
+`cat_legacy_form_loss` is zero.
+
+The formula treats `U` as continuous and rounds only once, after the product. The run's `U`
+lies on the grid `(k + 1/2) 2^-(p-1)` (`p` the significand precision), and `pow` rounds its
+result to the subnormal grid before the multiplication. Over the measured settings these
+lower the probability by at most 0.6 per cent; at float `kappa - 1/2 = 0.15`, where no
+setting was measured, the grid of `U` lowers it by about 15 per cent.
+
 ### `layer = "native"`
 
 As P1's native rows, minus the scalar summary and the tail file, plus `accounting_ok`. Same
