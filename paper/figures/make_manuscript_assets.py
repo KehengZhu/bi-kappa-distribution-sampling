@@ -217,8 +217,6 @@ def figure_cap(exp2_dir):
         xs = [l for l in lams if (k, l) in table]
         ys = [table[(k, l)]["reject_fraction_analytic"] for l in xs]
         ax.loglog(xs, ys, "o-", ms=3, color=colors[k], label=rf"$\kappa={k:g}$")
-    ax.axhline(1e-3, color="0.4", ls=":", lw=0.8)
-    ax.text(3.2, 1.3e-3, r"$\mathrm{TV}=10^{-3}$", fontsize=6, color="0.3")
     ax.set_xlabel(r"cap $\lambda$")
     ax.set_ylabel(r"rejected fraction $=\mathrm{TV}(f_\lambda,f_\kappa)$")
     ax.set_ylim(1e-8, 1.5)
@@ -230,9 +228,8 @@ def figure_cap(exp2_dir):
         ys = [qtab[(k, l)]["q_speed_ratio"]["mean"][i999] for l in xs]
         ax.semilogx(xs, ys, "o-", ms=3, color=colors[k])
     ax.axhline(1.0, color="0.35", lw=0.7)
-    ax.axhline(0.99, color="0.4", ls=":", lw=0.8)
     ax.set_xlabel(r"cap $\lambda$")
-    ax.set_ylabel(r"$q_{99.9}(|v|)$ ratio, capped / uncapped")
+    ax.set_ylabel("99.9th-percentile speed,\ncapped / uncapped")
     ax.set_ylim(-0.03, 1.08)
 
     fig.tight_layout(pad=0.4)
