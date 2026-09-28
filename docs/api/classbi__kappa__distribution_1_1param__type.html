@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('classbi__kappa
 </div><!--header-->
 <div class="contents">
 
-<p>Parameter class to store distribution parameters.  
+<p>The parameters of a <a class="el" href="classbi__kappa__distribution.html" title="Bi-Kappa distribution class for sampling 3D velocity vectors.">bi_kappa_distribution</a>: kappa, theta_perp, theta_par, ub and the velocity cap.  
  <a href="#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>&gt;</code></p>
@@ -129,25 +129,34 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('classbi__kappa
 <tr class="heading"><td colspan="2"><h2 id="header-pub-types" class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
 <tr class="memitem:abb07c81aabdf4e0fde2bab115cf83c58" id="r_abb07c81aabdf4e0fde2bab115cf83c58"><td class="memItemLeft">using&#160;</td><td class="memItemRight"><a class="el" href="#abb07c81aabdf4e0fde2bab115cf83c58">distribution_type</a> = <a class="el" href="classbi__kappa__distribution.html">bi_kappa_distribution</a>&lt;RealType&gt;</td></tr>
+<tr class="memdesc:abb07c81aabdf4e0fde2bab115cf83c58"><td class="mdescLeft">&#160;</td><td class="mdescRight">The owning sampler.  <br /></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-methods" class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:aea13dce631cb2046616e412b58c9786b" id="r_aea13dce631cb2046616e412b58c9786b"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#aea13dce631cb2046616e412b58c9786b">param_type</a> (RealType kappa=RealType(2.0), RealType theta_perp=RealType(1.0), RealType theta_par=RealType(1.0), <a class="el" href="classbi__kappa__distribution.html#af074fc20c80c5001257d16854dd88531">point_type</a> ub=<a class="el" href="classbi__kappa__distribution.html#af074fc20c80c5001257d16854dd88531">point_type</a>({RealType(0.0), RealType(0.0), RealType(1.0)}), RealType max_normalized_velocity=RealType(20.0))</td></tr>
+<tr class="memdesc:aea13dce631cb2046616e412b58c9786b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Store and validate the parameters.  <br /></td></tr>
 <tr class="memitem:ab5d95aef81a06747c2103800d8618c50" id="r_ab5d95aef81a06747c2103800d8618c50"><td class="memItemLeft">RealType&#160;</td><td class="memItemRight"><a class="el" href="#ab5d95aef81a06747c2103800d8618c50">kappa</a> () const</td></tr>
+<tr class="memdesc:ab5d95aef81a06747c2103800d8618c50"><td class="mdescLeft">&#160;</td><td class="mdescRight">Spectral index.  <br /></td></tr>
 <tr class="memitem:aa8277f36dd7b8729d6d530fdb71165d6" id="r_aa8277f36dd7b8729d6d530fdb71165d6"><td class="memItemLeft">RealType&#160;</td><td class="memItemRight"><a class="el" href="#aa8277f36dd7b8729d6d530fdb71165d6">theta_perp</a> () const</td></tr>
+<tr class="memdesc:aa8277f36dd7b8729d6d530fdb71165d6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Perpendicular thermal speed.  <br /></td></tr>
 <tr class="memitem:a3042417fe47ef29891a013acd5f66f63" id="r_a3042417fe47ef29891a013acd5f66f63"><td class="memItemLeft">RealType&#160;</td><td class="memItemRight"><a class="el" href="#a3042417fe47ef29891a013acd5f66f63">theta_par</a> () const</td></tr>
+<tr class="memdesc:a3042417fe47ef29891a013acd5f66f63"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parallel thermal speed.  <br /></td></tr>
 <tr class="memitem:ae8f64dd78847c50089b4a32551b0120d" id="r_ae8f64dd78847c50089b4a32551b0120d"><td class="memItemLeft"><a class="el" href="classbi__kappa__distribution.html#af074fc20c80c5001257d16854dd88531">point_type</a>&#160;</td><td class="memItemRight"><a class="el" href="#ae8f64dd78847c50089b4a32551b0120d">ub</a> () const</td></tr>
+<tr class="memdesc:ae8f64dd78847c50089b4a32551b0120d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Field direction, as given.  <br /></td></tr>
 <tr class="memitem:abe88dec57bd0769d09dcd3a2a34aa04b" id="r_abe88dec57bd0769d09dcd3a2a34aa04b"><td class="memItemLeft">RealType&#160;</td><td class="memItemRight"><a class="el" href="#abe88dec57bd0769d09dcd3a2a34aa04b">max_normalized_velocity</a> () const</td></tr>
+<tr class="memdesc:abe88dec57bd0769d09dcd3a2a34aa04b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Velocity cap in thermal speeds; +infinity for <a class="el" href="classbi__kappa__distribution.html#ae297e0e424247abd355b55109bdb9dde" title="Value of the cap that selects the uncapped sampler: +infinity.">no_cap()</a>.  <br /></td></tr>
 <tr class="memitem:a729ff204e81afd39cce8cbf3e7d8eab4" id="r_a729ff204e81afd39cce8cbf3e7d8eab4"><td class="memItemLeft">bool&#160;</td><td class="memItemRight"><a class="el" href="#a729ff204e81afd39cce8cbf3e7d8eab4">capped</a> () const</td></tr>
-<tr class="memdesc:a729ff204e81afd39cce8cbf3e7d8eab4"><td class="mdescLeft">&#160;</td><td class="mdescRight">True when a finite component-wise cap is in force, i.e.  <br /></td></tr>
+<tr class="memdesc:a729ff204e81afd39cce8cbf3e7d8eab4"><td class="mdescLeft">&#160;</td><td class="mdescRight">True when a finite component-wise cap is in force, that is, when the sampled distribution is the bi-Kappa distribution conditioned on the cap box rather than the bi-Kappa distribution itself.  <br /></td></tr>
 <tr class="memitem:a26b9ab5b96a374da3211cee8e3296ba7" id="r_a26b9ab5b96a374da3211cee8e3296ba7"><td class="memItemLeft">bool&#160;</td><td class="memItemRight"><a class="el" href="#a26b9ab5b96a374da3211cee8e3296ba7">operator==</a> (const <a class="el" href="#aea13dce631cb2046616e412b58c9786b">param_type</a> &amp;other) const</td></tr>
+<tr class="memdesc:a26b9ab5b96a374da3211cee8e3296ba7"><td class="mdescLeft">&#160;</td><td class="mdescRight">True if every parameter compares equal.  <br /></td></tr>
 <tr class="memitem:ac76a53761e1445466e7e36dac28bb2fa" id="r_ac76a53761e1445466e7e36dac28bb2fa"><td class="memItemLeft">bool&#160;</td><td class="memItemRight"><a class="el" href="#ac76a53761e1445466e7e36dac28bb2fa">operator!=</a> (const <a class="el" href="#aea13dce631cb2046616e412b58c9786b">param_type</a> &amp;other) const</td></tr>
+<tr class="memdesc:ac76a53761e1445466e7e36dac28bb2fa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Negation of operator==.  <br /></td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;typename RealType = double&gt;<br />
-class bi_kappa_distribution&lt; RealType &gt;::param_type</div><p>Parameter class to store distribution parameters. </p>
+class bi_kappa_distribution&lt; RealType &gt;::param_type</div><p>The parameters of a <a class="el" href="classbi__kappa__distribution.html" title="Bi-Kappa distribution class for sampling 3D velocity vectors.">bi_kappa_distribution</a>: kappa, theta_perp, theta_par, ub and the velocity cap. </p>
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00341">341</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00324">324</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 </div><a name="doc-typedef-members" id="doc-typedef-members"></a><h2 id="header-doc-typedef-members" class="groupheader">Member Typedef Documentation</h2>
 <a id="abb07c81aabdf4e0fde2bab115cf83c58" name="abb07c81aabdf4e0fde2bab115cf83c58"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#abb07c81aabdf4e0fde2bab115cf83c58">&#9670;&#160;</a></span>distribution_type</h2>
@@ -163,7 +172,9 @@ template&lt;typename RealType = double&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00344">344</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p>The owning sampler. </p>
+
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00327">327</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -212,11 +223,14 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00349">349</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p>Store and validate the parameters. </p>
+<p>The arguments, their defaults and the exceptions are those of <a class="el" href="classbi__kappa__distribution.html#a138df5909e003c80dc061b63da6d1e76" title="Replace all parameters with params (already validated by its constructor), then call reset().">bi_kappa_distribution::define()</a>. </p>
 
-<p class="reference">References <a class="el" href="bi__kappa__distribution_8_h_source.html#l00401">kappa()</a>, <a class="el" href="bi__kappa__distribution_8_h_source.html#l00403">theta_par()</a>, <a class="el" href="bi__kappa__distribution_8_h_source.html#l00402">theta_perp()</a>, and <a class="el" href="bi__kappa__distribution_8_h_source.html#l00404">ub()</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00331">331</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="bi__kappa__distribution_8_h_source.html#l00419">operator!=()</a>, and <a class="el" href="bi__kappa__distribution_8_h_source.html#l00412">operator==()</a>.</p>
+<p class="reference">References <a class="el" href="bi__kappa__distribution_8_h_source.html#l00383">kappa()</a>, <a class="el" href="bi__kappa__distribution_8_h_source.html#l00385">theta_par()</a>, <a class="el" href="bi__kappa__distribution_8_h_source.html#l00384">theta_perp()</a>, and <a class="el" href="bi__kappa__distribution_8_h_source.html#l00386">ub()</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="bi__kappa__distribution_8_h_source.html#l00404">operator!=()</a>, and <a class="el" href="bi__kappa__distribution_8_h_source.html#l00396">operator==()</a>.</p>
 
 </div>
 </div>
@@ -246,10 +260,9 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>True when a finite component-wise cap is in force, i.e. </p>
-<p>when the sampled law is the bi-Kappa distribution conditioned on the cap event rather than the bi-Kappa distribution itself. </p>
+<p>True when a finite component-wise cap is in force, that is, when the sampled distribution is the bi-Kappa distribution conditioned on the cap box rather than the bi-Kappa distribution itself. </p>
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00410">410</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00393">393</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -278,9 +291,11 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00401">401</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p>Spectral index. </p>
 
-<p class="reference">Referenced by <a class="el" href="bi__kappa__distribution_8_h_source.html#l00349">param_type()</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00383">383</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="bi__kappa__distribution_8_h_source.html#l00331">param_type()</a>.</p>
 
 </div>
 </div>
@@ -309,7 +324,9 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00405">405</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p>Velocity cap in thermal speeds; +infinity for <a class="el" href="classbi__kappa__distribution.html#ae297e0e424247abd355b55109bdb9dde" title="Value of the cap that selects the uncapped sampler: +infinity.">no_cap()</a>. </p>
+
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00388">388</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -338,9 +355,11 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00419">419</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p>Negation of operator==. </p>
 
-<p class="reference">References <a class="el" href="bi__kappa__distribution_8_h_source.html#l00349">param_type()</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00404">404</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+
+<p class="reference">References <a class="el" href="bi__kappa__distribution_8_h_source.html#l00331">param_type()</a>.</p>
 
 </div>
 </div>
@@ -369,9 +388,11 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00412">412</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p>True if every parameter compares equal. </p>
 
-<p class="reference">References <a class="el" href="bi__kappa__distribution_8_h_source.html#l00349">param_type()</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00396">396</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+
+<p class="reference">References <a class="el" href="bi__kappa__distribution_8_h_source.html#l00331">param_type()</a>.</p>
 
 </div>
 </div>
@@ -400,9 +421,11 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00403">403</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p>Parallel thermal speed. </p>
 
-<p class="reference">Referenced by <a class="el" href="bi__kappa__distribution_8_h_source.html#l00349">param_type()</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00385">385</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="bi__kappa__distribution_8_h_source.html#l00331">param_type()</a>.</p>
 
 </div>
 </div>
@@ -431,9 +454,11 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00402">402</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p>Perpendicular thermal speed. </p>
 
-<p class="reference">Referenced by <a class="el" href="bi__kappa__distribution_8_h_source.html#l00349">param_type()</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00384">384</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="bi__kappa__distribution_8_h_source.html#l00331">param_type()</a>.</p>
 
 </div>
 </div>
@@ -462,9 +487,11 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00404">404</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p>Field direction, as given. </p>
 
-<p class="reference">Referenced by <a class="el" href="bi__kappa__distribution_8_h_source.html#l00349">param_type()</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00386">386</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="bi__kappa__distribution_8_h_source.html#l00331">param_type()</a>.</p>
 
 </div>
 </div>

@@ -134,7 +134,7 @@ Classes</h2></td></tr>
 <tr class="memitem:bi_5Fkappa_5Fdistribution_3C_20RealType_20_3E" id="r_bi_5Fkappa_5Fdistribution_3C_20RealType_20_3E"><td class="memItemLeft">class &#160;</td><td class="memItemRight"><a class="el" href="classbi__kappa__distribution.html">bi_kappa_distribution&lt; RealType &gt;</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Bi-Kappa distribution class for sampling 3D velocity vectors.  <a href="classbi__kappa__distribution.html#details">More...</a><br /></td></tr>
 <tr class="memitem:bi_5Fkappa_5Fdistribution_3C_20RealType_20_3E_3A_3Aparam_5Ftype" id="r_bi_5Fkappa_5Fdistribution_3C_20RealType_20_3E_3A_3Aparam_5Ftype"><td class="memItemLeft">class &#160;</td><td class="memItemRight"><a class="el" href="classbi__kappa__distribution_1_1param__type.html">bi_kappa_distribution&lt; RealType &gt;::param_type</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parameter class to store distribution parameters.  <a href="classbi__kappa__distribution_1_1param__type.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The parameters of a <a class="el" href="classbi__kappa__distribution.html" title="Bi-Kappa distribution class for sampling 3D velocity vectors.">bi_kappa_distribution</a>: kappa, theta_perp, theta_par, ub and the velocity cap.  <a href="classbi__kappa__distribution_1_1param__type.html#details">More...</a><br /></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-namespaces" class="groupheader"><a id="namespaces" name="namespaces"></a>
 Namespaces</h2></td></tr>
@@ -144,7 +144,7 @@ Namespaces</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 id="header-define-members" class="groupheader"><a id="define-members" name="define-members"></a>
 Macros</h2></td></tr>
 <tr class="memitem:a072a411bef8c1b73f52385714babdeff" id="r_a072a411bef8c1b73f52385714babdeff"><td class="memItemLeft">#define&#160;</td><td class="memItemRight"><a class="el" href="#a072a411bef8c1b73f52385714babdeff">BI_KAPPA_VERSION_MAJOR</a>&#160;&#160;&#160;3</td></tr>
-<tr class="memdesc:a072a411bef8c1b73f52385714babdeff"><td class="mdescLeft">&#160;</td><td class="mdescRight">Release version of this header.  <br /></td></tr>
+<tr class="memdesc:a072a411bef8c1b73f52385714babdeff"><td class="mdescLeft">&#160;</td><td class="mdescRight">Version of this header, so that code which vendors the file can tell which sampler it has.  <br /></td></tr>
 <tr class="memitem:ab01206b40f62a73e361294ca58101147" id="r_ab01206b40f62a73e361294ca58101147"><td class="memItemLeft">#define&#160;</td><td class="memItemRight"><a class="el" href="#ab01206b40f62a73e361294ca58101147">BI_KAPPA_VERSION_MINOR</a>&#160;&#160;&#160;0</td></tr>
 <tr class="memitem:a87f2a2db0f5d64e03ee24238646657ef" id="r_a87f2a2db0f5d64e03ee24238646657ef"><td class="memItemLeft">#define&#160;</td><td class="memItemRight"><a class="el" href="#a87f2a2db0f5d64e03ee24238646657ef">BI_KAPPA_VERSION_PATCH</a>&#160;&#160;&#160;0</td></tr>
 <tr class="memitem:abd74c73d3e30c1f0587c0fbd1abe7ac5" id="r_abd74c73d3e30c1f0587c0fbd1abe7ac5"><td class="memItemLeft">#define&#160;</td><td class="memItemRight"><a class="el" href="#abd74c73d3e30c1f0587c0fbd1abe7ac5">BI_KAPPA_VERSION_STRING</a>&#160;&#160;&#160;&quot;3.0.0&quot;</td></tr>
@@ -183,12 +183,10 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Release version of this header. </p>
-<p>A consumer that vendors the file can test these to tell which sampler it has; 2.x is the first line whose radius is built in the log domain, and its random stream differs from 1.x for every seed.</p>
-<p>2.1.0 supersedes 2.0.0, which was never released. The two differ in which vectors they return at the representability boundary and in what <span class="tt">n_nonfinite()</span> counts under a cap, so they are two samplers and are versioned as two; see CHANGELOG.md.</p>
-<p>3.0.0 does all of its arithmetic in <span class="tt">RealType</span>: <span class="tt"><a class="el" href="classbi__kappa__distribution.html" title="Bi-Kappa distribution class for sampling 3D velocity vectors.">bi_kappa_distribution</a>&lt;float&gt;</span> computes in <span class="tt">float</span> throughout and <span class="tt"><a class="el" href="classbi__kappa__distribution.html" title="Bi-Kappa distribution class for sampling 3D velocity vectors.">bi_kappa_distribution</a>&lt;double&gt;</span> in <span class="tt">double</span>. 2.2.x formed the log-domain radius and the rest of the map of a <span class="tt">float</span> instantiation in <span class="tt">double</span>. The <span class="tt">double</span> instantiation returns the same bits as 2.2.x; the <span class="tt">float</span> one returns different numbers for the same seed, which is why the major version changes; see CHANGELOG.md. </p>
+<p>Version of this header, so that code which vendors the file can tell which sampler it has. </p>
+<p>The major version changes whenever some seed produces different numbers. CHANGELOG.md lists the changes between versions. </p>
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00017">17</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00007">7</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -204,7 +202,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00018">18</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00008">8</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -220,7 +218,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00019">19</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00009">9</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -236,7 +234,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00020">20</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__kappa__distribution_8_h_source.html#l00010">10</a> of file <a class="el" href="bi__kappa__distribution_8_h_source.html">bi_kappa_distribution.H</a>.</p>
 
 </div>
 </div>

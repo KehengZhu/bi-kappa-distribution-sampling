@@ -1,8 +1,13 @@
 /**
 \page parameters Parameter reference
 
-Every argument of every sampler. A default is the value used when the argument is omitted. A
-value outside its valid range makes `define(...)` throw `std::invalid_argument`.
+Every argument of every sampler. In the tables, "Default" is the value `define(...)` uses when
+the argument is omitted, and *required* marks an argument `define(...)` has no default for.
+`bi_kappa_distribution` and `bi_maxwellian_distribution` can also draw before any `define(...)`
+call; the values they then use are given below their tables. The other three samplers throw if
+called before `define(...)`. A value outside its valid range makes `define(...)` throw
+`std::invalid_argument`, except for the few cases listed in \ref params_errors, which are
+caught later or not at all.
 
 \tableofcontents
 
@@ -10,22 +15,37 @@ value outside its valid range makes `define(...)` throw `std::invalid_argument`.
 
 \subsection params_theta Thermal speeds: theta_perp, theta_par
 
-`theta` is a thermal speed, not a temperature, and has units of velocity. For the
-bi-Maxwellian, `theta = sqrt(2 k_B T / m)` and a velocity component is distributed as
-`N(0, theta^2 / 2)`. For the bi-Kappa distribution, `theta` is the scale in its density and is
-not tied to a temperature, which does not exist for `kappa <= 3/2`. The bi-Kappa distribution is
+`theta` is a thermal speed, not a temperature, and has units of velocity. `theta_perp` applies
+to both directions perpendicular to `ub` and `theta_par` to the direction along it. Both must
+be positive.
+
+For the bi-Maxwellian, `theta = sqrt(2 k_B T / m)` and a velocity component is distributed as
+`N(0, theta^2 / 2)`.
+
+For the bi-Kappa distribution, `theta` is the scale in its density,
 
     f(v) ~ [1 + v_perp^2 / (kappa theta_perp^2) + v_par^2 / (kappa theta_par^2)]^-(kappa+1)
 
-`theta_perp` applies to both directions perpendicular to `ub` and `theta_par` to the direction
-along it. Both must be positive.
+and the samplers do not tie it to a temperature. For `kappa > 3/2` each velocity component has
+a finite variance,
+
+    Var(v_perp1) = Var(v_perp2) = kappa theta_perp^2 / (2 kappa - 3),
+    Var(v_par)                  = kappa theta_par^2  / (2 kappa - 3).
+
+A population whose kinetic temperature along a direction is `T`, in the sense
+`k_B T = m Var(v_i)`, therefore has `theta = sqrt((2 - 3/kappa) k_B T / m)` for that direction.
+This tends to the bi-Maxwellian value as `kappa -> infinity`. For `kappa <= 3/2` the variance is
+infinite and there is no such temperature.
 
 \subsection params_ub Field direction: ub
 
 A 3-vector `{bx, by, bz}` giving the magnetic-field direction in the global frame.
 
 - It is normalized internally, so it need not have unit length.
-- It must be non-zero.
+- It must be non-zero. The samplers treat `ub` as zero when its squared length is below the
+  machine epsilon of the type, that is, when its length is below about `1.5e-8` in `double` or
+  `3.5e-4` in `float`. A magnetic field in tesla can be that small (the solar-wind field is
+  a few `1e-9` T), so pass a unit vector or the field in units that make it of order one.
 - Samples are drawn in field-aligned coordinates and rotated into the global frame before they
   are returned. For `ub = {0, 0, 1}` no rotation is applied.
 
@@ -47,12 +67,19 @@ are not reproducible.
 
 `dist(gen)` draws from an engine you supply instead of the internal one, for example one
 `std::mt19937` shared by several samplers. For `bi_kappa_distribution` the engine must produce a
-power-of-two number of distinct values, as `std::mt19937` and `std::mt19937_64` do.
+power-of-two number of distinct values (`max() - min() + 1`), as `std::mt19937` and
+`std::mt19937_64` do. This is not checked: `std::minstd_rand`, which produces `2^31 - 2`
+distinct values, compiles without a warning, and the variates drawn from it are then not exactly
+uniform.
+
+A sampler object holds its engine, a cached variate and, for `bi_kappa_distribution`, two
+counters, so one object must not be used by several threads at once. In a parallel code give
+each thread or MPI rank its own object and a distinct seed, for example `base_seed + rank`.
 
 For `bi_kappa_distribution`, a given seed gives the same values under libc++ and libstdc++ on
 the same architecture. Compile with `-ffp-contract=off` to rule out differences from fused
-multiply-add. Values are not bitwise identical across architectures, and they differ from
-release 1.0.0 (see CHANGELOG.md).
+multiply-add. Values are not bitwise identical across architectures. CHANGELOG.md lists the
+versions in which the values for a given seed changed.
 
 \subsection params_rejection Rejection-sampler settings: probe_points, max_reject_tries
 
@@ -61,12 +88,14 @@ These apply to the three samplers that take a user function (`general_velocity_g
 
 | Parameter | Meaning | Default |
 | --------- | ------- | ------- |
-| `probe_points` | Number of grid points used once, in `define(...)`, to estimate the maximum of your function. The estimate plus a 5% margin is the rejection envelope. | `1024` (velocity generators, must be `>= 64`); `4096` (position generator, must be `> 0`) |
+| `probe_points` | Number of points at which your function is evaluated once, in `define(...)`, to estimate its maximum. The largest value found, times 1.05, is the rejection envelope. The velocity generators use evenly spaced points from `w_min` to `w_max` inclusive. The position generator uses uniformly random points in the box, drawn from a separate engine with a fixed seed, so they are the same for every call with the same box and do not depend on `seed()`. | `1024` (velocity generators, must be `>= 64`); `4096` (position generator, must be `> 0`) |
 | `max_reject_tries` | Candidate draws allowed per sample before `operator()` throws `std::runtime_error`. | `100000` (velocity generators); `200000` (position generator) |
 
-\warning If your function has a peak narrower than the probe spacing, the estimated maximum is
-too low and the samples are biased, with no error reported. For a narrow peak, raise
-`probe_points` until `pdfUpperBound()` stops increasing.
+\warning If your function has a peak narrower than the spacing of the probe points, the
+estimated maximum is too low and the samples are biased, with no error reported. For a narrow
+peak, raise `probe_points` until the envelope stops increasing. The envelope is returned by
+`pdfUpperBound()` on the two velocity generators and by `densityUpperBound()` on the position
+generator.
 
 If a sampler exhausts `max_reject_tries`, the function is usually small over most of its range.
 Narrowing the range is more effective than raising the limit.
@@ -77,14 +106,17 @@ Narrowing the range is more effective than raising the limit.
 
 | Parameter | Meaning | Default | Valid range |
 | --------- | ------- | ------- | ----------- |
-| `kappa` | Spectral index. Smaller values give heavier suprathermal tails; `kappa -> infinity` gives the bi-Maxwellian. | `2.0` | `> 0.5` |
-| `theta_perp` | Thermal speed perpendicular to `ub`. | `1.0` | `> 0` |
-| `theta_par` | Thermal speed along `ub`. | `1.0` | `> 0` |
-| `ub` | Field direction. See \ref params_ub. | `{0, 0, 1}` | non-zero |
+| `kappa` | Spectral index. Smaller values give heavier suprathermal tails; `kappa -> infinity` gives the bi-Maxwellian. | *required* | `> 0.5`, finite |
+| `theta_perp` | Thermal speed perpendicular to `ub`. | `1.0` | `> 0`, finite |
+| `theta_par` | Thermal speed along `ub`. | `1.0` | `> 0`, finite |
+| `ub` | Field direction. See \ref params_ub. | `{0, 0, 1}` | non-zero, finite |
 | `max_normalized_velocity` | Velocity cap in thermal speeds, or `no_cap()`. See \ref params_cap. | `20` | `> 0`, or `no_cap()` |
-| `seed` | See \ref params_seed. | from `std::random_device` | any `int` |
+| `seed` | See \ref params_seed. | engine not reseeded | any `int` |
 
 `define(...)` also rejects NaN values, infinite thermal speeds and non-finite `ub` components.
+It does not reject `kappa = +infinity`; use `bi_maxwellian_distribution` for that limit. A
+default-constructed `bi_kappa_distribution` has `kappa = 2`, `theta_perp = theta_par = 1`,
+`ub = {0, 0, 1}` and a cap of 20.
 
 Moments of order `l` exist only for `kappa > (l + 1) / 2`. For `0.5 < kappa <= 1.5` the
 uncapped distribution has no finite second moment, so a temperature computed from the loaded
@@ -95,9 +127,12 @@ a sample.
 
 As `kappa` approaches `1/2`, the bi-Kappa distribution puts a non-negligible probability on
 speeds above the largest representable floating-point number. For
-`theta_perp = theta_par = 1` and `ub = {0, 0, 1}`, this probability is about `8.3e-4` at `kappa = 0.505` and `6.8e-7` at
-`kappa = 0.51` in `double`, and about `1.4e-4` at `kappa = 0.55` and `1.9e-8` at `kappa = 0.60`
-in `float`.
+`theta_perp = theta_par = 1` and `ub = {0, 0, 1}`, this probability is about `8.3e-4` at
+`kappa = 0.505` and `6.8e-7` at `kappa = 0.51` in `double`, and about `1.4e-4` at
+`kappa = 0.55` and `1.9e-8` at `kappa = 0.60` in `float`. At `kappa = 0.75` it is about
+`5e-20` in `float`. `bi_kappa_distribution<float>` is therefore suitable when kappa is not
+close to 1/2 and about seven significant digits per component are enough; closer to 1/2, use
+`double`.
 
 The sampler computes in the type it is instantiated with: `bi_kappa_distribution<float>` does
 all of its arithmetic in `float`. The relative error of a large radius grows like
@@ -162,11 +197,16 @@ bool c = dist.param().capped();                       // true
 
 | Parameter | Meaning | Default | Valid range |
 | --------- | ------- | ------- | ----------- |
-| `theta_perp` | Thermal speed perpendicular to `ub`. See \ref params_theta. | *required* | `> 0` |
-| `theta_par` | Thermal speed along `ub`. | `1.0` | `> 0` |
-| `ub` | Field direction. See \ref params_ub. | `{0, 0, 1}` | non-zero |
+| `theta_perp` | Thermal speed perpendicular to `ub`. See \ref params_theta. | *required* | `> 0`, finite |
+| `theta_par` | Thermal speed along `ub`. | `1.0` | `> 0`, finite |
+| `ub` | Field direction. See \ref params_ub. | `{0, 0, 1}` | non-zero, finite |
 | `max_normalized_velocity` | Velocity cap in thermal speeds, or `no_cap()`. See \ref params_cap. | `20` | `> 0`, or `no_cap()` |
-| `seed` | See \ref params_seed. | from `std::random_device` | any `int` |
+| `seed` | See \ref params_seed. | engine not reseeded | any `int` |
+
+`define(...)` rejects a zero or negative thermal speed and a cap that is not positive. It does
+not check `ub` and does not reject a NaN or infinite thermal speed; a zero `ub` makes every draw
+throw (see \ref params_errors). A default-constructed `bi_maxwellian_distribution` has
+`theta_perp = theta_par = 1`, `ub = {0, 0, 1}` and a cap of 20.
 
 \section params_generalvelocity general_velocity_generator
 
@@ -174,7 +214,7 @@ bool c = dist.param().capped();                       // true
 
 | Parameter | Meaning | Default | Valid range |
 | --------- | ------- | ------- | ----------- |
-| `speed_sq_pdf` | Your density `g(w)` in the speed squared `w = \|v\|^2`. It need not be normalized. | *required* | callable; finite, non-negative, positive somewhere in range |
+| `speed_sq_pdf` | Your density `g(w)` in the speed squared `w = vx^2 + vy^2 + vz^2`. It need not be normalized. | *required* | callable; finite, non-negative, positive somewhere in range |
 | `speed_sq_min` | Lower end of the sampled `w`. | *required* | `>= 0` |
 | `speed_sq_max` | Upper end of the sampled `w`. | *required* | `>= speed_sq_min` |
 | `probe_points` | See \ref params_rejection. | `1024` | `>= 64` |
@@ -189,8 +229,8 @@ distribution written in energy, use `w = 2E/m`. For example, a Maxwellian with t
 `speed_sq_min == speed_sq_max`, every sample has speed `sqrt(speed_sq_min)` and `g` is not
 evaluated.
 
-This interface replaced the 1.0.0 interface `define(f, E_min, E_max, particle_mass, ...)`. An old
-four-argument call passes the mass as `probe_points`, and throws if the mass is below 64.
+A call written for the 1.0.0 interface `define(f, E_min, E_max, particle_mass, ...)` passes the
+mass as `probe_points`, and throws if the mass is below 64; see CHANGELOG.md.
 
 \section params_fieldaligned field_aligned_velocity_generator
 
@@ -202,7 +242,7 @@ four-argument call passes the mass as `probe_points`, and throws if the mass is 
 | `speed_sq_pdf` | Your density `g(w)` for the parallel component, with `w = v_par^2`. | *required* | as above |
 | `speed_sq_min` | Lower end of the sampled `v_par^2`. | *required* | `>= 0` |
 | `speed_sq_max` | Upper end of the sampled `v_par^2`. | *required* | `>= speed_sq_min` |
-| `theta_perp` | Thermal speed of the two Maxwellian perpendicular components, each `N(0, theta_perp^2 / 2)`. | *required* | `> 0` |
+| `theta_perp` | Thermal speed of the two Maxwellian perpendicular components, each `N(0, theta_perp^2 / 2)`. | *required* | `> 0`, finite |
 | `ub` | Field direction. See \ref params_ub. | *required* | non-zero |
 | `parallel_sign` | `+1` puts the parallel component along `ub`, `-1` opposite to it. | *required* | `+1` or `-1` |
 | `probe_points` | See \ref params_rejection. | `1024` | `>= 64` |
@@ -234,7 +274,7 @@ The returned point is a `std::vector<Real>` of length `dimension`.
 
 | Exception | Thrown by | Cause |
 | --------- | --------- | ----- |
-| `std::invalid_argument` | `define(...)` and the single-parameter setters | A value outside the ranges above, a null callable, or mismatched bound sizes. |
-| `std::invalid_argument` | `bi_maxwellian_distribution::operator()` | A zero `ub`. This sampler checks `ub` when it rotates a sample, not in `define(...)`. |
+| `std::invalid_argument` | `define(...)` and the single-parameter setters | A value outside the ranges above, a null callable, or mismatched bound sizes. Not detected here: NaN or infinite thermal speeds and any `ub` for `bi_maxwellian_distribution`; a NaN or infinite `theta_perp` and a NaN `ub` component for `field_aligned_velocity_generator`; `kappa = +infinity` for `bi_kappa_distribution`. |
+| `std::invalid_argument` | `operator()` of `bi_kappa_distribution` and `bi_maxwellian_distribution` | A `ub` whose length is below the limit in \ref params_ub. `bi_maxwellian_distribution` checks `ub` only here, so a zero `ub` passes its `define(...)`. `bi_kappa_distribution` rejects an exactly zero `ub` in `define(...)`, but a non-zero `ub` below the limit reaches this check. |
 | `std::runtime_error` | `operator()` | A general or field-aligned generator called before `define(...)`; `max_reject_tries` exhausted; 10^6 consecutive cap rejections; or your function returned a negative or non-finite value. |
 */

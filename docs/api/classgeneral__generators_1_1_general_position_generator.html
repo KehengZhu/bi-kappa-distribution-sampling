@@ -129,19 +129,34 @@ Public Member Functions</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 id="header-pub-attribs" class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
 <tr class="memitem:a2cf4cc1c9ebd9571b15a5a9ed47b4a9a" id="r_a2cf4cc1c9ebd9571b15a5a9ed47b4a9a"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a2cf4cc1c9ebd9571b15a5a9ed47b4a9a">dimension</a> = dimension</td></tr>
-<tr class="memitem:a7e15c91a159b4561c943372fad575d28" id="r_a7e15c91a159b4561c943372fad575d28"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a7e15c91a159b4561c943372fad575d28">lower_bounds</a> = np.array(lower_bounds)</td></tr>
-<tr class="memitem:a42b21f0a360a9101001579483d7f63da" id="r_a42b21f0a360a9101001579483d7f63da"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a42b21f0a360a9101001579483d7f63da">upper_bounds</a> = np.array(upper_bounds)</td></tr>
+<tr class="memitem:a7e15c91a159b4561c943372fad575d28" id="r_a7e15c91a159b4561c943372fad575d28"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a7e15c91a159b4561c943372fad575d28">lower_bounds</a> = lower</td></tr>
+<tr class="memitem:a42b21f0a360a9101001579483d7f63da" id="r_a42b21f0a360a9101001579483d7f63da"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a42b21f0a360a9101001579483d7f63da">upper_bounds</a> = upper</td></tr>
 <tr class="memitem:ab50c2451aa231b1d377904d19aa31ec4" id="r_ab50c2451aa231b1d377904d19aa31ec4"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#ab50c2451aa231b1d377904d19aa31ec4">density_function</a> = density_function</td></tr>
 <tr class="memitem:aed38d322bec10f93bac15988c0d7dfb4" id="r_aed38d322bec10f93bac15988c0d7dfb4"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#aed38d322bec10f93bac15988c0d7dfb4">max_reject_tries</a> = max_reject_tries</td></tr>
 <tr class="memitem:a67aecd06294226fc89e32cc7ccfa9e48" id="r_a67aecd06294226fc89e32cc7ccfa9e48"><td class="memItemLeft">float&#160;</td><td class="memItemRight"><a class="el" href="#a67aecd06294226fc89e32cc7ccfa9e48">density_upper_bound</a> = self._estimate_density_upper_bound(probe_points)</td></tr>
 </table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 id="header-pub-static-attribs" class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
+Static Public Attributes</h2></td></tr>
+<tr class="memitem:a33a026e41349b14636396bdbadb3a2c3" id="r_a33a026e41349b14636396bdbadb3a2c3"><td class="memItemLeft">int&#160;</td><td class="memItemRight"><a class="el" href="#a33a026e41349b14636396bdbadb3a2c3">PROBE_SEED</a> = 1337</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pro-methods" class="groupheader"><a id="pro-methods" name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
+<tr class="memitem:aaa82e27f674f8468a93e336b761e15bb" id="r_aaa82e27f674f8468a93e336b761e15bb"><td class="memItemLeft">float&#160;</td><td class="memItemRight"><a class="el" href="#aaa82e27f674f8468a93e336b761e15bb">_density</a> (self, np.ndarray x)</td></tr>
 <tr class="memitem:aa3f976133436965f824ebc9cf7b7b597" id="r_aa3f976133436965f824ebc9cf7b7b597"><td class="memItemLeft">float&#160;</td><td class="memItemRight"><a class="el" href="#aa3f976133436965f824ebc9cf7b7b597">_estimate_density_upper_bound</a> (self, int probe_points)</td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
-<div class="textblock"><pre class="fragment">Samples positions in 1D/2D/3D from a user density function using rejection sampling.</pre> 
-<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00066">66</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
+<div class="textblock"><pre class="fragment">Samples positions in 1D/2D/3D from a user density rho(x) by rejection sampling.
+
+The domain is the axis-aligned box lower_bounds &lt;= x &lt;= upper_bounds, a hard
+support.  density_function takes a list of length ``dimension`` and returns
+a finite, non-negative value, positive somewhere in the box; it need not be
+normalized.  The rejection envelope is the largest density found at
+probe_points uniform points, drawn from a fixed seed so that two identical
+constructions give the same envelope, times a 5% margin.  A peak narrow
+enough to fall between the probes is undersampled without warning.  Each
+call returns an array of length ``dimension``.
+</pre> 
+<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00085">85</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
 </div><a name="doc-constructors" id="doc-constructors"></a><h2 id="header-doc-constructors" class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="aa657ab4d0e410ff5a69a78ccb4762873" name="aa657ab4d0e410ff5a69a78ccb4762873"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aa657ab4d0e410ff5a69a78ccb4762873">&#9670;&#160;</a></span>__init__()</h2>
@@ -187,7 +202,7 @@ Protected Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00069">69</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00100">100</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
 
 </div>
 </div>
@@ -210,10 +225,45 @@ Protected Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<pre class="fragment">Generate a random position vector using rejection sampling.</pre> 
-<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00089">89</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
+<pre class="fragment">Generate one position, an array of length ``dimension``.</pre> 
+<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00148">148</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
 
-<p class="reference">References <a class="el" href="general__generators_8py_source.html#l00074">density_function</a>, <a class="el" href="general__generators_8py_source.html#l00078">density_upper_bound</a>, <a class="el" href="general__generators_8py_source.html#l00071">dimension</a>, <a class="el" href="general__generators_8py_source.html#l00072">lower_bounds</a>, <a class="el" href="general__generators_8py_source.html#l00075">max_reject_tries</a>, <a class="el" href="general__generators_8py_source.html#l00027">general_generators.GeneralVelocityGenerator.max_reject_tries</a>, and <a class="el" href="general__generators_8py_source.html#l00073">upper_bounds</a>.</p>
+<p class="reference">References <a class="el" href="general__generators_8py_source.html#l00129">_density()</a>, <a class="el" href="general__generators_8py_source.html#l00125">density_upper_bound</a>, <a class="el" href="general__generators_8py_source.html#l00119">dimension</a>, <a class="el" href="general__generators_8py_source.html#l00120">lower_bounds</a>, <a class="el" href="general__generators_8py_source.html#l00123">max_reject_tries</a>, <a class="el" href="general__generators_8py_source.html#l00046">general_generators.GeneralVelocityGenerator.max_reject_tries</a>, and <a class="el" href="general__generators_8py_source.html#l00121">upper_bounds</a>.</p>
+
+</div>
+</div>
+<a id="aaa82e27f674f8468a93e336b761e15bb" name="aaa82e27f674f8468a93e336b761e15bb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaa82e27f674f8468a93e336b761e15bb">&#9670;&#160;</a></span>_density()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"> float general_generators.GeneralPositionGenerator._density </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>self</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">np.ndarray</td>          <td class="paramname"><span class="paramname"><em>x</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel protected">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00129">129</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
+
+<p class="reference">References <a class="el" href="general__generators_8py_source.html#l00122">density_function</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00148">__call__()</a>, and <a class="el" href="general__generators_8py_source.html#l00138">_estimate_density_upper_bound()</a>.</p>
 
 </div>
 </div>
@@ -243,10 +293,10 @@ Protected Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<pre class="fragment">Estimate the maximum value of the density function in the domain.</pre> 
-<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00080">80</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
+<pre class="fragment">Largest density at probe_points uniform points in the box, with a 5% margin.</pre> 
+<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00138">138</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
 
-<p class="reference">References <a class="el" href="general__generators_8py_source.html#l00074">density_function</a>, <a class="el" href="general__generators_8py_source.html#l00071">dimension</a>, <a class="el" href="general__generators_8py_source.html#l00072">lower_bounds</a>, and <a class="el" href="general__generators_8py_source.html#l00073">upper_bounds</a>.</p>
+<p class="reference">References <a class="el" href="general__generators_8py_source.html#l00129">_density()</a>, <a class="el" href="general__generators_8py_source.html#l00119">dimension</a>, <a class="el" href="general__generators_8py_source.html#l00120">lower_bounds</a>, <a class="el" href="general__generators_8py_source.html#l00098">PROBE_SEED</a>, and <a class="el" href="general__generators_8py_source.html#l00121">upper_bounds</a>.</p>
 
 </div>
 </div>
@@ -263,9 +313,9 @@ Protected Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00074">74</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00122">122</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00089">__call__()</a>, and <a class="el" href="general__generators_8py_source.html#l00080">_estimate_density_upper_bound()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00129">_density()</a>.</p>
 
 </div>
 </div>
@@ -281,9 +331,9 @@ Protected Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00078">78</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00125">125</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00089">__call__()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00148">__call__()</a>.</p>
 
 </div>
 </div>
@@ -299,9 +349,9 @@ Protected Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00071">71</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00119">119</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00089">__call__()</a>, and <a class="el" href="general__generators_8py_source.html#l00080">_estimate_density_upper_bound()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00148">__call__()</a>, and <a class="el" href="general__generators_8py_source.html#l00138">_estimate_density_upper_bound()</a>.</p>
 
 </div>
 </div>
@@ -312,14 +362,14 @@ Protected Member Functions</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">general_generators.GeneralPositionGenerator.lower_bounds = np.array(lower_bounds)</td>
+          <td class="memname">general_generators.GeneralPositionGenerator.lower_bounds = lower</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00072">72</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00120">120</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00089">__call__()</a>, and <a class="el" href="general__generators_8py_source.html#l00080">_estimate_density_upper_bound()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00148">__call__()</a>, and <a class="el" href="general__generators_8py_source.html#l00138">_estimate_density_upper_bound()</a>.</p>
 
 </div>
 </div>
@@ -335,9 +385,35 @@ Protected Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00075">75</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00123">123</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00178">general_generators.FieldAlignedVelocityGenerator.__call__()</a>, <a class="el" href="general__generators_8py_source.html#l00089">__call__()</a>, and <a class="el" href="general__generators_8py_source.html#l00167">general_generators.FieldAlignedVelocityGenerator.sample_speed_sq()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00233">general_generators.FieldAlignedVelocityGenerator.__call__()</a>, <a class="el" href="general__generators_8py_source.html#l00148">__call__()</a>, and <a class="el" href="general__generators_8py_source.html#l00222">general_generators.FieldAlignedVelocityGenerator.sample_speed_sq()</a>.</p>
+
+</div>
+</div>
+<a id="a33a026e41349b14636396bdbadb3a2c3" name="a33a026e41349b14636396bdbadb3a2c3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a33a026e41349b14636396bdbadb3a2c3">&#9670;&#160;</a></span>PROBE_SEED</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int general_generators.GeneralPositionGenerator.PROBE_SEED = 1337</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel static">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00098">98</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00138">_estimate_density_upper_bound()</a>.</p>
 
 </div>
 </div>
@@ -348,14 +424,14 @@ Protected Member Functions</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">general_generators.GeneralPositionGenerator.upper_bounds = np.array(upper_bounds)</td>
+          <td class="memname">general_generators.GeneralPositionGenerator.upper_bounds = upper</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00073">73</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00121">121</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00089">__call__()</a>, and <a class="el" href="general__generators_8py_source.html#l00080">_estimate_density_upper_bound()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00148">__call__()</a>, and <a class="el" href="general__generators_8py_source.html#l00138">_estimate_density_upper_bound()</a>.</p>
 
 </div>
 </div>

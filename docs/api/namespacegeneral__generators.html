@@ -135,7 +135,23 @@ Functions</h2></td></tr>
 Variables</h2></td></tr>
 <tr class="memitem:a486fbe5161eaee0c46531bbfa9abf0e2" id="r_a486fbe5161eaee0c46531bbfa9abf0e2"><td class="memItemLeft">int&#160;</td><td class="memItemRight"><a class="el" href="#a486fbe5161eaee0c46531bbfa9abf0e2">MIN_PROBE_POINTS</a> = 64</td></tr>
 </table>
-<a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Function Documentation</h2>
+<a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
+<div class="textblock"><pre class="fragment">NumPy versions of the general velocity and position generators.
+
+GeneralVelocityGenerator, FieldAlignedVelocityGenerator and
+GeneralPositionGenerator are small NumPy ports of the C++ classes
+general_velocity_generator, field_aligned_velocity_generator and
+general_position_generator in cpp/, meant for prototyping a density in
+Python.  They take the same parameters and use the same rejection envelope (the
+largest density found at a set of probe points, times 1.05).  They are not a
+validated equivalent of the C++ classes: the C++ regression suite does not
+cover them, they check fewer invalid inputs, and they do not reproduce the C++
+random streams.
+
+Each generator is called with a numpy.random.Generator and returns one draw:
+``v = gen(rng)``.  Running this file writes three example sample files to the
+current directory.
+</pre> </div><a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Function Documentation</h2>
 <a id="a51af30a60f9f02777c6396b8247e356f" name="a51af30a60f9f02777c6396b8247e356f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a51af30a60f9f02777c6396b8247e356f">&#9670;&#160;</a></span>main()</h2>
 
@@ -150,12 +166,12 @@ Variables</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<pre class="fragment">Generate samples from General Velocity and General Position distributions.</pre> 
-<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00198">198</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
+<pre class="fragment">Write example samples from the three generators to text files.</pre> 
+<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00253">253</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
 
-<p class="reference">References <a class="el" href="general__generators_8py_source.html#l00198">main()</a>.</p>
+<p class="reference">References <a class="el" href="general__generators_8py_source.html#l00253">main()</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00198">main()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="general__generators_8py_source.html#l00253">main()</a>.</p>
 
 </div>
 </div>
@@ -172,7 +188,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00005">5</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
+<p class="definition">Definition at line <a class="el" href="general__generators_8py_source.html#l00024">24</a> of file <a class="el" href="general__generators_8py_source.html">general_generators.py</a>.</p>
 
 </div>
 </div>

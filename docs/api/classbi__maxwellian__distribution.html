@@ -129,48 +129,72 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('classbi__maxwe
 <tr class="heading"><td colspan="2"><h2 id="header-nested-classes" class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
 <tr class="memitem:param_5Ftype" id="r_param_5Ftype"><td class="memItemLeft">class &#160;</td><td class="memItemRight"><a class="el" href="classbi__maxwellian__distribution_1_1param__type.html">param_type</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The parameters of a <a class="el" href="classbi__maxwellian__distribution.html" title="Bi-Maxwellian distribution for 3D velocity sampling.">bi_maxwellian_distribution</a>: theta_perp, theta_par, ub and the velocity cap.  <a href="classbi__maxwellian__distribution_1_1param__type.html#details">More...</a><br /></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-types" class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
 <tr class="memitem:abc0d31b3b84ff3f7a4ff253f577fd375" id="r_abc0d31b3b84ff3f7a4ff253f577fd375"><td class="memItemLeft">using&#160;</td><td class="memItemRight"><a class="el" href="#abc0d31b3b84ff3f7a4ff253f577fd375">result_type</a> = std::array&lt;RealType, 3&gt;</td></tr>
+<tr class="memdesc:abc0d31b3b84ff3f7a4ff253f577fd375"><td class="mdescLeft">&#160;</td><td class="mdescRight">A velocity {vx, vy, vz}.  <br /></td></tr>
 <tr class="memitem:a4108c0d09001ad9c856f157f3e07cf3b" id="r_a4108c0d09001ad9c856f157f3e07cf3b"><td class="memItemLeft">using&#160;</td><td class="memItemRight"><a class="el" href="#a4108c0d09001ad9c856f157f3e07cf3b">point_type</a> = <a class="el" href="#abc0d31b3b84ff3f7a4ff253f577fd375">result_type</a></td></tr>
+<tr class="memdesc:a4108c0d09001ad9c856f157f3e07cf3b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Same as <a class="el" href="#abc0d31b3b84ff3f7a4ff253f577fd375" title="A velocity {vx, vy, vz}.">result_type</a>.  <br /></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-methods" class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:adcbaca2ce9e79e556fb069924dc047d2" id="r_adcbaca2ce9e79e556fb069924dc047d2"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#adcbaca2ce9e79e556fb069924dc047d2">bi_maxwellian_distribution</a> ()</td></tr>
+<tr class="memdesc:adcbaca2ce9e79e556fb069924dc047d2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct with theta_perp = theta_par = 1, ub = {0, 0, 1} and a cap of 20.  <br /></td></tr>
 <tr class="memitem:a963bd75827f6d9c154c160903a11e220" id="r_a963bd75827f6d9c154c160903a11e220"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a963bd75827f6d9c154c160903a11e220">bi_maxwellian_distribution</a> (RealType theta_perp, RealType theta_par=RealType(1.0), <a class="el" href="#a4108c0d09001ad9c856f157f3e07cf3b">point_type</a> ub=<a class="el" href="#a4108c0d09001ad9c856f157f3e07cf3b">point_type</a>({RealType(0.0), RealType(0.0), RealType(1.0)}), RealType max_normalized_velocity=RealType(20.0))</td></tr>
+<tr class="memdesc:a963bd75827f6d9c154c160903a11e220"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct and call <a class="el" href="#aed2591ab2aed5ae7e6e520b9b141511f" title="Replace all parameters with params, then call reset().">define()</a> with these arguments.  <br /></td></tr>
 <tr class="memitem:a12a0118b7df80a00b3b41a4f634e84c7" id="r_a12a0118b7df80a00b3b41a4f634e84c7"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a12a0118b7df80a00b3b41a4f634e84c7">bi_maxwellian_distribution</a> (const <a class="el" href="classbi__maxwellian__distribution_1_1param__type.html">param_type</a> &amp;params)</td></tr>
+<tr class="memdesc:a12a0118b7df80a00b3b41a4f634e84c7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct from a parameter set.  <br /></td></tr>
 <tr class="memitem:aed2591ab2aed5ae7e6e520b9b141511f" id="r_aed2591ab2aed5ae7e6e520b9b141511f"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#aed2591ab2aed5ae7e6e520b9b141511f">define</a> (const <a class="el" href="classbi__maxwellian__distribution_1_1param__type.html">param_type</a> &amp;params)</td></tr>
+<tr class="memdesc:aed2591ab2aed5ae7e6e520b9b141511f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Replace all parameters with <code class="param">params</code>, then call <a class="el" href="#af1edb7ef9fd3a2857ee273a3706a2af2" title="Discard the normal variate cached by std::normal_distribution.">reset()</a>.  <br /></td></tr>
 <tr class="memitem:a4530c490894b1da88b01f76630fd7c89" id="r_a4530c490894b1da88b01f76630fd7c89"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#a4530c490894b1da88b01f76630fd7c89">define</a> (RealType theta_perp, RealType theta_par=RealType(1.0), <a class="el" href="#a4108c0d09001ad9c856f157f3e07cf3b">point_type</a> ub=<a class="el" href="#a4108c0d09001ad9c856f157f3e07cf3b">point_type</a>({RealType(0.0), RealType(0.0), RealType(1.0)}), RealType max_normalized_velocity=RealType(20.0))</td></tr>
 <tr class="memdesc:a4530c490894b1da88b01f76630fd7c89"><td class="mdescLeft">&#160;</td><td class="mdescRight">Configure the sampler.  <br /></td></tr>
 <tr class="memitem:aef0cdfc5f635b9ebec8de533a978f6b6" id="r_aef0cdfc5f635b9ebec8de533a978f6b6"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#aef0cdfc5f635b9ebec8de533a978f6b6">define</a> (const <a class="el" href="classbi__maxwellian__distribution_1_1param__type.html">param_type</a> &amp;params, int seed)</td></tr>
+<tr class="memdesc:aef0cdfc5f635b9ebec8de533a978f6b6"><td class="mdescLeft">&#160;</td><td class="mdescRight">define(params), after seeding the internal engine with <code class="param">seed</code> as <a class="el" href="#a91b1bf3e96f4175ac83d4ee39b1c79dd" title="Reseed the internal engine and discard any variate cached from before, so that seed(s) followed by n ...">seed()</a> does.  <br /></td></tr>
 <tr class="memitem:ad2dbd32d8f56eea5a6212ee048416f59" id="r_ad2dbd32d8f56eea5a6212ee048416f59"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#ad2dbd32d8f56eea5a6212ee048416f59">define</a> (RealType theta_perp, RealType theta_par, <a class="el" href="#a4108c0d09001ad9c856f157f3e07cf3b">point_type</a> ub, RealType max_normalized_velocity, int seed)</td></tr>
+<tr class="memdesc:ad2dbd32d8f56eea5a6212ee048416f59"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="#aed2591ab2aed5ae7e6e520b9b141511f" title="Replace all parameters with params, then call reset().">define()</a> with all four parameters, after seeding the internal engine with <code class="param">seed</code> as <a class="el" href="#a91b1bf3e96f4175ac83d4ee39b1c79dd" title="Reseed the internal engine and discard any variate cached from before, so that seed(s) followed by n ...">seed()</a> does (<span class="tt"><a class="el" href="#a91b1bf3e96f4175ac83d4ee39b1c79dd" title="Reseed the internal engine and discard any variate cached from before, so that seed(s) followed by n ...">seed</a> &gt;= 0</span> reproducible, <span class="tt"><a class="el" href="#a91b1bf3e96f4175ac83d4ee39b1c79dd" title="Reseed the internal engine and discard any variate cached from before, so that seed(s) followed by n ...">seed</a> &lt; 0</span> from <span class="tt">std::random_device</span>).  <br /></td></tr>
 <tr class="memitem:ab254252bace3eb7465b74f5a8aa5fc82" id="r_ab254252bace3eb7465b74f5a8aa5fc82"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#ab254252bace3eb7465b74f5a8aa5fc82">theta_perp</a> (RealType value)</td></tr>
+<tr class="memdesc:ab254252bace3eb7465b74f5a8aa5fc82"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set theta_perp, keeping the other parameters; throws as <a class="el" href="#aed2591ab2aed5ae7e6e520b9b141511f" title="Replace all parameters with params, then call reset().">define()</a> does.  <br /></td></tr>
 <tr class="memitem:af34264ec5592312b6b21429055d5eb8a" id="r_af34264ec5592312b6b21429055d5eb8a"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#af34264ec5592312b6b21429055d5eb8a">theta_par</a> (RealType value)</td></tr>
+<tr class="memdesc:af34264ec5592312b6b21429055d5eb8a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set theta_par, keeping the other parameters; throws as <a class="el" href="#aed2591ab2aed5ae7e6e520b9b141511f" title="Replace all parameters with params, then call reset().">define()</a> does.  <br /></td></tr>
 <tr class="memitem:ae1668e8b92004e45acfc2f767bc0c21a" id="r_ae1668e8b92004e45acfc2f767bc0c21a"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#ae1668e8b92004e45acfc2f767bc0c21a">ub</a> (const <a class="el" href="#a4108c0d09001ad9c856f157f3e07cf3b">point_type</a> &amp;value)</td></tr>
+<tr class="memdesc:ae1668e8b92004e45acfc2f767bc0c21a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the field direction, keeping the other parameters.  <br /></td></tr>
 <tr class="memitem:a1f5f2d5547d9b53d8707d7350806e2b7" id="r_a1f5f2d5547d9b53d8707d7350806e2b7"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#a1f5f2d5547d9b53d8707d7350806e2b7">max_normalized_velocity</a> (RealType value)</td></tr>
-<tr class="memdesc:a1f5f2d5547d9b53d8707d7350806e2b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unlike the other setters, this one changes <em>which distribution</em> is sampled, not merely its parameters.  <br /></td></tr>
+<tr class="memdesc:a1f5f2d5547d9b53d8707d7350806e2b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the velocity cap, keeping the other parameters.  <br /></td></tr>
 <tr class="memitem:af6528e247500682ea69a68c7e98812b6" id="r_af6528e247500682ea69a68c7e98812b6"><td class="memItemLeft"><a class="el" href="classbi__maxwellian__distribution_1_1param__type.html">param_type</a>&#160;</td><td class="memItemRight"><a class="el" href="#af6528e247500682ea69a68c7e98812b6">param</a> () const</td></tr>
+<tr class="memdesc:af6528e247500682ea69a68c7e98812b6"><td class="mdescLeft">&#160;</td><td class="mdescRight">The current parameters, for example to test <a class="el" href="#af6528e247500682ea69a68c7e98812b6" title="The current parameters, for example to test param().capped().">param()</a>.capped().  <br /></td></tr>
 <tr class="memitem:a3fb8333a4fb95552715b39fb5405ed5c" id="r_a3fb8333a4fb95552715b39fb5405ed5c"><td class="memItemLeft">RealType&#160;</td><td class="memItemRight"><a class="el" href="#a3fb8333a4fb95552715b39fb5405ed5c">theta_perp</a> () const</td></tr>
+<tr class="memdesc:a3fb8333a4fb95552715b39fb5405ed5c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Perpendicular thermal speed.  <br /></td></tr>
 <tr class="memitem:a75e231f0b56f4f4d9075580f4d823ab9" id="r_a75e231f0b56f4f4d9075580f4d823ab9"><td class="memItemLeft">RealType&#160;</td><td class="memItemRight"><a class="el" href="#a75e231f0b56f4f4d9075580f4d823ab9">theta_par</a> () const</td></tr>
+<tr class="memdesc:a75e231f0b56f4f4d9075580f4d823ab9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parallel thermal speed.  <br /></td></tr>
 <tr class="memitem:aa048faf4eebf929f3907daaf337d88d1" id="r_aa048faf4eebf929f3907daaf337d88d1"><td class="memItemLeft"><a class="el" href="#a4108c0d09001ad9c856f157f3e07cf3b">point_type</a>&#160;</td><td class="memItemRight"><a class="el" href="#aa048faf4eebf929f3907daaf337d88d1">ub</a> () const</td></tr>
+<tr class="memdesc:aa048faf4eebf929f3907daaf337d88d1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Field direction, as given.  <br /></td></tr>
 <tr class="memitem:a83a31ee69173a0493d86a878a657ef11" id="r_a83a31ee69173a0493d86a878a657ef11"><td class="memItemLeft">RealType&#160;</td><td class="memItemRight"><a class="el" href="#a83a31ee69173a0493d86a878a657ef11">max_normalized_velocity</a> () const</td></tr>
+<tr class="memdesc:a83a31ee69173a0493d86a878a657ef11"><td class="mdescLeft">&#160;</td><td class="mdescRight">Velocity cap in thermal speeds; +infinity for <a class="el" href="#ab5f2402b76654e4adf1c3d63d620e94d" title="Value of the cap that selects the uncapped sampler: +infinity.">no_cap()</a>.  <br /></td></tr>
 <tr class="memitem:a91b1bf3e96f4175ac83d4ee39b1c79dd" id="r_a91b1bf3e96f4175ac83d4ee39b1c79dd"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#a91b1bf3e96f4175ac83d4ee39b1c79dd">seed</a> (int s)</td></tr>
 <tr class="memdesc:a91b1bf3e96f4175ac83d4ee39b1c79dd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reseed the internal engine and discard any variate cached from before, so that seed(s) followed by n draws gives the same values however many draws came first.  <br /></td></tr>
 <tr class="memitem:af1edb7ef9fd3a2857ee273a3706a2af2" id="r_af1edb7ef9fd3a2857ee273a3706a2af2"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#af1edb7ef9fd3a2857ee273a3706a2af2">reset</a> ()</td></tr>
+<tr class="memdesc:af1edb7ef9fd3a2857ee273a3706a2af2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Discard the normal variate cached by <span class="tt">std::normal_distribution</span>.  <br /></td></tr>
 <tr class="memitem:a0adf7112047888083eb59ef2f8cad780" id="r_a0adf7112047888083eb59ef2f8cad780"><td class="memTemplParams" colspan="2">template&lt;typename GeneratorType&gt; </td></tr>
 <tr class="memitem:a0adf7112047888083eb59ef2f8cad780 template"><td class="memItemLeft"><a class="el" href="#abc0d31b3b84ff3f7a4ff253f577fd375">result_type</a>&#160;</td><td class="memItemRight"><a class="el" href="#a0adf7112047888083eb59ef2f8cad780">operator()</a> (GeneratorType &amp;gen)</td></tr>
+<tr class="memdesc:a0adf7112047888083eb59ef2f8cad780"><td class="mdescLeft">&#160;</td><td class="mdescRight">Draw one velocity from the engine <code class="param">gen</code> instead of the internal one.  <br /></td></tr>
 <tr class="memitem:ac6b21d8b0ff4924d4f19838079e449e6" id="r_ac6b21d8b0ff4924d4f19838079e449e6"><td class="memItemLeft"><a class="el" href="#abc0d31b3b84ff3f7a4ff253f577fd375">result_type</a>&#160;</td><td class="memItemRight"><a class="el" href="#ac6b21d8b0ff4924d4f19838079e449e6">operator()</a> ()</td></tr>
+<tr class="memdesc:ac6b21d8b0ff4924d4f19838079e449e6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Draw one velocity from the internal engine.  <br /></td></tr>
 <tr class="memitem:a23693725ae24d4c7ab72e8eb1391a06c" id="r_a23693725ae24d4c7ab72e8eb1391a06c"><td class="memTemplParams" colspan="2">template&lt;typename GeneratorType&gt; </td></tr>
 <tr class="memitem:a23693725ae24d4c7ab72e8eb1391a06c template"><td class="memItemLeft"><a class="el" href="#abc0d31b3b84ff3f7a4ff253f577fd375">result_type</a>&#160;</td><td class="memItemRight"><a class="el" href="#a23693725ae24d4c7ab72e8eb1391a06c">operator()</a> (GeneratorType &amp;gen, const <a class="el" href="classbi__maxwellian__distribution_1_1param__type.html">param_type</a> &amp;params)</td></tr>
+<tr class="memdesc:a23693725ae24d4c7ab72e8eb1391a06c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Draw one velocity from <code class="param">gen</code> with the parameters <code class="param">params</code> instead of the stored ones.  <br /></td></tr>
 <tr class="memitem:a40b30a374cad055ec042049a2a9d49e0" id="r_a40b30a374cad055ec042049a2a9d49e0"><td class="memItemLeft"><a class="el" href="#a4108c0d09001ad9c856f157f3e07cf3b">point_type</a>&#160;</td><td class="memItemRight"><a class="el" href="#a40b30a374cad055ec042049a2a9d49e0">rotate_from_fieldAligned_frame</a> (const <a class="el" href="#a4108c0d09001ad9c856f157f3e07cf3b">point_type</a> &amp;local, const <a class="el" href="#a4108c0d09001ad9c856f157f3e07cf3b">point_type</a> &amp;ub) const</td></tr>
+<tr class="memdesc:a40b30a374cad055ec042049a2a9d49e0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Rotate <code class="param">local</code> = {v_perp1, v_perp2, v_par} from field-aligned components to the global frame, for the field direction <code class="param">ub</code>.  <br /></td></tr>
 <tr class="memitem:a58063437df26360f12c804c3a9794755" id="r_a58063437df26360f12c804c3a9794755"><td class="memItemLeft">bool&#160;</td><td class="memItemRight"><a class="el" href="#a58063437df26360f12c804c3a9794755">operator==</a> (const <a class="el" href="classbi__maxwellian__distribution.html">bi_maxwellian_distribution</a> &amp;other) const</td></tr>
+<tr class="memdesc:a58063437df26360f12c804c3a9794755"><td class="mdescLeft">&#160;</td><td class="mdescRight">True if the two samplers have equal parameters. Engine state is not compared.  <br /></td></tr>
 <tr class="memitem:a3c2c29de984af00cf946cf114669bd39" id="r_a3c2c29de984af00cf946cf114669bd39"><td class="memItemLeft">bool&#160;</td><td class="memItemRight"><a class="el" href="#a3c2c29de984af00cf946cf114669bd39">operator!=</a> (const <a class="el" href="classbi__maxwellian__distribution.html">bi_maxwellian_distribution</a> &amp;other) const</td></tr>
+<tr class="memdesc:a3c2c29de984af00cf946cf114669bd39"><td class="mdescLeft">&#160;</td><td class="mdescRight">Negation of operator==.  <br /></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-static-methods" class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:ab5f2402b76654e4adf1c3d63d620e94d" id="r_ab5f2402b76654e4adf1c3d63d620e94d"><td class="memItemLeft">static constexpr RealType&#160;</td><td class="memItemRight"><a class="el" href="#ab5f2402b76654e4adf1c3d63d620e94d">no_cap</a> ()</td></tr>
-<tr class="memdesc:ab5f2402b76654e4adf1c3d63d620e94d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sentinel selecting the untruncated sampler.  <br /></td></tr>
+<tr class="memdesc:ab5f2402b76654e4adf1c3d63d620e94d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Value of the cap that selects the uncapped sampler: <span class="tt">+infinity</span>.  <br /></td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;typename RealType = double&gt;<br />
@@ -179,12 +203,12 @@ class bi_maxwellian_distribution&lt; RealType &gt;</div><p>Bi-Maxwellian distrib
 <div class="fragment"><div class="line"><a class="code hl_function" href="#adcbaca2ce9e79e556fb069924dc047d2">bi_maxwellian_distribution&lt;double&gt;</a> dist;</div>
 <div class="line">dist.<a class="code hl_function" href="#aed2591ab2aed5ae7e6e520b9b141511f">define</a>(1.0, 2.0, {0, 0, 1});   <span class="comment">// theta_perp, theta_par, ub</span></div>
 <div class="line"><span class="keyword">auto</span> v = dist();                    <span class="comment">// {vx, vy, vz}, global frame</span></div>
-<div class="ttc" id="aclassbi__maxwellian__distribution_html_adcbaca2ce9e79e556fb069924dc047d2"><div class="ttname"><a href="#adcbaca2ce9e79e556fb069924dc047d2">bi_maxwellian_distribution::bi_maxwellian_distribution</a></div><div class="ttdeci">bi_maxwellian_distribution()</div><div class="ttdef"><b>Definition</b> <a href="bi__maxwellian__distribution_8_h_source.html#l00116">bi_maxwellian_distribution.H:116</a></div></div>
-<div class="ttc" id="aclassbi__maxwellian__distribution_html_aed2591ab2aed5ae7e6e520b9b141511f"><div class="ttname"><a href="#aed2591ab2aed5ae7e6e520b9b141511f">bi_maxwellian_distribution::define</a></div><div class="ttdeci">void define(const param_type &amp;params)</div><div class="ttdef"><b>Definition</b> <a href="bi__maxwellian__distribution_8_h_source.html#l00139">bi_maxwellian_distribution.H:139</a></div></div>
-</div><!-- fragment --><dl class="section note"><dt>Note</dt><dd><b>The cap defaults to 20 thermal speeds</b>, as in release 1.0.0 and as in <a class="el" href="classbi__kappa__distribution.html" title="Bi-Kappa distribution class for sampling 3D velocity vectors.">bi_kappa_distribution</a>. For a bi-Maxwellian the probability beyond it is negligible. Pass <a class="el" href="#ab5f2402b76654e4adf1c3d63d620e94d" title="Sentinel selecting the untruncated sampler.">no_cap()</a> to sample the bi-Maxwellian distribution itself; see <a class="el" href="#ab5f2402b76654e4adf1c3d63d620e94d" title="Sentinel selecting the untruncated sampler.">no_cap()</a> and <a class="el" href="classbi__maxwellian__distribution_1_1param__type.html#ab8d027bbd6da762387e1c347003d2ab6" title="True when a finite component-wise cap is in force, i.e.">param_type::capped()</a>.</dd></dl>
+<div class="ttc" id="aclassbi__maxwellian__distribution_html_adcbaca2ce9e79e556fb069924dc047d2"><div class="ttname"><a href="#adcbaca2ce9e79e556fb069924dc047d2">bi_maxwellian_distribution::bi_maxwellian_distribution</a></div><div class="ttdeci">bi_maxwellian_distribution()</div><div class="ttdoc">Construct with theta_perp = theta_par = 1, ub = {0, 0, 1} and a cap of 20.</div><div class="ttdef"><b>Definition</b> <a href="bi__maxwellian__distribution_8_h_source.html#l00121">bi_maxwellian_distribution.H:121</a></div></div>
+<div class="ttc" id="aclassbi__maxwellian__distribution_html_aed2591ab2aed5ae7e6e520b9b141511f"><div class="ttname"><a href="#aed2591ab2aed5ae7e6e520b9b141511f">bi_maxwellian_distribution::define</a></div><div class="ttdeci">void define(const param_type &amp;params)</div><div class="ttdoc">Replace all parameters with params, then call reset().</div><div class="ttdef"><b>Definition</b> <a href="bi__maxwellian__distribution_8_h_source.html#l00148">bi_maxwellian_distribution.H:148</a></div></div>
+</div><!-- fragment --><dl class="section note"><dt>Note</dt><dd><b>The cap defaults to 20 thermal speeds</b>, as in <a class="el" href="classbi__kappa__distribution.html" title="Bi-Kappa distribution class for sampling 3D velocity vectors.">bi_kappa_distribution</a>. For a bi-Maxwellian the probability beyond it is negligible. Pass <a class="el" href="#ab5f2402b76654e4adf1c3d63d620e94d" title="Value of the cap that selects the uncapped sampler: +infinity.">no_cap()</a> to sample the bi-Maxwellian distribution itself; see <a class="el" href="#ab5f2402b76654e4adf1c3d63d620e94d" title="Value of the cap that selects the uncapped sampler: +infinity.">no_cap()</a> and <a class="el" href="classbi__maxwellian__distribution_1_1param__type.html#ab8d027bbd6da762387e1c347003d2ab6" title="True when a finite component-wise cap is in force, that is, when the sampled distribution is the bi-M...">param_type::capped()</a>.</dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="usage.html" title="Usage examples">Usage examples</a> for more recipes (seeding, external RNG, reconfiguration). </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00030">30</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00029">29</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
 </div><a name="doc-typedef-members" id="doc-typedef-members"></a><h2 id="header-doc-typedef-members" class="groupheader">Member Typedef Documentation</h2>
 <a id="a4108c0d09001ad9c856f157f3e07cf3b" name="a4108c0d09001ad9c856f157f3e07cf3b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a4108c0d09001ad9c856f157f3e07cf3b">&#9670;&#160;</a></span>point_type</h2>
@@ -200,7 +224,9 @@ template&lt;typename RealType = double&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00034">34</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+<p>Same as <a class="el" href="#abc0d31b3b84ff3f7a4ff253f577fd375" title="A velocity {vx, vy, vz}.">result_type</a>. </p>
+
+<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00033">33</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -218,7 +244,9 @@ template&lt;typename RealType = double&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00033">33</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+<p>A velocity {vx, vy, vz}. </p>
+
+<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00032">32</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -248,7 +276,10 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00116">116</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+<p>Construct with theta_perp = theta_par = 1, ub = {0, 0, 1} and a cap of 20. </p>
+<p>The internal engine is seeded from <span class="tt">std::random_device</span>. </p>
+
+<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00121">121</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -291,7 +322,10 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00118">118</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+<p>Construct and call <a class="el" href="#aed2591ab2aed5ae7e6e520b9b141511f" title="Replace all parameters with params, then call reset().">define()</a> with these arguments. </p>
+<p>The internal engine is seeded from <span class="tt">std::random_device</span>; call <a class="el" href="#a91b1bf3e96f4175ac83d4ee39b1c79dd" title="Reseed the internal engine and discard any variate cached from before, so that seed(s) followed by n ...">seed()</a> for a reproducible stream. </p>
+
+<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00125">125</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -320,7 +354,10 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00128">128</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+<p>Construct from a parameter set. </p>
+<p>The internal engine is seeded from <span class="tt">std::random_device</span>. </p>
+
+<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00137">137</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -350,9 +387,11 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00139">139</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+<p>Replace all parameters with <code class="param">params</code>, then call <a class="el" href="#af1edb7ef9fd3a2857ee273a3706a2af2" title="Discard the normal variate cached by std::normal_distribution.">reset()</a>. </p>
 
-<p class="reference">Referenced by <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00128">bi_maxwellian_distribution()</a>, <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00179">define()</a>, <a class="el" href="main_8cpp_source.html#l00015">main()</a>, <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00206">max_normalized_velocity()</a>, <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00192">theta_par()</a>, <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00187">theta_perp()</a>, and <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00197">ub()</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00148">148</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00137">bi_maxwellian_distribution()</a>, <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00195">define()</a>, <a class="el" href="main_8cpp_source.html#l00015">main()</a>, <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00228">max_normalized_velocity()</a>, <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00212">theta_par()</a>, <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00206">theta_perp()</a>, and <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00218">ub()</a>.</p>
 
 </div>
 </div>
@@ -385,9 +424,11 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00177">177</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+<p>define(params), after seeding the internal engine with <code class="param">seed</code> as <a class="el" href="#a91b1bf3e96f4175ac83d4ee39b1c79dd" title="Reseed the internal engine and discard any variate cached from before, so that seed(s) followed by n ...">seed()</a> does. </p>
 
-<p class="reference">Referenced by <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00177">define()</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00191">191</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00191">define()</a>.</p>
 
 </div>
 </div>
@@ -435,7 +476,9 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00179">179</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+<p><a class="el" href="#aed2591ab2aed5ae7e6e520b9b141511f" title="Replace all parameters with params, then call reset().">define()</a> with all four parameters, after seeding the internal engine with <code class="param">seed</code> as <a class="el" href="#a91b1bf3e96f4175ac83d4ee39b1c79dd" title="Reseed the internal engine and discard any variate cached from before, so that seed(s) followed by n ...">seed()</a> does (<span class="tt"><a class="el" href="#a91b1bf3e96f4175ac83d4ee39b1c79dd" title="Reseed the internal engine and discard any variate cached from before, so that seed(s) followed by n ...">seed</a> &gt;= 0</span> reproducible, <span class="tt"><a class="el" href="#a91b1bf3e96f4175ac83d4ee39b1c79dd" title="Reseed the internal engine and discard any variate cached from before, so that seed(s) followed by n ...">seed</a> &lt; 0</span> from <span class="tt">std::random_device</span>). </p>
+
+<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00195">195</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -479,26 +522,26 @@ template&lt;typename RealType = double&gt; </div>
 </div><div class="memdoc">
 
 <p>Configure the sampler. </p>
-<p>Validates everything; throws rather than deferring a bad parameter to sampling time.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">theta_perp</td><td>Thermal speed of the two components transverse to <code class="param">ub</code>, &gt; 0. Each is N(0, theta_perp^2/2) &ndash; a speed, not a temperature: theta = sqrt(2*k_B*T/m). </td></tr>
     <tr><td class="paramname">theta_par</td><td>Thermal speed along <code class="param">ub</code>, &gt; 0. </td></tr>
-    <tr><td class="paramname">ub</td><td>Magnetic-field direction {bx,by,bz} in the global frame. Need not be normalized; must be non-zero. </td></tr>
-    <tr><td class="paramname">max_normalized_velocity</td><td>Velocity cap in thermal speeds (default 20, as in release 1.0.0), or <a class="el" href="#ab5f2402b76654e4adf1c3d63d620e94d" title="Sentinel selecting the untruncated sampler.">no_cap()</a> for the untruncated bi-Maxwellian law. A finite value selects a <em>different</em>, bounded target law &ndash; see <a class="el" href="usage.html#usage_bikappa_cap" title="The velocity cap">The velocity cap</a>. Must be &gt; 0; passing 0 to mean "no cap" throws.</td></tr>
+    <tr><td class="paramname">ub</td><td>Magnetic-field direction {bx,by,bz} in the global frame. Need not be normalized; must be non-zero, with a length above about 1.5e-8 in <span class="tt">double</span> (3.5e-4 in <span class="tt">float</span>); see <a class="el" href="parameters.html#params_ub" title="Field direction: ub">Field direction: ub</a>. </td></tr>
+    <tr><td class="paramname">max_normalized_velocity</td><td>Velocity cap in thermal speeds (default 20), or <a class="el" href="#ab5f2402b76654e4adf1c3d63d620e94d" title="Value of the cap that selects the uncapped sampler: +infinity.">no_cap()</a> for the bi-Maxwellian distribution itself. A finite value selects a <em>different</em>, bounded target distribution; see <a class="el" href="usage.html#usage_bikappa_cap" title="The velocity cap">The velocity cap</a>. Must be &gt; 0; passing 0 to mean "no cap" throws.</td></tr>
   </table>
   </dd>
 </dl>
 <dl class="section note"><dt>Note</dt><dd>To seed reproducibly, either call <a class="el" href="#a91b1bf3e96f4175ac83d4ee39b1c79dd" title="Reseed the internal engine and discard any variate cached from before, so that seed(s) followed by n ...">seed()</a> afterwards or use the overload taking a trailing int: &gt;= 0 is reproducible, &lt; 0 reseeds from std::random_device.</dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
-    <tr><td class="paramname">std::invalid_argument</td><td>if either theta is non-positive, <code class="param">max_normalized_velocity</code> is non-positive, or <code class="param">ub</code> is the zero vector.</td></tr>
+    <tr><td class="paramname">std::invalid_argument</td><td>if either theta is zero or negative, or <code class="param">max_normalized_velocity</code> is not positive (NaN included).</td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section note"><dt>Note</dt><dd><a class="el" href="#aed2591ab2aed5ae7e6e520b9b141511f" title="Replace all parameters with params, then call reset().">define()</a> does not check <code class="param">ub</code>, and it does not reject a NaN or infinite theta. A <code class="param">ub</code> that is zero, or shorter than the limit above, passes <a class="el" href="#aed2591ab2aed5ae7e6e520b9b141511f" title="Replace all parameters with params, then call reset().">define()</a> and makes every draw throw std::invalid_argument("ub must be a non-zero vector").</dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="parameters.html" title="Parameter reference">Parameter reference</a> for the full table, <a class="el" href="choosing.html" title="Choosing a sampler">Choosing a sampler</a> to compare samplers. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00170">170</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00183">183</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -527,7 +570,9 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00222">222</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+<p>Velocity cap in thermal speeds; +infinity for <a class="el" href="#ab5f2402b76654e4adf1c3d63d620e94d" title="Value of the cap that selects the uncapped sampler: +infinity.">no_cap()</a>. </p>
+
+<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00244">244</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -556,10 +601,10 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Unlike the other setters, this one changes <em>which distribution</em> is sampled, not merely its parameters. </p>
-<p>Pass <a class="el" href="#ab5f2402b76654e4adf1c3d63d620e94d" title="Sentinel selecting the untruncated sampler.">no_cap()</a> to return to the bi-Maxwellian law itself; passing 0 to mean "no cap" throws, as every non-positive value does. </p>
+<p>Set the velocity cap, keeping the other parameters. </p>
+<p>Unlike the other setters, this one changes <em>which distribution</em> is sampled, not merely its parameters. Pass <a class="el" href="#ab5f2402b76654e4adf1c3d63d620e94d" title="Value of the cap that selects the uncapped sampler: +infinity.">no_cap()</a> to return to the bi-Maxwellian distribution itself; passing 0 to mean "no cap" throws, as every non-positive value does. </p>
 
-<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00206">206</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00228">228</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -588,14 +633,14 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Sentinel selecting the untruncated sampler. </p>
-<p>In this mode each draw is three Gaussians with no outer acceptance-rejection loop, and the sampled law is the full bi-Maxwellian distribution.</p>
-<p>It must be passed explicitly, because the default cap is 20 (release 1.0.0): </p><pre class="fragment">bi_maxwellian_distribution&lt;double&gt; d(1.0, 2.0, {0,0,1},
+<p>Value of the cap that selects the uncapped sampler: <span class="tt">+infinity</span>. </p>
+<p>In this mode each draw is three Gaussians with no outer acceptance-rejection loop, and the samples follow the bi-Maxwellian distribution itself.</p>
+<p>It must be passed explicitly, because the default cap is 20: </p><pre class="fragment">bi_maxwellian_distribution&lt;double&gt; d(1.0, 2.0, {0,0,1},
                                      bi_maxwellian_distribution&lt;double&gt;::no_cap());
-</pre><p>With a finite cap the sampled law is instead that distribution conditioned on all normalized components lying inside the component-wise box &ndash; a different, bounded law with its own normalization. The cap is tested in the field-aligned frame, before the rotation into the global frame, so the returned components are <em>not</em> individually bounded by cap*theta unless ub is {0,0,1}; the box rotates with ub.</p>
+</pre><p>With a finite cap the sampled distribution is instead that distribution conditioned on all normalized components lying inside the component-wise box &ndash; a different, bounded distribution with its own normalization. The cap is tested in the field-aligned frame, before the rotation into the global frame, so the returned components are <em>not</em> individually bounded by cap*theta unless ub is {0,0,1}; the box rotates with ub.</p>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="usage.html#usage_bikappa_cap" title="The velocity cap">The velocity cap</a>, which describes the same construction for <a class="el" href="classbi__kappa__distribution.html" title="Bi-Kappa distribution class for sampling 3D velocity vectors.">bi_kappa_distribution</a>. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00108">108</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00111">111</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="main_8cpp_source.html#l00015">main()</a>.</p>
 
@@ -626,7 +671,9 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00360">360</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+<p>Negation of operator==. </p>
+
+<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00395">395</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -655,7 +702,10 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00245">245</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+<p>Draw one velocity from the internal engine. </p>
+<dl class="section return"><dt>Returns</dt><dd>{vx, vy, vz} in the global frame. </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00273">273</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -686,7 +736,10 @@ template&lt;typename GeneratorType&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00240">240</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+<p>Draw one velocity from the engine <code class="param">gen</code> instead of the internal one. </p>
+<dl class="section return"><dt>Returns</dt><dd>{vx, vy, vz} in the global frame. </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00266">266</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -721,7 +774,15 @@ template&lt;typename GeneratorType&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00251">251</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+<p>Draw one velocity from <code class="param">gen</code> with the parameters <code class="param">params</code> instead of the stored ones. </p>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::invalid_argument</td><td>if the field direction of <code class="param">params</code> is numerically zero; std::runtime_error after 10^6 consecutive rejections by a finite cap. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00283">283</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -750,7 +811,9 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00355">355</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+<p>True if the two samplers have equal parameters. Engine state is not compared. </p>
+
+<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00389">389</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -779,7 +842,9 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00216">216</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+<p>The current parameters, for example to test <a class="el" href="#af6528e247500682ea69a68c7e98812b6" title="The current parameters, for example to test param().capped().">param()</a>.capped(). </p>
+
+<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00238">238</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -808,9 +873,12 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00235">235</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+<p>Discard the normal variate cached by <span class="tt">std::normal_distribution</span>. </p>
+<p>Called by <a class="el" href="#a91b1bf3e96f4175ac83d4ee39b1c79dd" title="Reseed the internal engine and discard any variate cached from before, so that seed(s) followed by n ...">seed()</a> and by every <a class="el" href="#aed2591ab2aed5ae7e6e520b9b141511f" title="Replace all parameters with params, then call reset().">define()</a> overload. </p>
 
-<p class="reference">Referenced by <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00139">define()</a>, and <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00229">seed()</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00259">259</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00148">define()</a>, and <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00251">seed()</a>.</p>
 
 </div>
 </div>
@@ -843,9 +911,12 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00301">301</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+<p>Rotate <code class="param">local</code> = {v_perp1, v_perp2, v_par} from field-aligned components to the global frame, for the field direction <code class="param">ub</code>. </p>
+<p>The perpendicular axes are the ones the sampler uses. Throws std::invalid_argument if <code class="param">ub</code> is numerically zero. </p>
 
-<p class="reference">Referenced by <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00251">operator()()</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00334">334</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00283">operator()()</a>.</p>
 
 </div>
 </div>
@@ -876,7 +947,7 @@ template&lt;typename RealType = double&gt; </div>
 
 <p>Reseed the internal engine and discard any variate cached from before, so that seed(s) followed by n draws gives the same values however many draws came first. </p>
 
-<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00229">229</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00251">251</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -905,7 +976,9 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00220">220</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+<p>Parallel thermal speed. </p>
+
+<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00241">241</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -934,7 +1007,9 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00192">192</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+<p>Set theta_par, keeping the other parameters; throws as <a class="el" href="#aed2591ab2aed5ae7e6e520b9b141511f" title="Replace all parameters with params, then call reset().">define()</a> does. </p>
+
+<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00212">212</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -963,7 +1038,9 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00219">219</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+<p>Perpendicular thermal speed. </p>
+
+<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00240">240</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -992,7 +1069,9 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00187">187</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+<p>Set theta_perp, keeping the other parameters; throws as <a class="el" href="#aed2591ab2aed5ae7e6e520b9b141511f" title="Replace all parameters with params, then call reset().">define()</a> does. </p>
+
+<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00206">206</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -1021,7 +1100,9 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00221">221</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+<p>Field direction, as given. </p>
+
+<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00242">242</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -1050,7 +1131,9 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00197">197</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+<p>Set the field direction, keeping the other parameters. </p>
+
+<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00218">218</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
 
 </div>
 </div>

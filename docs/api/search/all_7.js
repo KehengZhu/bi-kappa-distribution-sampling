@@ -6,7 +6,8 @@ var searchData=
   ['engine_3',['Sharing one engine',['../usage.html#usage_external_rng',1,'']]],
   ['enginebits_4',['engineBits',['../namespacebikappa__detail.html#a6bdc9e9068ebd6ff7cdb96841d773e76',1,'bikappa_detail']]],
   ['engines_5',['Seeding and random engines',['../parameters.html#params_seed',1,'']]],
-  ['errors_6',['Errors',['../usage.html#usage_errors',1,'']]],
-  ['examples_7',['Usage examples',['../usage.html',1,'']]],
-  ['exceptions_8',['Exceptions',['../parameters.html#params_errors',1,'']]]
+  ['epilog_6',['EPILOG',['../namespacebikappa__validate.html#afc787ca0113fd572bc48eb8595523542',1,'bikappa_validate']]],
+  ['errors_7',['Errors',['../usage.html#usage_errors',1,'']]],
+  ['examples_8',['Usage examples',['../usage.html',1,'']]],
+  ['exceptions_9',['Exceptions',['../parameters.html#params_errors',1,'']]]
 ];

@@ -125,12 +125,12 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('index.html',''
 <p>Header-only C++11 samplers for loading particle velocities and positions in kinetic plasma simulations (particle-in-cell and hybrid codes). The package samples bi-Kappa and bi-Maxwellian velocity distributions about an arbitrary magnetic-field direction, and draws velocities or positions from densities you supply. A Python script tests a bi-Kappa velocity sample from any loader against the target distribution.</p>
 <ul>
 <li><span class="tt">cpp/</span>: the five sampler headers, a regression suite, and a demo program.</li>
-<li><span class="tt">python/</span>: the validator <span class="tt"><a class="el" href="bikappa__validate_8py.html">bikappa_validate.py</a></span>, Python versions of the general samplers, and a notebook that plots samples.</li>
+<li><span class="tt">python/</span>: the validator <span class="tt"><a class="el" href="bikappa__validate_8py.html">bikappa_validate.py</a></span>, NumPy ports of the three general samplers for prototyping, and a notebook that plots samples.</li>
 <li><span class="tt">experiments/</span>: the studies behind the accompanying paper.</li>
 </ul>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md1"></a>
 Quick start (C++)</h1>
-<p>Copy the headers you need from <span class="tt">cpp/</span> into your project, or add <span class="tt">cpp/</span> to the include path. Any C++11 compiler works.</p>
+<p>Copy the headers you need from <span class="tt">cpp/</span> into your project, or add <span class="tt">cpp/</span> to the include path. The headers need C++11 and nothing outside the standard library. Continuous integration builds and runs the regression suite with GCC and libstdc++ and with Clang and libc++ on Linux x86-64, and with Apple Clang and libc++ on macOS arm64, and compiles each header on its own with <span class="tt">-std=c++11 -pedantic-errors</span>.</p>
 <div class="fragment"><div class="line"><span class="preprocessor">#include &quot;<a class="code" href="bi__kappa__distribution_8_h.html">bi_kappa_distribution.H</a>&quot;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;cstdio&gt;</span></div>
 <div class="line"> </div>
@@ -153,15 +153,17 @@ Quick start (C++)</h1>
 <div class="line">    <span class="keywordflow">return</span> 0;</div>
 <div class="line">}</div>
 <div class="ttc" id="abi__kappa__distribution_8_h_html"><div class="ttname"><a href="bi__kappa__distribution_8_h.html">bi_kappa_distribution.H</a></div></div>
-<div class="ttc" id="aclassbi__kappa__distribution_html"><div class="ttname"><a href="classbi__kappa__distribution.html">bi_kappa_distribution</a></div><div class="ttdoc">Bi-Kappa distribution class for sampling 3D velocity vectors.</div><div class="ttdef"><b>Definition</b> <a href="bi__kappa__distribution_8_h_source.html#l00332">bi_kappa_distribution.H:333</a></div></div>
-<div class="ttc" id="aclassbi__kappa__distribution_html_a138df5909e003c80dc061b63da6d1e76"><div class="ttname"><a href="classbi__kappa__distribution.html#a138df5909e003c80dc061b63da6d1e76">bi_kappa_distribution::define</a></div><div class="ttdeci">void define(const param_type &amp;params)</div><div class="ttdef"><b>Definition</b> <a href="bi__kappa__distribution_8_h_source.html#l00489">bi_kappa_distribution.H:489</a></div></div>
+<div class="ttc" id="aclassbi__kappa__distribution_html"><div class="ttname"><a href="classbi__kappa__distribution.html">bi_kappa_distribution</a></div><div class="ttdoc">Bi-Kappa distribution class for sampling 3D velocity vectors.</div><div class="ttdef"><b>Definition</b> <a href="bi__kappa__distribution_8_h_source.html#l00314">bi_kappa_distribution.H:315</a></div></div>
+<div class="ttc" id="aclassbi__kappa__distribution_html_a138df5909e003c80dc061b63da6d1e76"><div class="ttname"><a href="classbi__kappa__distribution.html#a138df5909e003c80dc061b63da6d1e76">bi_kappa_distribution::define</a></div><div class="ttdeci">void define(const param_type &amp;params)</div><div class="ttdoc">Replace all parameters with params (already validated by its constructor), then call reset().</div><div class="ttdef"><b>Definition</b> <a href="bi__kappa__distribution_8_h_source.html#l00481">bi_kappa_distribution.H:481</a></div></div>
 <div class="ttc" id="amain_8cpp_html_ae66f6b31b5ad750f1fe042a706a4e3d4"><div class="ttname"><a href="main_8cpp.html#ae66f6b31b5ad750f1fe042a706a4e3d4">main</a></div><div class="ttdeci">int main()</div><div class="ttdef"><b>Definition</b> <a href="main_8cpp_source.html#l00015">main.cpp:15</a></div></div>
 </div><!-- fragment --><div class="fragment"><div class="line">g++ -std=c++11 -O2 -I cpp example.cpp -o example</div>
 </div><!-- fragment --><p>To build and run the code shipped in <span class="tt">cpp/</span>:</p>
 <div class="fragment"><div class="line">make -C cpp test                  # build and run the regression suite (exit status 0 on success)</div>
 <div class="line">cd cpp &amp;&amp; make &amp;&amp; ./main.exe      # short worked examples of all five samplers</div>
 <div class="line">make -C cpp CXX=clang++ test      # use a different compiler</div>
-</div><!-- fragment --><h2 class="doxsection"><a class="anchor" id="autotoc_md2"></a>
+</div><!-- fragment --><p>The regression suite takes about 10 s. <span class="tt">main.exe</span> writes five sample files of 50,000 lines each to the current directory; <span class="tt">samples_bikappa.txt</span> holds bi-Kappa velocities drawn with <span class="tt">no_cap()</span>, <span class="tt">kappa = 2</span>, <span class="tt">theta_perp = 1</span>, <span class="tt">theta_par = 2</span> and <span class="tt">ub = {0, 0, 1}</span>.</p>
+<p>The <a href="https://kehengzhu.github.io/bi-kappa-distribution-sampling/api/usage.html">usage examples</a> include complete programs for an oblique field direction, for loading particles with a bulk drift and a temperature in a particle-in-cell code, and for <span class="tt"><a class="el" href="classbi__kappa__distribution.html" title="Bi-Kappa distribution class for sampling 3D velocity vectors.">bi_kappa_distribution</a>&lt;float&gt;</span>.</p>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md2"></a>
 The velocity cap</h2>
 <p><span class="tt"><a class="el" href="classbi__kappa__distribution.html" title="Bi-Kappa distribution class for sampling 3D velocity vectors.">bi_kappa_distribution</a></span> and <span class="tt"><a class="el" href="classbi__maxwellian__distribution.html" title="Bi-Maxwellian distribution for 3D velocity sampling.">bi_maxwellian_distribution</a></span> take a cap <span class="tt">max_normalized_velocity</span>, in thermal speeds. It is applied to each component in field-aligned coordinates: a draw with <span class="tt">|v_i| / theta_i &gt; cap</span> for any component is redrawn. The samples therefore follow the distribution conditioned on that box, not the distribution itself.</p>
 <ul>
@@ -180,7 +182,7 @@ The five samplers</h1>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><span class="tt"><a class="el" href="classbi__maxwellian__distribution.html" title="Bi-Maxwellian distribution for 3D velocity sampling.">bi_maxwellian_distribution</a></span>  </td><td class="markdownTableBodyNone">bi-Maxwellian velocity  </td><td class="markdownTableBodyNone"><span class="tt">theta_perp, theta_par, ub[, cap[, seed]]</span>  </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><span class="tt"><a class="el" href="classgeneral__velocity__generator.html" title="Samples velocities from a user-defined speed-squared distribution g(w).">general_velocity_generator</a></span>  </td><td class="markdownTableBodyNone">speed from your <span class="tt">g(w)</span>, <span class="tt">w = \|v\|^2</span>; isotropic direction  </td><td class="markdownTableBodyNone"><span class="tt">g, w_min, w_max[, probe_points, max_reject_tries]</span>  </td></tr>
+<td class="markdownTableBodyNone"><span class="tt"><a class="el" href="classgeneral__velocity__generator.html" title="Samples velocities from a user-defined speed-squared distribution g(w).">general_velocity_generator</a></span>  </td><td class="markdownTableBodyNone">speed from your <span class="tt">g(w)</span>, with <span class="tt">w</span> the speed squared; isotropic direction  </td><td class="markdownTableBodyNone"><span class="tt">g, w_min, w_max[, probe_points, max_reject_tries]</span>  </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><span class="tt"><a class="el" href="classfield__aligned__velocity__generator.html" title="Samples field-aligned velocities: an arbitrary parallel speed-squared distribution along B,...">field_aligned_velocity_generator</a></span>  </td><td class="markdownTableBodyNone">parallel speed from your <span class="tt">g(w)</span>, <span class="tt">w = v_par^2</span>, with a fixed sign along <span class="tt">ub</span>; Maxwellian perpendicular components  </td><td class="markdownTableBodyNone"><span class="tt">g, w_min, w_max, theta_perp, ub, sign[, probe_points, max_reject_tries, cap]</span>  </td></tr>
 <tr class="markdownTableRowOdd">
@@ -188,11 +190,11 @@ The five samplers</h1>
 </table>
 <p>Common behavior:</p>
 <ul>
-<li>Construct, call <span class="tt">define(...)</span>, then call <span class="tt">dist()</span> for one sample. <span class="tt">define(...)</span> throws <span class="tt">std::invalid_argument</span> on an invalid parameter.</li>
-<li><span class="tt">theta_perp</span> and <span class="tt">theta_par</span> are thermal-speed parameters in units of velocity. For the bi-Maxwellian, <span class="tt">theta = sqrt(2 k_B T / m)</span> and each component is <span class="tt">N(0, theta^2 / 2)</span>. For the bi-Kappa distribution they are the scales in its density (Eq. 2 of the paper) and are not tied to a temperature, which does not exist for <span class="tt">kappa &lt;= 3/2</span>.</li>
-<li><span class="tt">ub</span> is the magnetic-field direction. Samples are returned in the global frame.</li>
-<li><span class="tt">seed(s)</span> with <span class="tt">s &gt;= 0</span> makes the stream reproducible; <span class="tt">s &lt; 0</span> seeds from <span class="tt">std::random_device</span>. Without a seed, runs are not reproducible.</li>
-<li><span class="tt">dist(gen)</span> draws from your own engine, for example a shared <span class="tt">std::mt19937</span>. For <span class="tt"><a class="el" href="classbi__kappa__distribution.html" title="Bi-Kappa distribution class for sampling 3D velocity vectors.">bi_kappa_distribution</a></span> the engine must produce a power-of-two number of distinct values, as <span class="tt">std::mt19937</span> and <span class="tt">std::mt19937_64</span> do (<span class="tt">std::minstd_rand</span> does not).</li>
+<li>Construct, call <span class="tt">define(...)</span>, then call <span class="tt">dist()</span> for one sample. <span class="tt">define(...)</span> throws <span class="tt">std::invalid_argument</span> for most invalid parameters. <span class="tt"><a class="el" href="classbi__maxwellian__distribution.html" title="Bi-Maxwellian distribution for 3D velocity sampling.">bi_maxwellian_distribution</a></span> checks <span class="tt">ub</span> only when it draws, and it and <span class="tt"><a class="el" href="classfield__aligned__velocity__generator.html" title="Samples field-aligned velocities: an arbitrary parallel speed-squared distribution along B,...">field_aligned_velocity_generator</a></span> do not reject a NaN or infinite thermal speed; the <a href="https://kehengzhu.github.io/bi-kappa-distribution-sampling/api/parameters.html#params_errors">parameters page</a> lists what each sampler checks.</li>
+<li><span class="tt">theta_perp</span> and <span class="tt">theta_par</span> are thermal-speed parameters in units of velocity. For the bi-Maxwellian, <span class="tt">theta = sqrt(2 k_B T / m)</span> and each component is <span class="tt">N(0, theta^2 / 2)</span>. For the bi-Kappa distribution they are the scales in its density (Eq. 2 of the paper). For <span class="tt">kappa &gt; 3/2</span> a kinetic temperature <span class="tt">T</span> corresponds to <span class="tt">theta = sqrt((2 - 3/kappa) k_B T / m)</span>; for <span class="tt">kappa &lt;= 3/2</span> the second moment is infinite and there is no such temperature.</li>
+<li><span class="tt">ub</span> is the magnetic-field direction; it need not have unit length. Samples are returned in the global frame, with <span class="tt">theta_par</span> applying along <span class="tt">ub</span>. A <span class="tt">ub</span> shorter than about <span class="tt">1.5e-8</span> (<span class="tt">double</span>) or <span class="tt">3.5e-4</span> (<span class="tt">float</span>) is treated as zero, so pass a magnetic field in tesla as a unit vector.</li>
+<li><span class="tt">seed(s)</span> with <span class="tt">s &gt;= 0</span> makes the stream reproducible; <span class="tt">s &lt; 0</span> seeds from <span class="tt">std::random_device</span>. Without a seed, runs are not reproducible. A sampler object must not be shared between threads; give each thread or MPI rank its own object and a distinct seed.</li>
+<li><span class="tt">dist(gen)</span> draws from your own engine, for example a shared <span class="tt">std::mt19937</span>. For <span class="tt"><a class="el" href="classbi__kappa__distribution.html" title="Bi-Kappa distribution class for sampling 3D velocity vectors.">bi_kappa_distribution</a></span> the engine must produce a power-of-two number of distinct values, as <span class="tt">std::mt19937</span> and <span class="tt">std::mt19937_64</span> do. This is not checked at compile time: <span class="tt">std::minstd_rand</span>, which does not meet it, compiles without a warning.</li>
 <li><span class="tt"><a class="el" href="classgeneral__velocity__generator.html" title="Samples velocities from a user-defined speed-squared distribution g(w).">general_velocity_generator</a></span> and <span class="tt"><a class="el" href="classfield__aligned__velocity__generator.html" title="Samples field-aligned velocities: an arbitrary parallel speed-squared distribution along B,...">field_aligned_velocity_generator</a></span> take no particle mass. For a distribution written in energy, use <span class="tt">w = 2E/m</span>. If <span class="tt">w_min == w_max</span>, every sample has speed <span class="tt">sqrt(w_min)</span>. <span class="tt">probe_points</span> must be at least 64.</li>
 <li>The <span class="tt"><a class="el" href="classfield__aligned__velocity__generator.html" title="Samples field-aligned velocities: an arbitrary parallel speed-squared distribution along B,...">field_aligned_velocity_generator</a></span> caps each perpendicular component at <span class="tt">cap * theta_perp</span> (default 20); <span class="tt">no_cap()</span> removes it.</li>
 <li>Near <span class="tt">kappa = 1/2</span>, some bi-Kappa draws exceed the largest representable floating-point number. Without a cap they are returned with infinite components; with a cap they are redrawn. <span class="tt">n_nonfinite()</span> and <span class="tt">n_attempts()</span> count them in both cases.</li>
@@ -200,16 +202,19 @@ The five samplers</h1>
 </ul>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md4"></a>
 Validate a sample (Python)</h1>
+<p>The Python code needs Python 3.10 or later.</p>
 <div class="fragment"><div class="line">cd python</div>
 <div class="line">uv sync          # or: pip install numpy scipy   (the notebook and figure scripts also</div>
 <div class="line">                 #     need matplotlib, pandas, mpmath and ipykernel)</div>
 </div><!-- fragment --><p><span class="tt"><a class="el" href="bikappa__validate_8py.html">bikappa_validate.py</a></span> tests an <span class="tt">(N, 3)</span> velocity sample, with <span class="tt">N &gt;= 1000</span>, from any bi-Kappa loader against the bi-Kappa distribution. It uses no moments, so it also applies at <span class="tt">kappa &lt;= 3/2</span>. It tests the radius, the direction, their independence, the counts in cells of equal probability (with the radius resolved into the tail as far as the sample size allows), the anisotropy, and the number of non-finite values.</p>
-<div class="fragment"><div class="line">uv run python bikappa_validate.py samples.txt --kappa 2 --theta-perp 1 --theta-par 2</div>
-</div><!-- fragment --><table class="markdownTable">
+<p>To test the sample written by the demo program (<span class="tt">cd cpp &amp;&amp; make &amp;&amp; ./main.exe</span>), run from <span class="tt">python/</span>:</p>
+<div class="fragment"><div class="line">uv run python bikappa_validate.py ../cpp/samples_bikappa.txt --kappa 2 --theta-perp 1 --theta-par 2</div>
+</div><!-- fragment --><p>A text sample has three columns, <span class="tt">vx vy vz</span> in the global frame, one draw per line, separated by whitespace (by commas for a <span class="tt">.csv</span> file). Blank lines and lines starting with <span class="tt">#</span> are ignored, and a non-numeric first line such as <span class="tt">vx vy vz</span> is skipped as a header.</p>
+<table class="markdownTable">
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Option  </th><th class="markdownTableHeadNone">Meaning  </th></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><span class="tt">sample</span>  </td><td class="markdownTableBodyNone"><span class="tt">.npy</span>, text (<span class="tt">.txt</span>, <span class="tt">.csv</span>), or raw float64 (<span class="tt">.bin</span>) file with three columns  </td></tr>
+<td class="markdownTableBodyNone"><span class="tt">sample</span>  </td><td class="markdownTableBodyNone"><span class="tt">.npy</span> array of shape <span class="tt">(N, 3)</span>; raw float64 (<span class="tt">.bin</span>, <span class="tt">.f64</span>), three values per draw; any other extension is read as text  </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><span class="tt">--kappa</span>, <span class="tt">--theta-perp</span>, <span class="tt">--theta-par</span>  </td><td class="markdownTableBodyNone">parameters of the target distribution (required)  </td></tr>
 <tr class="markdownTableRowOdd">
@@ -217,22 +222,22 @@ Validate a sample (Python)</h1>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><span class="tt">--attempts N</span>  </td><td class="markdownTableBodyNone">total draws attempted, if the loader redrew samples outside a cap; adds the rejected fraction to the report  </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><span class="tt">--alpha A</span>  </td><td class="markdownTableBodyNone">significance level, default 0.01  </td></tr>
+<td class="markdownTableBodyNone"><span class="tt">--alpha A</span>  </td><td class="markdownTableBodyNone">family-wise significance level, default 0.01; the tests are corrected for multiple testing (Holm)  </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><span class="tt">--binary</span>  </td><td class="markdownTableBodyNone">read the file as raw float64 whatever its extension  </td></tr>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><span class="tt">--json</span>  </td><td class="markdownTableBodyNone">print the full report as JSON  </td></tr>
 </table>
-<p>The exit status is 0 if every test passes and 1 otherwise. The tests compare the sample with the uncapped bi-Kappa distribution, so a sample from <span class="tt"><a class="el" href="classbi__kappa__distribution.html" title="Bi-Kappa distribution class for sampling 3D velocity vectors.">bi_kappa_distribution</a></span> should be drawn with <span class="tt">no_cap()</span>; the default cap of 20 changes the distribution.</p>
+<p>The exit status is 0 if every test passes, 1 if at least one test fails, and 2 if the input or the options are invalid (with a message on standard error). The tests compare the sample with the uncapped bi-Kappa distribution, so a sample from <span class="tt"><a class="el" href="classbi__kappa__distribution.html" title="Bi-Kappa distribution class for sampling 3D velocity vectors.">bi_kappa_distribution</a></span> should be drawn with <span class="tt">no_cap()</span>; the default cap of 20 changes the distribution.</p>
 <p>From Python:</p>
 <div class="fragment"><div class="line"><span class="keyword">from</span> bikappa_validate <span class="keyword">import</span> validate_sample, format_report</div>
 <div class="line">report = validate_sample(v, kappa=2.0, theta_perp=1.0, theta_par=2.0)   <span class="comment"># v: (N, 3) array</span></div>
 <div class="line">print(format_report(report)); <span class="keyword">assert</span> report[<span class="stringliteral">&quot;passed&quot;</span>]</div>
 </div><!-- fragment --><p>Other Python files:</p>
 <ul>
-<li><span class="tt"><a class="el" href="general__generators_8py.html">general_generators.py</a></span>: <span class="tt">GeneralVelocityGenerator</span>, <span class="tt">FieldAlignedVelocityGenerator</span> and <span class="tt">GeneralPositionGenerator</span>, with the same rules as the C++ classes. Call a generator with a <span class="tt">numpy.random.Generator</span>: <span class="tt">v = gen(rng)</span>. Running the file writes example samples.</li>
-<li><span class="tt">visualize_samples.ipynb</span>: plots sample files written by the C++ or Python examples.</li>
-<li><span class="tt">test_bikappa_validate.py</span>: regression test of the validator (<span class="tt">uv run python test_bikappa_validate.py</span>).</li>
+<li><span class="tt"><a class="el" href="general__generators_8py.html">general_generators.py</a></span>: <span class="tt">GeneralVelocityGenerator</span>, <span class="tt">FieldAlignedVelocityGenerator</span> and <span class="tt">GeneralPositionGenerator</span>, small NumPy ports of the three general C++ generators for prototyping a density in Python. They take the same parameters, but they are not a validated equivalent of the C++ classes and do not reproduce their random streams. Call a generator with a <span class="tt">numpy.random.Generator</span>: <span class="tt">v = gen(rng)</span>. Running the file writes example samples.</li>
+<li><span class="tt">visualize_samples.ipynb</span>: plots the three sample files of the general generators written by <span class="tt">cpp/main.exe</span> (<span class="tt">samples_general_velocity.txt</span>, <span class="tt">samples_field_aligned.txt</span>, <span class="tt">samples_general_position.txt</span>), read from <span class="tt">cpp/</span>.</li>
+<li><span class="tt">test_bikappa_validate.py</span>: regression test of the validator (<span class="tt">uv run python test_bikappa_validate.py</span>, or <span class="tt">uv run --with pytest pytest test_bikappa_validate.py</span>).</li>
 </ul>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md5"></a>
 Reproducing the paper</h1>
@@ -241,15 +246,15 @@ Reproducing the paper</h1>
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Directory  </th><th class="markdownTableHeadNone">In the paper  </th><th class="markdownTableHeadNone">Command  </th></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><span class="tt">experiments/exp1_radial_directional</span>  </td><td class="markdownTableBodyNone">Tables III and IV, Figs. 4 and 5  </td><td class="markdownTableBodyNone"><span class="tt">make cells tail moments marginals</span>  </td></tr>
+<td class="markdownTableBodyNone"><span class="tt">experiments/exp1_radial_directional</span>  </td><td class="markdownTableBodyNone">Tables III and IV, Figs. 4 and 5, Sec. VI C  </td><td class="markdownTableBodyNone"><span class="tt">make cells tail moments frame marginals</span> (<span class="tt">cells</span> first)  </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><span class="tt">experiments/exp2_cap_characterization</span>  </td><td class="markdownTableBodyNone">Table II, Fig. 3  </td><td class="markdownTableBodyNone"><span class="tt">make run</span>, then <span class="tt">uv run --project ../../python python exp2_analyze.py</span>  </td></tr>
+<td class="markdownTableBodyNone"><span class="tt">experiments/exp2_cap_characterization</span>  </td><td class="markdownTableBodyNone">Table II, Fig. 3  </td><td class="markdownTableBodyNone"><span class="tt">make run</span>, <span class="tt">make verify</span>, then <span class="tt">uv run --project ../../python python exp2_analyze.py</span>  </td></tr>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><span class="tt">experiments/exp4_finite_precision</span>  </td><td class="markdownTableBodyNone">Fig. 2  </td><td class="markdownTableBodyNone"><span class="tt">make figures</span> redraws it from the committed results; the full study (protocol, sampling, analysis) is in the GitHub repository, see its README  </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><span class="tt">experiments/exp3_benchmark</span>  </td><td class="markdownTableBodyNone">not shown (speed comparison with two other samplers)  </td><td class="markdownTableBodyNone"><span class="tt">make run</span>, then <span class="tt">uv run --project ../../python python exp3_analyze.py</span>  </td></tr>
 </table>
-<p><span class="tt">paper/figures/make_manuscript_assets.py</span> regenerates the paper's figures and tables from the committed experiment results.</p>
+<p><span class="tt">paper/figures/make_manuscript_assets.py</span> regenerates the paper's figures and tables from the committed experiment results. It writes them into <span class="tt">paper/overleaf/figures/</span> and <span class="tt">paper/overleaf/tables/</span>, which it creates; the manuscript source itself is not part of this repository.</p>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md6"></a>
 Documentation</h1>
 <ul>
@@ -266,10 +271,10 @@ How to cite</h1>
   Three-Dimensional Tests, Velocity Bounds, and Finite Precision" (2026).</li>
 <li>K. Zhu and Y. A. Omelchenko, bi-kappa-distribution-sampling, Zenodo, <a href="https://doi.org/10.5281/zenodo.20617011">doi:10.5281/zenodo.20617011</a>. This concept DOI resolves to the latest release; Zenodo lists the DOI of each version.</li>
 </ul>
-<p>GitHub's "Cite this repository" button reads <a href="CITATION.cff"><span class="tt">CITATION.cff</span></a>.</p>
+<p>GitHub's "Cite this repository" button reads <a href="https://github.com/KehengZhu/bi-kappa-distribution-sampling/blob/main/CITATION.cff">CITATION.cff</a>.</p>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md8"></a>
 License</h1>
-<p>MIT. See [<span class="tt">LICENSE</span>](LICENSE). </p>
+<p>MIT. See <a href="https://github.com/KehengZhu/bi-kappa-distribution-sampling/blob/main/LICENSE">LICENSE</a>. </p>
 </div></div><!-- PageDoc -->
 <a href="doxygen_crawl.html"></a>
 </div><!-- contents -->

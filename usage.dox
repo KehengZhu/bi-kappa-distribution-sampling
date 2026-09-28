@@ -1,9 +1,9 @@
 /**
 \page usage Usage examples
 
-Short examples for the five samplers. They use `Real = double`; `float` also works. Every
-sampler is used the same way: construct, call `define(...)`, then call `operator()` once per
-sample.
+Short examples for the five samplers. They use `Real = double`; \ref usage_float shows the
+`float` instantiation. Every sampler is used the same way: construct, call `define(...)`, then
+call `operator()` once per sample. \ref usage_oblique and \ref usage_pic are complete programs.
 
 \tableofcontents
 
@@ -41,8 +41,7 @@ The seed is the sixth argument, so the cap has to be given when a seed is passed
 
 \subsection usage_bikappa_cap The velocity cap
 
-The fifth argument, `max_normalized_velocity`, is a cap in thermal speeds. It defaults to 20,
-the value used in release 1.0.0.
+The fifth argument, `max_normalized_velocity`, is a cap in thermal speeds. It defaults to 20.
 
 \code{.cpp}
 BK dist;
@@ -91,15 +90,16 @@ dist.seed(-1);         // s < 0: seed from std::random_device
 Without a seed, runs are not reproducible. On every sampler `seed(s)` also calls `reset()`, which
 discards any variate cached from earlier draws, so reseeding restarts the stream exactly. For
 `bi_kappa_distribution` a given seed gives the same values under libc++ and libstdc++ on the same
-architecture; the values are not bitwise identical across architectures, and they differ from
-release 1.0.0. `bi_maxwellian_distribution` uses `std::normal_distribution`, whose values depend
-on the standard library, and gives the same values as release 1.0.0.
+architecture; the values are not bitwise identical across architectures. The other four samplers
+use `std::normal_distribution` or `std::uniform_real_distribution`, whose values can depend on
+the standard library. CHANGELOG.md lists the versions in which the values for a given seed changed.
 
 \section usage_external_rng Sharing one engine
 
 Pass your own engine to `operator()` to draw several samplers from one stream. For
 `bi_kappa_distribution` the engine must produce a power-of-two number of distinct values, as
-`std::mt19937` and `std::mt19937_64` do.
+`std::mt19937` and `std::mt19937_64` do. This is not checked at compile time: `std::minstd_rand`
+compiles without a warning but does not meet the requirement.
 
 \code{.cpp}
 #include <random>
@@ -111,6 +111,127 @@ halo.define(2.0, 3.0, 3.0);
 
 BK::point_type a = core(gen);   // both draw from gen
 BK::point_type b = halo(gen);
+\endcode
+
+\section usage_oblique An oblique magnetic field
+
+`ub` can point in any direction and need not have unit length. `theta_par` applies along `ub`
+and `theta_perp` across it. The sampler returns velocities in the global frame, so to recover
+field-aligned components, project onto the unit vector `b = ub / |ub|`: `v_par = v . b` and
+`v_perp^2 = |v|^2 - v_par^2`. This program checks the result against the variances of
+\ref params_theta, which exist for `kappa > 3/2`.
+
+\code{.cpp}
+#include "bi_kappa_distribution.H"
+#include <cmath>
+#include <cstdio>
+
+int main()
+{
+    using BK = bi_kappa_distribution<double>;
+    const BK::point_type ub = {1.0, 2.0, 3.0};   // field direction, any length
+
+    BK dist;
+    //          kappa  theta_perp  theta_par  ub  cap           seed
+    dist.define(4.0,   1.0,        2.0,       ub, BK::no_cap(), 12345);
+
+    const double norm = std::sqrt(ub[0] * ub[0] + ub[1] * ub[1] + ub[2] * ub[2]);
+    const double b[3] = {ub[0] / norm, ub[1] / norm, ub[2] / norm};
+
+    const int n = 1000000;
+    double sum_par2 = 0.0, sum_perp2 = 0.0;
+    for (int i = 0; i < n; ++i) {
+        const BK::point_type v = dist();                           // global frame
+        const double v_par = v[0] * b[0] + v[1] * b[1] + v[2] * b[2];
+        const double v2 = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
+        sum_par2 += v_par * v_par;
+        sum_perp2 += v2 - v_par * v_par;
+    }
+    // Expected: <v_par^2> = kappa theta_par^2 / (2 kappa - 3) = 3.2 and
+    //           <v_perp^2> = 2 kappa theta_perp^2 / (2 kappa - 3) = 1.6.
+    std::printf("<v_par^2> = %.3f  <v_perp^2> = %.3f\n", sum_par2 / n, sum_perp2 / n);
+    return 0;
+}
+\endcode
+
+The two perpendicular axes the sampler uses internally matter only for a finite cap, whose box
+is aligned with them; see \ref params_cap.
+
+\section usage_float Single precision
+
+\code{.cpp}
+#include "bi_kappa_distribution.H"
+using BKf = bi_kappa_distribution<float>;
+
+BKf distf;
+distf.define(3.0f, 1.0f, 2.0f, {0.0f, 0.0f, 1.0f}, BKf::no_cap(), 12345);
+BKf::point_type vf = distf();   // std::array<float, 3>
+\endcode
+
+`bi_kappa_distribution<float>` does all of its arithmetic in `float`, so for the same seed it
+returns different numbers from the `double` instantiation. It is suitable when kappa is not
+close to 1/2 and about seven significant digits per component are enough. Near kappa = 1/2 a
+noticeable fraction of `float` draws exceeds the largest `float` (about `1.4e-4` of draws at
+kappa = 0.55); see \ref params_precision and use `double` there.
+
+\section usage_pic Loading particles in a simulation
+
+This program fills arrays for `N` particles with a drifting bi-Kappa population, as a
+particle-in-cell code would at initialization. It converts kinetic temperatures to thermal
+speeds with the relation of \ref params_theta, which holds for `kappa > 3/2`; for smaller kappa,
+specify `theta` directly. Each thread or MPI rank has its own sampler, and so its own engine,
+with its own seed. The ranks are simulated here by a loop.
+
+\code{.cpp}
+#include "bi_kappa_distribution.H"
+#include <cmath>
+#include <cstdio>
+#include <vector>
+
+int main()
+{
+    using BK = bi_kappa_distribution<double>;
+
+    const double k_B = 1.380649e-23;             // J/K
+    const double m = 1.67262192e-27;             // proton mass, kg
+    const double kappa = 3.0;
+    const double T_perp = 1.0e5, T_par = 2.0e5;  // kinetic temperatures, K
+    const BK::point_type b = {0.0, 0.6, 0.8};    // field direction, unit length
+    const double drift[3] = {4.0e5, 0.0, 0.0};   // bulk velocity, m/s
+
+    // theta = sqrt((2 - 3/kappa) k_B T / m), valid for kappa > 3/2.
+    const double theta_perp = std::sqrt((2.0 - 3.0 / kappa) * k_B * T_perp / m);
+    const double theta_par = std::sqrt((2.0 - 3.0 / kappa) * k_B * T_par / m);
+
+    const int n_ranks = 4;
+    const int n_per_rank = 250000;
+    const int base_seed = 1000;                  // change it to get a different run
+    const int n = n_ranks * n_per_rank;
+    std::vector<double> vx(n), vy(n), vz(n);
+
+    for (int rank = 0; rank < n_ranks; ++rank) {   // in a real code, one rank or thread each
+        BK dist;
+        // no_cap(): sample the bi-Kappa distribution itself; the default cap of 20 thermal
+        // speeds would sample it conditioned on a box instead.
+        dist.define(kappa, theta_perp, theta_par, b, BK::no_cap(), base_seed + rank);
+        for (int i = rank * n_per_rank; i < (rank + 1) * n_per_rank; ++i) {
+            const BK::point_type v = dist();       // global frame, zero mean
+            vx[i] = v[0] + drift[0];
+            vy[i] = v[1] + drift[1];
+            vz[i] = v[2] + drift[2];
+        }
+    }
+
+    // Check: the kinetic temperature along b, m <(v - drift) . b)^2> / k_B, is close to T_par.
+    double sum = 0.0;
+    for (int i = 0; i < n; ++i) {
+        const double v_par = (vx[i] - drift[0]) * b[0] + (vy[i] - drift[1]) * b[1] +
+                             (vz[i] - drift[2]) * b[2];
+        sum += v_par * v_par;
+    }
+    std::printf("T_par from the sample: %.4g K (target %.4g K)\n", m * sum / n / k_B, T_par);
+    return 0;
+}
 \endcode
 
 \section usage_redefine Changing parameters

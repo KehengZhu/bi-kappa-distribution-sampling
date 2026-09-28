@@ -121,28 +121,40 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('classbi__maxwe
 </div><!--header-->
 <div class="contents">
 
+<p>The parameters of a <a class="el" href="classbi__maxwellian__distribution.html" title="Bi-Maxwellian distribution for 3D velocity sampling.">bi_maxwellian_distribution</a>: theta_perp, theta_par, ub and the velocity cap.  
+ <a href="#details">More...</a></p>
+
 <p><code>#include &lt;<a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-types" class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
 <tr class="memitem:aa937ba6267b0ae7dd758b068bdf24c1f" id="r_aa937ba6267b0ae7dd758b068bdf24c1f"><td class="memItemLeft">using&#160;</td><td class="memItemRight"><a class="el" href="#aa937ba6267b0ae7dd758b068bdf24c1f">distribution_type</a> = <a class="el" href="classbi__maxwellian__distribution.html">bi_maxwellian_distribution</a>&lt;RealType&gt;</td></tr>
+<tr class="memdesc:aa937ba6267b0ae7dd758b068bdf24c1f"><td class="mdescLeft">&#160;</td><td class="mdescRight">The owning sampler.  <br /></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-methods" class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:ab05f146bbfab62d46dba7e6a661213df" id="r_ab05f146bbfab62d46dba7e6a661213df"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#ab05f146bbfab62d46dba7e6a661213df">param_type</a> (RealType theta_perp=RealType(1.0), RealType theta_par=RealType(1.0), <a class="el" href="classbi__maxwellian__distribution.html#a4108c0d09001ad9c856f157f3e07cf3b">point_type</a> ub=<a class="el" href="classbi__maxwellian__distribution.html#a4108c0d09001ad9c856f157f3e07cf3b">point_type</a>({RealType(0.0), RealType(0.0), RealType(1.0)}), RealType max_normalized_velocity=RealType(20.0))</td></tr>
+<tr class="memdesc:ab05f146bbfab62d46dba7e6a661213df"><td class="mdescLeft">&#160;</td><td class="mdescRight">Store the parameters.  <br /></td></tr>
 <tr class="memitem:a6d2b8921dda616403ceeb4df89415e0f" id="r_a6d2b8921dda616403ceeb4df89415e0f"><td class="memItemLeft">RealType&#160;</td><td class="memItemRight"><a class="el" href="#a6d2b8921dda616403ceeb4df89415e0f">theta_perp</a> () const</td></tr>
+<tr class="memdesc:a6d2b8921dda616403ceeb4df89415e0f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Perpendicular thermal speed.  <br /></td></tr>
 <tr class="memitem:a831a7a7dd1bc7fa62056b7c6b06454a4" id="r_a831a7a7dd1bc7fa62056b7c6b06454a4"><td class="memItemLeft">RealType&#160;</td><td class="memItemRight"><a class="el" href="#a831a7a7dd1bc7fa62056b7c6b06454a4">theta_par</a> () const</td></tr>
+<tr class="memdesc:a831a7a7dd1bc7fa62056b7c6b06454a4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parallel thermal speed.  <br /></td></tr>
 <tr class="memitem:a3ba11a7563972783a1b5c547de638494" id="r_a3ba11a7563972783a1b5c547de638494"><td class="memItemLeft"><a class="el" href="classbi__maxwellian__distribution.html#a4108c0d09001ad9c856f157f3e07cf3b">point_type</a>&#160;</td><td class="memItemRight"><a class="el" href="#a3ba11a7563972783a1b5c547de638494">ub</a> () const</td></tr>
+<tr class="memdesc:a3ba11a7563972783a1b5c547de638494"><td class="mdescLeft">&#160;</td><td class="mdescRight">Field direction, as given.  <br /></td></tr>
 <tr class="memitem:a605f32484ba6068f0d1c12088733ab90" id="r_a605f32484ba6068f0d1c12088733ab90"><td class="memItemLeft">RealType&#160;</td><td class="memItemRight"><a class="el" href="#a605f32484ba6068f0d1c12088733ab90">max_normalized_velocity</a> () const</td></tr>
+<tr class="memdesc:a605f32484ba6068f0d1c12088733ab90"><td class="mdescLeft">&#160;</td><td class="mdescRight">Velocity cap in thermal speeds; +infinity for <a class="el" href="classbi__maxwellian__distribution.html#ab5f2402b76654e4adf1c3d63d620e94d" title="Value of the cap that selects the uncapped sampler: +infinity.">no_cap()</a>.  <br /></td></tr>
 <tr class="memitem:ab8d027bbd6da762387e1c347003d2ab6" id="r_ab8d027bbd6da762387e1c347003d2ab6"><td class="memItemLeft">bool&#160;</td><td class="memItemRight"><a class="el" href="#ab8d027bbd6da762387e1c347003d2ab6">capped</a> () const</td></tr>
-<tr class="memdesc:ab8d027bbd6da762387e1c347003d2ab6"><td class="mdescLeft">&#160;</td><td class="mdescRight">True when a finite component-wise cap is in force, i.e.  <br /></td></tr>
+<tr class="memdesc:ab8d027bbd6da762387e1c347003d2ab6"><td class="mdescLeft">&#160;</td><td class="mdescRight">True when a finite component-wise cap is in force, that is, when the sampled distribution is the bi-Maxwellian distribution conditioned on the cap box rather than the bi-Maxwellian distribution itself.  <br /></td></tr>
 <tr class="memitem:a16d36044c79f08422f8651263eed00b9" id="r_a16d36044c79f08422f8651263eed00b9"><td class="memItemLeft">bool&#160;</td><td class="memItemRight"><a class="el" href="#a16d36044c79f08422f8651263eed00b9">operator==</a> (const <a class="el" href="#ab05f146bbfab62d46dba7e6a661213df">param_type</a> &amp;other) const</td></tr>
+<tr class="memdesc:a16d36044c79f08422f8651263eed00b9"><td class="mdescLeft">&#160;</td><td class="mdescRight">True if every parameter compares equal.  <br /></td></tr>
 <tr class="memitem:a94fcc68f4cdccf3c9e0f9b5727f57bc4" id="r_a94fcc68f4cdccf3c9e0f9b5727f57bc4"><td class="memItemLeft">bool&#160;</td><td class="memItemRight"><a class="el" href="#a94fcc68f4cdccf3c9e0f9b5727f57bc4">operator!=</a> (const <a class="el" href="#ab05f146bbfab62d46dba7e6a661213df">param_type</a> &amp;other) const</td></tr>
+<tr class="memdesc:a94fcc68f4cdccf3c9e0f9b5727f57bc4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Negation of operator==.  <br /></td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;typename RealType = double&gt;<br />
-class bi_maxwellian_distribution&lt; RealType &gt;::param_type</div>
-<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00036">36</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+class bi_maxwellian_distribution&lt; RealType &gt;::param_type</div><p>The parameters of a <a class="el" href="classbi__maxwellian__distribution.html" title="Bi-Maxwellian distribution for 3D velocity sampling.">bi_maxwellian_distribution</a>: theta_perp, theta_par, ub and the velocity cap. </p>
+
+<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00037">37</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
 </div><a name="doc-typedef-members" id="doc-typedef-members"></a><h2 id="header-doc-typedef-members" class="groupheader">Member Typedef Documentation</h2>
 <a id="aa937ba6267b0ae7dd758b068bdf24c1f" name="aa937ba6267b0ae7dd758b068bdf24c1f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aa937ba6267b0ae7dd758b068bdf24c1f">&#9670;&#160;</a></span>distribution_type</h2>
@@ -158,7 +170,9 @@ template&lt;typename RealType = double&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00039">39</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+<p>The owning sampler. </p>
+
+<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00040">40</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -202,11 +216,14 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
+<p>Store the parameters. </p>
+<p>Throws std::invalid_argument if either theta is zero or negative, or if the cap is not positive; <code class="param">ub</code> is not checked here. </p>
+
 <p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00044">44</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
 
 <p class="reference">References <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00066">theta_par()</a>, <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00065">theta_perp()</a>, and <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00067">ub()</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00081">operator!=()</a>, and <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00075">operator==()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00084">operator!=()</a>, and <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00077">operator==()</a>.</p>
 
 </div>
 </div>
@@ -236,10 +253,9 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>True when a finite component-wise cap is in force, i.e. </p>
-<p>when the sampled law is the bi-Maxwellian distribution conditioned on the cap event rather than the bi-Maxwellian distribution itself. </p>
+<p>True when a finite component-wise cap is in force, that is, when the sampled distribution is the bi-Maxwellian distribution conditioned on the cap box rather than the bi-Maxwellian distribution itself. </p>
 
-<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00073">73</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00074">74</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -268,7 +284,9 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00068">68</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+<p>Velocity cap in thermal speeds; +infinity for <a class="el" href="classbi__maxwellian__distribution.html#ab5f2402b76654e4adf1c3d63d620e94d" title="Value of the cap that selects the uncapped sampler: +infinity.">no_cap()</a>. </p>
+
+<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00069">69</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
 
 </div>
 </div>
@@ -297,7 +315,9 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00081">81</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+<p>Negation of operator==. </p>
+
+<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00084">84</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
 
 <p class="reference">References <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00044">param_type()</a>.</p>
 
@@ -328,7 +348,9 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00075">75</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
+<p>True if every parameter compares equal. </p>
+
+<p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00077">77</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
 
 <p class="reference">References <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00044">param_type()</a>.</p>
 
@@ -358,6 +380,8 @@ template&lt;typename RealType = double&gt; </div>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Parallel thermal speed. </p>
 
 <p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00066">66</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
 
@@ -390,6 +414,8 @@ template&lt;typename RealType = double&gt; </div>
 </table>
 </div><div class="memdoc">
 
+<p>Perpendicular thermal speed. </p>
+
 <p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00065">65</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00044">param_type()</a>.</p>
@@ -420,6 +446,8 @@ template&lt;typename RealType = double&gt; </div>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Field direction, as given. </p>
 
 <p class="definition">Definition at line <a class="el" href="bi__maxwellian__distribution_8_h_source.html#l00067">67</a> of file <a class="el" href="bi__maxwellian__distribution_8_h_source.html">bi_maxwellian_distribution.H</a>.</p>
 
