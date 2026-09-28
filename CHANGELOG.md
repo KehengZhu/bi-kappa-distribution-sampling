@@ -25,6 +25,46 @@ that a given seed produces counts as a breaking change.
   `float` may therefore be returned as a finite number or as an infinity. `n_nonfinite()`
   counts what is returned.
 
+- **Python validator.** `bikappa_validate.py` exits with 0 when every test passes, 1 when a
+  test fails, and 2 for invalid input or options, with a one-line message instead of a
+  traceback. Parameters are checked before any test runs. A `.dat` file is now read as text;
+  raw `float64` input is `.bin`, `.f64`, or any file with `--binary`. A non-numeric first line
+  of a text file is skipped. The report prints each test's statistic, p-value and
+  Holm-adjusted p-value, and a test fails when its adjusted p-value is at most `alpha`; the
+  uncorrected critical value is no longer printed or stored in the JSON report.
+- **Python generators.** `GeneralPositionGenerator` in `general_generators.py` checks its
+  arguments as the C++ class does, estimates the density maximum from a fixed-seed probe with
+  the same 5% margin, and returns points of length `dimension`.
+- `make -C cpp test` builds the regression suite with `-O2`.
+
+### Documentation
+
+- Every public member of the C++ classes is documented. `usage.dox` has new examples: an
+  oblique field direction, `float`, and loading particles with a drift velocity and one
+  engine per thread or rank.
+- `parameters.dox` distinguishes the defaults of `define()` from the values of a
+  default-constructed object, gives the relation between `theta` and a kinetic temperature for
+  `kappa > 3/2`, and lists what each `define()` checks.
+- The README gives the tested toolchains, a runnable validation command for the demo output,
+  the validator's input formats and exit codes, and renders correctly as the Doxygen main page.
+
+### Release tools
+
+- `tools/make_release_archive.py` packs exactly what `git archive` exports, so its archive has
+  the same files as the GitHub and Zenodo archives of a tag, and keeps the executable bit.
+  `--with-results` is removed.
+- `tools/verify_release.py` checks the Python validator and the regeneration of Fig. 2 from
+  the archived results in place of the checksum manifests of the finite-precision study,
+  which are kept in the repository only.
+
+### Known issues
+
+- Every sampler treats the field direction `ub` as the zero vector when `|ub|^2` is at most
+  the machine epsilon of `RealType`, that is `|ub| < 1.5e-8` in `double` and `|ub| < 3.5e-4`
+  in `float`. Pass a direction of order unity rather than a field in SI units.
+- `bi_maxwellian_distribution::define()` checks the thermal speeds and the cap but not `ub`;
+  a zero `ub` throws at the first draw.
+
 ### Unchanged
 
 - `double` samples. A `double` instantiation performs the same operations in the same order as
