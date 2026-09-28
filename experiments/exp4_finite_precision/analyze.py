@@ -2962,7 +2962,10 @@ def g6_evidence(ctx: Context, p1: dict, override_path: str | None) -> dict:
 
 def rng_stream_break_documented() -> bool:
     """Computed, not asserted: the stream break is stated in the frozen protocol and in the
-    released header's own version history."""
+    released header's own documentation.
+
+    The header test looks for the phrase "random stream", which the header uses where it
+    says that the stream differs between versions and points to CHANGELOG.md."""
     needles = ("The random stream changes for every seed",
                "No seed-for-seed continuity")
     try:
@@ -2978,7 +2981,7 @@ def rng_stream_break_documented() -> bool:
             htext = fh.read()
     except OSError:
         return False
-    return "2.0.0" in htext
+    return "random stream" in htext.lower()
 
 
 # ---------------------------------------------------------------------------

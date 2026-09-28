@@ -16,35 +16,55 @@ the high-energy tail.
 This experiment measures both kinds of loss for two radius calculations, in single and double
 precision:
 
-- **Direct calculation**, which forms `X₂` and evaluates `√X₁/√X₂`. It is the calculation of the
-  header before release 2.0.0, vendored as `src/legacy/bi_kappa_distribution_v1.H` with only its
-  include guard renamed and a namespace added. The data files label it `LEGACY`.
+- **Direct calculation**, which forms `X₂` and evaluates `√X₁/√X₂`, with both Gamma variates
+  drawn by `std::gamma_distribution`. It is `cpp/bi_kappa_distribution.H` as committed at
+  53dbd30 (2026-08-18), the last version of the header before the stabilized calculation
+  replaced it. The data files label it `LEGACY`.
 - **Stabilized calculation**, which never forms `X₂`. It obtains `log X₂ = log G + (log ξ)/α`
   with `G ~ Γ(α + 1)` and `ξ ~ U(0, 1)`, evaluates `log R = (log X₁ − log X₂)/2`, and keeps
-  `log R` until the final components are formed. This is `cpp/bi_kappa_distribution.H`. The data
-  files label it `CANDIDATE`.
+  `log R` until the final components are formed. This is `cpp/bi_kappa_distribution.H` of
+  version 3.0.0. The data files label it `CANDIDATE`.
 
 A third column, `QF` (`√(X₁/X₂)`, whose intermediate quotient can overflow when its square root
 would not), appears only in the paired comparison described below. It is a diagnostic, not a
-sampler under test.
+sampler under test. Release 1.0.0 formed the radius in this quotient-first way.
 
-Source and output files carry the prefix `exp7`.
+The study was numbered 7 when it was designed, so its source and data files carry the prefix
+`exp7`.
 
-## Paper
+## Reproducing Fig. 2
 
-Fig. 2 of the paper is `figures/fp1_failure_envelope.pdf`. It is drawn by `make_figures.py` from
-`results/failure_envelope.csv`, `results/honest_floor_curve.csv` and
-`results/direct_zero_denominator_curve.csv` and copied into the paper by
-`paper/figures/make_manuscript_assets.py`. The four other figures in `figures/` are not used in
-the paper.
+Fig. 2 of the paper is `figures/fp1_failure_envelope.pdf`. `make_figures.py` draws it from three
+CSV files in `results/`, and `paper/figures/make_manuscript_assets.py` copies it into the paper.
 
-The release archive (the GitHub and Zenodo downloads) contains only what reproduces Fig. 2 from
-the committed results: this README, `GNUmakefile`, `make_figures.py`,
-`results/failure_envelope.csv`, `results/honest_floor_curve.csv` and
-`results/direct_zero_denominator_curve.csv` with their column
-description `results/source_data_README.md`, and the figure files. There, `make figures` redraws Fig. 2. The protocol, the analysis code, the
-sampler probe, the 100-digit recomputation and the run records described below are in the
-GitHub repository.
+The release archive (the GitHub and Zenodo downloads) contains this part of the experiment
+only. From this directory,
+
+```bash
+make figures
+```
+
+runs `uv run --project ../../python python make_figures.py`, which needs `uv` and the Python
+project in `../../python`. It redraws Fig. 2 as `figures/fp1_failure_envelope.pdf` and `.svg`,
+with a PNG preview that is not part of the release, and rewrites `figures/captions.md` and the
+Fig. 2 entry of `figures/figure_manifest.json`. With the shipped CSV files all four shipped
+figure files are reproduced byte for byte. The other four figures are drawn from results that
+are in the repository only; in the archive they are not drawn, and `figure_manifest.json` keeps
+their entries.
+
+| file in the release archive | contents |
+|---|---|
+| `results/failure_envelope.csv` | the non-finite fraction of every setting, with its 95% Clopper–Pearson interval, split into avoidable and unavoidable losses; the markers and the dotted line of Fig. 2 |
+| `results/honest_floor_curve.csv` | the closed-form fraction of draws with a component too large for the type, on a fine grid of κ; the grey region of Fig. 2 |
+| `results/direct_zero_denominator_curve.csv` | the closed-form probability that the direct calculation's `X₂` rounds to zero; the dashed line of Fig. 2 |
+| `results/source_data_README.md` | definitions of every column |
+| `figures/fp1_failure_envelope.pdf`, `.svg` | Fig. 2 |
+| `figures/captions.md` | captions of the five figures of this experiment |
+| `figures/figure_manifest.json` | for each figure, its source CSV files with their SHA-256, and the SHA-256 of `make_figures.py` |
+| `make_figures.py`, `GNUmakefile` | the plotting script and the make targets |
+
+Everything else described below — the protocol, the C++ probe, the 100-digit recomputation, the
+analysis code and the run records — is in the GitHub repository.
 
 ## Design
 
@@ -71,6 +91,10 @@ The comparison is made in two ways.
   outcome of one attempt can be compared across calculations. Fig. 2 uses this comparison.
 - **Native.** Each implementation runs as released, drawing its own variates. This is what a
   user receives.
+
+The paired comparison uses 5 × 10⁷ attempts per setting so that a setting with no failure has
+a one-sided 95% upper bound of 6.0 × 10⁻⁸ on its failure fraction; with 5 × 10⁶ the bound would
+be 6.0 × 10⁻⁷, above the fractions observed at neighbouring κ.
 
 **Recomputation at 100 digits.** The probe records the random variates of selected attempts.
 `src/exp7_oracle.cpp`, a separate program built on `boost::multiprecision::mpfr_float_100` (MPFR)
@@ -99,17 +123,19 @@ The experiment runs in six phases, each a make target.
 | `p5` | a SHA-256 digest of every returned value and counter, compared between the two builds |
 | `p6` | time per returned sample, stabilized against direct, in five benchmark cases |
 
-`PROTOCOL.md` specifies the design, every statistical test and every threshold in full.
-`config/protocol.json` holds the same settings in machine-readable form; it is generated by
+`PROTOCOL.md` specifies the design, every statistical test and every threshold, fixed before the
+run. `config/protocol.json` holds the same settings in machine-readable form; it is generated by
 `config/make_protocol.py`, and the C++ probe reads it through the generated header
 `src/exp7_protocol.H`.
 
 ## Results
 
-The committed results were produced with release 3.0.0 of `cpp/bi_kappa_distribution.H`, which
-computes in the working precision in every instantiation: in `float` all arithmetic is done in
-`float`. `raw/environment.json` records its SHA-256 (beginning `0573ea1c`) and the SHA-256 of
-every other source file, and `results/provenance.md` records the compilers and run times.
+The committed results were produced with `cpp/bi_kappa_distribution.H` as committed at 0e7783f,
+which computes in the working precision in every instantiation: in `float` all arithmetic is
+done in `float`. `raw/environment.json` records its SHA-256 (beginning `0573ea1c`) and the
+SHA-256 of every other source file, and `results/provenance.md` records the compilers and run
+times. The header released as 3.0.0 differs from that file only in its comments, so its SHA-256
+differs but it compiles to the same code.
 
 - In double precision the stabilized calculation had no avoidable loss in any setting. Every
   non-finite output it returned had a component too large for `double`.
@@ -117,7 +143,7 @@ every other source file, and `results/provenance.md` records the compilers and r
   been stored, at κ = 0.501, out of 5 × 10⁷ attempts; the same draw occurred in both builds.
   Its exact largest component lay 2.7 × 10⁻⁶ (relative) below the value at which a `float`
   overflows. The single-precision radius carries a relative error of about 10⁻⁵ at that size,
-  so a component that close to the limit can round either way. The protocol counts such a draw
+  so a component that close to the limit can round either way. The analysis counts such a draw
   as a rounding-band loss rather than an avoidable one (see below). Every other non-finite
   output had a component too large for `float`.
 - The direct calculation lost additional draws near κ = 1/2. In double precision at κ = 0.505,
@@ -135,61 +161,31 @@ every other source file, and `results/provenance.md` records the compilers and r
 - With libc++ the stabilized calculation took 0.71 to 0.92 times as long per returned sample as
   the direct one, depending on the benchmark case. With libstdc++ it took 1.15 to 1.40 times as
   long. The single-precision case is the fastest of the five.
-- Every statistical and mechanism gate in `results/analysis_report.md` passes. The verdict line
-  reads NO-GO because gate G6 requires a `make verify` measurement taken after the analysis, and
-  no such record exists for this run until a release archive is built and checked.
 
-Only one processor architecture (64-bit ARM) was tested. `results/portability_remote.md` gives
-the commands for running the comparison on x86_64.
+Only one processor architecture (64-bit ARM) was tested.
 
 **Rounding-band losses.** A calculation in the working type cannot tell on which side of the
 overflow threshold a component falls when the exact component lies within its rounding error
-of the threshold. Since protocol 5.0.0 a failure whose exact largest component `V` lies below
-the threshold by a relative distance of at most `4 eps max(1, |log V|)` (4.2 × 10⁻⁵ in `float`,
-6.3 × 10⁻¹³ in `double`) is counted separately, in the `rounding_band_*` columns of
-`results/failure_envelope.csv`, and not as avoidable loss. In this run that applied to the one
-single-precision draw above for the stabilized calculation. The direct calculation had 28
+of the threshold. A failure at the step that forms the output component, whose exact largest
+component `V` lies below the threshold by a relative distance of at most `4 eps max(1, |log V|)`
+(4.2 × 10⁻⁵ in `float`, 6.3 × 10⁻¹³ in `double`), is therefore counted separately, in the
+`rounding_band_*` columns of `results/failure_envelope.csv`, and not as an avoidable loss. In
+this run that applied to the one single-precision draw above. The direct calculation had 28
 failures in single precision whose exact largest component also lay within the band (9 at
-κ = 0.501, 8 at κ = 0.505, 11 at κ = 0.51). Their denominator had underflowed to zero, and they
-are counted as avoidable losses (see the next paragraph).
+κ = 0.501, 8 at κ = 0.505, 11 at κ = 0.51). Their denominator `X₂` had underflowed to zero, so
+the failure did not occur at the final step, and they are counted as avoidable losses. The
+stabilized calculation never forms `X₂`, so every one of its failures is a failure of the final
+step.
 
-**Rounding band: a correction made after the 5.0.0 run.** The way the analysis applies the
-rounding band was changed after the 5.0.0 run. As first implemented, the band applied to every
-avoidable loss whose exact largest component lay inside it, whatever the cause. That rule
-counted the 28 failures of the direct calculation above as rounding-band losses in each build,
-and the same 28 draws for the quotient-first diagnostic. Each of them occurred because the
-denominator `X₂` had underflowed to zero, not because of the rounding of the final step, so
-the original rule misclassified an underflow loss as a rounding loss. `analyze.py` now counts a
-failure as a rounding-band loss only when it occurred at the step that forms the output
-component. A failure that the probe attributes to an intermediate quantity (`denominator_zero`,
-`quotient_first_loss`, or any other loss on a draw whose `X₂` was zero or subnormal) remains an
-avoidable loss wherever its exact component lies. The stabilized calculation never forms `X₂`,
-so every one of its failures is a failure of the final step, and its counts are unchanged. The
-correction changes only the diagnostic columns `rounding_band_*` and `avoidable_outside_band_*`
-of the direct calculation and of the quotient-first diagnostic in
-`results/failure_envelope.csv`. No gate result changes, because G1 counts only the stabilized
-calculation. `PROTOCOL.md` and `config/protocol.json` were not changed, so that the recorded
-protocol hash still matches the run; the sentence in `PROTOCOL.md` §2.9.2 that the rule is the
-same for every method describes the rule as first implemented.
+## The full study (repository only)
 
-**2026-09-25, protocols 4.0.0 and 5.0.0.** These results replace those of protocol 3.0.0, which
-were produced with release 2.2.0 on seeds 9001–9010. Release 2.2.0 computed a `float` sample in
-`double` and rounded each component once; release 3.0.0 computes it in `float`, so that the
-header works where only single precision is available. `double` output is unchanged. The
-mechanism phase `p2` runs 10⁷ attempts per seed instead of 10⁶: with 5 × 10⁶ attempts per
-setting a setting with no failure could only be bounded at 6.0 × 10⁻⁷ (one-sided 95%), above the
-nonzero fractions observed at neighbouring κ; with 5 × 10⁷ the bound is 6.0 × 10⁻⁸. The
-recomputation uses MPFR instead of `cpp_dec_float_100`. A first run under protocol 4.0.0, on
-seeds 10001–10010 (commit `84130b5`), found three single-precision draws of the kind described
-above and failed gate G1, which then counted them as avoidable losses. Protocol 5.0.0 adds the
-rounding band and was tested on the new seed block 11001–11010. `PROTOCOL.md` §2.8 and §2.9
-record both amendments.
+The files below are in the GitHub repository and not in the release archive.
 
-## Rerunning
-
-Run from this directory. The builds need `clang++` with libc++, optionally a Homebrew `g++-15`,
-`g++-14` or `g++-13` for the second build, and the Boost headers (set `BOOST_INC`, default
-`/opt/homebrew/include`). Python dependencies come from `../../python` through `uv`.
+**Rerunning.** Run from this directory. The builds need `clang++` with libc++, optionally a
+Homebrew `g++-15`, `g++-14` or `g++-13` for the second build, the Boost headers (set `BOOST_INC`,
+default `/opt/homebrew/include`) and MPFR (set `MPFR_PREFIX`, default `/opt/homebrew`). Python
+dependencies come from `../../python` through `uv`. `make check-legacy`, which every phase runs
+through `make preflight`, reads commit 53dbd30 with git, so it needs a clone with history.
 
 ```bash
 make selftest                 # build; consistency checks on seeds 7501-7505, which write no data
@@ -204,10 +200,10 @@ make reverify                 # regenerate results/ and figures/ and compare the
 ```
 
 Three further targets check the sources: `make cxx11-check` compiles the probe as strict
-C++11 under both compilers, `make check-legacy` confirms that the vendored comparator matches
-`cpp/bi_kappa_distribution.H` at commit `0fc2c95` apart from its include guard and namespace, and
-`make protocol-check` confirms that `config/protocol.json` is what `config/make_protocol.py`
-produces.
+C++11 under both compilers, `make check-legacy` confirms that the vendored comparator
+`src/legacy/bi_kappa_distribution_v1.H` matches `cpp/bi_kappa_distribution.H` at commit 53dbd30
+apart from its include guard, namespace and comment banner, and `make protocol-check` confirms
+that `config/protocol.json` is what `config/make_protocol.py` produces.
 
 `make reverify` and `make protocol-check` compare every word, integer and row exactly and
 every floating-point number to a relative tolerance of 1e-9, so that a different numpy or
@@ -221,12 +217,17 @@ recorded in `raw/environment.json`. `compare_regenerated.py` does both compariso
 - Every simulation target runs `preflight` first. `preflight` stops if any source file the
   experiment depends on has uncommitted changes. `ALLOW_DIRTY_DEV=1 make preflight` overrides
   this and marks the run as exploratory.
-- `preflight` rewrites `raw/environment.json`, and `make checksums` rewrites `checksums.sha256`.
-  Both files are part of the committed record, so running either changes it.
-- Adding `SMOKE=1` to any target runs 2000 attempts on one seed and writes everything under
-  `raw/smoke/` and `results/smoke/`, leaving the committed data untouched.
+- `preflight` rewrites `raw/environment.json`, and `make checksums` rewrites both checksum
+  lists. These files are part of the committed record, so running either changes it. After an
+  edit to a committed source, README or result that leaves the run data unchanged,
+  `make bundle-checksums` rewrites `checksums.sha256` alone.
+- Adding `SMOKE=1` to any target runs 2000 attempts on one seed and writes its data under
+  `raw/smoke/` and `results/smoke/`. The `preflight` it runs first still rewrites
+  `raw/environment.json`; `git checkout raw/environment.json` restores the committed record.
 - `ORACLE_JOBS` sets the number of processes that share the 100-digit recomputation. On macOS
   the default is the number of performance cores.
+- `make clean` removes the executables and caches. `make distclean` also removes the smoke
+  runs, the PNG previews and the per-attempt binary files. Neither removes a committed file.
 
 **Runtime and disk use.** On the test machine (Apple silicon, 12 performance cores) the six
 phases took 34 minutes for both builds together, 21 of them in `p2`. The 100-digit
@@ -236,8 +237,57 @@ about 7 minutes. The phases write about 11 GB of per-attempt binary files under 
 it the two `p2` audit streams. These `.bin` files are not committed.
 
 **Checking the committed files.** `shasum -a 256 -c checksums.sha256` checks the committed
-sources, settings, results and figures. `make verify` also checks `raw/raw_checksums.sha256`,
-which lists the uncommitted `.bin` files, so it passes only after the phases have been rerun.
+sources, settings, results and PDF and SVG figures; it lists committed files only. `make
+verify` also checks `raw/raw_checksums.sha256`, which lists the uncommitted `.bin` files, so it
+passes only after the phases have been rerun.
+
+**Acceptance criteria.** `PROTOCOL.md` sets seven acceptance criteria, G0 to G6, before the
+run. `results/analysis_report.md` records that G0 to G5 are met: the checks of the evaluation
+code, the tests of the radial distribution and of the complete loader, the accounting of every
+loss, the bitwise agreement of the two builds, and the cost bound. G6 requires, among other
+provenance checks, a record that `make verify` and `make reverify` succeeded on the finished
+results, supplied to the analysis as `g6_evidence.json`. No such record was supplied, so G6 is reported as failed and the report's
+first line, its overall verdict, reads NO-GO. The failure of G6 concerns only that missing
+record, not a measured result.
+
+**Portability on other machines.** `results/portability_remote.md` gives the commands for
+running the phase `p5` comparison on other machines, including x86_64, and
+`.github/workflows/portability.yml` runs it on hosted runners when started by hand.
+`config/protocol.json` limits the portability criterion to the tested architecture.
+
+**Notes on the committed records.** These files record the run as it was made and are not
+edited afterwards.
+
+- `PROTOCOL.md` is titled "Experiment 7" and refers to an earlier study, "Experiment 6", whose
+  files are not in this repository. It also uses the terms holdout, for a production run on
+  a block of seeds not used before, and battery, for a fixed set of statistical tests.
+  `config/protocol.json` lists, under `seeds.spent_blocks`, the seed blocks of earlier runs of
+  this study, which are not included here; this run uses none of them.
+- `PROTOCOL.md`, `config/protocol.json` and the comment banner of
+  `src/legacy/bi_kappa_distribution_v1.H` describe the comparator as the header of release 1.0.0,
+  and the banner names commit `0fc2c95`, which is not in this repository's history. That
+  description is inaccurate. The
+  vendored file reproduces the header at commit 53dbd30, which forms the radius as `√X₁/√X₂`;
+  release 1.0.0 formed it as `√(X₁/X₂)`. `make check-legacy` checks against 53dbd30.
+- `PROTOCOL.md` §2.9.2 states that the rounding band applies to every calculation alike. The
+  analysis applies it only to failures at the step that forms the output component, as
+  described under Results. The two rules differ only for the 28 single-precision underflow
+  losses of the direct calculation, and the same draws of the quotient-first diagnostic, which
+  the analysis counts as avoidable. The counts of the stabilized calculation are the same under
+  both rules.
+- Comments in the probe, the recomputation, the analysis and the protocol call the stabilized
+  header "release 2.0.0", and some name versions 2.1.0 to 2.3.0. Those were development
+  version numbers that were never released (see `CHANGELOG.md`); the committed run used
+  version 3.0.0. The C++ sources and the protocol are left as they were run, since
+  `raw/environment.json` records their hashes. Several Python scripts (`preflight.py`,
+  `analyze.py`, `make_figures.py`, `exp7_portability.py`, `src/check_legacy.py`) have been
+  corrected since the run without changing any committed number; their hashes in
+  `raw/environment.json` are therefore those of the versions that ran.
+- `raw/environment_open.json` is the environment record of an earlier run of this study
+  (2026-09-20, under an earlier protocol and header, commit `8c36438`, which is not in this
+  repository's history). No file of the committed run refers to it.
+- `results/portability_remote.md` was written before the production run; a note at the top of
+  its status table says what has run since.
 
 ## Output files
 
@@ -246,12 +296,12 @@ which lists the uncommitted `.bin` files, so it passes only after the phases hav
 | `raw/p1/` … `raw/p6/` | per-configuration counters as JSON lines (committed) and per-attempt binary files (not committed) |
 | `raw/manifest.csv` | one row per output file, written by the process that produced it: phase, method, precision, κ, seed, size, SHA-256, build |
 | `raw/environment.json` | commit, source hashes, compilers and floating-point environment of each build |
-| `raw/oracle_audit.jsonl`, `raw/oracle_disagreements.jsonl` | 100-digit recomputation results and any disagreements |
+| `raw/oracle_audit.jsonl`, `raw/oracle_disagreements.jsonl`, `raw/oracle_rounding_band.jsonl` | 100-digit recomputation results, any disagreements, and the rounding-band records |
 | `results/*.csv` | source data for every figure and number; `results/source_data_README.md` defines every column |
 | `results/exp7_results.json` | the same results in one JSON file |
 | `results/analysis_report.md`, `results/validation_matrix.md` | outcome of every statistical test and consistency check |
 | `results/provenance.md` | run times and build identity |
 | `results/schema.md` | binary record formats of the probe's output |
 | `figures/*.pdf`, `figures/*.svg` | figures; `figures/captions.md` has their captions and `figures/figure_manifest.json` their source data |
-| `checksums.sha256` | SHA-256 of the sources, settings, results and figures |
+| `checksums.sha256` | SHA-256 of the committed sources, settings, results and figures |
 | `raw/raw_checksums.sha256` | SHA-256 of every file under `raw/p*/`, the manifest and the recomputation output |

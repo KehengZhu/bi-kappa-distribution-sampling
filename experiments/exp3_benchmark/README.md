@@ -70,15 +70,23 @@ direction `(0.3, −0.5, 0.8)`) and `capped20` (λ = 20).
 Run from this directory.
 
 ```bash
-make run                                               # build, validate, time; write raw/ and raw/checksums.sha256
+make run                                               # build, validate, time; write raw/
 uv run --project ../../python python exp3_analyze.py   # read raw/, write results/
-make verify                                            # check raw/ against raw/checksums.sha256
+make verify                                            # check raw/ against the committed raw/checksums.sha256
 ```
 
-`make run` rebuilds `exp3_bench.exe` against the current `cpp/bi_kappa_distribution.H` and
-overwrites `raw/`. The analysis reads the validation dumps `raw/val_*.bin`, which are not
-committed, so it needs a completed `make run`. `make clean` removes the executable and
-`make distclean` also removes `raw/`.
+`make run` rebuilds `exp3_bench.exe` against the current `cpp/bi_kappa_distribution.H`,
+overwrites the committed `raw/validate.jsonl` and `raw/timing.jsonl` (`git checkout raw/`
+restores them), writes the validation dumps `raw/val_*.bin`, and writes the checksums of the new
+files to `raw/checksums_rerun.txt` (not committed). It never overwrites the committed
+`raw/checksums.sha256`. `make verify` fails if any file listed there is missing or differs, so it
+passes only on the original files. A rerun does not pass it: the timings differ from run to run,
+and the validation dumps of the package's sampler differ because the current header draws
+different variates from the version measured (see below). With version 3.0.0 only
+`raw/validate.jsonl`, which records the rejection method alone, reproduces. The analysis reads
+the validation dumps, which are not committed, so it needs a completed `make run`. `make clean`
+removes the executable and `make distclean` also removes the validation dumps; the committed
+files in `raw/` stay.
 
 `exp3_bench.exe` can also be called directly:
 
@@ -105,14 +113,23 @@ of a minute at the measured rates. The validation dumps take about 220 MB.
 
 ## Header version and scope
 
-The committed results measured `cpp/bi_kappa_distribution.H` as of commit `0139426`
-(2026-08-17), after release 1.0.0 and before release 2.0.0. `results/exp3_results.json` records
-its SHA-256 (`sampler_header_sha256`, beginning `6b138af5`). That version computes the radius
-directly as `√X₁/√X₂`, draws both Gamma variates with `std::gamma_distribution`, and draws the
-direction from `cos θ` and `φ`. Release 2.0.0 and later compute the radius on a logarithmic
-scale, generate the Gamma variates inside the header, and draw the direction by Marsaglia's
-(1972) rejection method. This benchmark has not been rerun on those releases, so its timings do
-not describe them. Experiment 4 times the current radius calculation against the direct one.
+The timings and validation dumps in `raw/` were recorded at commit 0139426 (2026-08-17), a
+development version between release 1.0.0 and version 2.2.1, and measured
+`cpp/bi_kappa_distribution.H` as committed there (SHA-256 beginning `6b138af5`). `raw/` does
+not record the header's hash itself. That version computes the radius directly as `√X₁/√X₂`,
+draws both Gamma variates with `std::gamma_distribution`, and draws the direction from `cos θ`
+and `φ`. Since version 2.2.1 the header computes the radius on a logarithmic scale, generates
+the Gamma variates itself, and draws the direction by Marsaglia's (1972) rejection method.
+This benchmark has not been rerun on those versions, so its timings do not describe them.
+Experiment 4 times the current radius calculation against the direct one.
+
+`results/exp3_results.json` was regenerated later from the same `raw/` files. Its
+`environment` block describes the machine and working tree at that time, not at the time of
+measurement: `sampler_header_sha256` (beginning `8a3cfe3c`, version 2.2.1) is the header that
+was on disk when the analysis ran, `git_commit` is b9a4609 with `git_dirty` true, and `cxx` is
+the compiler then installed. The compiler that built the timed binary is recorded in each line
+of `raw/timing.jsonl` (clang 21.0.0, clang-2100.1.1.101). Since the measurement
+`exp3_bench.cpp` has changed only in its comments.
 
 The measurements come from one machine and one toolchain: Apple clang 21 with libc++ on arm64
 (Apple silicon), macOS 26.6.1, `-O2`. The measured version draws its Gamma variates from the

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Experiment 7 figures.
+"""Figures of the finite-precision study.
 
 Run with:  uv run --project ../../python python make_figures.py [--smoke]
 
@@ -10,15 +10,22 @@ guarantee: ``csv``, ``json``, ``hashlib``, ``math``, ``os``, ``sys``, numpy and 
 
 Output is byte-identical between runs.  ``SOURCE_DATE_EPOCH`` is fixed before matplotlib is
 imported, the PDF writer is told to omit its creation date and the SVG writer its date, and
-``svg.hashsalt`` is pinned so that generated element ids do not depend on the process.  Six
-of Experiment 6's tracked outputs carry a "Generated <utc>" line and its bundle can therefore
-never re-verify; nothing written here does.
+``svg.hashsalt`` is pinned so that generated element ids do not depend on the process.  No
+output carries a generation timestamp.
 
 Two main figures and three supplementary figures, each exported as PDF (canonical), SVG
 (editable text) and a 600-dpi PNG preview, with ``figures/captions.md`` and
-``figures/figure_manifest.json`` recording the source CSVs and their hashes.  ``--smoke``
-writes into ``results/smoke/figures/`` instead, which the repository excludes wholesale, so
-a rehearsal can never reach the tracked figure set.
+``figures/figure_manifest.json`` recording the source CSVs and their hashes.  Fig. 2 of the
+paper is ``fp1_failure_envelope``.
+
+A figure whose source CSVs are absent is not drawn.  That is the normal case in the release
+archive, which ships only the three CSVs behind Fig. 2: there this script redraws Fig. 2,
+rewrites ``captions.md``, and rewrites the Fig. 2 entry of ``figure_manifest.json`` while
+keeping the entries of the other four figures, whose source data are in the repository only.
+With the committed inputs the archive's own ``figures/`` files are reproduced byte for byte.
+
+``--smoke`` writes into ``results/smoke/figures/`` instead, which the repository excludes
+wholesale, so a rehearsal can never reach the tracked figure set.
 """
 from __future__ import annotations
 
@@ -71,6 +78,7 @@ mpl.rcParams.update({
     "pdf.fonttype": 42,
     "ps.fonttype": 42,
     "svg.fonttype": "none",
+    # The salt is part of every SVG element id; changing it changes every SVG byte.
     "svg.hashsalt": "exp7-confirmatory",
     "axes.spines.top": False,
     "axes.spines.right": False,
@@ -88,6 +96,17 @@ STYLE = {
 }
 PASS_C, FAIL_C, GREY_C = BLUE, VERMILION, "0.6"
 PRIMARY_TAG = "libcxx"
+
+# Every figure this script can draw, in the order the manifest lists them, with the CSVs
+# each one is drawn from.
+FIGURE_SOURCES = {
+    "fp1_failure_envelope": ("failure_envelope.csv", "honest_floor_curve.csv",
+                             "direct_zero_denominator_curve.csv"),
+    "fp2_conditioning_tail": ("conditioning_bins.csv", "tail_metrics.csv"),
+    "sfp1_scalar_validation": ("scalar_ecdf.csv", "scalar_validation.csv"),
+    "sfp2_loader_validation": ("loader_validation.csv",),
+    "sfp3_portability_cost": ("portability.csv", "performance.csv"),
+}
 
 MANIFEST: list[dict] = []
 
@@ -457,9 +476,10 @@ def figure_fp2(ctx: dict) -> None:
             a.set_ylim(lo, hi)
     fig.tight_layout(pad=0.4)
     export(ctx, fig, "fp2_conditioning_tail", 4,
-           "Released-path failure is concentrated in the intended tail, so conditioning on a "
-           "returned vector changes tail observables; the candidate returns the representable "
-           "tail and leaves the honest overflow visible instead of hiding it.",
+           "The failures of the direct calculation are concentrated in the intended tail, so "
+           "conditioning on a returned vector changes the tail; the stabilized calculation "
+           "returns the representable tail and leaves the unavoidable overflow visible as "
+           "failures.",
            ["conditioning_bins.csv", "tail_metrics.csv"], WIDTH_MM, 118,
            "95% Clopper-Pearson for per-bin success rates (one-sided 95% upper limits where "
            "a bin saw no success); 99% cluster-bootstrap percentile intervals over seeds, "
@@ -581,11 +601,12 @@ def figure_sfp1(ctx: dict) -> None:
 
     fig.tight_layout(pad=0.4)
     export(ctx, fig, "sfp1_scalar_validation", 4,
-           "The candidate samples the intended radial law on a stable scale across the whole "
-           "frozen ladder, including the shapes where the order-statistic brackets are too "
-           "wide to be evidence and the upper-tail statistic carries the certification.",
+           "The stabilized calculation samples the target radial distribution over the whole "
+           "kappa list, including the shapes where the order-statistic intervals are too wide "
+           "to be informative and the upper-tail statistic carries the validation.",
            ["scalar_ecdf.csv", "scalar_validation.csv"], WIDTH_MM, 118,
-           "dotted lines are simultaneous Kolmogorov bands at the frozen F1 level; quantile "
+           "dotted lines are simultaneous Kolmogorov bands at the familywise level of the "
+           "radial-distribution test set in PROTOCOL.md; quantile "
            "brackets are exact binomial order-statistic intervals, Bonferroni-corrected over "
            "the five levels")
 
@@ -671,13 +692,14 @@ def figure_sfp2(ctx: dict) -> None:
               bbox_to_anchor=(0.5, 1.11))
     fig.tight_layout(pad=0.4)
     export(ctx, fig, "sfp2_loader_validation", 1,
-           "The candidate stays correct after direction sampling, anisotropic scaling, "
-           "rotation into an arbitrary field frame and cap conditioning; every cell whose "
+           "The stabilized calculation stays correct after direction sampling, anisotropic "
+           "scaling, rotation into an arbitrary field frame and conditioning on the cap; "
+           "every cell whose "
            "statistics ran on a radius-filtered subsample is marked conditional with its "
            "loss fraction.",
            ["loader_validation.csv"], WIDTH_MM, 104,
-           "Holm-corrected jointly over all cells and tests at the frozen F5 familywise "
-           "alpha; a conditional cell cannot support the fidelity claim on its own")
+           "Holm-corrected jointly over all cells and tests at the familywise level set in "
+           "PROTOCOL.md; a conditional cell cannot support the fidelity claim on its own")
 
 
 # ---------------------------------------------------------------------------
@@ -759,10 +781,11 @@ def figure_sfp3(ctx: dict) -> None:
     panel_label(ax, "b", "cost")
     fig.tight_layout(pad=0.4)
     export(ctx, fig, "sfp3_portability_cost", 2,
-           "Within one architecture the candidate's output is bit-for-bit independent of the "
-           "standard library while the comparator's is not, and the mitigation costs less "
-           "than the pre-registered bound; the architectures that were not available are "
-           "shown as absent rather than as passing.",
+           "Within one architecture the output of the stabilized calculation is bit-for-bit "
+           "independent of the standard library while that of the direct calculation is not, "
+           "and the stabilized calculation costs less than the bound set in PROTOCOL.md; the "
+           "architectures that were not available are shown as absent rather than as "
+           "passing.",
            ["portability.csv", "performance.csv"], WIDTH_MM, 84,
            "99% cluster-bootstrap percentile interval over seeds, 10000 resamples, for the "
            "paired blockwise time ratio; the bitwise comparison is exact and has no interval")
@@ -783,107 +806,118 @@ def write_captions(ctx: dict) -> None:
             "region. The direct calculation also loses the draws for which $X_2$ rounds to "
             "zero; the dashed line is the probability of this event.",
         "fp2_conditioning_tail":
-            "State-dependent failure and its tail consequence. (a, b) Probability that an "
-            "attempt delivers a three-vector to the caller, as a function of the upper-tail "
-            "probability $q=\\Pr(R>r)$ of the radius that attempt intended to produce, so "
-            "that the horizontal axis runs from the body of the distribution on the left to "
-            "the extreme tail on the right. Bars are 95 per cent Clopper-Pearson intervals "
-            "and bins holding fewer than twenty attempts are not drawn. (c, d) Tail "
-            "retention at the pre-registered percentiles of the intended radius. Filled "
-            "markers are the ratio measured per attempt, in which an attempt that failed "
-            "stays outside the returned mass; open markers are the ratio conditional on "
-            "success, the law a caller actually receives, and for independent attempts it is "
-            "also the law produced by silently redrawing until success. The two are "
-            "different quantities and are labelled as such throughout "
-            "`tail_metrics.csv`. Where a method's per-attempt law carries a failure atom its "
-            "upper quantiles are undefined, so the figure and the source data report tail "
-            "MASS above the target quantile rather than a quantile error. Bars are 99 per "
-            "cent cluster-bootstrap percentile intervals over the seed block from 10\\,000 "
-            "resamples; the black line marks the target itself.",
+            "Failure as a function of the intended radius, and its effect on the tail. "
+            "LEGACY in the legend is the direct calculation and CANDIDATE the stabilized one. "
+            "(a, b) Probability that an attempt returns a finite three-vector, as a function "
+            "of the upper-tail probability $q=\\Pr(R>r)$ of the radius the attempt was meant "
+            "to produce, so that the horizontal axis runs from the body of the distribution "
+            "on the left to the extreme tail on the right. Bars are 95 per cent "
+            "Clopper-Pearson intervals, and bins holding fewer than twenty attempts are not "
+            "drawn. (c, d) Tail retention at percentiles of the intended radius fixed in "
+            "PROTOCOL.md before the run. Filled markers are the ratio measured per attempt, "
+            "in which an attempt that failed stays outside the returned mass; open markers "
+            "are the ratio conditional on success, which is the distribution a caller "
+            "receives and, for independent attempts, also the distribution produced by "
+            "redrawing until an attempt succeeds. The two are different quantities and are "
+            "labelled separately in `tail_metrics.csv`. Where a calculation loses a finite "
+            "fraction of its attempts, the per-attempt distribution has an atom at failure "
+            "and its upper quantiles are undefined, so the figure and the source data report "
+            "the tail mass above the target quantile rather than a quantile error. Bars are "
+            "99 per cent cluster-bootstrap percentile intervals over the seeds from 10\\,000 "
+            "resamples; the black line marks the target.",
         "sfp1_scalar_validation":
-            "Scalar validation of the 3.0.0 candidate. (a, b) Residuals of the empirical CDF "
-            "of $Z=-\\log I_W(a,3/2)$ from the unit-exponential CDF, where "
-            "$W=X_2/(X_1+X_2)\\sim\\mathrm{Beta}(a,3/2)$ and $a=\\kappa-1/2$; $Z$ is the "
-            "diagnostic of record because $W$ itself rounds to zero at the smallest shapes "
-            "while $\\log W$ does not. Dotted lines are simultaneous Kolmogorov bands at the "
-            "frozen familywise level of family F1. (c) Error in the empirical $\\log R$ "
-            "quantile relative to the exact target quantile, averaged over the seed block; "
-            "open markers are cells whose order-statistic bracket is wider than one natural-"
-            "log unit and which the protocol declares non-informative in advance, since an "
-            "interval admitting a multiplicative error of $e^{8951}$ cannot distinguish a "
-            "correct sampler from a wrong one. Those shapes are certified by the families "
-            "that retain power at any shape, not by coverage. (d) Observed exceedances above "
-            "$z_0=-\\log q_0$ divided by the count the null predicts, in double precision. "
-            "The count is the one family F4 tests: the resolved draws above $z_0$ plus the "
-            "draws whose $Z$ never resolved, over the attempts made, because a draw that "
-            "could not be resolved lies above every threshold and counting only the resolved "
-            "ones would condition on resolvability, which is itself monotone in the tail. "
-            "This is the statistic that retains power against survivor conditioning at a "
-            "loss fraction of $10^{-4}$, where the bulk-weighted statistics have none; the "
-            "measured power of each is in `config/power_study.json` and was computed before "
-            "the run.",
+            "Validation of the radial distribution of the stabilized calculation. (a, b) "
+            "Residuals of the empirical CDF of $Z=-\\log I_W(a,3/2)$ from the "
+            "unit-exponential CDF, where $W=X_2/(X_1+X_2)\\sim\\mathrm{Beta}(a,3/2)$ and "
+            "$a=\\kappa-1/2$. The test uses $Z$ because $W$ itself rounds to zero at the "
+            "smallest shapes while $\\log W$ does not. Dotted lines are simultaneous "
+            "Kolmogorov bands at the familywise significance level that PROTOCOL.md sets for "
+            "this test. (c) Error in the empirical $\\log R$ quantile relative to the exact "
+            "quantile of the target distribution, averaged over the seeds. Open markers are "
+            "cells whose order-statistic interval is wider than one natural-log unit; "
+            "PROTOCOL.md declares these uninformative before the run, since an interval that "
+            "admits a multiplicative error of $e^{8951}$ cannot distinguish a correct sampler "
+            "from a wrong one. At those shapes the validation rests on the tests that keep "
+            "their power at every shape. (d) Observed exceedances above $z_0=-\\log q_0$ "
+            "divided by the count expected under the target distribution, in double "
+            "precision. The count is the resolved draws above $z_0$ plus the draws whose $Z$ "
+            "could not be resolved, over the attempts made: a draw that could not be "
+            "resolved lies above every threshold, and counting only the resolved ones would "
+            "condition on resolvability, which itself depends on the tail. At a loss "
+            "fraction of $10^{-4}$ this statistic keeps its power against such conditioning, "
+            "where the statistics weighted toward the body of the distribution have none; "
+            "the power of each statistic, computed before the run, is in "
+            "`config/power_study.json`.",
         "sfp2_loader_validation":
-            "Complete-loader validation matrix. Rows are the curated configurations C0-C6 "
-            "pooled over the frozen seed block; columns are the members of family F5 -- the "
-            "five frozen with the protocol, then an exceedance count and an excess "
-            "goodness-of-fit at each upper-tail threshold $q_0$. Decisions are "
-            "Holm-corrected jointly over all cells and tests at the "
-            "frozen familywise level, not within each cell. A small grey dot marks a test "
-            "that is not a property of that cell's law rather than one that passed: under a "
-            "cap the accepted set couples the radius to the direction and is not "
-            "rotationally symmetric in the azimuth, so direction uniformity, independence, "
-            "frame invariance and the upper-tail members do not apply there -- the accepted "
-            "radius is truncated at a direction-dependent bound, so the count above $z_0$ is "
-            "not binomial -- and the bounded law is tested by its "
+            "Validation of the complete loader. Rows are the configurations C0-C6, pooled "
+            "over the seeds; columns are the tests of the complete loader, first the five "
+            "fixed in PROTOCOL.md, then an exceedance count and an excess goodness-of-fit "
+            "test at each upper-tail threshold $q_0$. Decisions are Holm-corrected jointly "
+            "over all cells and tests at the familywise level set in PROTOCOL.md, not within "
+            "each cell. A small grey dot marks a test that does not apply to that cell's "
+            "distribution, not one that passed. Under a cap the accepted set couples the "
+            "radius to the direction and is not symmetric in the azimuth, so direction "
+            "uniformity, independence, frame invariance and the upper-tail tests do not apply "
+            "there; the accepted radius is truncated at a direction-dependent bound, so the "
+            "count above $z_0$ is not binomial, and the capped distribution is tested by its "
             "own conditional transform instead. An exceedance count includes the draws the "
             "analysis could not resolve, each of which lies above every threshold, so the "
-            "count also reads on a cell whose own loss fraction exceeds $q_0$; the resolved "
-            "and unresolved parts of every count are published separately in "
-            "`loader_validation.csv`. The frame test recovers the direction "
-            "through a field-aligned basis re-derived independently of the loader's, so it "
-            "is a genuine check of the rotation rather than a tautology. Open grey circles "
-            "are the 1.0.0 comparator: its p-values are reported but it is not gated, "
-            "because where the released formation discards a non-negligible share of the "
-            "intended draws the draws it keeps are no longer distributed as the target, and "
-            "a test detecting that is the conditioning result rather than a defect. Sample "
-            "sizes, and the loss fraction of every cell whose statistics ran on a "
-            "radius-filtered subsample, are in the row labels and in "
-            "`loader_validation.csv`.",
+            "count remains informative on a cell whose loss fraction exceeds $q_0$; the "
+            "resolved and unresolved parts of every count are listed separately in "
+            "`loader_validation.csv`. The frame test recovers the direction through a "
+            "field-aligned basis derived independently of the loader's, so it checks the "
+            "rotation rather than repeating it. Open grey circles are the direct calculation. "
+            "Its p-values are reported but do not enter the decision: where it discards a "
+            "non-negligible share of the intended draws, the draws it keeps no longer follow "
+            "the target distribution, and a test that detects this measures the loss shown "
+            "in `fp2_conditioning_tail` rather than a separate defect. Sample sizes, and the "
+            "loss fraction of every cell whose statistics ran on a radius-filtered "
+            "subsample, are in the row labels and in `loader_validation.csv`.",
         "sfp3_portability_cost":
-            "Portability and cost. (a) Every environment the portability matrix names. An "
+            "Portability and cost. (a) Every environment of the portability comparison. An "
             "environment that ran natively and completed sits on the upper level; one that "
-            "was not available on this host sits on the lower level as an open triangle, "
-            "with the reason and the exact command to run it elsewhere recorded in "
-            "`portability.csv` and `results/portability_remote.md`. An absent environment is "
-            "never drawn as a zero and never omitted, so it cannot be read as a passing one; "
-            "the gate stays open until it runs, and emulated execution is recorded as "
-            "corroborating evidence and excluded from the decision. The annotation states "
-            "the two predictions being tested within one architecture: the candidate's "
-            "output is predicted to be bit-for-bit equal across standard libraries, because "
-            "its Gamma, normal and uniform primitives live in the header and its stream is a "
-            "function of the engine alone, while the comparator's is predicted to differ, "
-            "because it draws from the standard library. (b) Paired blockwise ratio of "
-            "candidate to comparator time per returned sample, by benchmark case, with the "
-            "99 per cent cluster-bootstrap interval over the performance seed block. The "
-            "solid line is parity and the dashed line the pre-registered bound. "
-            "Architectures are never pooled.",
+            "was not available on the test machine sits on the lower level as an open "
+            "triangle, with the reason recorded in `portability.csv`. An environment that did "
+            "not run is drawn as absent, never as a zero, so it cannot be read as one that "
+            "passed; emulated runs are recorded but do not count. The annotation states the "
+            "two predictions tested within one architecture: the output of the stabilized "
+            "calculation is bit-for-bit equal across standard libraries, because its Gamma, "
+            "normal and uniform variates are generated in the header and its stream depends "
+            "only on the engine, while the output of the direct calculation differs, because "
+            "it draws its Gamma variates from the standard library. (b) Paired blockwise "
+            "ratio of the time per returned sample of the stabilized calculation (CANDIDATE) "
+            "to that of the direct calculation (LEGACY), by benchmark case, with the 99 per "
+            "cent cluster-bootstrap interval over the timing seeds. The solid line is parity "
+            "and the dashed line the largest ratio PROTOCOL.md accepts. Architectures are "
+            "never pooled.",
     }
     os.makedirs(ctx["figures"], exist_ok=True)
-    L = ["# Experiment 7 figure captions", "",
-         "Every figure is generated from the CSVs under `results/` by `make_figures.py`, "
-         "which reads no raw binary and recomputes no statistic. This file carries no "
-         "generation timestamp: `make reverify` regenerates every derived artifact and diffs "
-         "it, which a wall-clock stamp would make impossible.", "",
-         f"Protocol `config/protocol.json` SHA-256 `{ctx['protocol_sha256']}`.", "",
-         "A caption is a property of the figure's definition rather than of the run that "
-         "drew it, so all five are written here; `figure_manifest.json` records which "
-         "figures this run actually produced, with the SHA-256 of every source CSV behind "
-         "them.", ""]
+    L = ["# Figure captions", "",
+         "`make_figures.py` draws every figure from the CSV files in `results/`; it reads no "
+         "raw data and recomputes no statistic. Fig. 2 of the paper is "
+         "`fp1_failure_envelope`. The other four figures are not used in the paper; they "
+         "and the CSV files they are drawn from are in the repository only, not in the "
+         "release archive. In the figures and the data files, LEGACY labels the direct "
+         "calculation and CANDIDATE the stabilized one.", "",
+         "`figure_manifest.json` records, for each figure, the SHA-256 of its source CSV "
+         "files and of `make_figures.py`. The results were analysed under the protocol file "
+         f"`config/protocol.json` with SHA-256 `{ctx['protocol_sha256']}`.", ""]
     for name, text in caps.items():
         L += [f"## {name}", "", text, ""]
     with open(os.path.join(ctx["figures"], "captions.md"), "w", encoding="utf-8") as fh:
         fh.write("\n".join(L) + "\n")
     print(f"  wrote {os.path.relpath(ctx['figures'], HERE)}/captions.md")
+
+
+def read_manifest(figures: str) -> list[dict]:
+    """The figure manifest this run is about to replace, or an empty list."""
+    path = os.path.join(figures, "figure_manifest.json")
+    try:
+        with open(path, encoding="utf-8") as fh:
+            entries = json.load(fh)
+    except (OSError, ValueError):
+        return []
+    return [e for e in entries if isinstance(e, dict) and e.get("figure") in FIGURE_SOURCES]
 
 
 def main() -> int:
@@ -908,6 +942,13 @@ def main() -> int:
     if os.path.exists(summary):
         with open(summary, encoding="utf-8") as fh:
             sha = json.load(fh).get("protocol_sha256", "")
+    # Without the analysis summary (the release archive ships only the CSVs behind Fig. 2),
+    # the protocol hash is the one the existing manifest records, provided it records one.
+    previous = read_manifest(figures)
+    if not sha:
+        recorded = {e.get("protocol_sha256") for e in previous if e.get("protocol_sha256")}
+        if len(recorded) == 1:
+            sha = recorded.pop()
     ctx = {"results": results, "figures": figures, "protocol_sha256": sha}
     expected = ("failure_envelope.csv", "conditioning_bins.csv", "tail_metrics.csv",
                 "scalar_validation.csv", "scalar_ecdf.csv", "loader_validation.csv",
@@ -931,11 +972,23 @@ def main() -> int:
     figure_sfp3(ctx)
     write_captions(ctx)
 
+    # A figure that could not be drawn because its source CSVs are absent keeps the entry
+    # the existing manifest has for it, so that the manifest still describes every figure.
+    # A figure whose CSVs are present but that drew nothing loses its entry.
+    drawn = {e["figure"]: e for e in MANIFEST}
+    kept = {e["figure"]: e for e in previous
+            if e["figure"] not in drawn
+            and not all(os.path.exists(os.path.join(results, n))
+                        for n in FIGURE_SOURCES[e["figure"]])}
+    entries = [drawn.get(name) or kept[name] for name in FIGURE_SOURCES
+               if name in drawn or name in kept]
     with open(os.path.join(figures, "figure_manifest.json"), "w", encoding="utf-8") as fh:
-        json.dump(MANIFEST, fh, indent=2, sort_keys=True)
+        json.dump(entries, fh, indent=2, sort_keys=True)
         fh.write("\n")
     print(f"  wrote {os.path.relpath(figures, HERE)}/figure_manifest.json "
-          f"({len(MANIFEST)} figures)")
+          f"({len(drawn)} figures drawn"
+          + (f", entries kept for {', '.join(kept)}, whose source data are not here"
+             if kept else "") + ")")
     return 0
 
 

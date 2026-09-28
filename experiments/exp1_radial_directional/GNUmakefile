@@ -28,7 +28,15 @@ frame: exp1_draw.exe
 marginals: exp1_draw.exe
 	$(PY) exp1_marginals.py
 
+# Check that the current header reproduces the committed draws: regenerate the cell test's
+# draws at the kappa in VERIFY_KAPPA (any of the nine) and stop with an error if a 400-cell
+# count or the overflow count differs from results/exp1_cells.json.  Writes no file.
+VERIFY_KAPPA ?= 0.51 2
+verify: exp1_draw.exe
+	$(PY) exp1_tail.py $(VERIFY_KAPPA)
+
 clean:
 	rm -f exp1_draw.exe
+	rm -rf __pycache__
 
-.PHONY: all cells tail moments frame marginals clean
+.PHONY: all cells tail moments frame marginals verify clean

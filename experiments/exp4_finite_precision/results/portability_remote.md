@@ -1,5 +1,12 @@
 # P5 portability: the environments, and the exact command for each
 
+**Scope in the committed protocol.** `config/protocol.json` (`gates.G4`) limits the
+portability criterion to one architecture: arm64 macOS with both standard libraries, where the
+committed run met it. The cross-architecture comparison described below is outside that
+scope. It is kept so that it can be run; a disagreement it found would still count against
+G4 (`gates.G4.cross_arch_withdrawn_reason`). Statements below that G4 needs x86_64 describe
+the criterion before its scope was narrowed.
+
 Gate G4 asks two different questions of the same phase, and they need different hardware.
 
 On one architecture the candidate's stream is a function of the engine alone — the Gamma,
@@ -17,7 +24,7 @@ reachable here only through CI runners, which is what `.github/workflows/portabi
 is for.
 
 Everything below runs the **frozen** sizes: 10⁶ attempts × 5 seeds, production block
-7001–7005, over the full κ ladder. The phase costs about a minute of single-core time, so
+11001–11005, over the full κ ladder. The phase costs about a minute of single-core time, so
 there is no reason to reduce it and no provision for doing so. A run at any other size or
 seed block is not P5 and must not be filed as P5 evidence.
 
@@ -41,10 +48,14 @@ CXX_LIBSTDCXX="g++-15"                    # empty string if it has no libstdc++
 mkdir -p evidence
 
 # Build the probe and run P5.  The sizes come from the makefile's frozen defaults;
-# do not pass N_PORTABILITY or SEEDS_PROD.  The build log is kept because the
+# do not pass N_P5 or SEEDS_PROD.  The build log is kept because the
 # environment record quotes the compile line make actually used and fails if the
-# frozen flags (-std=c++11 -O2 -ffp-contract=off) are not on it.
-make -C experiments/exp7_confirmatory portability \
+# frozen flags (-std=c++11 -O2 -ffp-contract=off) are not on it.  `make p5` runs
+# `make preflight` first, which also builds the 100-digit recomputation (Boost headers
+# and MPFR; set BOOST_INC and MPFR_PREFIX if they are not under /opt/homebrew), runs the
+# Python checks through `uv`, and reads commit 53dbd30 with git, so the clone must
+# have its history.
+make -C experiments/exp4_finite_precision p5 \
   CXX_LIBCXX="$CXX_LIBCXX" \
   CXX_LIBSTDCXX="$CXX_LIBSTDCXX" \
   2>&1 | tee evidence/run.log
@@ -68,7 +79,7 @@ for tag in libcxx libstdcxx; do
     --build-log evidence/run.log \
     --phase P5 \
     --out "evidence/environment_$tag.json"
-  cp "experiments/exp7_confirmatory/raw/portability/portability_$tag.jsonl" evidence/
+  cp "experiments/exp4_finite_precision/raw/p5/p5_$tag.jsonl" "evidence/portability_$tag.jsonl"
 done
 
 # Package it the way the workflow's artifact is packaged, so that a hand run and a CI
@@ -89,10 +100,10 @@ environments' bundles into one directory, and run:
 python3 .github/ci/check_evidence.py \
   --evidence evidence-bundle \
   --expect .github/ci/expected_environments.json \
-  --protocol experiments/exp7_confirmatory/config/protocol.json \
+  --protocol experiments/exp4_finite_precision/config/protocol.json \
   --out evidence-bundle/coverage.json
 
-cd experiments/exp7_confirmatory
+cd experiments/exp4_finite_precision
 uv run --project ../../python python analyze.py \
   --portability-ingest ../../evidence-bundle
 ```
@@ -130,7 +141,10 @@ Not available locally. Reached through the `ubuntu-latest` runner in
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y --no-install-recommends build-essential clang libc++-dev libc++abi-dev
+sudo apt-get install -y --no-install-recommends build-essential clang libc++-dev libc++abi-dev \
+  libboost-dev libmpfr-dev libgmp-dev python3-pip
+python3 -m pip install --break-system-packages uv
+export BOOST_INC=/usr/include MPFR_PREFIX=/usr
 ```
 
 ```bash
@@ -177,8 +191,11 @@ Available locally; corroborating only.
 ```bash
 docker run --rm --platform linux/amd64 -v "$PWD":/w -w /w ubuntu:24.04 bash -lc '
   apt-get update &&
-  apt-get install -y --no-install-recommends build-essential clang libc++-dev libc++abi-dev python3 &&
-  make -C experiments/exp7_confirmatory portability CXX_LIBCXX="clang++ -stdlib=libc++" CXX_LIBSTDCXX="g++"'
+  apt-get install -y --no-install-recommends build-essential clang libc++-dev libc++abi-dev \
+    libboost-dev libmpfr-dev libgmp-dev git python3 python3-pip &&
+  python3 -m pip install --break-system-packages uv &&
+  make -C experiments/exp4_finite_precision p5 BOOST_INC=/usr/include MPFR_PREFIX=/usr \
+    CXX_LIBCXX="clang++ -stdlib=libc++" CXX_LIBSTDCXX="g++"'
 ```
 
 Same standing as the row above.
@@ -186,6 +203,11 @@ Same standing as the row above.
 ---
 
 ## Status
+
+This table was written before the production run and has not been updated since. The
+committed run completed P5 natively on the development host with both standard libraries
+(`raw/p5/p5_libcxx.jsonl` and `raw/p5/p5_libstdcxx.jsonl`), and `results/portability.csv`
+records the outcome. No record of any of the other rows is committed.
 
 `execution` is the mode the run was or would be performed in. `available` says whether the
 environment can be reached from this project as it stands. `completed` says whether P5 has

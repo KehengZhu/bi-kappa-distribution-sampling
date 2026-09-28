@@ -1,25 +1,32 @@
-# Experiment 4 - finite-precision losses of the direct (LEGACY) and the stabilized
-# (CANDIDATE) radius calculation of the bi-Kappa loader.
+# Experiment 4 - finite-precision losses of the direct and the stabilized radius
+# calculation of the bi-Kappa loader.  The probe and the data files label the direct
+# calculation (src/legacy/bi_kappa_distribution_v1.H) LEGACY and the stabilized one
+# (cpp/bi_kappa_distribution.H) CANDIDATE.
 #
-# The same source is built once per standard library.  Within the 2.x line the stabilized
-# loader's random stream is a function of the engine alone, so the two builds must agree
-# byte for byte.
+# The same source is built once per standard library.  The stabilized loader draws its Gamma,
+# normal and uniform variates with its own code, so its random stream is a function of the
+# engine alone and the two builds must agree byte for byte.
+#
+# In the release archive only `make figures` can run: it redraws Fig. 2 of the paper from the
+# three CSV files shipped in results/.  Every other target needs files that are in the
+# repository only.
 #
 #   make cxx11-check    the sampling sources compile as strict C++11 under both compilers
 #   make selftest       accounting identity, replica-vs-class equality, error paths, digests
-#   make check-legacy   the vendored comparator is still the released 1.0.0 header
+#   make check-legacy   the vendored comparator is still the header at commit 53dbd30
 #   make protocol-check config/protocol.json is what config/make_protocol.py produces
 #   make preflight      environment + provenance; refuses a dirty production run
 #   make p1             scalar radial law, both methods, full ladder
 #   make p2             mechanism: paired diagnostic layer + native layer
 #   make p3             conditioning: per-attempt intended state vs success
 #   make p4             complete anisotropic, rotated, capped 3-D loader, C0-C6
-#   make p5             portability: CANDIDATE, full ladder, one tagged environment
+#   make p5             portability: stabilized calculation, full ladder, one tagged environment
 #   make p6             performance: timed blocks, B0-B4, seeds 11006-11010
 #   make oracle         recompute every recorded attempt at 100 decimal digits
-#   make analyze        results/*.csv, results/analysis_report.md, the acceptance-criteria table
-#   make figures        figures/*.{pdf,svg,png}
+#   make analyze        results/*.csv, results/analysis_report.md
+#   make figures        figures/*.{pdf,svg,png}, figures/captions.md, figures/figure_manifest.json
 #   make checksums      write both checksum manifests
+#   make bundle-checksums  rewrite checksums.sha256 only, leaving raw/raw_checksums.sha256
 #   make verify         re-check every checksum manifest
 #   make reverify       regenerate the derived artifacts and compare them with the committed ones
 #                       (STRICT=1 for byte-for-byte; also accepted by protocol-check)
@@ -33,8 +40,10 @@
 #
 # Every simulation target accepts SMOKE=1, which shrinks the run and diverts *everything* it
 # writes -- data, manifest and all -- under raw/smoke/.  SMOKE is forwarded to analyze and
-# figures.  A smoke run touches nothing outside raw/smoke/ and results/smoke/, and the
-# production targets never look inside either.
+# figures.  Apart from raw/environment.json, which `preflight` rewrites on every run (smoke
+# or not; `git checkout raw/environment.json` restores the committed record), a smoke run
+# touches nothing outside raw/smoke/ and results/smoke/, and the production targets never
+# look inside either.
 
 CXX_LIBCXX    := clang++
 CXX_LIBSTDCXX := $(shell command -v g++-15 || command -v g++-14 || command -v g++-13)
@@ -105,7 +114,7 @@ endif
 STRICTARG := $(if $(STRICT),--strict)
 
 .PHONY: all cxx11-check selftest preflight protocol-check check-legacy \
-        p1 p2 p3 p4 p5 p6 oracle analyze figures checksums verify \
+        p1 p2 p3 p4 p5 p6 oracle analyze figures checksums bundle-checksums verify \
         reverify clean distclean
 
 all: $(TARGETS) exp7_oracle.exe
@@ -141,8 +150,10 @@ cxx11-check: $(GENERATED)
 selftest: $(TARGETS) cxx11-check
 	@for b in $(TARGETS); do echo "== $$b"; ./$$b selftest || exit 1; done
 
-# The comparator must still be the released 1.0.0 header, modulo the guard rename and the
-# namespace wrap that letting both versions coexist in one translation unit requires.
+# The comparator must still be cpp/bi_kappa_distribution.H as committed at 53dbd30 (the last
+# version of the header with the direct radius calculation), modulo the guard rename and the
+# namespace wrap that letting both versions coexist in one translation unit requires.  The
+# check reads that commit with `git show`, so it needs a clone with history.
 check-legacy:
 	@$(PY) src/check_legacy.py
 
@@ -265,31 +276,54 @@ figures:
 
 # ---------------------------------------------------------------------------
 # Provenance.  The production checksum bundle never descends into raw/smoke/.
+#
+# raw/raw_checksums.sha256 lists the per-attempt binaries, which are not committed, so it
+# verifies only after the phases have been rerun.  checksums.sha256 lists only files that are
+# committed: the sources, settings, results and the PDF and SVG figures.  The PNG previews
+# that make_figures.py also writes are not committed (the repository ignores *.png), so they
+# are left out; so are Python bytecode caches.
 # ---------------------------------------------------------------------------
-checksums:
+BUNDLE_PY := $(sort $(wildcard *.py))
+
+define WRITE_RAW_CHECKSUMS
 	@cd raw && find . -path ./smoke -prune -o -type f \
 	   \( -name '*.bin' -o -name '*.jsonl' -o -name 'manifest.csv' \) -print | sort | \
 	   xargs shasum -a 256 > raw_checksums.sha256 && \
 	   echo "  wrote raw/raw_checksums.sha256 ($$(wc -l < raw_checksums.sha256) files)"
-	@# `results/smoke/` is pruned for the same reason as `raw/smoke/`: smoke output is not
-	@# part of the production record, and hashing it would make `make verify` fail after
-	@# every smoke re-run.
-	@find config results figures src PROTOCOL.md GNUmakefile README.md preflight.py \
+endef
+
+# `results/smoke/` is pruned for the same reason as `raw/smoke/`: smoke output is not part of
+# the production record, and hashing it would make `make verify` fail after every smoke re-run.
+define WRITE_BUNDLE_CHECKSUMS
+	@find config results figures src PROTOCOL.md GNUmakefile README.md $(BUNDLE_PY) \
 	   raw/environment.json raw/manifest.csv raw/raw_checksums.sha256 \
-	   \( -path './results/smoke' -o -path 'results/smoke' \) -prune -o \
-	   -type f ! -name 'checksums.sha256' ! -name '*.pyc' -print 2>/dev/null | sort | \
-	   xargs shasum -a 256 > checksums.sha256
+	   \( -path 'results/smoke' -o -name '__pycache__' \) -prune -o \
+	   -type f ! -name 'checksums.sha256' ! -name '*.pyc' ! -name '*.png' -print \
+	   2>/dev/null | sort | xargs shasum -a 256 > checksums.sha256
 	@echo "  wrote checksums.sha256 ($$(wc -l < checksums.sha256) files)"
+endef
+
+# After a production run: both lists.
+checksums:
+	$(WRITE_RAW_CHECKSUMS)
+	$(WRITE_BUNDLE_CHECKSUMS)
+
+# After an edit to a committed source, README or result, with the run data unchanged: only
+# checksums.sha256.  raw/raw_checksums.sha256 is the record of the run's data and is left alone.
+bundle-checksums:
+	$(WRITE_BUNDLE_CHECKSUMS)
 
 verify:
 	@fail=0; \
 	if [ -f raw/raw_checksums.sha256 ]; then \
-	  (cd raw && shasum -a 256 --check --quiet raw_checksums.sha256) || fail=1; \
-	  echo "  raw/raw_checksums.sha256: $$( [ $$fail -eq 0 ] && echo ok || echo MISMATCH )"; \
+	  if (cd raw && shasum -a 256 --check --quiet raw_checksums.sha256); then \
+	    echo "  raw/raw_checksums.sha256: ok"; \
+	  else echo "  raw/raw_checksums.sha256: MISMATCH OR MISSING FILES"; fail=1; fi; \
 	else echo "  raw/raw_checksums.sha256 missing"; fail=1; fi; \
 	if [ -f checksums.sha256 ]; then \
-	  shasum -a 256 --check --quiet checksums.sha256 || fail=1; \
-	  echo "  checksums.sha256: $$( [ $$fail -eq 0 ] && echo ok || echo MISMATCH )"; \
+	  if shasum -a 256 --check --quiet checksums.sha256; then \
+	    echo "  checksums.sha256: ok"; \
+	  else echo "  checksums.sha256: MISMATCH OR MISSING FILES"; fail=1; fi; \
 	else echo "  checksums.sha256 missing"; fail=1; fi; \
 	exit $$fail
 
@@ -319,12 +353,18 @@ reverify:
 	 if [ $$rc -ne 0 ]; then echo "  reverify: the analysis or the figures failed to run"; exit 1; fi
 	@$(PY) compare_regenerated.py outputs $(STRICTARG) && rm -rf .reverify
 
+# clean and distclean remove only files that are not committed.  src/exp7_protocol.H is
+# generated from config/protocol.json but is committed, because the preflight provenance
+# check hashes it; it is left in place.
 clean:
-	rm -f $(TARGETS) exp7_oracle.exe $(GENERATED)
-	rm -rf .reverify
+	rm -f exp7_probe_libcxx.exe exp7_probe_libstdcxx.exe exp7_oracle.exe
+	rm -f raw/manifest.keep raw/oracle_*.tmp
+	rm -rf .reverify __pycache__ config/__pycache__ src/__pycache__
 
+# distclean also removes the regenerable outputs that are not committed: the per-attempt
+# binaries under raw/p1 ... raw/p6 (about 11 GB), the PNG previews of the figures, and every
+# smoke run.  The committed counters, manifests, checksum lists, results and figures stay.
 distclean: clean
-	rm -rf raw/smoke raw/p1 raw/p2 raw/p3 raw/p4 raw/p5 raw/p6 \
-	       raw/manifest.csv raw/oracle_audit.jsonl raw/oracle_disagreements.jsonl \
-	       raw/oracle_rounding_band.jsonl \
-	       raw/raw_checksums.sha256 checksums.sha256
+	rm -rf raw/smoke results/smoke
+	rm -f raw/p1/*.bin raw/p2/*.bin raw/p3/*.bin raw/p4/*.bin raw/p5/*.bin raw/p6/*.bin
+	rm -f figures/*.png

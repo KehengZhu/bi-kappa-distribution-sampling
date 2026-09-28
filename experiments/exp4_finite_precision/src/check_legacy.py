@@ -1,17 +1,23 @@
-"""Verify that the vendored comparator is still the released 1.0.0 header.
+"""Verify that the vendored comparator is still the header at commit 53dbd30.
 
 Run with:  uv run --project ../../python python src/check_legacy.py
 
-``src/legacy/bi_kappa_distribution_v1.H`` is ``cpp/bi_kappa_distribution.H`` exactly as
-released at version 1.0.0, with two changes that are forced by having both headers in one
-translation unit: the include guard is renamed and the whole file is wrapped in
-``namespace bikappa_v1``.  A banner recording that fact was added above the wrap.
+``src/legacy/bi_kappa_distribution_v1.H`` is ``cpp/bi_kappa_distribution.H`` as committed at
+53dbd30 (2026-08-18), the last commit to change the header before the radius calculation
+was moved to a logarithmic scale.  That header forms the radius directly as
+``sqrt(X1) / sqrt(X2)`` from two ``std::gamma_distribution`` variates.  It is not the header of release 1.0.0 (tag v1.0.0),
+which formed the radius as ``sqrt(X1 / X2)``; the banner of the vendored file, PROTOCOL.md
+and config/protocol.json call it the 1.0.0 header, and that description is inaccurate.
+
+The vendored copy differs from the committed header by three edits, forced by having both
+headers in one translation unit: the include guard is renamed, the whole file is wrapped in
+``namespace bikappa_v1``, and a banner recording that fact was added above the wrap.
 
 This script undoes precisely those three edits and compares the result, byte for byte,
 against ``git show <commit>:cpp/bi_kappa_distribution.H``.  Anything else that has been
-changed in the comparator -- a "harmless" reformatting, a compiler warning silenced, a
-constant nudged -- shows up as a diff and fails the check.  A comparator that has drifted
-is not a comparator.
+changed in the comparator -- a reformatting, a compiler warning silenced, a constant
+nudged -- shows up as a diff and fails the check.  The commit is on the main branch, so the
+check needs a clone with history (not a shallow one).
 """
 
 from __future__ import annotations
@@ -26,9 +32,10 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
 VENDORED = os.path.join(HERE, "legacy", "bi_kappa_distribution_v1.H")
 
-# The commit whose cpp/bi_kappa_distribution.H is release 1.0.0.
-RELEASE_COMMIT = "0fc2c95"
-RELEASE_PATH = "cpp/bi_kappa_distribution.H"
+# The commit whose cpp/bi_kappa_distribution.H the comparator was vendored from: the last
+# version of the header with the direct radius calculation sqrt(X1) / sqrt(X2).
+COMPARATOR_COMMIT = "53dbd30c59ac0cde643f2e49105b9131a4805404"
+HEADER_PATH = "cpp/bi_kappa_distribution.H"
 
 GUARD_VENDORED = "_BI_KAPPA_DISTRIBUTION_V1_H_"
 GUARD_ORIGINAL = "_BI_KAPPA_DISTRIBUTION_H_"
@@ -101,17 +108,17 @@ def unwrap(text: str) -> tuple[str, list[str]]:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--commit", default=RELEASE_COMMIT)
+    ap.add_argument("--commit", default=COMPARATOR_COMMIT)
     ap.add_argument("--show-diff", action="store_true", default=True)
     args = ap.parse_args()
 
     proc = subprocess.run(
-        ["git", "show", f"{args.commit}:{RELEASE_PATH}"],
+        ["git", "show", f"{args.commit}:{HEADER_PATH}"],
         cwd=ROOT, capture_output=True, check=False,
     )
     if proc.returncode != 0:
         sys.stderr.write(
-            f"check-legacy: cannot read {args.commit}:{RELEASE_PATH}\n"
+            f"check-legacy: cannot read {args.commit}:{HEADER_PATH}\n"
             f"{proc.stderr.decode('utf-8', 'replace')}")
         return 1
     original = proc.stdout.decode("utf-8")
@@ -125,16 +132,17 @@ def main() -> int:
 
     if recovered == original:
         print(f"  check-legacy: src/legacy/bi_kappa_distribution_v1.H reproduces "
-              f"{args.commit}:{RELEASE_PATH} exactly")
+              f"{args.commit}:{HEADER_PATH} exactly")
         return 1 if notes else 0
 
     sys.stderr.write(
-        "check-legacy: the vendored comparator no longer reproduces the released 1.0.0\n"
-        "              header after undoing the guard rename and the namespace wrap.\n")
+        f"check-legacy: the vendored comparator no longer reproduces {args.commit[:12]}:"
+        f"{HEADER_PATH}\n"
+        "              after undoing the guard rename and the namespace wrap.\n")
     if args.show_diff:
         diff = difflib.unified_diff(
             original.split("\n"), recovered.split("\n"),
-            fromfile=f"{args.commit}:{RELEASE_PATH}",
+            fromfile=f"{args.commit}:{HEADER_PATH}",
             tofile="src/legacy/bi_kappa_distribution_v1.H (unwrapped)", lineterm="")
         for i, line in enumerate(diff):
             if i > 200:

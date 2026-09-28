@@ -42,7 +42,8 @@ COUNTER_FIELDS = (
     "cat_avoidable", "cat_denominator_zero", "cat_subnormal_denominator",
     "gamma_variates", "uniform_variates", "engine_calls", "cap_rejects",
 )
-DIGEST_FIELDS = ("vector_digest", "digest", "sha256", "fnv1a")
+# The probe writes `digest_sha256` (SHA-256 of every returned value and counter) on each P5 row.
+DIGEST_FIELDS = ("digest_sha256", "vector_digest", "digest", "sha256", "fnv1a")
 
 
 def load_bundle(root: str) -> tuple[list[dict], list[dict]]:

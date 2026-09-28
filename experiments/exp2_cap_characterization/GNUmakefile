@@ -9,23 +9,31 @@ all: $(TARGET)
 $(TARGET): $(SRC) ../../cpp/bi_kappa_distribution.H
 	$(CXX) $(CXXFLAGS) -o $(TARGET) $(SRC)
 
-# Regenerate every sample file from scratch and record their checksums.  The .bin
-# files are gitignored on purpose; checksums.sha256 is whitelisted and is what makes
-# a regenerated raw/ verifiable against the tracked results.
+# Regenerate every sample file from scratch.  The .bin files are not committed;
+# raw/manifest.csv and raw/checksums.sha256 are, and raw/checksums.sha256 is what makes a
+# regenerated raw/ verifiable.  `make run` therefore never overwrites it: the checksums of
+# the new files go to raw/checksums_rerun.txt, which is not committed, for inspection.
 run: $(TARGET)
 	mkdir -p $(RAWDIR)
 	./$(TARGET) $(RAWDIR)
-	cd $(RAWDIR) && shasum -a 256 manifest.csv run_*.bin > checksums.sha256
+	cd $(RAWDIR) && shasum -a 256 manifest.csv run_*.bin > checksums_rerun.txt
 
-# Verify a regenerated raw/ against the committed checksums.
+# Check raw/ against the committed raw/checksums.sha256.  Fails on any mismatch and on any
+# missing file.
 verify:
-	cd $(RAWDIR) && shasum -a 256 --check checksums.sha256 | grep -v ': OK$$' || \
-	  echo "all files match checksums.sha256"
+	@cd $(RAWDIR) && if shasum -a 256 --check --quiet checksums.sha256; then \
+	  echo "all files match raw/checksums.sha256"; \
+	else \
+	  echo "raw/ does not match raw/checksums.sha256 (lines above name each file)" >&2; \
+	  exit 1; \
+	fi
 
 clean:
 	rm -f $(TARGET)
 
+# Also remove the regenerated sample files.  The committed raw/manifest.csv and
+# raw/checksums.sha256 stay.
 distclean: clean
-	rm -rf $(RAWDIR)
+	rm -f $(RAWDIR)/run_*.bin $(RAWDIR)/checksums_rerun.txt
 
 .PHONY: all run verify clean distclean

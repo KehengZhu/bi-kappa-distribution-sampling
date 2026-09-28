@@ -1,8 +1,8 @@
 # Experiment 3 -- performance benchmark.
 #
-# Correctness is generated BEFORE timing, and `make run` enforces that order:
+# Correctness is checked BEFORE timing, and `make run` enforces that order:
 # no timing number is meaningful until every compared method is verified to
-# sample the intended target law.
+# sample the intended target distribution.
 
 CXX      = g++
 CXXFLAGS = -Wall -Wextra -std=c++11 -O2
@@ -30,7 +30,9 @@ $(TARGET): $(SRC) $(HDR)
 	$(CXX) $(CXXFLAGS) -o $(TARGET) $(SRC)
 
 # Regenerate everything from scratch, then record checksums.  The .bin validation
-# dumps are gitignored; checksums.sha256 and the .jsonl summaries are tracked.
+# dumps are not committed; checksums.sha256 and the .jsonl summaries are.  `make run`
+# overwrites the committed raw/validate.jsonl and raw/timing.jsonl; `git checkout raw/`
+# restores them.
 run: $(TARGET)
 	mkdir -p $(RAWDIR)
 	@echo "--- phase 1: distributional validation (must pass before timing) ---"
@@ -53,17 +55,26 @@ run: $(TARGET)
 	      $(TIME_N) $(TIME_REPEAT) >> $(RAWDIR)/timing.jsonl; \
 	  done; \
 	done
-	cd $(RAWDIR) && shasum -a 256 *.jsonl val_*.bin > checksums.sha256
+	cd $(RAWDIR) && shasum -a 256 *.jsonl val_*.bin > checksums_rerun.txt
 
-# Verify a regenerated raw/ against the committed checksums.
+# Check raw/ against the committed raw/checksums.sha256, which `make run` never overwrites
+# (it writes the checksums of the new files to raw/checksums_rerun.txt, not committed).
+# Fails on any mismatch and on any missing file.  A rerun is not expected to pass: the
+# timings differ from run to run, and see README.md for the validation dumps.
 verify:
-	cd $(RAWDIR) && shasum -a 256 --check checksums.sha256 | grep -v ': OK$$' || \
-	  echo "all files match checksums.sha256"
+	@cd $(RAWDIR) && if shasum -a 256 --check --quiet checksums.sha256; then \
+	  echo "all files match raw/checksums.sha256"; \
+	else \
+	  echo "raw/ does not match raw/checksums.sha256 (lines above name each file)" >&2; \
+	  exit 1; \
+	fi
 
 clean:
 	rm -f $(TARGET)
 
+# Also remove the validation dumps.  The committed raw/validate.jsonl, raw/timing.jsonl and
+# raw/checksums.sha256 stay.
 distclean: clean
-	rm -rf $(RAWDIR)
+	rm -f $(RAWDIR)/val_*.bin $(RAWDIR)/checksums_rerun.txt
 
 .PHONY: all run verify clean distclean

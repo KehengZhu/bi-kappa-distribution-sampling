@@ -78,14 +78,20 @@ the 99.9th-percentile speeds for the anisotropic runs.
 Run from this directory.
 
 ```bash
-make run                                               # build, write raw/, write raw/checksums.sha256
+make run                                               # build, write raw/
+make verify                                            # check raw/ against the committed raw/checksums.sha256
 uv run --project ../../python python exp2_analyze.py   # read raw/, write results/
-make verify                                            # check raw/ against raw/checksums.sha256
 ```
+
+`make run` rewrites `raw/manifest.csv` and the sample files, and writes the checksums of the
+new files to `raw/checksums_rerun.txt` (not committed); it never overwrites the committed
+`raw/checksums.sha256`. `make verify` fails if any file listed there is missing or differs.
+With the version 3.0.0 header all 280 sample files and `raw/manifest.csv` reproduce the
+committed checksums exactly.
 
 `exp2_analyze.py` also accepts the input and output directories as arguments,
 `exp2_analyze.py [raw_dir] [results_dir]`. `make clean` removes the executable and
-`make distclean` also removes `raw/`.
+`make distclean` also removes the sample files; the committed files in `raw/` stay.
 
 **Runtime and disk use.** On an Apple M4 Max, `exp2_sample.exe` takes about 4 s and the analysis
 about 20 s. `raw/` holds 280 binary files of 2.4 MB each, about 670 MB in total. These files are
@@ -104,11 +110,15 @@ not committed. `raw/manifest.csv` and `raw/checksums.sha256` are committed, so a
 
 ## Committed results
 
-The committed results were produced with release 2.2.1 of `cpp/bi_kappa_distribution.H` on
+The committed results were produced with version 2.2.1 of `cpp/bi_kappa_distribution.H` on
 macOS 26.7 on arm64 (Apple silicon), compiled by Apple clang 21 with libc++ and
-`-Wall -Wextra -std=c++11 -O2`.
-`results/exp2_results.json` records the SHA-256 of the header (`sampler_header_sha256`,
-beginning `79842dc4`), the compiler, the git commit and the Python package versions.
+`-Wall -Wextra -std=c++11 -O2`. `results/exp2_results.json` records the SHA-256 of the header
+(`sampler_header_sha256`, beginning `8a3cfe3c`, which is version 2.2.1 as committed at
+cbd92b4), the compiler, the git commit and the Python package versions. The recorded commit,
+b9a4609, is the one that was checked out, and `git_dirty` is true: the working tree held the
+2.2.1 header before it was committed. The header is identified by its SHA-256, not by the
+commit. Version 3.0.0 returns the same double-precision draws, and `make run` with it
+reproduces every committed checksum.
 
 The main results are these:
 

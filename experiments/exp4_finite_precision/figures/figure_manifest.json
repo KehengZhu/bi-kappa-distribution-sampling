@@ -11,7 +11,7 @@
     "interval_definition": "each marker is an observed non-finite fraction, drawn without its interval; the failure count and its two-sided 95% Clopper-Pearson interval are published for every setting in failure_envelope.csv. A setting with no failure is not drawn; the dotted line is the one-sided 95% upper bound on its fraction (failure_ci_hi in failure_envelope.csv), which is the same for every such setting. The grey region lies below the closed-form probability that the exact velocity has a component larger than the largest finite value of the output type (honest_floor_curve.csv). The dashed line is the closed-form probability that the direct calculation's X2 rounds to zero (direct_zero_denominator_curve.csv). The two curves are computed, not measured, and have no interval",
     "panels": 2,
     "protocol_sha256": "8fa713c11bebc4a76f9d1a412633a7fdb72f7be1ddce397112801c1b400f3596",
-    "script_sha256": "c4c58f1841942e67b7c117739126cf0ceef5bbf71e29956029587ee158d1137c",
+    "script_sha256": "7291c6c9765f523786e383a62b6b9555ebae6e7729036d49c7c7c9cf4976ea1e",
     "source_csv_sha256s": {
       "direct_zero_denominator_curve.csv": "2a6a23742ab4bd272619c8396dc273d1e25a6a3cd39e4f145a30717c5ee7e30d",
       "failure_envelope.csv": "ecf3a3dbd80c573432cc92a69a9b710a1fffd0748b8b9194b08a7830f3e7e12d",
@@ -25,7 +25,7 @@
     "width_mm": 183.0
   },
   {
-    "core_conclusion": "Released-path failure is concentrated in the intended tail, so conditioning on a returned vector changes tail observables; the candidate returns the representable tail and leaves the honest overflow visible instead of hiding it.",
+    "core_conclusion": "The failures of the direct calculation are concentrated in the intended tail, so conditioning on a returned vector changes the tail; the stabilized calculation returns the representable tail and leaves the unavoidable overflow visible as failures.",
     "figure": "fp2_conditioning_tail",
     "formats": [
       "pdf",
@@ -36,7 +36,7 @@
     "interval_definition": "95% Clopper-Pearson for per-bin success rates (one-sided 95% upper limits where a bin saw no success); 99% cluster-bootstrap percentile intervals over seeds, 10000 resamples, for the tail ratios",
     "panels": 4,
     "protocol_sha256": "8fa713c11bebc4a76f9d1a412633a7fdb72f7be1ddce397112801c1b400f3596",
-    "script_sha256": "c4c58f1841942e67b7c117739126cf0ceef5bbf71e29956029587ee158d1137c",
+    "script_sha256": "7291c6c9765f523786e383a62b6b9555ebae6e7729036d49c7c7c9cf4976ea1e",
     "source_csv_sha256s": {
       "conditioning_bins.csv": "020955b3b9ceb494c63a951283830ce5dfab3669e21b59eb458f8051e638c72e",
       "tail_metrics.csv": "94665a6340f2067eab99705cdabd47b9c49e3644e9d5367cdd070f93abd3d854"
@@ -48,7 +48,7 @@
     "width_mm": 183.0
   },
   {
-    "core_conclusion": "The candidate samples the intended radial law on a stable scale across the whole frozen ladder, including the shapes where the order-statistic brackets are too wide to be evidence and the upper-tail statistic carries the certification.",
+    "core_conclusion": "The stabilized calculation samples the target radial distribution over the whole kappa list, including the shapes where the order-statistic intervals are too wide to be informative and the upper-tail statistic carries the validation.",
     "figure": "sfp1_scalar_validation",
     "formats": [
       "pdf",
@@ -56,10 +56,10 @@
       "png@600dpi"
     ],
     "height_mm": 118,
-    "interval_definition": "dotted lines are simultaneous Kolmogorov bands at the frozen F1 level; quantile brackets are exact binomial order-statistic intervals, Bonferroni-corrected over the five levels",
+    "interval_definition": "dotted lines are simultaneous Kolmogorov bands at the familywise level of the radial-distribution test set in PROTOCOL.md; quantile brackets are exact binomial order-statistic intervals, Bonferroni-corrected over the five levels",
     "panels": 4,
     "protocol_sha256": "8fa713c11bebc4a76f9d1a412633a7fdb72f7be1ddce397112801c1b400f3596",
-    "script_sha256": "c4c58f1841942e67b7c117739126cf0ceef5bbf71e29956029587ee158d1137c",
+    "script_sha256": "7291c6c9765f523786e383a62b6b9555ebae6e7729036d49c7c7c9cf4976ea1e",
     "source_csv_sha256s": {
       "scalar_ecdf.csv": "67de274d3dab20f05913a4fbf709d5e976a2a7917b0d0c2c8e9b45fb5f2e3fd7",
       "scalar_validation.csv": "1718dd8bb69438cf7f3ab0269b666283330dd5a805179e224adf7b1ee008a95f"
@@ -71,7 +71,7 @@
     "width_mm": 183.0
   },
   {
-    "core_conclusion": "The candidate stays correct after direction sampling, anisotropic scaling, rotation into an arbitrary field frame and cap conditioning; every cell whose statistics ran on a radius-filtered subsample is marked conditional with its loss fraction.",
+    "core_conclusion": "The stabilized calculation stays correct after direction sampling, anisotropic scaling, rotation into an arbitrary field frame and conditioning on the cap; every cell whose statistics ran on a radius-filtered subsample is marked conditional with its loss fraction.",
     "figure": "sfp2_loader_validation",
     "formats": [
       "pdf",
@@ -79,10 +79,10 @@
       "png@600dpi"
     ],
     "height_mm": 104,
-    "interval_definition": "Holm-corrected jointly over all cells and tests at the frozen F5 familywise alpha; a conditional cell cannot support the fidelity claim on its own",
+    "interval_definition": "Holm-corrected jointly over all cells and tests at the familywise level set in PROTOCOL.md; a conditional cell cannot support the fidelity claim on its own",
     "panels": 1,
     "protocol_sha256": "8fa713c11bebc4a76f9d1a412633a7fdb72f7be1ddce397112801c1b400f3596",
-    "script_sha256": "c4c58f1841942e67b7c117739126cf0ceef5bbf71e29956029587ee158d1137c",
+    "script_sha256": "7291c6c9765f523786e383a62b6b9555ebae6e7729036d49c7c7c9cf4976ea1e",
     "source_csv_sha256s": {
       "loader_validation.csv": "02a120d23e9b82a2305d0b6578ed487e4eed552fe72b5e19267e301225276212"
     },
@@ -92,7 +92,7 @@
     "width_mm": 183.0
   },
   {
-    "core_conclusion": "Within one architecture the candidate's output is bit-for-bit independent of the standard library while the comparator's is not, and the mitigation costs less than the pre-registered bound; the architectures that were not available are shown as absent rather than as passing.",
+    "core_conclusion": "Within one architecture the output of the stabilized calculation is bit-for-bit independent of the standard library while that of the direct calculation is not, and the stabilized calculation costs less than the bound set in PROTOCOL.md; the architectures that were not available are shown as absent rather than as passing.",
     "figure": "sfp3_portability_cost",
     "formats": [
       "pdf",
@@ -103,7 +103,7 @@
     "interval_definition": "99% cluster-bootstrap percentile interval over seeds, 10000 resamples, for the paired blockwise time ratio; the bitwise comparison is exact and has no interval",
     "panels": 2,
     "protocol_sha256": "8fa713c11bebc4a76f9d1a412633a7fdb72f7be1ddce397112801c1b400f3596",
-    "script_sha256": "c4c58f1841942e67b7c117739126cf0ceef5bbf71e29956029587ee158d1137c",
+    "script_sha256": "7291c6c9765f523786e383a62b6b9555ebae6e7729036d49c7c7c9cf4976ea1e",
     "source_csv_sha256s": {
       "performance.csv": "e8a50b3db21314fdfe10fe7f38764844d60030ca6e011f9a1c6b8debe13b3b6a",
       "portability.csv": "5b9795ecf8771d965f16d1ab88109ca29e26b5a3b107364d3eeed6e34315d10b"

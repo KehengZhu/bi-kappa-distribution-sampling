@@ -85,6 +85,12 @@ test at selected κ without writing any results, pass the κ values to the tail 
 uv run --project ../../python python exp1_tail.py 0.51 0.55
 ```
 
+The same call is the check that the current header reproduces the committed draws. It
+regenerates the draws at the given κ, recounts the 400 cells and stops with an error if any
+count, or the number of overflowed draws, differs from `results/exp1_cells.json`. `make verify`
+runs it at κ = 0.51 and 2 in about 40 seconds; `make verify VERIFY_KAPPA="0.51 0.55 0.75 1 1.25
+1.5 2 5 10"` checks all nine.
+
 `make clean` removes `exp1_draw.exe`.
 
 **Runtime and disk use.** One seed (5 × 10⁵ draws, written and counted) takes about 0.1 s on an
@@ -113,10 +119,25 @@ deviation among the 126 counts of the 14-shell test is 2.5 standard deviations. 
 variances lie within 1.6 standard errors of theory. The largest relative difference in the frame
 test is 9.97 × 10⁻¹⁶.
 
-The committed results were produced with release 2.2.1 of `cpp/bi_kappa_distribution.H`, on
-macOS 26.7 on arm64 (Apple silicon). Each JSON file records the SHA-256 of the header it compiled
-(`sampler_header_sha256`, beginning `b6559a9d`), the git commit, and the Python, NumPy and SciPy
-versions.
+The committed results were produced on macOS 26.7 on arm64 (Apple silicon), with two versions
+of `cpp/bi_kappa_distribution.H` that return the same double-precision draws. Each JSON file
+records the SHA-256 of the header it compiled (`sampler_header_sha256`) and the Python, NumPy
+and SciPy versions; all but `exp1_marginals.json` also record a git commit (`git_commit`).
+
+- `exp1_cells.json` and `exp1_tail.json` record a header beginning `8a3cfe3c`, which is version
+  2.2.1 as committed at cbd92b4. Their `git_commit`, b9a4609, is the commit that was checked out
+  at the time; the header was then an uncommitted edit, and the header committed at b9a4609 is
+  the earlier one below.
+- `exp1_moments.json`, `exp1_frame.json` and `exp1_marginals.json` record a header beginning
+  `b6559a9d`, the header committed at 5e5f565 and at b9a4609, whose version macros also read
+  2.2.1. Their `git_commit`, 1c1b25b5, is not in this repository's history; its header is the
+  same file. The moments and marginals scripts recounted the 400-cell counts and found them
+  equal to those of `results/exp1_cells.json` (`same_draws_as_cell_test`), so all five files
+  describe the same draws.
+
+Version 3.0.0 returns the same double-precision draws as 2.2.1 for every seed (see
+`CHANGELOG.md`). `make verify` confirms this for the committed draws: under 3.0.0 the recount
+at κ = 0.51 and 2 matches `results/exp1_cells.json` exactly.
 
 ## Numerical notes
 

@@ -1,26 +1,47 @@
-# Experiment 7 source data
+# Column definitions of the result files
 
-Every figure and every number quoted from this experiment is generated from the CSV files
-described here. `make_figures.py` reads only these files; it never opens a raw binary or a
-counter JSONL, so every plotted point is recoverable from a human-readable row.
+This file defines every column of the CSV files in `results/`. `make_figures.py` reads only
+these files; it never opens a raw binary or a counter file, so every plotted point can be
+traced to a readable row.
 
-This file carries no generation timestamp, and neither does any CSV, `analysis_report.md`,
-`validation_matrix.md`, `exp7_results.json` or `figures/figure_manifest.json`. `make
-reverify` regenerates every derived artifact and diffs it byte for byte, which a wall-clock
-stamp would make impossible. The one file that does record wall-clock time and build
-identity is `provenance.md`, and it copies those values out of `raw/manifest.csv` rather
-than reading the clock, so it regenerates byte for byte too.
+**What the release archive contains.** The release archive (the GitHub and Zenodo downloads)
+ships three of these files, the ones Fig. 2 of the paper is drawn from:
+`failure_envelope.csv` (§4), `honest_floor_curve.csv` and `direct_zero_denominator_curve.csv`
+(both in §3). The other result files, the analysis script `analyze.py` that writes all of
+them, the derivation `config/honest_floor.md`, the binary record formats `results/schema.md`
+and the protocol `PROTOCOL.md` are in the GitHub repository only. Sections 1, 2 and 5 to 13
+describe files that are in the repository only.
+
+**Terms used below.**
+
+- `method` names the radius calculation. `LEGACY` is the direct calculation `√X₁/√X₂`, the
+  header at commit 53dbd30 vendored as `src/legacy/bi_kappa_distribution_v1.H`. `CANDIDATE` is
+  the stabilized calculation of `cpp/bi_kappa_distribution.H` (version 3.0.0), which never
+  forms `X₂`. `QF` is the quotient-first formation `√(X₁/X₂)`, a diagnostic computed only in
+  the paired layer of phase P2; no conclusion rests on it.
+- The phases P1 to P6 are the make targets `p1` to `p6` described in `README.md`.
+- An **unavoidable** loss (the columns say `honest`) is an attempt whose exact velocity has a
+  component larger than the largest finite value of the floating-point type, so that no
+  calculation in that type can return it. An **avoidable** loss is a non-finite result whose
+  exact velocity could have been stored. `honest_floor_rate` is the closed-form probability
+  of an unavoidable loss (§0).
+- `PROTOCOL.md` fixes, before the run, seven acceptance criteria G0 to G6 and seven families
+  of statistical tests F1 to F7 with their significance levels. Columns that feed one of
+  them say which.
 
 Every file below carries a `protocol_sha256` column holding the SHA-256 of the
-`config/protocol.json` the run was judged by. `analyze.py` refuses to run at all unless that
+`config/protocol.json` the run was analysed under. `analyze.py` refuses to run unless that
 hash matches the one every probe process recorded in `raw/manifest.csv` and in every counter
-row: a result that cannot be tied to the rules it was judged by is not a confirmatory
-result.
+row, so every result is tied to the settings it was produced under.
+
+No file here carries a generation timestamp, so that `make reverify` can regenerate every
+derived file and compare it with the committed one. The one file that records wall-clock time
+and build identity is `provenance.md`, which copies those values from `raw/manifest.csv`
+rather than reading the clock.
 
 A `--smoke` analysis reads `raw/smoke/` only and writes `results/smoke/` only, with its
-figures under `results/smoke/figures/`. The repository excludes
-`experiments/*/results/smoke/` wholesale, so a rehearsal can reach neither a production
-result file nor the tracked figure set, and the two modes refuse to read each other's data.
+figures under `results/smoke/figures/`. The repository excludes `experiments/*/results/smoke/`,
+so a rehearsal can reach neither a production result file nor the tracked figures.
 
 ---
 
@@ -75,17 +96,18 @@ docstring records that its variance has no between-seed component, so no interva
 it can see the seed-level heterogeneity an RNG-stream or portability defect produces.
 
 `boot_n_per_seed` is the resolution of the **within-seed** half of the resample, capped at
-2000 draws per seed. The between-seed half — the component that was missing before — is
-always exact, because it resamples the five seeds themselves. Capping the inner draw widens
+2000 draws per seed. The between-seed half is always exact, because it resamples the five
+seeds themselves. Capping the inner draw widens
 the interval relative to the full sample and never narrows it. The decisive interval for a
 failure probability is the Clopper-Pearson one in the `*_ci_*` columns, as the protocol
 requires; the bootstrap columns are the pooled-over-seeds companion.
 
-### The analytic honest floor
+### The analytic floor of unavoidable loss
 
 Every failure rate is reported beside `honest_floor_rate`, the closed-form probability that
 the intended vector has **no representation** in the run's floating-point type. It is
-derived in `config/honest_floor.md` and implemented in `analyze.py`:
+derived in `config/honest_floor.md` and implemented in `analyze.py` (both in the repository
+only):
 
 ```
 log floor = lgamma(3/2 + a) - lgamma(3/2) - lgamma(a + 1)
@@ -109,10 +131,8 @@ floor has underflowed to zero.
 `arch` are that build's identity; `execution` is `native` or `translated`, and translated
 execution is recorded but excluded from every decision. `precision` is `float` or `double`
 and accuracy statistics are **never** pooled across the two. `scope` is `seed` for one
-replicate or `pooled` over the seed block. `method` is `LEGACY` (the released 1.0.0
-comparator), `CANDIDATE` (2.0.0, the log-domain loader under test) or `QF` (the
-quotient-first formation, a diagnostic that carries no claim). `layer` distinguishes the
-layers described per file below.
+replicate or `pooled` over the seed block. `method` is `LEGACY`, `CANDIDATE` or `QF`, as
+defined at the top of this file. `layer` distinguishes the layers described per file below.
 
 ---
 
@@ -139,7 +159,7 @@ the class bit for bit.
 | `conditional` | `true` when `n_nonresolved > 0`. Such a cell cannot by itself support the fidelity claim | -- |
 | `failure_*`, `avoidable_*`, `honest_*` | rate blocks (see §0) for `nonfinite_output`, `n_avoidable` and `n_honest` over `n_attempted` | probability |
 | `honest_floor_rate`, `honest_floor_log10`, `observed_over_floor` | the analytic floor (see §0) | probability, log10, ratio |
-| `ad_statistic`, `ks_statistic`, `cvm_statistic` | exact Anderson-Darling `A^2`, Kolmogorov-Smirnov `D` and Cramer-von Mises `W^2` of `Z = -log I_W(a, 3/2)` against `Exp(1)`, computed by the probe with the estimators `results/schema.md` fixes. **These three are the whole of family F1** — `corrections.F1_contents`. The Beta test on `W` that PROTOCOL.md §5's table lists beside them is withdrawn: the probe emits no `W` sample, `Z` is a monotone transform of `log W`, and G0 already checks the `log q` evaluator against an arbitrary-precision incomplete beta to `1e-10`, which is a stronger check on the transform than comparing the two routes to each other | dimensionless |
+| `ad_statistic`, `ks_statistic`, `cvm_statistic` | exact Anderson-Darling `A^2`, Kolmogorov-Smirnov `D` and Cramer-von Mises `W^2` of `Z = -log I_W(a, 3/2)` against `Exp(1)`, computed by the probe with the estimators `results/schema.md` fixes. **These three are the whole of family F1** (`corrections.F1_contents` in `config/protocol.json`). The table of PROTOCOL.md §5 also lists a Beta test on `W`; it is not run, because the probe emits no `W` sample, `Z` is a monotone transform of `log W`, and criterion G0 checks the `log q` evaluator against an arbitrary-precision incomplete beta to `1e-10`, which is a stronger check on the transform than comparing the two routes to each other | dimensionless |
 | `ad_pvalue`, `ks_pvalue`, `cvm_pvalue` | their upper tails under the fully specified null. AD uses the Marsaglia & Marsaglia (2004) limiting CDF, KS `scipy.stats.kstwo.sf(D, n_resolved)`, CvM the Csorgo & Faraway limiting series | probability |
 | `f1_cell_simes_p` | the Simes combination of the three, the configuration's F1 statistic | probability |
 | `tail_records`, `tail_file` | the companion `TailRecord` stream and its length. The path is relative to the experiment directory | count, path |
@@ -151,7 +171,7 @@ One block per protocol level `p`.
 
 | suffix | meaning |
 |---|---|
-| `_lo_index`, `_hi_index` | the 0-based order-statistic bracket frozen in `config/protocol.json` for the production sample size |
+| `_lo_index`, `_hi_index` | the 0-based order-statistic bracket fixed in `config/protocol.json` for the production sample size |
 | `_achieved_coverage` | the protocol's analytically computed coverage of that bracket (nominal 99 %: 95 % Bonferroni-corrected over the five levels) |
 | `_lo_value`, `_hi_value` | the sample `log R` at those indices. `nan` when the sample cannot fill the bracket; may be `inf` |
 | `_point_value` | the sample `log R` at `ceil(p n) - 1`, the empirical quantile |
@@ -159,8 +179,8 @@ One block per protocol level `p`.
 | `_error` | `_point_value - _target` |
 | `_width` | `_hi_value - _lo_value`, in natural-log units |
 | `_resolved` | `true` when both bracket ends are finite. A cell that did not resolve enters neither the miss count nor the informativeness map |
-| `_informative` | `true` when `_width <= 1` natural-log unit, the threshold frozen in `config/protocol.json`. **A non-informative cell is not evidence**: at `kappa = 0.5001` the bracket runs to 8951 natural-log units, and an interval admitting a multiplicative error of `e^8951` cannot distinguish a correct sampler from a wrong one. Those shapes are certified by the families that retain power at any shape. The flag is published as a map; it is computed from the frozen width threshold and not from the data |
-| `_covered` | `true` when `_lo_value <= _target <= _hi_value`. `NA` when the cell did not resolve. Family F2's miss count is taken over every **resolved** interval — `corrections.F2_informativeness` — because that is the set the frozen Poisson-binomial null was built over. The informativeness flag is published as a map and changes no count; dropping the non-informative cells from the count would leave F2 with no null to be tested against |
+| `_informative` | `true` when `_width <= 1` natural-log unit, the threshold fixed in `config/protocol.json`. **A non-informative cell is not evidence**: at `kappa = 0.5001` the bracket runs to 8951 natural-log units, and an interval admitting a multiplicative error of `e^8951` cannot distinguish a correct sampler from a wrong one. At those shapes the validation rests on the test families that keep their power at every shape. The flag is published as a map; it is computed from the width threshold fixed in the protocol and not from the data |
+| `_covered` | `true` when `_lo_value <= _target <= _hi_value`. `NA` when the cell did not resolve. Family F2's miss count is taken over every **resolved** interval — `corrections.F2_informativeness` — because that is the set the Poisson-binomial null fixed in the protocol was built over. The informativeness flag is published as a map and changes no count; dropping the non-informative cells from the count would leave F2 with no null to be tested against |
 
 ### Tail blocks `tail0p01_*`, `tail0p001_*`, `tail0p0001_*`
 
@@ -182,11 +202,11 @@ One block per protocol `q0`.
 
 **The exceedance count includes the unresolved draws, and its denominator is the attempts.**
 `config/protocol.json -> F5_tail.unresolved_exceedances_count_toward_every_threshold` is
-true and amendment 1.3.0 gives the reason: a draw whose `Z` never resolved lies above every
-threshold by construction, so testing only the resolved subset conditions on resolvability,
-which is itself monotone in the tail — the exact bias the statistic exists to detect. The
-rule is written for family F5's new upper-tail members and is applied to F4 as well, because
-F4 is the same statistic on the scalar phase.
+true, for this reason: a draw whose `Z` never resolved lies above every threshold by
+construction, so testing only the resolved subset conditions on resolvability, which is
+itself monotone in the tail, and that is the bias the statistic exists to detect. The rule is
+written for the upper-tail tests of family F5 and is applied to F4 as well, because F4 is the
+same statistic on the scalar phase.
 
 Two consequences are worth stating rather than leaving to be discovered. Where a cell's loss
 fraction is at or below `q0`, the count is exactly unbiased: the unresolved draws replace
@@ -198,7 +218,7 @@ can tell the two situations apart on any row.
 
 ---
 
-## 2. `scalar_ecdf.csv` — the `Z` ECDF on the frozen grid
+## 2. `scalar_ecdf.csv` — the `Z` ECDF on a fixed grid
 
 One row per `tag` x `method` x `precision` x `kappa` x grid point, pooled over seeds.
 501 grid points, step 0.05.
@@ -210,11 +230,11 @@ One row per `tag` x `method` x `precision` x `kappa` x grid point, pooled over s
 | `null_cdf` | `1 - exp(-z)`, the unit-exponential CDF at `z` | probability |
 | `ecdf` | cumulative fraction of resolved draws with `Z <= z` | probability |
 | `ecdf_residual` | `ecdf - null_cdf` | dimensionless |
-| `band_lo`, `band_hi`, `band_alpha` | simultaneous Kolmogorov band at the frozen F1 familywise level | dimensionless |
+| `band_lo`, `band_hi`, `band_alpha` | simultaneous Kolmogorov band at the familywise level of F1 | dimensionless |
 
 ---
 
-## 3. `honest_floor.csv` — the analytic floor across the frozen ladder
+## 3. `honest_floor.csv` — the analytic floor at every κ of the design
 
 One row per `precision` x `kappa`. A reference curve, not a measurement: it has no interval.
 
@@ -224,13 +244,14 @@ One row per `precision` x `kappa`. A reference curve, not a measurement: it has 
 | `type_max`, `log_type_max` | the largest finite value of the type, and its logarithm | -- |
 | `configuration` | the configuration the floor is derived for: isotropic, unrotated, `theta_perp = theta_par = 1`, which is what P1 and P2 run | -- |
 
-### `honest_floor_curve.csv` — the same floor on a fine grid, for Fig. 2
+### `honest_floor_curve.csv` — the same floor on a fine grid, for Fig. 2 (in the release)
 
-The floor of `honest_floor.csv` evaluated on 200 points uniform in `log(kappa - 1/2)` from
+The floor of unavoidable loss (§0) evaluated on 200 points uniform in `log(kappa - 1/2)` from
 1e-4 to 0.15, the horizontal range of `figures/fp1_failure_envelope`, for each precision. It is
 the upper edge of the grey region of that figure: the fraction of attempts whose exact
 velocity has a component larger than the largest finite value of the type, which no
-calculation returning values in that type can return. A reference curve, not a measurement: it has no interval.
+calculation returning values in that type can return. It is a computed curve, not a
+measurement, and has no interval.
 
 | column | meaning | unit |
 |---|---|---|
@@ -240,15 +261,16 @@ calculation returning values in that type can return. A reference curve, not a m
 | `honest_floor_rate`, `honest_floor_log10` | the floor at that point, and its base-10 logarithm | probability, log10 |
 | `configuration` | isotropic, unrotated, `theta_perp = theta_par = 1`, the configuration of P2's `paired` layer | -- |
 
-### `direct_zero_denominator_curve.csv` — the direct calculation's expected loss, for Fig. 2
+### `direct_zero_denominator_curve.csv` — the direct calculation's expected loss, for Fig. 2 (in the release)
 
-The probability that the direct (LEGACY) calculation's denominator `X2 = Y U^(1/a)` rounds to
+The probability that the direct (`LEGACY`) calculation's denominator `X2 = Y U^(1/a)` rounds to
 zero, on the grid of `honest_floor_curve.csv`, for each precision. `X2` is zero when
 `U^(1/a)` falls below `x0`, half the smallest subnormal, or when its product with `Y < 1`
-does; hence `P(X2 = 0) = x0^a E[max(1, Y^(-a))]`, which has the closed form given in
-`results/schema.md` §4. In P2's `paired` layer this is also the direct calculation's expected
-non-finite fraction, because a non-zero `X2` never makes its radius overflow. It is the dashed
-line of `figures/fp1_failure_envelope`. A reference curve, not a measurement: it has no
+does; hence `P(X2 = 0) = x0^a E[max(1, Y^(-a))]`, which has a closed form (given in
+`results/schema.md` §4, in the repository). In P2's `paired` layer this is also the direct
+calculation's expected non-finite fraction, because a non-zero `X2` never makes its radius
+overflow. It is the dashed line of
+`figures/fp1_failure_envelope`. It is a computed curve, not a measurement, and has no
 interval.
 
 | column | meaning | unit |
@@ -263,13 +285,15 @@ interval.
 
 ---
 
-## 4. `failure_envelope.csv` — P2, the mechanism decomposition
+## 4. `failure_envelope.csv` — P2, the causes of loss (in the release)
 
-`layer` distinguishes the two layers of the phase, and the distinction is load-bearing:
+Fig. 2 plots the `pooled`, `paired` rows of the `libcxx` build for `LEGACY` and `CANDIDATE`:
+`failure_rate` against `kappa - 1/2`, with `failure_ci_hi` of the settings with no failure as
+the dotted line. `layer` distinguishes the two layers of the phase:
 
 | `layer` | meaning |
 |---|---|
-| `paired` | all three formations receive the **same** declared primitives, so "was this draw recoverable?" is decided per draw. This is the authoritative decomposition and what G1 and G2 read |
+| `paired` | all three formations receive the **same** random variates, so whether a draw could have been returned is decided draw by draw. This is the decomposition criteria G1 and G2 read |
 | `native` | each method runs its own stream, as a user would get. Same seed and stream as P1's `native` row for the same configuration, so the two must agree exactly |
 
 `scope` is `seed` for one replicate or `pooled` over the seed block. `diagnostic_only` is
@@ -278,19 +302,19 @@ interval.
 | column | meaning | unit |
 |---|---|---|
 | `cat_*`, `n_finite`, `n_avoidable`, `n_honest`, `nonfinite_output` | the terminal-category decomposition | count |
-| `candidate_avoidable_count` | the candidate's avoidable-loss count for this configuration as the probe classifies it, `NA` on a row that is not the candidate's. Since protocol 5.0.0 G1 counts only the part outside the rounding band (`avoidable_outside_band_count`) and requires that total to be **exactly zero** | count |
+| `candidate_avoidable_count` | the stabilized calculation's avoidable-loss count for this configuration as the probe classifies it, `NA` on a row of another method. Criterion G1 counts only the part outside the rounding band (`avoidable_outside_band_count`) and requires that total to be **exactly zero** | count |
 | `accounting_ok` | the probe's own evaluation of `n_attempted = n_finite + n_avoidable + n_honest` | -- |
 | `accounting_residual` | the same identity recomputed here: `n_attempted - (finite + avoidable + honest)`. Zero when the identity holds exactly. Both are reported so that the check is not taken on trust | count |
 | `ref_nonrepresentable` | attempts whose intended vector has no representation in the type — the oracle floor of this configuration | count |
-| `honest_minus_ref` | the candidate's honest count minus that floor. G2 requires it to be zero, or each discrepancy individually adjudicated and listed | count |
+| `honest_minus_ref` | the stabilized calculation's unavoidable-loss count minus that floor. G2 requires it to be zero, or each discrepancy to be checked by the 100-digit recomputation and listed | count |
 | `rotation_recoverable`, `near_limit` | attempts whose local vector overflowed while the rotated one is representable, and attempts within the audit margin of a type limit | count |
 | `x2_zero`, `x2_subnormal` | denominator states of the shared primitives; identical across the three paired rows | count |
 | `n_rel_err`, `mean_rel_err_radius`, `max_rel_err_radius` | the relative radius error against the reference, **per precision**. Never pool the two: the `float` and `double` worst cases differ by orders of magnitude that come from the type and not from the method | dimensionless |
-| `max_rel_error_threshold` | the FINITE_BUT_WRONG threshold for the type, from the protocol: 1.05e-8 in `double`, 2.44e-4 in `float` | dimensionless |
+| `max_rel_error_threshold` | the relative radius error above which a finite result counts as a loss (category `finite_but_wrong`), from the protocol: 1.05e-8 in `double`, 2.44e-4 in `float` | dimensionless |
 | `max_log_r_ref`, `max_finite_log_component` | largest intended `log R`, and largest intended `max_j log|V_j|` among successes | log units |
 | `failure_*`, `avoidable_*`, `honest_*` | rate blocks (see §0) | probability |
-| `rounding_band_*` | rate block for the avoidable losses that occurred at the step forming the output component and whose exact (100-digit) largest component lies below the overflow threshold by a relative distance of at most `B = 4 eps max(1, |log V|)` (PROTOCOL.md §2.9): 4.2e-5 in `float`, 6.3e-13 in `double`. Taken from the oracle's `raw/oracle_rounding_band.jsonl`. A failure of the direct calculation or of the quotient-first diagnostic that the probe attributes to the underflow of `X2` (`denominator_zero`, `quotient_first_loss`, or a draw whose `X2` was zero or subnormal) is not counted here, however close to the threshold it lies; every failure of the stabilized calculation is a final-step failure. This exclusion was added to the analysis after the 5.0.0 run. As first implemented, the column also counted 28 underflow losses per build of the direct calculation, and the same draws of the quotient-first diagnostic, in single precision at kappa = 0.501, 0.505 and 0.51 (see README.md). The stabilized calculation's counts are unchanged. `paired` rows only; `NA` on `native` rows, which have no per-attempt adjudication | probability |
-| `avoidable_outside_band_*` | rate block for `n_avoidable` minus the rounding-band count: the avoidable losses G1 counts for the stabilized calculation. Since the correction described under `rounding_band_*`, it includes the underflow losses of the direct calculation and the quotient-first diagnostic that lie near the threshold. `paired` rows only | probability |
+| `rounding_band_*` | rate block for the avoidable losses that occurred at the step forming the output component and whose exact (100-digit) largest component lies below the overflow threshold by a relative distance of at most `B = 4 eps max(1, |log V|)`: 4.2e-5 in `float`, 6.3e-13 in `double`. A calculation in the working type cannot tell on which side of the threshold such a component falls. Taken from the recomputation's `raw/oracle_rounding_band.jsonl`. A failure of the direct calculation or of the quotient-first diagnostic that the probe attributes to the underflow of `X2` (`denominator_zero`, `quotient_first_loss`, or a draw whose `X2` was zero or subnormal) is not counted here, however close to the threshold its exact component lies, because its cause is the underflow and not the rounding of the final step. Every failure of the stabilized calculation is a final-step failure. `paired` rows only; `NA` on `native` rows, which have no per-attempt recomputation | probability |
+| `avoidable_outside_band_*` | rate block for `n_avoidable` minus the rounding-band count: for the stabilized calculation, the avoidable losses G1 counts. For the direct calculation and the quotient-first diagnostic it includes the underflow losses near the threshold. `paired` rows only | probability |
 | `honest_floor_rate`, `honest_floor_log10`, `observed_over_floor` | the analytic floor (see §0) | -- |
 | `audit_margin_log_units` | 20.0, the margin within which an attempt is decision-relevant | log units |
 | `audit_margin_assertions`, `audit_margin_assertion_failures` | attempts declared unambiguous, each of which had its margin evaluated in working precision, and how many failed the inequality. **Must be zero** | count |
@@ -298,7 +322,7 @@ interval.
 | `audited` | records this configuration contributed to the audit stream | count |
 | `audit_<stratum>_total`, `_audited`, `_rate` | attempts that fell in each of the seven strata, how many were written, and the protocol's declared rate. Assignment is by priority and the first match wins, so the counts partition the sample | count, count, probability |
 | `seed_homogeneity_chi2`, `seed_homogeneity_p` | exact-table homogeneity of the failure rate across seeds, on `pooled` rows. A required diagnostic, reported with its p-value | dimensionless, probability |
-| `cross_phase_native_agrees` | on a `native` row, whether P1's row for the same configuration, seed and stream reports the same counters. The comparison is made only when the two rows ran the same number of attempts; under protocol 4.0.0 P2 runs 10⁷ attempts per seed and P1 10⁶, so it is `NA` there. `NA` on a `paired` row | -- |
+| `cross_phase_native_agrees` | on a `native` row, whether P1's row for the same configuration, seed and stream reports the same counters. The comparison is made only when the two rows ran the same number of attempts; P2 runs 10⁷ attempts per seed and P1 10⁶, so it is `NA` in this run. `NA` on a `paired` row | -- |
 | `boot_*` | cluster-bootstrap interval for the pooled failure rate (see §0) | -- |
 
 ---
@@ -384,7 +408,7 @@ tautology.
 | `loss_kind` | which fraction it is: non-finite attempts over attempts for an uncapped cell, unrecoverable returns over returns for a capped one | -- |
 | `nonfinite_attempt_rate_*` | the rate block (see §0) for `nonfinite_attempt` over `attempts` | probability |
 | `honest_floor_rate`, `honest_floor_log10` | the analytic floor for the cell's `kappa` and precision | -- |
-| `in_family` | `true` on the cells that enter the F5 decision: the CANDIDATE cells of the primary environment, pooled over seeds. Within version 2.0.0 the stream is a function of the engine alone, so the other environment's rows are the same draws and would enter Holm twice. LEGACY rows are reported with their p-values but are not gated | -- |
+| `in_family` | `true` on the cells that enter the F5 decision: the `CANDIDATE` cells of the primary build, pooled over seeds. The stabilized calculation's stream is a function of the engine alone, so the other build's rows are the same draws and would enter the Holm correction twice. `LEGACY` rows are reported with their p-values but do not enter the decision | -- |
 | `seed_homogeneity_chi2`, `seed_homogeneity_p` | homogeneity of the non-finite rate across seeds, on pooled rows | -- |
 
 ### The tests of family F5
@@ -393,13 +417,12 @@ For each test `T` there are four columns: `p_T`, `stat_T`, `applies_T` and
 `f5_holm_rejected_T`. The last is the family's own Holm decision, taken once over every cell
 and every test jointly and written into the row, so that no reader and no figure has to
 re-derive a rejection threshold from an alpha and a count of tests. It is `false` on a
-`scope = seed` row and on a cell that is not `in_family`, neither of which is gated: the
-decision is taken on the pooled candidate cells of the primary environment.
+`scope = seed` row and on a cell that is not `in_family`, neither of which enters the
+decision: the decision is taken on the pooled `CANDIDATE` cells of the primary build.
 
-The first five tests were frozen with the protocol. The upper-tail members were added by
-amendment 1.3.0, one pair per threshold in `config/protocol.json -> F5_tail.q0`, and named
-after it: `tail_1em4_count` is the exceedance count at `q0 = 1e-4`. They **add** tests to
-the family rather than replacing any of it.
+The first five tests are those of PROTOCOL.md §5. The upper-tail tests come in one pair per
+threshold in `config/protocol.json -> F5_tail.q0` and are named after it: `tail_1em4_count`
+is the exceedance count at `q0 = 1e-4`.
 
 | test | statistic | applies to |
 |---|---|---|
@@ -440,11 +463,9 @@ threshold: an uncapped cell must produce exactly one record per attempt, so a sh
 attempts went unrecorded, which is silent conditioning. It is reported as a count, never
 absorbed into a rate.
 
-Amendment 1.3.0 computed the count member from the radius **recovered from the returned
-vectors**, which representability censors, and patched around the censoring with an
-applicability side condition. Amendment 2.0.0 withdraws that side condition and computes the
-member from `log_r_ref` instead, so it now applies at every threshold of every uncapped cell —
-including the two (C3 and C4 at `q0 = 1e-4`) that 1.3.0 had to declare not applicable.
+The count test is computed from `log_r_ref`, the intended radius, and not from the radius
+recovered from the returned vectors, which the range of the type censors. It therefore
+applies at every threshold of every uncapped cell.
 
 `validation_matrix.md` is the same information as a table, with the Holm decisions, the
 `n.a.` cells and every conditional cell's loss fraction shown.
@@ -453,10 +474,10 @@ including the two (C3 and C4 at `q0 = 1e-4`) that 1.3.0 had to declare not appli
 
 ## 9. `negative_controls.csv` — measured power, not a pass/fail bit
 
-One row per control per effect size. The detection rule of each control is the **frozen
-family rule itself**, evaluated on the injected sample: a control counts as detected when the
-family that certifies the corresponding property fails. That keeps the measured power a
-property of the battery rather than of a statistic chosen after the fact.
+One row per control per effect size. The detection rule of each control is the **family rule
+fixed in the protocol**, evaluated on the injected sample: a control counts as detected when the
+family that tests the corresponding property fails. That keeps the measured power a property
+of the test families themselves rather than of a statistic chosen after the fact.
 
 | column | meaning | unit |
 |---|---|---|
@@ -467,7 +488,7 @@ property of the battery rather than of a statistic chosen after the fact.
 | `source_cell` | the measured sample the injection was applied to, and its size | -- |
 | `injections`, `detections` | replicates run, and how many were detected. `injections = 0` means the control could not be run and the row is a failure, never a vacuous pass | count |
 | `power`, `power_ci_lo`, `power_ci_hi`, `power_interval_kind`, `power_is_upper_bound` | the measured power as a rate block (see §0) | probability |
-| `required_power`, `passed` | the pre-registered threshold, and whether the Clopper-Pearson **lower** limit clears it. Both are `NA` on a `level` row: a rejection rate measured with nothing injected is not a power and is neither passed nor failed by the power rule | -- |
+| `required_power`, `passed` | the threshold fixed in the protocol, and whether the Clopper-Pearson **lower** limit clears it. Both are `NA` on a `level` row: a rejection rate measured with nothing injected is not a power and is neither passed nor failed by the power rule | -- |
 | `in_family` | `true` on the rows that enter family F6's decision. `false` rows are published diagnostics: they state the detection floor rather than leaving it implied | -- |
 | `note` | free text, `NA` when there is nothing to say | -- |
 
@@ -479,7 +500,7 @@ with replacement.** The empirical joint distribution of a finite sample carries 
 dependence of the order of its own chi-square, so a with-replacement resample inherits that
 as a genuine non-centrality: the independence member of F5 then rejects at close to
 certainty with nothing injected at all, at any sample size, and the "power" it reports is
-the resampling scheme's and not the battery's. NC1 therefore permutes the measured cell's
+the resampling scheme's and not the tests'. NC1 therefore permutes the measured cell's
 radii against its directions, which is the independence null carrying the cell's own two
 marginals and uses every draw exactly once; NC3 simulates the law outright. The `level` row
 published for NC1 measures the rejection rate with nothing injected, so every power figure
@@ -493,7 +514,7 @@ Injections:
   the radius and the direction and of neither alone. Two readings are measured and both are
   published. The in-family row is the defect the control exists for: a loader that
   **silently** conditions, so the cell it hands the analysis reports no loss and the
-  battery has to catch it unaided. The row beside it declares the same removed draws as
+  tests have to catch it unaided. The row beside it declares the same removed draws as
   unresolved attempts — the reading that applies when the loader reports its loss, which
   then counts toward every threshold and leaves the cell labelled conditional with its loss
   fraction under PROTOCOL.md §5.2.
@@ -512,12 +533,13 @@ Injections:
   cell among those the fidelity claim rests on — the **uncapped loader cells** — and not the
   global maximum over the scalar ladder, which is float `kappa = 0.5001`, where almost every
   draw is unrepresentable and detection is trivial. The correction adds "whose loss is not
-  dominated by honest overflow"; G1 requires the candidate's avoidable loss to be exactly
-  zero, so every loss it has *is* honest overflow and reading that clause as a filter would
+  dominated by honest overflow"; G1 requires the stabilized calculation's avoidable loss to
+  be exactly zero, so every loss it has *is* unavoidable overflow and reading that clause as a filter would
   empty the set. It is read here as it is illustrated there: excluding the degenerate
   configurations outside the uncapped loader cases, not excluding a case from among them.
   Each cell's honest floor sits beside its loss fraction in `loader_validation.csv`, so the
-  reading can be checked. The diagnostic rows use the pre-registered injection fractions.
+  reading can be checked. The diagnostic rows use the injection fractions fixed in the
+  protocol.
 
 ---
 
@@ -537,9 +559,9 @@ read as a passing one.
 | `completed` | whether it produced counter rows |
 | `reason_not_run` | why it did not, in words, `NA` when it did. For an absent environment this names `results/portability_remote.md`, which carries the exact command |
 | `n_rows` | counter rows behind the row | 
-| `prediction` | what the protocol predicts for the comparison: bitwise equality for the candidate across standard libraries within one architecture, a difference for the comparator, equality of rates across architectures |
+| `prediction` | what the protocol predicts for the comparison: bitwise equality for the stabilized calculation across standard libraries within one architecture, a difference for the direct calculation, equality of rates across architectures |
 | `n_common`, `n_digests_compared`, `n_differences`, `identical` | the bitwise comparison: configurations present in both arms, digests compared, and differences found. There is no tolerance, because the claim is exact |
-| `log_ratio`, `se`, `margin`, `p_value`, `equivalent`, `disagrees`, `informative` | the cross-architecture two one-sided tests on the log rate ratio against the pre-registered margin. `equivalent` and `disagrees` are different outcomes, and a cell that is neither is **underpowered**: it leaves the gate open rather than closing or failing it, which `informative = false` records |
+| `log_ratio`, `se`, `margin`, `p_value`, `equivalent`, `disagrees`, `informative` | the cross-architecture two one-sided tests on the log rate ratio against the margin fixed in the protocol. `equivalent` and `disagrees` are different outcomes, and a cell that is neither is **underpowered**: it leaves the gate open rather than closing or failing it, which `informative = false` records |
 | `in_decision` | whether the row enters the F7/G4 decision |
 
 `analyze.py --portability-ingest <DIR>` writes this file and `g4_verdict.json` from a CI
@@ -555,7 +577,7 @@ the summary** so that the summary can be recomputed from them.
 | `scope` | meaning |
 |---|---|
 | `block` | one timed block of one method on one case: `block`, `slot` (the order the method ran within the block), `candidate_first` (the realized randomization, recorded so it can be checked rather than asserted), `seed`, `n_returned`, `n_finite`, `n_nonfinite`, `attempts_reported`, `seconds`, `seconds_per_returned` |
-| `case_ratio` | the paired candidate/LEGACY ratio of time per returned sample for one case: `ratio_candidate_over_legacy`, `ratio_lo`, `ratio_hi`, `ratio_conf`, `boot_kind`, `boot_resamples`, `boot_rng_seed`, `boot_n_seeds`, `pre_registered_bound` |
+| `case_ratio` | the paired `CANDIDATE`/`LEGACY` ratio of time per returned sample for one case: `ratio_candidate_over_legacy`, `ratio_lo`, `ratio_hi`, `ratio_conf`, `boot_kind`, `boot_resamples`, `boot_rng_seed`, `boot_n_seeds`, `pre_registered_bound` |
 | `overall_ratio` | the same pooled over the benchmark cases; this is the G5 statistic |
 | `reproducibility` | `repeat_identical`: whether two same-seed runs produced identical counters |
 
@@ -564,14 +586,14 @@ interval is a cluster bootstrap over the performance seed block (see §0). Its l
 **0.99**, the value in `config/protocol.json -> statistics.bootstrap.conf`, and every row
 records the level it used in `ratio_conf`: PROTOCOL.md §6 says 95 per cent in prose, the
 machine-readable value governs — `corrections.G5_interval` — and it is the conservative
-choice for a gate on an upper limit. `attempts_reported`
+choice for a criterion on an upper limit. `attempts_reported`
 is `0` for LEGACY, which has no attempt counter — a genuine zero, not a missing value.
 
 ---
 
 ## 12. `log_q_evaluator_validation.csv` — G0
 
-The frozen two-piece `log q` evaluator against an arbitrary-precision incomplete beta, on
+The two-piece `log q` evaluator fixed in the protocol against an arbitrary-precision incomplete beta, on
 both sides of the switch, for every shape on the ladder.
 
 | column | meaning | unit |
@@ -579,20 +601,23 @@ both sides of the switch, for every shape on the ladder.
 | `shape_a` | `kappa - 1/2` | dimensionless |
 | `log_w_min`, `log_w_max`, `points` | the declared grid | log units, count |
 | `max_abs_log_q_error`, `worst_at_log_w` | the worst absolute disagreement and where it occurred | log units |
-| `tolerance`, `pass` | the pre-registered tolerance from `config/protocol.json`, and whether the shape cleared it | -- |
+| `tolerance`, `pass` | the tolerance from `config/protocol.json`, and whether the shape cleared it | -- |
 | `oracle` | `mpmath.betainc at 60 decimal digits` | -- |
 
 ---
 
 ## 13. The non-CSV outputs
 
+All of these are in the repository only, except the two files in `figures/`, which are also in
+the release archive.
+
 | file | contents |
 |---|---|
-| `analysis_report.md` | the verdict on the first line, then the gate table, the family table, what the verdict means, the unresolved items, and the decisive source data. No timestamp |
+| `analysis_report.md` | the overall verdict on the first line, then the table of acceptance criteria, the family table, what the verdict means, the unresolved items, and the decisive source data. No timestamp |
 | `validation_matrix.md` | the F5 matrix (see §8) |
 | `exp7_results.json` | the machine-readable verdict: gates, families, the evidence dictionary the gates were evaluated on, the F2 miss count and informativeness totals, the F5 test list, the F6 controls and the performance ratio. No timestamp |
 | `provenance.md` | the only file here that records wall-clock time and build identity, all of it copied from `raw/manifest.csv` and the environment record rather than read from the clock, so it regenerates byte for byte. Builds, compile lines, probe hashes, the adjudicated audit streams, and the SHA-256 of every analysis input |
-| `g6_evidence.json` | **an input, not an output.** `make verify` and `make reverify` run *after* `analyze.py`, so the one thing the analysis cannot observe is whether its own output re-verified. It reads that from this receipt, written by the release step, with the keys `make_verify_exit_code`, `make_reverify_identical`, `dependencies_clean`, `baseline_comparison_resolved` and `archive_identifier`. Absent, those keys stay unset and G6 **fails**, naming what is missing -- which is the honest state of a run that has not been re-verified yet. The production sequence is `make analyze` -> `make checksums verify reverify` -> write the receipt -> `make analyze` again. `analyze.py` verifies the two checksum manifests itself by recomputing every hash, so `make_verify_exit_code` is a computation over file contents even when no receipt is supplied, not a check that a file exists |
+| `g6_evidence.json` (read from the experiment directory, not from `results/`; no such file is committed) | **an input, not an output.** `make verify` and `make reverify` run *after* `analyze.py`, so the one thing the analysis cannot observe is whether its own output re-verified. It reads that from this receipt, written by the release step, with the keys `make_verify_exit_code`, `make_reverify_identical`, `dependencies_clean`, `baseline_comparison_resolved` and `archive_identifier`. Absent, those keys stay unset and G6 **fails**, naming what is missing -- which is the honest state of a run that has not been re-verified yet. The production sequence is `make analyze` -> `make checksums verify reverify` -> write the receipt -> `make analyze` again. `analyze.py` verifies the two checksum manifests itself by recomputing every hash, so `make_verify_exit_code` is a computation over file contents even when no receipt is supplied, not a check that a file exists |
 | `g4_verdict.json` | written by `--portability-ingest`: whether G4 closes, and if not, each reason |
 | `figures/captions.md`, `figures/figure_manifest.json` | the captions, and one manifest object per figure: panels, core conclusion, source CSVs with their SHA-256s, the script's SHA-256, the size in millimetres and the interval definition. No generation timestamp |
 
@@ -603,7 +628,7 @@ both sides of the switch, for every shape on the ladder.
 * **A rate of zero.** There is none. A configuration with no observed failure is "no failures
   observed in N draws under the tested configuration", with its one-sided upper limit and its
   analytic floor beside it.
-* **A pass from an absent measurement.** Every gate states the evidence it requires and fails
+* **A pass from an absent measurement.** Every criterion states the evidence it requires and fails
   when that evidence is missing. A phase that did not run is an error naming the phase, and
   no verdict is written at all.
 * **A tail statement without its conditioning.** Every tail ratio says whether it is per
