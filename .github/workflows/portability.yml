@@ -1,37 +1,43 @@
-# Finite-precision experiment (experiments/exp4_finite_precision), phase P5 -- the evidence
-# its portability criterion (gates.G4 in config/protocol.json) is decided on.
+# Finite-precision experiment (experiments/exp4_finite_precision), phase P5 on hosted
+# runners: the evidence its portability criterion (gates.G4 in config/protocol.json) is
+# decided on.
 #
-# Why this workflow exists.  PROTOCOL.md 5.3 makes two portability claims and tests
-# them differently: on one architecture the candidate's stream is a function of the engine
-# alone, so libc++ and libstdc++ must agree BITWISE; across architectures log, exp and pow
-# are not correctly rounded and the libm implementations differ, so only the rates are
-# predicted to agree, within a declared equivalence margin.  The second claim needs
-# real x86_64 hardware.  The development host is arm64 macOS; Rosetta 2 and Docker/Rosetta
-# can execute x86_64 there, but PROTOCOL.md 5.3 records translated execution as
-# corroborating evidence only and excludes it from the F7 decision.  Hosted runners are
-# therefore the only native x86_64 this project has.
+# What the phase tests.  PROTOCOL.md 5.3 makes two portability predictions and tests them
+# differently.  On one architecture the stabilized calculation's stream is a function of the
+# engine alone, so libc++ and libstdc++ builds must agree BITWISE.  Across architectures
+# log, exp and pow are not correctly rounded and the libm implementations differ, so only the
+# rates are predicted to agree, within a declared equivalence margin.
 #
-# Cost.  The full scalar envelope is a minute of single-core work, so the frozen sizes run
-# unreduced: 10^6 attempts x 5 seeds (9001-9005) over the whole kappa ladder.  Nothing here
-# shrinks a sample to fit a runner.  The bulky per-draw binaries stay on the runner; the
-# portability decision needs counter rows and an environment record, and that is all that
-# is uploaded.
+# Scope.  config/protocol.json limits G4 to one architecture, arm64 macOS with both standard
+# libraries, and the committed run met it on the development host (raw/p5/).  The
+# macos-arm64 leg below repeats that comparison on a hosted runner, with Homebrew GCC for the
+# libstdc++ build.  The Linux legs supply the cross-architecture comparison, which is outside
+# the protocol's scope; a disagreement found there would still count against G4.
 #
-# What an unavailable environment means.  Not a pass.  The final job fails when an expected
-# environment is missing, and results/portability_remote.md carries the exact command to
-# run it elsewhere.
+# Cost.  The phase runs at the frozen sizes, unreduced: 10^6 attempts x 5 seeds
+# (11001-11005) over the whole kappa list, about a minute of single-core time per build.
+# `make p5` first runs `make preflight`, which builds the probe and the 100-digit
+# recomputation (Boost headers and MPFR), checks config/protocol.json against
+# config/make_protocol.py through uv, and runs `make check-legacy`, which reads commit
+# 53dbd30 with git; the checkout therefore fetches the full history.  The per-attempt binary
+# files stay on the runner; only counter rows and environment records are uploaded.
 #
-# Requirements on other files:
-#   * experiments/exp4_finite_precision/GNUmakefile must provide a `portability` target that
-#     runs P5 at the frozen sizes, honour CXX_LIBCXX and CXX_LIBSTDCXX (an empty
-#     CXX_LIBSTDCXX disables that build), echo its compile lines, and write
-#     raw/portability/portability_<tag>.jsonl with tags libcxx and libstdcxx.
-#   * experiments/exp4_finite_precision/analyze.py must provide --portability-ingest; the
-#     contract is stated on that step below.
+# What an unavailable environment means.  Not a pass.  The decision job fails when a
+# required environment in .github/ci/expected_environments.json is missing, and
+# experiments/exp4_finite_precision/results/portability_remote.md gives the commands for
+# running an environment by hand.
+#
+# Files this workflow relies on:
+#   * experiments/exp4_finite_precision/GNUmakefile: target `p5`, which honours CXX_LIBCXX and
+#     CXX_LIBSTDCXX (an empty CXX_LIBSTDCXX disables that build), echoes its compile lines,
+#     and writes raw/p5/p5_<tag>.jsonl for the tags libcxx and libstdcxx.  The collection
+#     step renames each to portability_<tag>.jsonl, the name the bundle layout uses.
+#   * experiments/exp4_finite_precision/analyze.py --portability-ingest; the contract is
+#     stated on that step below.
 
 name: portability (G4)
 
-# Run by hand only: it reruns the finite-precision study on hosted runners.
+# Run by hand only: it reruns phase P5 of the finite-precision study on hosted runners.
 on:
   workflow_dispatch:
 
@@ -60,55 +66,81 @@ jobs:
             arch: x86_64
             cxx_libcxx: clang++ -stdlib=libc++
             cxx_libstdcxx: g++
-            apt: libc++-dev libc++abi-dev
+            apt: libc++-dev libc++abi-dev libboost-dev libmpfr-dev libgmp-dev
+            brew: ""
             experimental: false
           # ubuntu-24.04-arm is a GitHub-hosted arm64 label whose availability depends on
-          # the account's plan and on the repository being public.  It is provided and
-          # marked experimental rather than assumed: if the label is not served, this leg
-          # fails or never starts, the final job reports arm64 Linux as missing, and the
-          # portability criterion stays open with a command in results/portability_remote.md.
+          # the account's plan and on the repository being public.  It is marked
+          # experimental and optional: if the label is not served, this leg fails or never
+          # starts and the decision job reports arm64 Linux as missing but optional.
           - env_id: linux-arm64
             os: ubuntu-24.04-arm
             arch: arm64
             cxx_libcxx: clang++ -stdlib=libc++
             cxx_libstdcxx: g++
-            apt: libc++-dev libc++abi-dev
+            apt: libc++-dev libc++abi-dev libboost-dev libmpfr-dev libgmp-dev
+            brew: ""
             experimental: true
-          # macOS ships no libstdc++ toolchain, so this environment contributes one
-          # standard library.  It carries the cross-architecture comparison against
-          # linux-arm64's libc++ build, not a cross-library one.
+          # The environment the protocol's G4 is scoped to.  Apple clang supplies libc++;
+          # the newest Homebrew GCC on the runner supplies libstdc++ (found by the step
+          # "select the libstdc++ compiler").
           - env_id: macos-arm64
             os: macos-latest
             arch: arm64
             cxx_libcxx: clang++ -stdlib=libc++
-            cxx_libstdcxx: ""
+            cxx_libstdcxx: homebrew-gcc
             apt: ""
+            brew: boost mpfr gcc
             experimental: false
 
     steps:
-      - name: check out the repository
+      - name: check out the repository, with history for make check-legacy
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: install the standard library packages this environment needs
+      - name: install the packages this environment needs (apt)
         if: matrix.apt != ''
         run: |
           set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends ${{ matrix.apt }}
 
+      - name: install the packages this environment needs (Homebrew)
+        if: matrix.brew != ''
+        run: brew install ${{ matrix.brew }}
+
+      - name: install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: select the libstdc++ compiler
+        run: |
+          set -euo pipefail
+          cxx='${{ matrix.cxx_libstdcxx }}'
+          if [ "$cxx" = homebrew-gcc ]; then
+            cxx=$(ls "$(brew --prefix)"/bin/g++-[0-9]* 2>/dev/null | sort -V | tail -1 || true)
+            cxx=${cxx##*/}
+            if [ -z "$cxx" ]; then
+              echo "no Homebrew g++ found; the libstdc++ build cannot run" >&2
+              exit 1
+            fi
+          fi
+          echo "CXX_LIBSTDCXX_SELECTED=$cxx" >> "$GITHUB_ENV"
+          echo "libstdc++ compiler: ${cxx:-none}"
+
       - name: prepare the evidence directory
         run: mkdir -p "$GITHUB_WORKSPACE/evidence"
 
       # The build log is evidence, not diagnostics: the environment record quotes the
       # compile line make actually used and fails if the frozen flags are not on it.
-      # -ffp-contract=off in particular is load-bearing -- a fused multiply-add changes the
-      # rounding of the very products whose overflow is being counted.
+      # -ffp-contract=off in particular matters: a fused multiply-add changes the rounding
+      # of the very products whose overflow is being counted.
       - name: build the probe and run P5 at the frozen sizes
         run: |
           set -euo pipefail
-          make -C experiments/exp4_finite_precision portability \
+          make -C experiments/exp4_finite_precision p5 \
             CXX_LIBCXX="${{ matrix.cxx_libcxx }}" \
-            CXX_LIBSTDCXX="${{ matrix.cxx_libstdcxx }}" \
+            CXX_LIBSTDCXX="$CXX_LIBSTDCXX_SELECTED" \
             2>&1 | tee "$GITHUB_WORKSPACE/evidence/run.log"
 
       - name: record the floating-point environment, once per standard library
@@ -136,20 +168,21 @@ jobs:
               --out "$GITHUB_WORKSPACE/evidence/environment_$tag.json"
           }
           record_one libcxx "${{ matrix.cxx_libcxx }}"
-          record_one libstdcxx "${{ matrix.cxx_libstdcxx }}"
+          record_one libstdcxx "$CXX_LIBSTDCXX_SELECTED"
 
-      # Counter rows only.  The per-draw binaries, which the decision does not need, stay on
-      # the runner.
+      # Counter rows only.  The per-attempt binaries, which the decision does not need, stay
+      # on the runner.
       - name: collect the counter rows
         run: |
           set -euo pipefail
-          src=experiments/exp4_finite_precision/raw/portability
+          src=experiments/exp4_finite_precision/raw/p5
           found=0
-          for f in "$src"/portability_*.jsonl; do
+          for f in "$src"/p5_*.jsonl; do
             [ -e "$f" ] || continue
-            cp "$f" "$GITHUB_WORKSPACE/evidence/"
+            tag=$(basename "$f" .jsonl); tag=${tag#p5_}
+            cp "$f" "$GITHUB_WORKSPACE/evidence/portability_$tag.jsonl"
             found=1
-            echo "collected $(basename "$f") ($(wc -l < "$f") rows)"
+            echo "collected $(basename "$f") as portability_$tag.jsonl ($(wc -l < "$f") rows)"
           done
           if [ "$found" -eq 0 ]; then
             echo "no counter rows were produced in $src" >&2
@@ -209,10 +242,9 @@ jobs:
           pattern: portability-*
 
       # Presence and shape only -- no statistic is computed here.  Its purpose is that a
-      # missing environment cannot end as a green check.  The required environments are
-      # read from .github/ci/expected_environments.json, the same file the hand-run recipe
-      # in results/portability_remote.md points at, so that what is expected is stated in
-      # one place rather than inferred from whatever turned up.
+      # missing environment cannot end as a green check.  The environments are read from
+      # .github/ci/expected_environments.json, so that what is expected is stated in one
+      # place rather than inferred from whatever turned up.
       - name: coverage of the G4 matrix
         id: coverage
         continue-on-error: true
@@ -225,13 +257,8 @@ jobs:
             --protocol experiments/exp4_finite_precision/config/protocol.json \
             --out evidence/coverage.json
 
-      - name: set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
       - name: install uv
-        run: python -m pip install --disable-pip-version-check uv
+        uses: astral-sh/setup-uv@v6
 
       # The two portability tests, both decided by the experiment's own analysis against
       # config/protocol.json.  Neither rule is reimplemented here.
@@ -243,9 +270,9 @@ jobs:
       # run_manifest.json, plus <EVIDENCE_DIR>/coverage.json written by the step above.
       # It must:
       #   (a) group records by the environment record's "arch" and, within an
-      #       architecture, require bitwise equality of every candidate counter and of the
-      #       per-row sample digest across standard libraries -- no tolerance, because the
-      #       claim is exact (PROTOCOL.md 5.3);
+      #       architecture, require bitwise equality of every counter of the stabilized
+      #       calculation and of the per-row sample digest across standard libraries -- no
+      #       tolerance, because the claim is exact (PROTOCOL.md 5.3);
       #   (b) across architectures, run the two one-sided tests on the log rate ratio at
       #       the margin in gates.G4.log_ratio_margin and the level in
       #       statistics.family_alpha.F7_portability, Holm-corrected across
@@ -274,7 +301,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 90
 
-      - name: report the gate
+      - name: report the outcome
         run: |
           set -euo pipefail
           coverage='${{ steps.coverage.outcome }}'
@@ -282,9 +309,9 @@ jobs:
           echo "coverage step: $coverage"
           echo "F7/G4 step:    $ingest"
           if [ "$coverage" != success ] || [ "$ingest" != success ]; then
-            echo "G4 is OPEN.  An environment is missing, or the F7 rules did not pass." >&2
-            echo "The exact command for every environment is in" >&2
+            echo "G4 is not met by this run: a required environment is missing, or the" >&2
+            echo "F7 tests did not pass.  Commands for running an environment by hand are in" >&2
             echo "experiments/exp4_finite_precision/results/portability_remote.md" >&2
             exit 1
           fi
-          echo "G4 closed on the environments declared in evidence_expected.json."
+          echo "G4 met on the required environments of .github/ci/expected_environments.json."

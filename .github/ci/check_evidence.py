@@ -9,7 +9,14 @@ succeed quietly.
 
 It answers only questions of presence and shape -- is the counter file there, is it
 non-empty, does its environment record say the run was native, were the frozen sizes and
-seeds used.  Every decision that involves a distribution belongs to
+seeds used.
+
+The environments come from ``expected_environments.json``: a JSON list of objects with
+``env_id``, ``arch``, ``os``, ``runner``, ``tags`` (the standard-library builds the
+environment must provide), ``required`` (default true) and ``in_protocol_scope`` (whether
+``config/protocol.json`` scopes G4 to that environment; recorded, not acted on).  A required
+environment that is missing or incomplete makes the script exit non-zero; an optional one is
+reported and does not.  Every decision that involves a distribution belongs to
 ``analyze.py --portability-ingest``, which reads ``config/protocol.json``; nothing here
 duplicates it.
 
@@ -189,6 +196,8 @@ def main():
         art_dir = os.path.join(args.evidence, "portability-%s" % env_id)
         entry = {"env_id": env_id, "arch": env.get("arch"), "os": env.get("os"),
                  "runner_label": env.get("runner"), "artifact_dir": art_dir,
+                 "required": bool(env.get("required", True)),
+                 "in_protocol_scope": env.get("in_protocol_scope"),
                  "artifact_present": os.path.isdir(art_dir), "pairs": []}
         if not entry["artifact_present"]:
             entry["reason_not_run"] = (
@@ -231,8 +240,11 @@ def main():
         "cross_arch_comparison_available": len([a for a in archs if archs[a]]) >= 2,
         "reproduction_commands": "experiments/exp4_finite_precision/results/portability_remote.md",
     }
-    missing = [e["env_id"] for e in results if not e["complete"]]
+    missing = [e["env_id"] for e in results if not e["complete"] and e["required"]]
+    optional_missing = [e["env_id"] for e in results
+                        if not e["complete"] and not e["required"]]
     coverage["incomplete_environments"] = missing
+    coverage["incomplete_optional_environments"] = optional_missing
     coverage["gate_state"] = "closable" if not missing else "open"
 
     os.makedirs(os.path.dirname(os.path.abspath(args.out)) or ".", exist_ok=True)
@@ -241,23 +253,27 @@ def main():
         fh.write("\n")
 
     lines = ["## G4 portability evidence coverage", "",
-             "| env_id | arch | os | artifact | toolchains | complete | problems |",
-             "|---|---|---|---|---|---|---|"]
+             "| env_id | arch | os | required | in protocol scope | artifact | toolchains | complete | problems |",
+             "|---|---|---|---|---|---|---|---|---|"]
     for e in results:
         probs = "; ".join(p_ for pair in e["pairs"] for p_ in pair["problems"]) \
             or e.get("reason_not_run", "")
-        lines.append("| %s | %s | %s | %s | %s | %s | %s |" % (
+        lines.append("| %s | %s | %s | %s | %s | %s | %s | %s | %s |" % (
             e["env_id"], e.get("arch"), e.get("os"),
+            "yes" if e["required"] else "no",
+            {True: "yes", False: "no"}.get(e.get("in_protocol_scope"), "-"),
             "yes" if e["artifact_present"] else "NO",
             ", ".join(p["tag"] + ("" if p["required_by_matrix"] else "*")
                       for p in e["pairs"]) or "-",
             "yes" if e["complete"] else "NO", probs or "-"))
     lines += ["", "`*` marks a toolchain the CI matrix does not require, contributed by a "
                   "hand run; it can supply a comparison but cannot complete an environment."]
-    lines += ["", "Gate state: **%s**" % coverage["gate_state"], "",
-              "An environment that did not run leaves G4 open with an exact command in "
-              "`experiments/exp4_finite_precision/results/portability_remote.md`.  It is never "
-              "recorded as a pass (PROTOCOL.md 5.3)."]
+    lines += ["", "Gate state: **%s**" % coverage["gate_state"], ""]
+    if optional_missing:
+        lines += ["Optional environments not complete: %s." % ", ".join(optional_missing), ""]
+    lines += ["An environment that did not run is never recorded as a pass (PROTOCOL.md 5.3). "
+              "Commands for running one by hand are in "
+              "`experiments/exp4_finite_precision/results/portability_remote.md`."]
     summary = "\n".join(lines)
     print(summary)
     step_summary = os.environ.get("GITHUB_STEP_SUMMARY")
@@ -267,7 +283,7 @@ def main():
 
     if missing and not args.allow_open:
         sys.stderr.write(
-            "\ncheck_evidence: G4 is OPEN. Missing or incomplete: %s\n"
+            "\ncheck_evidence: G4 is OPEN. Required environments missing or incomplete: %s\n"
             "This job fails deliberately: a green check would read as a passing gate.\n"
             % ", ".join(missing))
         return 1

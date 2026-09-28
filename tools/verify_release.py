@@ -1,25 +1,25 @@
 #!/usr/bin/env python3
 """Verify a release archive from a fresh extraction, with nothing borrowed from this tree.
 
-This is the check the reproducibility criterion of the finite-precision experiment
-(`gates.G6` in its config/protocol.json) requires. Running `make verify` in the tree that
-produced the artifacts proves only that the bytes on disk are the bytes that were hashed;
-it says nothing about whether someone who downloads the archive can reproduce anything. So the
-archive is extracted into a scratch directory, the build is done there, and every command
-runs with that directory as its root.
+Running checks in the tree that produced an archive proves only that the bytes on disk are
+the bytes that were hashed; it says nothing about whether someone who downloads the archive
+can build and reproduce anything. So the archive is extracted into a scratch directory, the
+build is done there, and every command runs with that directory as its root.
 
-Steps, each reported pass/fail and none of them skipped silently:
+Steps, each reported pass/fail/skip and none of them skipped silently:
 
-  1. the archive's own SHA-256 matches its published `.sha256`;
+  1. the archive's own SHA-256 matches its published `.sha256`, if one is alongside;
   2. every entry matches `ARCHIVE_MANIFEST.sha256` inside it;
-  3. the released library compiles as strict C++11 under every available compiler;
+  3. the library compiles as strict C++11 under every available compiler;
   4. its regression suite passes under every available compiler;
-  5. the experiment's checksum manifests verify (`make verify`);
-  6. the experiment's derived artifacts regenerate (`make reverify`: exact apart from a
-     relative tolerance of 1e-9 on floating-point numbers).
+  5. the Python validator's self-test passes (needs `uv`; skipped otherwise);
+  6. Fig. 2 of the paper and its caption and manifest regenerate byte-identically from the
+     archived results of the finite-precision study (`make figures` in
+     experiments/exp4_finite_precision).
 
 Usage:
-    tools/verify_release.py dist/bi-kappa-v2.0.0-<sha>.tar.gz
+    tools/make_release_archive.py --ref v3.0.0 --out dist/
+    tools/verify_release.py dist/bi-kappa-v3.0.0-<sha>.tar.gz
 """
 from __future__ import annotations
 
@@ -59,6 +59,18 @@ def sh(cmd: list[str], cwd: str, timeout: int = 3600) -> tuple[int, str]:
         return 124, "timed out"
 
 
+def tree_digests(root: str) -> dict[str, str]:
+    """SHA-256 of every file under `root`, keyed by path relative to it."""
+    out = {}
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [d for d in dirnames if d != "__pycache__"]
+        for fn in filenames:
+            full = os.path.join(dirpath, fn)
+            with open(full, "rb") as fh:
+                out[os.path.relpath(full, root)] = hashlib.sha256(fh.read()).hexdigest()
+    return out
+
+
 def compilers() -> list[tuple[str, list[str]]]:
     found = []
     if shutil.which("clang++"):
@@ -71,11 +83,14 @@ def compilers() -> list[tuple[str, list[str]]]:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("archive")
+    ap = argparse.ArgumentParser(
+        description="Extract a release archive into a scratch directory and verify it there.")
+    ap.add_argument("archive", help="the .tar.gz written by tools/make_release_archive.py")
     ap.add_argument("--keep", action="store_true", help="keep the extraction directory")
+    ap.add_argument("--skip-python", action="store_true",
+                    help="skip the Python validator's self-test")
     ap.add_argument("--skip-experiment", action="store_true",
-                    help="verify the library only; skip the experiment manifests")
+                    help="skip regenerating Fig. 2 of the finite-precision study")
     args = ap.parse_args()
 
     archive = os.path.abspath(args.archive)
@@ -98,7 +113,10 @@ def main() -> int:
         with tarfile.open(archive, "r:gz") as tar:
             names = tar.getnames()
             root = os.path.commonprefix(names).split("/")[0]
-            tar.extractall(tmp)
+            if hasattr(tarfile, "data_filter"):
+                tar.extractall(tmp, filter="data")
+            else:
+                tar.extractall(tmp)
         top = os.path.join(tmp, root)
         rep.add(os.path.isdir(top), "archive extracts to a single root",
                 f"{root} ({len(names)} entries)")
@@ -146,22 +164,38 @@ def main() -> int:
                     rep.add(rc == 0, f"regression suite [{label}]",
                             tail[-1] if tail else out.strip()[-200:])
 
-        # 5 & 6 -- the experiment bundle
-        if not args.skip_experiment:
-            exp = os.path.join(top, "experiments", "exp4_finite_precision")
-            if os.path.isdir(exp):
-                rc, out = sh(["make", "-s", "verify"], cwd=exp)
-                rep.add(rc == 0, "experiment checksum manifests verify",
-                        out.strip()[-300:] if rc else "")
-                rc, out = sh(["make", "-s", "reverify"], cwd=exp)
-                if "No rule to make target" in out:
-                    rep.add(None, "derived artifacts regenerate",
-                            "no `reverify` target")
-                else:
-                    rep.add(rc == 0, "derived artifacts regenerate",
-                            out.strip()[-300:] if rc else "")
+        have_uv = shutil.which("uv") is not None
+
+        # 5 -- the Python validator
+        if args.skip_python:
+            rep.add(None, "Python validator self-test", "--skip-python")
+        elif not have_uv:
+            rep.add(None, "Python validator self-test", "uv not found")
+        else:
+            rc, out = sh(["uv", "run", "python", "test_bikappa_validate.py"],
+                         cwd=os.path.join(top, "python"))
+            rep.add(rc == 0, "Python validator self-test", "" if rc == 0 else out.strip()[-300:])
+
+        # 6 -- Fig. 2 from the archived results of the finite-precision study
+        exp = os.path.join(top, "experiments", "exp4_finite_precision")
+        name = "Fig. 2 regenerates byte-identically from the archived results"
+        if args.skip_experiment:
+            rep.add(None, name, "--skip-experiment")
+        elif not os.path.isdir(exp):
+            rep.add(None, name, "experiments/exp4_finite_precision not archived")
+        elif not have_uv:
+            rep.add(None, name, "uv not found")
+        else:
+            before = tree_digests(exp)
+            rc, out = sh(["make", "-s", "figures"], cwd=exp)
+            after = tree_digests(exp)
+            changed = sorted(p for p in before if after.get(p) != before[p])
+            if rc != 0:
+                rep.add(False, name, out.strip()[-300:])
             else:
-                rep.add(None, "experiment bundle present", "exp4_finite_precision not archived")
+                rep.add(not changed, name,
+                        f"{len(changed)} archived file(s) differ: {changed[:4]}" if changed
+                        else f"{len(before)} archived files unchanged")
     finally:
         if args.keep:
             print(f"\nextraction kept at {tmp}")

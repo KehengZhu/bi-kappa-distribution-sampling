@@ -69,14 +69,8 @@ cpp/p/
 # vscode settings
 .vscode
 
-# Locally-installed Claude Code skills (large vendored asset bundles)
-.claude/skills/
-
 # overleaf project
 paper/overleaf
-
-DISTRIBUTION_NOTES.md
-CLAUDE.md
 
 # Experiment artifacts that are tracked despite the generic rules above: the manifests and
 # checksums of the raw data, and the compact results and figures the paper is built from.
