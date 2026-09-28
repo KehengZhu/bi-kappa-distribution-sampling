@@ -1,5 +1,24 @@
-import numpy as np
+"""NumPy versions of the general velocity and position generators.
+
+GeneralVelocityGenerator, FieldAlignedVelocityGenerator and
+GeneralPositionGenerator are small NumPy ports of the C++ classes
+general_velocity_generator, field_aligned_velocity_generator and
+general_position_generator in cpp/, meant for prototyping a density in
+Python.  They take the same parameters and use the same rejection envelope (the
+largest density found at a set of probe points, times 1.05).  They are not a
+validated equivalent of the C++ classes: the C++ regression suite does not
+cover them, they check fewer invalid inputs, and they do not reproduce the C++
+random streams.
+
+Each generator is called with a numpy.random.Generator and returns one draw:
+``v = gen(rng)``.  Running this file writes three example sample files to the
+current directory.
+"""
+
+import math
 from typing import Callable, List
+
+import numpy as np
 
 # Fewer probes can miss the peak of g and bias the samples silently (as in the C++ headers).
 MIN_PROBE_POINTS = 64
@@ -64,41 +83,77 @@ class GeneralVelocityGenerator:
 
 
 class GeneralPositionGenerator:
-    """Samples positions in 1D/2D/3D from a user density function using rejection sampling."""
-    
+    """Samples positions in 1D/2D/3D from a user density rho(x) by rejection sampling.
+
+    The domain is the axis-aligned box lower_bounds <= x <= upper_bounds, a hard
+    support.  density_function takes a list of length ``dimension`` and returns
+    a finite, non-negative value, positive somewhere in the box; it need not be
+    normalized.  The rejection envelope is the largest density found at
+    probe_points uniform points, drawn from a fixed seed so that two identical
+    constructions give the same envelope, times a 5% margin.  A peak narrow
+    enough to fall between the probes is undersampled without warning.  Each
+    call returns an array of length ``dimension``.
+    """
+
+    PROBE_SEED = 1337        # fixed, as in the C++ class, so the envelope is reproducible
+
     def __init__(self, dimension: int, lower_bounds: List[float], upper_bounds: List[float],
                  density_function: Callable, probe_points: int = 4096, max_reject_tries: int = 200000):
+        if isinstance(dimension, bool) or dimension not in (1, 2, 3):
+            raise ValueError("dimension must be 1, 2, or 3")
+        if not callable(density_function):
+            raise ValueError("density_function must be callable")
+        lower = np.asarray(lower_bounds, dtype=float)
+        upper = np.asarray(upper_bounds, dtype=float)
+        if lower.shape != (dimension,) or upper.shape != (dimension,):
+            raise ValueError("lower_bounds and upper_bounds must each have `dimension` entries")
+        if not (np.isfinite(lower).all() and np.isfinite(upper).all()):
+            raise ValueError("the bounds must be finite")
+        if not (lower < upper).all():
+            raise ValueError("each lower bound must be strictly less than its upper bound")
+        if probe_points <= 0:
+            raise ValueError("probe_points must be positive")
+        if max_reject_tries <= 0:
+            raise ValueError("max_reject_tries must be positive")
+
         self.dimension = dimension
-        self.lower_bounds = np.array(lower_bounds)
-        self.upper_bounds = np.array(upper_bounds)
+        self.lower_bounds = lower
+        self.upper_bounds = upper
         self.density_function = density_function
         self.max_reject_tries = max_reject_tries
-        
-        # Estimate upper bound of the density
+
         self.density_upper_bound = self._estimate_density_upper_bound(probe_points)
-    
+        if not self.density_upper_bound > 0.0:
+            raise ValueError("density_function must be positive somewhere inside the domain")
+
+    def _density(self, x: np.ndarray) -> float:
+        rho = float(self.density_function(x.tolist()))
+        if not math.isfinite(rho):
+            raise ValueError("density_function returned a non-finite value")
+        if rho < 0.0:
+            raise ValueError("density_function returned a negative value; expected a "
+                             "non-negative density")
+        return rho
+
     def _estimate_density_upper_bound(self, probe_points: int) -> float:
-        """Estimate the maximum value of the density function in the domain."""
+        """Largest density at probe_points uniform points in the box, with a 5% margin."""
+        probe_rng = np.random.default_rng(self.PROBE_SEED)
+        width = self.upper_bounds - self.lower_bounds
         max_density = 0.0
         for _ in range(probe_points):
-            x = self.lower_bounds + np.random.rand(self.dimension) * (self.upper_bounds - self.lower_bounds)
-            rho = self.density_function(x.tolist())
-            max_density = max(max_density, rho)
-        return max_density
-    
+            x = self.lower_bounds + probe_rng.uniform(0.0, 1.0, self.dimension) * width
+            max_density = max(max_density, self._density(x))
+        return max_density * 1.05
+
     def __call__(self, rng: np.random.Generator) -> np.ndarray:
-        """Generate a random position vector using rejection sampling."""
+        """Generate one position, an array of length ``dimension``."""
+        width = self.upper_bounds - self.lower_bounds
         for _ in range(self.max_reject_tries):
-            # Sample uniformly in the domain
-            x = self.lower_bounds + rng.uniform(0, 1, self.dimension) * (self.upper_bounds - self.lower_bounds)
-            u = rng.uniform(0, self.density_upper_bound)
-            
-            if u <= self.density_function(x.tolist()):
-                # Pad to 3D if necessary
-                if self.dimension < 3:
-                    x = np.pad(x, (0, 3 - self.dimension), mode='constant', constant_values=0)
+            x = self.lower_bounds + rng.uniform(0.0, 1.0, self.dimension) * width
+            u = rng.uniform(0.0, self.density_upper_bound)
+            if u <= self._density(x):
                 return x
-        
+
         raise RuntimeError("Failed to sample position after max_reject_tries attempts")
 
 
@@ -196,9 +251,9 @@ class FieldAlignedVelocityGenerator:
 
 
 def main():
-    """Generate samples from General Velocity and General Position distributions."""
+    """Write example samples from the three generators to text files."""
     n_particle = 200000
-    rng = np.random.default_rng()
+    rng = np.random.default_rng(20030410)
 
     theta_perp = 1.0
 
@@ -224,11 +279,10 @@ def main():
     print(f"Wrote {n_particle} samples to samples_general_velocity.txt\n")
     
     print("=== Example 2: GeneralPositionGenerator rho=1+sin(x)sin(y) ===")
-    rho = lambda x: (1+np.sin(x[0])*np.sin(x[1])*np.sin(x[2])) if len(x) >= 3 else (1+np.sin(x[0])*np.sin(x[1]))
-    
-    # 3D domain
-    from numpy import pi
-    pos_gen = GeneralPositionGenerator(2, [-pi, -pi], [pi, pi], rho)
+    rho = lambda x: 1.0 + np.sin(x[0]) * np.sin(x[1])
+
+    # 2D domain [-pi, pi]^2
+    pos_gen = GeneralPositionGenerator(2, [-np.pi, -np.pi], [np.pi, np.pi], rho)
     
     samples_position = []
     for i in range(n_particle):

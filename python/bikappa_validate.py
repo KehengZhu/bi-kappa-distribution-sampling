@@ -7,7 +7,8 @@ loader -- inverse transform, acceptance-rejection, or scale mixture.
 
 Input contract
 --------------
-``v``            (N, 3) array of velocities, in the simulation's global frame.
+``v``            (N, 3) array of velocities, in the simulation's global frame,
+                 with N >= MIN_SAMPLES (1000).
 ``kappa``        shape index, > 1/2.
 ``theta_perp``   perpendicular thermal speed, > 0, in the units of ``v``.
 ``theta_par``    parallel thermal speed, > 0, in the units of ``v``.
@@ -16,27 +17,46 @@ Input contract
 ``n_attempts``   total draws attempted, if the loader enforced a velocity bound
                  by discarding and redrawing.  Supplying it lets the report
                  quote the rejected fraction, which for a hard bound equals the
-                 total-variation distance from the unbounded law.
+                 total-variation distance from the uncapped distribution.
+``alpha``        family-wise significance level, 0 < alpha < 1.
 
 The thermal speeds follow the convention of Eq. (2) of the accompanying paper,
 
     f(v) ~ [1 + v_perp^2/(kappa theta_perp^2) + v_par^2/(kappa theta_par^2)]^-(kappa+1),
 
-normalizable for every kappa > 1/2.  A temperature-linked convention such as
+normalizable for every kappa > 1/2.  A thermal speed is a speed, not a
+temperature.  A temperature-linked convention such as
 theta^2 = 2[(kappa-3/2)/kappa](k_B T/m) is defined only for kappa > 3/2 and is
 *not* interchangeable with this one; convert before calling.
+
+The target is the uncapped distribution above.  A sample from a loader that
+rejects draws outside a velocity bound follows a different, capped distribution;
+the tests then measure the effect of the bound.
 
 What the tests establish, and what they do not
 ----------------------------------------------
 The cell-count test of the accompanying paper (Sec. VI B) and the radial,
 directional and independence tests below together pin down the
-three-dimensional law, because a spherically symmetric density is determined by
-its radial law plus a uniform, radius-independent direction.  They are
-distribution-free and use no moments, so they remain valid on
-1/2 < kappa <= 3/2 where the second moment does not exist.  A pass is evidence
-that the sample is consistent with the target at the given size; it is not a
-proof of correctness, and it says nothing about a bound the loader may have
-applied -- for that, supply ``n_attempts`` and read the tail-quantile block.
+three-dimensional distribution, because a spherically symmetric density is
+determined by its radial distribution plus a uniform, radius-independent
+direction.  They are distribution-free and use no moments, so they remain valid
+on 1/2 < kappa <= 3/2 where the second moment does not exist.  A pass is
+evidence that the sample is consistent with the target at the given size; it is
+not a proof of correctness, and it says nothing about a bound the loader may
+have applied -- for that, supply ``n_attempts`` and read the tail quantiles.
+
+Verdicts
+--------
+The nine distributional tests (seven when the sample is too small for the
+cell-count test) form one family.  Each has a p-value, and the family is
+corrected with the Holm-Bonferroni step-down procedure: a test fails when its
+Holm-adjusted p-value is at most ``alpha``, which keeps the probability that a
+correct sample fails any of them at or below ``alpha`` (to the accuracy of the
+asymptotic p-values).  Two further tests have
+their own criteria: the anisotropy ratio fails when it is more than four
+standard errors from its expected value, and the finiteness test fails on any
+non-finite draw.  The tail quantiles and the largest normalized speeds are
+diagnostics and carry no verdict.
 
 Usage
 -----
@@ -44,11 +64,12 @@ Usage
     report = validate_sample(v, kappa=2.0, theta_perp=1.0, theta_par=2.0)
     print(format_report(report))
 
-or from the command line:
+or from the command line (``--help`` lists the options and input formats):
 
     python bikappa_validate.py sample.npy --kappa 2 --theta-perp 1 --theta-par 2
 
-Exit status is 0 if every test passes and 1 otherwise.
+Exit status is 0 if every test passes, 1 if at least one test fails, and 2 if
+the input or the options are invalid.
 """
 
 from __future__ import annotations
@@ -58,11 +79,16 @@ import json
 import math
 import os
 import sys
+import warnings
 
 import numpy as np
 from scipy import special, stats
 
-__all__ = ["validate_sample", "format_report", "load_sample"]
+__all__ = ["validate_sample", "format_report", "load_sample", "field_basis",
+           "log_radius_quantile", "MIN_SAMPLES"]
+
+# Smallest sample the tests accept.
+MIN_SAMPLES = 1000
 
 # Quantile probes for the radial tail.  The two extreme ones are where a radial
 # error shows up first and where Cartesian marginals are least sensitive.
@@ -164,17 +190,12 @@ def field_basis(bhat: np.ndarray) -> np.ndarray:
 # the tests
 # ----------------------------------------------------------------------------
 
-def _ks_critical(alpha: float) -> float:
-    """Asymptotic critical value of sqrt(n) D for a two-sided KS test."""
-    return math.sqrt(-0.5 * math.log(alpha / 2.0))
-
-
 def mad_relative_sigma(kappa: float, n: int) -> float:
     """Asymptotic relative standard error of a sample MAD, per component.
 
-    Each Cartesian marginal of Eq. (2) is a scaled Student-t law with
+    Each Cartesian marginal of Eq. (2) is a scaled Student-t distribution with
     nu = 2 kappa - 1 degrees of freedom, so in units of its own scale the MAD is
-    t0 = ppf(3/4, nu).  For a symmetric law the MAD is the median of |X|, whose
+    t0 = ppf(3/4, nu).  For a symmetric distribution the MAD is the median of |X|, whose
     density at t0 is 2 f(t0), giving
 
         sqrt(n) (MAD_n - t0) -> N(0, 1 / (16 f(t0)^2)).
@@ -189,19 +210,31 @@ def mad_relative_sigma(kappa: float, n: int) -> float:
     return 1.0 / (4.0 * math.sqrt(n) * t0 * f0)
 
 
-def _holm(pvalues: dict, alpha: float) -> dict:
-    """Holm-Bonferroni step-down over a family of p-values."""
+def _holm_adjusted(pvalues: dict) -> dict:
+    """Holm-Bonferroni adjusted p-values over a family of p-values.
+
+    With the m p-values sorted as p_(1) <= ... <= p_(m), the adjusted value of
+    p_(i) is max_{j <= i} min(1, (m - j + 1) p_(j)).  Rejecting every test whose
+    adjusted p-value is at most alpha is the Holm step-down procedure at
+    family-wise level alpha.
+    """
     items = sorted(pvalues.items(), key=lambda kv: kv[1])
     m = len(items)
-    rejected, still = {}, True
+    adjusted, running = {}, 0.0
     for i, (name, p) in enumerate(items):
-        thresh = alpha / (m - i)
-        if still and p <= thresh:
-            rejected[name] = True
-        else:
-            still = False
-            rejected[name] = False
-    return rejected
+        running = max(running, min(1.0, (m - i) * p))
+        adjusted[name] = running
+    return adjusted
+
+
+def _finite_number(name: str, x) -> float:
+    try:
+        x = float(x)
+    except (TypeError, ValueError):
+        raise ValueError(f"{name} must be a number; got {x!r}") from None
+    if not math.isfinite(x):
+        raise ValueError(f"{name} must be finite; got {x}")
+    return x
 
 
 def validate_sample(v,
@@ -218,15 +251,34 @@ def validate_sample(v,
     """
     v = np.asarray(v, dtype=float)
     if v.ndim != 2 or v.shape[1] != 3:
-        raise ValueError(f"v must have shape (N, 3); got {v.shape}")
+        raise ValueError(f"the sample must have shape (N, 3); got {v.shape}")
+    kappa = _finite_number("kappa", kappa)
     if not kappa > 0.5:
         raise ValueError(f"kappa must exceed 1/2; got {kappa}")
-    if not (theta_perp > 0 and theta_par > 0):
-        raise ValueError("thermal speeds must be positive")
+    theta_perp = _finite_number("theta_perp", theta_perp)
+    theta_par = _finite_number("theta_par", theta_par)
+    if not (theta_perp > 0.0 and theta_par > 0.0):
+        raise ValueError(f"the thermal speeds must be positive; got theta_perp = "
+                         f"{theta_perp}, theta_par = {theta_par}")
+    alpha = _finite_number("alpha", alpha)
+    if not 0.0 < alpha < 1.0:
+        raise ValueError(f"alpha must lie strictly between 0 and 1; got {alpha}")
+    if bhat is not None:
+        bhat = np.asarray(bhat, dtype=float)
+        if bhat.shape != (3,):
+            raise ValueError(f"bhat must have three components; got shape {bhat.shape}")
+        field_basis(bhat)              # raises on a zero or non-finite vector
 
     n_total = v.shape[0]
-    if n_total < 1000:
-        raise ValueError(f"need at least 1000 draws for the tests to mean anything; got {n_total}")
+    if n_total < MIN_SAMPLES:
+        raise ValueError(f"the tests need at least {MIN_SAMPLES} draws; got {n_total}")
+    if n_attempts is not None:
+        if isinstance(n_attempts, bool) or int(n_attempts) != n_attempts:
+            raise ValueError(f"n_attempts must be an integer; got {n_attempts!r}")
+        n_attempts = int(n_attempts)
+        if n_attempts < n_total:
+            raise ValueError(f"the number of attempts ({n_attempts}) cannot be smaller "
+                             f"than the number of draws in the sample ({n_total})")
 
     report: dict = {
         "inputs": {
@@ -279,7 +331,6 @@ def validate_sample(v,
     }
 
     b = kappa - 0.5
-    ks_crit = _ks_critical(alpha)
     pvalues: dict = {}
 
     # --- 1. radial law -----------------------------------------------------
@@ -290,8 +341,8 @@ def validate_sample(v,
     # perfectly good sample.  The orientation is not cosmetic.
     #
     # For R > 1 the form (1/R)^2 / (1 + (1/R)^2) keeps W resolvable down to the
-    # subnormal range, R up to about 6e161.  (An earlier version used 1/(1 + exp(2 log R)),
-    # which returns W = 0 already for R > 1.3e154.)
+    # subnormal range, R up to about 6e161, whereas 1/(1 + R^2) or
+    # 1/(1 + exp(2 log R)) returns W = 0 already for R > 1.3e154.
     with np.errstate(over="ignore", divide="ignore", under="ignore"):
         small = R <= 1.0
         W = np.empty_like(R)
@@ -319,7 +370,6 @@ def validate_sample(v,
     pvalues["radial_cvm"] = float(cvm_radial.pvalue)
     report["tests"]["radial_law"] = {
         "statistic_sqrtn_D": float(ks_radial.statistic * math.sqrt(n)),
-        "critical_sqrtn_D": ks_crit,
         "ks_pvalue": float(ks_radial.pvalue),
         "cvm_statistic": float(cvm_radial.statistic),
         "cvm_pvalue": float(cvm_radial.pvalue),
@@ -347,7 +397,7 @@ def validate_sample(v,
     np.add.at(table, (r_bin, c_bin * N_PHI_BINS + p_bin), 1.0)
     # The two KS tests check each angle on its own; uniform marginals make the
     # direction uniform on the sphere only if the angles are also independent.
-    # Equal occupancy of the cells, summed over radius, tests the joint law.
+    # Equal occupancy of the cells, summed over radius, tests the joint distribution.
     cells = stats.chisquare(table.sum(axis=0))
 
     # The paper's cell-count test: radius shells x direction cells, and the radius
@@ -369,14 +419,19 @@ def validate_sample(v,
         r_counts = np.bincount(np.searchsorted(r_log_edges, log_R, side="right"),
                                minlength=r_probs.size)
         cells_radius = stats.chisquare(r_counts, n * r_probs)
+        # Pearson's chi^2 against fully specified cell probabilities: k - 1 dof.
         pvalues["cells_radius"] = float(cells_radius.pvalue)
         pvalues["cells_all"] = float(cells_all.pvalue)
         report["tests"]["cells"] = {
             "radius_pvalue": float(cells_radius.pvalue),
+            "radius_statistic": float(cells_radius.statistic),
+            "radius_dof": int(r_probs.size - 1),
             "radius_shells": int(r_probs.size),
             "radius_outermost_percentile": float(100.0 * (1.0 - r_probs[-1])),
             "radius_expected_outermost": float(n * r_probs[-1]),
             "all_pvalue": float(cells_all.pvalue),
+            "all_statistic": float(cells_all.statistic),
+            "all_dof": int(n_cells - 1),
             "expected_per_cell": n / n_cells,
             "min_count": int(cell_counts.min()),
             "description": (f"Pearson chi^2 against equal occupancy of {N_SHELLS} "
@@ -399,7 +454,8 @@ def validate_sample(v,
         "cos_theta_pvalue": float(ks_cos.pvalue),
         "phi_sqrtn_D": float(ks_phi.statistic * math.sqrt(n)),
         "phi_pvalue": float(ks_phi.pvalue),
-        "critical_sqrtn_D": ks_crit,
+        "cells_chi2_statistic": float(cells.statistic),
+        "cells_chi2_dof": int(N_COS_BINS * N_PHI_BINS - 1),
         "cells_chi2_pvalue": float(cells.pvalue),
         "description": ("cos(Theta) ~ U(-1,1) and Phi ~ U(-pi,pi) about bhat, and "
                         f"equal occupancy of {N_COS_BINS * N_PHI_BINS} equal-solid-angle "
@@ -418,9 +474,11 @@ def validate_sample(v,
     pvalues["independence_chi2"] = float(chi2.pvalue)
     pvalues["independence_inner_outer"] = float(ks_io.pvalue)
     report["tests"]["independence"] = {
+        "chi2_statistic": float(chi2.statistic),
         "chi2_pvalue": float(chi2.pvalue),
         "chi2_dof": int(chi2.dof),
         "min_cell_count": int(table.min()),
+        "inner_outer_ks_D": float(ks_io.statistic),
         "inner_outer_ks_pvalue": float(ks_io.pvalue),
         "description": ("chi^2 contingency over radial quartiles x the equal-solid-"
                         "angle direction cells, plus a two-sample KS of cos(Theta) "
@@ -470,9 +528,9 @@ def validate_sample(v,
         "probes": list(QUANTILE_PROBES),
         "log_error": [float(x) for x in log_err],
         "ratio": [float(math.exp(x)) if np.isfinite(x) else None for x in log_err],
-        "description": ("empirical minus exact quantiles of log R; ratio is the "
-                        "empirical quantile of R divided by the exact one, so 1 "
-                        "means an undistorted tail"),
+        "description": ("diagnostic without a verdict: empirical minus exact "
+                        "quantiles of log R; ratio is the empirical quantile of R "
+                        "divided by the exact one, so 1 means an undistorted tail"),
     }
 
     # --- 6. an applied velocity bound ---------------------------------------
@@ -481,35 +539,41 @@ def validate_sample(v,
     bound: dict = {
         "max_normalized_component": max_component,
         "max_normalized_radius": max_speed_norm,
-        "description": ("largest |v_i|/theta_i and largest sqrt(sum (v_i/theta_i)^2) "
-                        "in the sample; a bound applied by the loader shows up as a "
-                        "hard edge in whichever of these the bounding region uses"),
+        "description": ("diagnostic without a verdict: largest |v_i|/theta_i and "
+                        "largest sqrt(sum (v_i/theta_i)^2) in the sample; a bound "
+                        "applied by the loader shows up as a hard edge in whichever "
+                        "of these the bounding region uses"),
     }
     if n_attempts is not None:
-        if n_attempts < n_total:
-            raise ValueError("n_attempts cannot be smaller than the number of draws returned")
         rejected = 1.0 - n_total / n_attempts
         bound["rejected_fraction"] = rejected
         bound["total_variation_from_unbounded"] = rejected
         bound["note"] = ("for a bound enforced by discarding and redrawing, the rejected "
-                         "fraction equals the total-variation distance from the unbounded "
-                         "bi-Kappa law exactly; it bounds how far any probability can move "
-                         "and does not bound a tail quantile")
+                         "fraction equals the total-variation distance from the uncapped "
+                         "bi-Kappa distribution exactly; it bounds how far any probability "
+                         "can move and does not bound a tail quantile")
         report["notes"].append(
-            "A bound was declared. The radial and tail tests above compare against the "
-            "*unbounded* law and are expected to fail in the tail by construction; read "
-            "them as a measurement of the bound's effect, not as a defect.")
+            "A bound was declared. The tests compare the sample with the uncapped "
+            "distribution, so the radial tests and the tail quantiles show the effect "
+            "of the bound; a failure there measures the bound, not a defect of the "
+            "loader.")
     report["tests"]["bound"] = bound
 
     # --- overall verdict ----------------------------------------------------
-    rejected_flags = _holm(pvalues, alpha)
-    for name, rej in rejected_flags.items():
-        pvalues[name] = {"pvalue": pvalues[name], "rejected_at_alpha": rej}
+    adjusted = _holm_adjusted(pvalues)
+    family_tests = {
+        name: {"pvalue": p,
+               "holm_adjusted_pvalue": adjusted[name],
+               "rejected_at_alpha": bool(adjusted[name] <= alpha)}
+        for name, p in pvalues.items()
+    }
     report["family"] = {
         "alpha": alpha,
-        "correction": "Holm-Bonferroni over the distributional tests",
-        "tests": pvalues,
-        "n_rejected": int(sum(rejected_flags.values())),
+        "correction": ("Holm-Bonferroni over the distributional tests; a test is "
+                       "rejected when its Holm-adjusted p-value is at most alpha"),
+        "n_tests": len(family_tests),
+        "tests": family_tests,
+        "n_rejected": int(sum(d["rejected_at_alpha"] for d in family_tests.values())),
     }
     report["passed"] = bool(
         report["family"]["n_rejected"] == 0
@@ -524,65 +588,87 @@ def validate_sample(v,
 # ----------------------------------------------------------------------------
 
 def format_report(report: dict) -> str:
-    """Render a report as a short human-readable table."""
+    """Render a report as a short human-readable table.
+
+    The distributional tests are listed with their statistic, raw p-value and
+    Holm-adjusted p-value; each verdict is FAIL exactly when the adjusted
+    p-value is at most alpha.  The tests with their own criteria and the
+    diagnostics without a verdict follow.
+    """
     i = report["inputs"]
+    t = report["tests"]
+    fam = report["family"]
+    alpha = fam["alpha"]
     out = [
         "bi-Kappa sample validation",
-        f"  N = {i['n_samples']}, kappa = {i['kappa']}, "
-        f"theta_perp = {i['theta_perp']}, theta_par = {i['theta_par']}",
+        f"  N = {i['n_samples']}, kappa = {i['kappa']:g}, "
+        f"theta_perp = {i['theta_perp']:g}, theta_par = {i['theta_par']:g}",
         f"  frame: {i['frame']}",
         "",
+        f"  Distributional tests: {fam['n_tests']} tests, Holm-Bonferroni correction at "
+        f"family-wise alpha = {alpha:g}.",
+        "  A test fails when its Holm-adjusted p-value is at most alpha.",
+        "",
+        f"  {'test':36s} {'statistic':>22s} {'p-value':>9s} {'Holm p':>9s}  verdict",
+        "  " + "-" * 88,
     ]
-    t = report["tests"]
-    crit = t["radial_law"]["critical_sqrtn_D"]
-    out.append(f"  {'test':32s} {'statistic':>14s}  verdict")
-    out.append("  " + "-" * 62)
 
-    def line(name, stat, ok):
-        out.append(f"  {name:32s} {stat:>14s}  {'PASS' if ok else 'FAIL'}")
+    def pfmt(p):
+        return f"{p:.3f}" if p >= 1e-3 else f"{p:.1e}"
 
-    fam = report["family"]["tests"]
+    def row(name, key, stat):
+        d = fam["tests"][key]
+        out.append(f"  {name:36s} {stat:>22s} {pfmt(d['pvalue']):>9s} "
+                   f"{pfmt(d['holm_adjusted_pvalue']):>9s}  "
+                   f"{'FAIL' if d['rejected_at_alpha'] else 'PASS'}")
+
     if "cells" in t:
-        line(f"cells: radius ({t['cells']['radius_shells']} shells)",
-             f"p={t['cells']['radius_pvalue']:.3f}", not fam["cells_radius"]["rejected_at_alpha"])
-        line("cells: radius x direction",
-             f"p={t['cells']['all_pvalue']:.3f}", not fam["cells_all"]["rejected_at_alpha"])
-    line("radial law (sqrt(n) D)",
-         f"{t['radial_law']['statistic_sqrtn_D']:.3f}", not fam["radial_ks"]["rejected_at_alpha"])
-    line("radial law (Cramer-von Mises)",
-         f"{t['radial_law']['cvm_statistic']:.4f}", not fam["radial_cvm"]["rejected_at_alpha"])
-    line("direction cos(Theta)",
-         f"{t['direction']['cos_theta_sqrtn_D']:.3f}", not fam["cos_theta"]["rejected_at_alpha"])
-    line("direction Phi",
-         f"{t['direction']['phi_sqrtn_D']:.3f}", not fam["phi"]["rejected_at_alpha"])
-    line("direction, equal-area cells",
-         f"p={t['direction']['cells_chi2_pvalue']:.3f}",
-         not fam["direction_cells"]["rejected_at_alpha"])
-    line("radius-direction independence",
-         f"p={t['independence']['chi2_pvalue']:.3f}",
-         not fam["independence_chi2"]["rejected_at_alpha"])
-    line("  inner vs outer quartile",
-         f"p={t['independence']['inner_outer_ks_pvalue']:.3f}",
-         not fam["independence_inner_outer"]["rejected_at_alpha"])
-    line("anisotropy MAD ratio",
-         f"{t['anisotropy']['mad_ratio_par_perp']:.4f}", t["anisotropy"]["passed"])
-    line("finite draws",
-         f"{t['finiteness']['n_nonfinite']} bad", t["finiteness"]["passed"])
-    if "frame_basis" in t:
-        out.append(f"  {'basis orthonormality':32s} "
-                   f"{t['frame_basis']['orthonormality_error']:>14.2e}")
-    out.append("")
-    out.append(f"  critical sqrt(n) D at alpha = {report['inputs']['alpha']}: {crit:.3f}"
-               "   (about 0.87 on average when the law is correct)")
-    out.append("")
-    out.append("  tail quantiles of the radius, empirical / exact:")
+        c = t["cells"]
+        row(f"cell counts: radius, {c['radius_shells']} shells", "cells_radius",
+            f"chi2 = {c['radius_statistic']:.1f} ({c['radius_dof']} dof)")
+        row("cell counts: radius x direction", "cells_all",
+            f"chi2 = {c['all_statistic']:.1f} ({c['all_dof']} dof)")
+    rl = t["radial_law"]
+    row("radius, Kolmogorov-Smirnov", "radial_ks",
+        f"sqrt(n) D = {rl['statistic_sqrtn_D']:.3f}")
+    row("radius, Cramer-von Mises", "radial_cvm", f"T = {rl['cvm_statistic']:.4f}")
+    d = t["direction"]
+    row("direction: cos(Theta), KS", "cos_theta", f"sqrt(n) D = {d['cos_theta_sqrtn_D']:.3f}")
+    row("direction: Phi, KS", "phi", f"sqrt(n) D = {d['phi_sqrtn_D']:.3f}")
+    row("direction: equal-solid-angle cells", "direction_cells",
+        f"chi2 = {d['cells_chi2_statistic']:.1f} ({d['cells_chi2_dof']} dof)")
+    ind = t["independence"]
+    row("radius-direction independence", "independence_chi2",
+        f"chi2 = {ind['chi2_statistic']:.1f} ({ind['chi2_dof']} dof)")
+    row("cos(Theta), inner vs outer quartile", "independence_inner_outer",
+        f"D = {ind['inner_outer_ks_D']:.4f}")
+
+    an, fin = t["anisotropy"], t["finiteness"]
+    out += [
+        "",
+        "  Tests with their own criteria:",
+        f"  {'anisotropy':36s} {'':>42s}  {'PASS' if an['passed'] else 'FAIL'}",
+        f"    MAD(v_par)/MAD(v_perp1)   = {an['mad_ratio_par_perp']:.4f}, expected "
+        f"{an['expected']:.4f} (error {100 * an['relative_error']:+.2f}%)",
+        f"    MAD(v_perp2)/MAD(v_perp1) = {an['mad_ratio_perp_perp']:.4f}, expected 1",
+        f"    each must lie within {100 * an['tolerance']:.2f}% of its expected value "
+        "(four standard errors)",
+        f"  {'finite draws':36s} {'':>42s}  {'PASS' if fin['passed'] else 'FAIL'}",
+        f"    {fin['n_nonfinite']} of {i['n_samples']} draws are non-finite; any is a failure",
+        "",
+        "  Diagnostics without a verdict:",
+        "  tail quantiles of the radius, empirical / exact:",
+    ]
     for p, r in zip(t["tail_quantiles"]["probes"], t["tail_quantiles"]["ratio"]):
         out.append(f"    p = {p:<6} {r:.4f}" if r is not None else f"    p = {p:<6} n/a")
     bd = t["bound"]
+    out.append(f"  largest |v_i|/theta_i: {bd['max_normalized_component']:.4g}; "
+               f"largest normalized speed: {bd['max_normalized_radius']:.4g}")
+    if "frame_basis" in t:
+        out.append(f"  basis orthonormality error: {t['frame_basis']['orthonormality_error']:.2e}")
     if "rejected_fraction" in bd:
-        out.append("")
         out.append(f"  declared bound: rejected fraction {bd['rejected_fraction']:.3e}, "
-                   f"which is the total-variation distance from the unbounded law")
+                   "which is the total-variation distance from the uncapped distribution")
     out.append("")
     for note in report["notes"]:
         out.append(f"  note: {note}")
@@ -590,42 +676,152 @@ def format_report(report: dict) -> str:
     return "\n".join(out)
 
 
-def load_sample(path: str, binary: bool = False) -> np.ndarray:
-    """Read an (N, 3) sample from .npy, whitespace/comma text, or raw float64."""
+RAW_EXTENSIONS = (".bin", ".f64")
+
+
+def _read_text(path: str, delimiter) -> tuple[np.ndarray, str | None]:
+    """Read a text table, skipping one non-numeric header line if there is one.
+
+    Blank lines and lines starting with '#' are ignored.  If the first other line
+    does not parse as numbers it is taken as a column header and skipped; any
+    later non-numeric line is an error.
+    """
+    header, skip = None, 0
+    with open(path, "r") as fh:
+        for lineno, raw in enumerate(fh, start=1):
+            line = raw.strip()
+            if not line or line.startswith("#"):
+                continue
+            try:
+                [float(tok) for tok in line.split(delimiter)]
+            except ValueError:
+                header, skip = line, lineno
+            break
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)        # "input contained no data"
+        try:
+            v = np.loadtxt(path, delimiter=delimiter, skiprows=skip, ndmin=2)
+        except ValueError as exc:
+            # NumPy's message may end with advice on its own keyword arguments.
+            raise ValueError(f"{path}: {str(exc).split('; use')[0]}") from None
+    return v, header
+
+
+def _load(path: str, binary: bool) -> tuple[np.ndarray, str | None]:
     ext = os.path.splitext(path)[1].lower()
-    if ext == ".npy":
-        v = np.load(path)
-    elif binary or ext in (".bin", ".dat", ".f64"):
+    header = None
+    if binary or ext in RAW_EXTENSIONS:
         v = np.fromfile(path, dtype=np.float64)
-    else:
-        v = np.loadtxt(path, delimiter="," if ext == ".csv" else None)
-    v = np.asarray(v, dtype=float)
-    if v.ndim == 1:
         if v.size % 3:
-            raise ValueError("flat input length is not a multiple of 3")
+            raise ValueError(f"{path}: raw float64 input holds {v.size} values, "
+                             "which is not a multiple of 3")
         v = v.reshape(-1, 3)
-    return v
+    elif ext == ".npy":
+        v = np.load(path, allow_pickle=False)
+    else:
+        v, header = _read_text(path, "," if ext == ".csv" else None)
+    v = np.asarray(v, dtype=float)
+    if v.size == 0:
+        raise ValueError(f"{path}: the file holds no data")
+    if v.ndim != 2 or v.shape[1] != 3:
+        raise ValueError(f"{path}: expected three columns (vx vy vz), got an array "
+                         f"of shape {v.shape}")
+    return v, header
+
+
+def load_sample(path: str, binary: bool = False) -> np.ndarray:
+    """Read an (N, 3) velocity sample from a file.
+
+    The format follows the extension: ``.bin`` and ``.f64`` are raw float64
+    values in the machine's byte order, three per draw (``binary=True`` forces this for any
+    extension); ``.npy`` is a NumPy array of shape (N, 3); anything else is text
+    with three columns, separated by whitespace, or by commas for ``.csv``.  In
+    text, blank lines and lines starting with '#' are ignored, and a first line
+    that is not numeric (a header such as ``vx vy vz``) is skipped.
+
+    Raises ``ValueError`` if the file does not hold an (N, 3) array of numbers,
+    and ``OSError`` if it cannot be read.
+    """
+    return _load(path, binary)[0]
+
+
+EPILOG = """\
+input formats:
+  .bin, .f64   raw float64 values, three per draw (vx vy vz); --binary forces
+               this for any extension
+  .npy         NumPy array of shape (N, 3)
+  other        text, three columns per line, separated by whitespace (by
+               commas for .csv); blank lines and lines starting with '#' are
+               ignored, and a non-numeric first line such as 'vx vy vz' is
+               skipped as a header
+
+The target is the uncapped bi-Kappa distribution of Eq. (2) of the paper,
+  f(v) ~ [1 + v_perp^2/(kappa theta_perp^2) + v_par^2/(kappa theta_par^2)]^-(kappa+1).
+A sample from a sampler that rejects draws outside a velocity bound follows a
+different, capped distribution; pass --attempts to have the rejected fraction
+reported.
+
+The distributional tests are corrected for multiple testing with the
+Holm-Bonferroni procedure at family-wise level --alpha: a test fails when its
+Holm-adjusted p-value is at most alpha.  The anisotropy test fails beyond four
+standard errors, and any non-finite draw is a failure.  Tail quantiles are
+reported without a verdict.
+
+exit status:
+  0  every test passes
+  1  at least one test fails
+  2  invalid input or options (message on stderr)
+
+example:
+  python bikappa_validate.py samples_bikappa.txt --kappa 2 --theta-perp 1 --theta-par 2
+"""
+
+
+def _parser() -> argparse.ArgumentParser:
+    ap = argparse.ArgumentParser(
+        prog="bikappa_validate.py",
+        description=("Test an (N, 3) velocity sample from any bi-Kappa loader against\n"
+                     f"the bi-Kappa distribution.  N must be at least {MIN_SAMPLES}."),
+        epilog=EPILOG,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("sample", help="file holding the sample; see 'input formats' below")
+    ap.add_argument("--kappa", type=float, required=True,
+                    help="spectral index kappa of the target distribution, > 1/2")
+    ap.add_argument("--theta-perp", type=float, required=True, metavar="THETA",
+                    help=("perpendicular thermal speed, > 0: a speed in the units of the "
+                          "sample, not a temperature (the convention of Eq. (2) of the "
+                          "paper and of the C++ class)"))
+    ap.add_argument("--theta-par", type=float, required=True, metavar="THETA",
+                    help="parallel thermal speed, > 0, in the same convention and units")
+    ap.add_argument("--bhat", type=float, nargs=3, default=None, metavar=("BX", "BY", "BZ"),
+                    help=("magnetic-field direction in the frame of the sample, need not "
+                          "be normalized; omit if the third column is already the "
+                          "parallel component"))
+    ap.add_argument("--attempts", type=int, default=None, metavar="N",
+                    help=("total draws attempted, for a sampler that rejects draws "
+                          "outside a velocity bound and redraws them; must be at least "
+                          "the number of draws in the sample"))
+    ap.add_argument("--alpha", type=float, default=0.01,
+                    help="family-wise significance level, 0 < alpha < 1 (default 0.01)")
+    ap.add_argument("--binary", action="store_true",
+                    help="read the file as raw float64 whatever its extension")
+    ap.add_argument("--json", action="store_true", help="print the full report as JSON")
+    return ap
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(
-        description="Validate an (N, 3) bi-Kappa velocity sample from any loader.")
-    ap.add_argument("sample", help="path to .npy, text (.txt/.csv), or raw float64 (.bin)")
-    ap.add_argument("--kappa", type=float, required=True)
-    ap.add_argument("--theta-perp", type=float, required=True)
-    ap.add_argument("--theta-par", type=float, required=True)
-    ap.add_argument("--bhat", type=float, nargs=3, default=None,
-                    help="magnetic-field direction; omit if the sample is field-aligned")
-    ap.add_argument("--attempts", type=int, default=None,
-                    help="total draws attempted, if a velocity bound was enforced by redrawing")
-    ap.add_argument("--alpha", type=float, default=0.01)
-    ap.add_argument("--binary", action="store_true", help="force raw float64 input")
-    ap.add_argument("--json", action="store_true", help="emit the full report as JSON")
-    args = ap.parse_args(argv)
-
-    v = load_sample(args.sample, binary=args.binary)
-    report = validate_sample(v, args.kappa, args.theta_perp, args.theta_par,
-                             bhat=args.bhat, n_attempts=args.attempts, alpha=args.alpha)
+    args = _parser().parse_args(argv)
+    prog = "bikappa_validate.py"
+    try:
+        v, header = _load(args.sample, args.binary)
+        if header is not None:
+            print(f"{prog}: note: skipped the header line {header!r}", file=sys.stderr)
+        report = validate_sample(v, args.kappa, args.theta_perp, args.theta_par,
+                                 bhat=args.bhat, n_attempts=args.attempts, alpha=args.alpha)
+    except (ValueError, OSError) as exc:
+        msg = " ".join(str(exc).split()) or type(exc).__name__
+        print(f"{prog}: error: {msg}", file=sys.stderr)
+        return 2
     print(json.dumps(report, indent=2) if args.json else format_report(report))
     return 0 if report["passed"] else 1
 

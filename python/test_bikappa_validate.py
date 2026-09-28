@@ -6,29 +6,38 @@ negative controls below matter more than the positive one: each injects a
 specific, plausible loader bug and asserts that the tests catch it.
 
 Run with:  uv run --project python python python/test_bikappa_validate.py
-Exit status is 0 on success.
+Exit status is 0 on success.  The same checks run under pytest, one test per
+section:  uv run --project python --with pytest pytest python/test_bikappa_validate.py
 """
 
 from __future__ import annotations
 
+import contextlib
+import io
 import os
 import sys
+import tempfile
 
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import bikappa_validate  # noqa: E402
 from bikappa_validate import (validate_sample, format_report, field_basis,  # noqa: E402
-                             log_radius_quantile)
+                              log_radius_quantile, MIN_SAMPLES)
 
 N = 100_000
+SEED = 20260820
 
 
 def draw(n, kappa, theta_perp, theta_par, rng, uniform_theta=False, bhat=None):
     """A reference bi-Kappa sample, independent of the C++ implementation."""
     # sqrt(X1)/sqrt(X2), never sqrt(X1/X2): the quotient overflows at small
     # kappa in a regime where the radius itself is perfectly representable.
-    R = np.sqrt(rng.gamma(1.5, 1.0, n)) / np.sqrt(rng.gamma(kappa - 0.5, 1.0, n))
+    # Near kappa = 1/2, X2 can underflow to 0; the division then gives R = inf,
+    # which the validator is expected to report as a non-finite draw.
+    with np.errstate(divide="ignore"):
+        R = np.sqrt(rng.gamma(1.5, 1.0, n)) / np.sqrt(rng.gamma(kappa - 0.5, 1.0, n))
     if uniform_theta:                        # the classic direction bug
         c = np.cos(rng.uniform(0.0, np.pi, n))
     else:
@@ -70,15 +79,23 @@ def failing_tests(report):
     return bad
 
 
-def main() -> int:
-    rng = np.random.default_rng(20260820)
-    failures = []
+class Checks:
+    """Collects named checks, printing each as it runs."""
 
-    def check(name, ok, detail=""):
+    def __init__(self):
+        self.failures = []
+
+    def __call__(self, name, ok, detail=""):
         print(f"  [{'ok' if ok else 'FAILED'}] {name}{'  ' + detail if detail else ''}")
         if not ok:
-            failures.append(name)
+            self.failures.append(name)
 
+
+# ----------------------------------------------------------------------------
+# sections: each takes a random generator and a Checks object
+# ----------------------------------------------------------------------------
+
+def positive_control(rng, check):
     print("positive control")
     for kappa in (0.55, 0.75, 1.0, 1.5, 2.0, 5.0, 10.0):
         r = validate_sample(draw(N, kappa, 1.0, 2.0, rng), kappa, 1.0, 2.0)
@@ -98,9 +115,9 @@ def main() -> int:
           f"caught by: {failing_tests(r)}")
 
     # With the radius formed in logs the sample is exact, and about 6e-4 of its
-    # probability lies where W = 1/(1+R^2) underflows to 0.  An earlier version mapped
-    # those draws to F_W = 0 and failed an exact sample of this size
-    # (sqrt(n) D = 2.33 at n = 8e6).
+    # probability lies where W = 1/(1+R^2) underflows to 0.  Mapping those draws
+    # to F_W = 0 would fail an exact sample of this size (sqrt(n) D = 2.33 at
+    # n = 8e6); the validator evaluates F_W from log R there instead.
     n_big = 8_000_000
     v = draw_log_radius(n_big, 0.51, 1.0, 2.0, rng)
     finite = np.isfinite(v).all(axis=1)
@@ -112,6 +129,8 @@ def main() -> int:
     check("the underflow branch is exercised",
           r["tests"]["radial_law"]["n_w_underflow"] > 1000)
 
+
+def rotated_frame(rng, check):
     print("positive control, rotated frame")
     bhat = np.array([0.3, -0.5, 0.8])
     bhat = bhat / np.linalg.norm(bhat)
@@ -124,6 +143,8 @@ def main() -> int:
     check("rotated sample fails when bhat is withheld", not r["passed"],
           f"caught by: {failing_tests(r)}")
 
+
+def negative_controls(rng, check):
     print("negative controls")
     r = validate_sample(draw(N, 2.0, 1.0, 2.0, rng, uniform_theta=True), 2.0, 1.0, 2.0)
     check("uniform-Theta direction bug is caught",
@@ -159,7 +180,7 @@ def main() -> int:
     # A radius-direction coupling that leaves both marginals correct: rotate the
     # direction of the outer half of the sample onto a preferred axis by pairing
     # sorted radii with sorted |cos Theta|.  Marginals are untouched by
-    # construction; only the joint law is wrong.
+    # construction; only the joint distribution is wrong.
     v = draw(N, 2.0, 1.0, 1.0, rng)
     R = np.hypot(np.hypot(v[:, 0], v[:, 1]), v[:, 2])
     order_r = np.argsort(R)
@@ -202,8 +223,9 @@ def main() -> int:
           and "cos_theta" not in bad and "phi" not in bad,
           f"caught by: {bad}")
 
-    print("bound accounting")
 
+def bound_accounting(rng, check):
+    print("bound accounting")
     lam = 5.0
     v = draw(4 * N, 2.0, 1.0, 2.0, rng)
     keep = (np.abs(v[:, 0]) <= lam) & (np.abs(v[:, 1]) <= lam) & (np.abs(v[:, 2]) <= 2.0 * lam)
@@ -218,12 +240,23 @@ def main() -> int:
           r["tests"]["tail_quantiles"]["ratio"][-1] < 1.0,
           f"p99.9 ratio = {r['tests']['tail_quantiles']['ratio'][-1]:.4f}")
 
+
+def input_contract(rng, check):
     print("input contract")
+    ok = dict(kappa=2.0, theta_perp=1.0, theta_par=1.0)
+    v = np.zeros((N, 3))
     for bad_input, why in (
-        (dict(v=np.zeros((10, 3)), kappa=2.0, theta_perp=1.0, theta_par=1.0), "too few draws"),
-        (dict(v=np.zeros((N, 2)), kappa=2.0, theta_perp=1.0, theta_par=1.0), "wrong shape"),
-        (dict(v=np.zeros((N, 3)), kappa=0.4, theta_perp=1.0, theta_par=1.0), "kappa <= 1/2"),
-        (dict(v=np.zeros((N, 3)), kappa=2.0, theta_perp=0.0, theta_par=1.0), "zero thermal speed"),
+        (dict(ok, v=np.zeros((10, 3))), "too few draws"),
+        (dict(ok, v=np.zeros((N, 2))), "wrong shape"),
+        (dict(ok, v=v, kappa=0.4), "kappa <= 1/2"),
+        (dict(ok, v=v, kappa=float("nan")), "kappa = nan"),
+        (dict(ok, v=v, kappa=float("inf")), "kappa = inf"),
+        (dict(ok, v=v, theta_perp=0.0), "zero thermal speed"),
+        (dict(ok, v=v, theta_par=float("inf")), "infinite thermal speed"),
+        (dict(ok, v=v, alpha=5.0), "alpha >= 1"),
+        (dict(ok, v=v, alpha=0.0), "alpha = 0"),
+        (dict(ok, v=v, bhat=[0.0, 0.0, 0.0]), "zero bhat"),
+        (dict(ok, v=v, n_attempts=N - 1), "fewer attempts than draws"),
     ):
         try:
             validate_sample(**bad_input)
@@ -231,11 +264,156 @@ def main() -> int:
         except ValueError:
             check(f"rejects {why}", True)
 
+
+def report_rendering(rng, check):
     print("report rendering")
     r = validate_sample(draw(N, 2.0, 1.0, 2.0, rng), 2.0, 1.0, 2.0)
     text = format_report(r)
-    check("report renders", "overall: PASS" in text and "radial law" in text)
+    check("report renders", "overall: PASS" in text and "Holm" in text
+          and "Kolmogorov-Smirnov" in text)
 
+    # Every family verdict must follow from the printed Holm-adjusted p-value, and
+    # the adjusted p-values must reproduce the Holm step-down procedure.
+    fam = r["family"]
+    check("each verdict is 'Holm-adjusted p <= alpha'",
+          all(d["rejected_at_alpha"] == (d["holm_adjusted_pvalue"] <= fam["alpha"])
+              for d in fam["tests"].values()))
+    p = {f"t{k}": x for k, x in enumerate(rng.uniform(0, 0.02, 12) ** 2)}
+    adj = bikappa_validate._holm_adjusted(p)
+    for alpha in (1e-4, 1e-3, 1e-2):
+        stepdown, still = {}, True
+        for i, (name, x) in enumerate(sorted(p.items(), key=lambda kv: kv[1])):
+            still = still and x <= alpha / (len(p) - i)
+            stepdown[name] = still
+        check(f"adjusted p-values reproduce the step-down at alpha = {alpha:g}",
+              all(stepdown[k] == (adj[k] <= alpha) for k in p))
+
+
+def command_line(rng, check):
+    print("command line")
+    n = 20_000
+    v = draw(n, 2.0, 1.0, 2.0, rng)
+    params = ["--kappa", "2", "--theta-perp", "1", "--theta-par", "2"]
+
+    def run(argv):
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            try:
+                code = bikappa_validate.main(argv)
+            except SystemExit as exc:          # argparse usage errors
+                code = exc.code
+        return code, out.getvalue(), err.getvalue()
+
+    with tempfile.TemporaryDirectory() as tmp:
+        def path(name):
+            return os.path.join(tmp, name)
+
+        np.savetxt(path("s.txt"), v, fmt="%.17g")
+        np.savetxt(path("s.dat"), v, fmt="%.17g", header="vx vy vz", comments="")
+        np.savetxt(path("s.csv"), v, fmt="%.17g", delimiter=",", header="vx,vy,vz",
+                   comments="")
+        np.savetxt(path("commented.txt"), v, fmt="%.17g", header="written by a test")
+        np.save(path("s.npy"), v)
+        v.tofile(path("s.bin"))
+        v.tofile(path("s.raw"))
+        v.ravel()[:-1].tofile(path("short.bin"))
+        np.savetxt(path("two.txt"), v[:, :2])
+        np.savetxt(path("small.txt"), v[:MIN_SAMPLES - 1])
+        with open(path("broken.txt"), "w") as fh:
+            fh.write("1 2 3\n4 5 6\n7 x 9\n")
+        open(path("empty.txt"), "w").close()
+
+        for name, extra in (("s.txt", []), ("s.dat", []), ("s.csv", []),
+                            ("commented.txt", []), ("s.npy", []), ("s.bin", []),
+                            ("s.raw", ["--binary"])):
+            code, out, err = run([path(name)] + params + extra)
+            check(" ".join(["correct sample in", name] + extra + ["exits 0"]),
+                  code == 0 and "overall: PASS" in out, f"exit {code}, stderr {err!r}")
+        code, _, err = run([path("s.dat")] + params)
+        check("a header line in a text .dat file is skipped with a note",
+              "skipped the header line 'vx vy vz'" in err)
+
+        code, out, _ = run([path("s.txt"), "--kappa", "1", "--theta-perp", "1",
+                            "--theta-par", "2"])
+        check("wrong kappa exits 1", code == 1 and "overall: FAIL" in out, f"exit {code}")
+
+        code, out, _ = run([path("s.txt"), "--json"] + params)
+        check("--json prints the report as JSON",
+              code == 0 and '"holm_adjusted_pvalue"' in out)
+
+        for argv, why in (
+            ([path("two.txt")] + params, "two-column file"),
+            ([path("small.txt")] + params, f"fewer than {MIN_SAMPLES} draws"),
+            ([path("broken.txt")] + params, "non-numeric line after the first"),
+            ([path("empty.txt")] + params, "empty file"),
+            ([path("short.bin")] + params, "raw file of the wrong length"),
+            ([path("missing.txt")] + params, "missing file"),
+            ([path("s.txt")] + params + ["--alpha", "5"], "alpha = 5"),
+            ([path("s.txt"), "--kappa", "0.5", "--theta-perp", "1", "--theta-par", "2"],
+             "kappa = 1/2"),
+            ([path("s.txt"), "--kappa", "nan", "--theta-perp", "1", "--theta-par", "2"],
+             "kappa = nan"),
+            ([path("s.txt"), "--kappa", "2", "--theta-perp", "-1", "--theta-par", "2"],
+             "negative theta_perp"),
+            ([path("s.txt"), "--kappa", "2", "--theta-perp", "1", "--theta-par", "inf"],
+             "infinite theta_par"),
+            ([path("s.txt")] + params + ["--bhat", "0", "0", "0"], "zero bhat"),
+            ([path("s.txt")] + params + ["--attempts", str(n - 1)], "attempts < N"),
+        ):
+            code, out, err = run(argv)
+            lines = err.strip().splitlines()
+            check(f"{why} exits 2 with a one-line message",
+                  code == 2 and out == "" and len(lines) == 1
+                  and lines[0].startswith("bikappa_validate.py: error:"),
+                  f"exit {code}, stderr {err.strip()!r}")
+
+        code, _, _ = run([path("s.txt"), "--theta-perp", "1", "--theta-par", "2"])
+        check("a missing required option exits 2", code == 2, f"exit {code}")
+
+
+SECTIONS = (positive_control, rotated_frame, negative_controls, bound_accounting,
+            input_contract, report_rendering, command_line)
+
+
+def run_section(section) -> list:
+    check = Checks()
+    section(np.random.default_rng([SEED, SECTIONS.index(section)]), check)
+    return check.failures
+
+
+# pytest entry points, one per section
+def test_positive_control():
+    assert not run_section(positive_control)
+
+
+def test_rotated_frame():
+    assert not run_section(rotated_frame)
+
+
+def test_negative_controls():
+    assert not run_section(negative_controls)
+
+
+def test_bound_accounting():
+    assert not run_section(bound_accounting)
+
+
+def test_input_contract():
+    assert not run_section(input_contract)
+
+
+def test_report_rendering():
+    assert not run_section(report_rendering)
+
+
+def test_command_line():
+    assert not run_section(command_line)
+
+
+def main() -> int:
+    failures = []
+    for section in SECTIONS:
+        failures += run_section(section)
     print()
     if failures:
         print(f"FAILED: {len(failures)} check(s): {failures}")
