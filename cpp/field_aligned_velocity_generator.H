@@ -38,10 +38,13 @@
 template <typename RealType= double> class field_aligned_velocity_generator
 {
   public:
-    using result_type= std::array<RealType, 3>;
-    using point_type= result_type;
+    using result_type= std::array<RealType, 3>;   ///< A velocity {vx, vy, vz}.
+    using point_type= result_type;                  ///< Same as result_type.
+    /// The type of the density g(w) passed to define().
     using speed_sq_pdf_function= std::function<RealType(RealType)>;
 
+    /// Construct an undefined generator; call define() before drawing.  The internal engine
+    /// is seeded from `std::random_device`.
     field_aligned_velocity_generator()
         : m_speedSqPdf(), m_speedSqMin(RealType(0.0)), m_speedSqMax(RealType(1.0)),
           m_thetaPerp(RealType(1.0)),
@@ -54,6 +57,7 @@ template <typename RealType= double> class field_aligned_velocity_generator
     {
     }
 
+    /// Construct and call define() with these arguments.
     field_aligned_velocity_generator(speed_sq_pdf_function speed_sq_pdf, RealType speed_sq_min,
                                      RealType speed_sq_max, RealType theta_perp, point_type ub,
                                      int parallel_sign, int probe_points= 1024,
@@ -83,14 +87,18 @@ template <typename RealType= double> class field_aligned_velocity_generator
      *                Each is N(0, theta_perp^2/2), the same convention as
      *                bi_maxwellian_distribution.
      * @param ub      Magnetic-field direction {bx,by,bz}.  Need not be normalized;
-     *                must be non-zero.
+     *                must be non-zero, with a length above about 1.5e-8 in `double`
+     *                (3.5e-4 in `float`); see \ref params_ub.
      * @param parallel_sign  Exactly +1 (parallel component along @p ub) or -1
      *                (opposite).  This makes the result **one-sided**: every sample
      *                streams the same way along the field, which is what you want
      *                for a beam and not what you want for a symmetric population.
      *                For the symmetric case draw the sign yourself, or use
      *                bi_maxwellian_distribution / bi_kappa_distribution.
-     * @param probe_points  Envelope-estimation grid; see \ref params_rejection for
+     * @param probe_points  Number of evenly spaced points, from @p speed_sq_min to
+     *                @p speed_sq_max inclusive, at which g is evaluated once, here, to
+     *                estimate its maximum; the largest value plus a 5% margin is the
+     *                rejection envelope (pdfUpperBound()).  See \ref params_rejection for
      *                the silent-bias failure mode.  Must be >= 64.
      * @param max_reject_tries  Candidate draws per sample before operator() throws.
      *                Must be > 0.
@@ -99,9 +107,11 @@ template <typename RealType= double> class field_aligned_velocity_generator
      *                Default 20, as in bi_maxwellian_distribution; no_cap() removes it.
      *                Must be > 0.
      *
-     * @throws std::invalid_argument on a null callable, a bad range, a non-positive
-     *         @p theta_perp, a zero @p ub, a @p parallel_sign other than ±1,
-     *         @p probe_points < 64, or a non-positive @p max_reject_tries or cap.
+     * @throws std::invalid_argument on a null callable, a bad range, a zero or negative
+     *         @p theta_perp, a @p ub shorter than the limit above, a @p parallel_sign
+     *         other than +1 or -1, @p probe_points < 64, a non-positive
+     *         @p max_reject_tries or cap, or a g that is nowhere positive in range.  A NaN
+     *         or infinite @p theta_perp and a @p ub with a NaN component are not rejected.
      *
      * @see \ref parameters for the full table, \ref usage_field_aligned for a recipe.
      */
@@ -195,6 +205,8 @@ template <typename RealType= double> class field_aligned_velocity_generator
         reset();
     }
 
+    /// Discard any state cached by the internal distributions, including the second normal
+    /// variate of `std::normal_distribution`.  Called by seed() and define().
     void reset()
     {
         m_distSpeedSq.reset();
@@ -202,6 +214,10 @@ template <typename RealType= double> class field_aligned_velocity_generator
         m_standardNormal.reset();
     }
 
+    /// Draw one velocity from the engine @p gen instead of the internal one.
+    /// @return {vx, vy, vz} in the global frame.
+    /// @throws std::runtime_error if called before define(), if `max_reject_tries` is
+    ///         exhausted, or if g returns a negative or non-finite value.
     template <typename GeneratorType> point_type operator()(GeneratorType &gen)
     {
         if (!m_isDefined)
@@ -241,24 +257,29 @@ template <typename RealType= double> class field_aligned_velocity_generator
         return rotate_from_fieldAligned_frame(local, m_ub);
     }
 
+    /// Draw one velocity from the internal engine; throws as operator()(gen) does.
     point_type operator()()
     {
         return (*this)(m_gen);
     }
 
-    RealType parallelSpeedSqMin() const { return m_speedSqMin; }
-    RealType parallelSpeedSqMax() const { return m_speedSqMax; }
-    RealType thetaPerp() const { return m_thetaPerp; }
-    point_type ub() const { return m_ub; }
-    RealType parallelSign() const { return m_parallelSign; }
+    RealType parallelSpeedSqMin() const { return m_speedSqMin; }   ///< Lower end of the sampled v_par^2.
+    RealType parallelSpeedSqMax() const { return m_speedSqMax; }   ///< Upper end of the sampled v_par^2.
+    RealType thetaPerp() const { return m_thetaPerp; }             ///< Perpendicular thermal speed.
+    point_type ub() const { return m_ub; }                         ///< Field direction, as given.
+    RealType parallelSign() const { return m_parallelSign; }       ///< +1 or -1, as a RealType.
+    /// Cap on each perpendicular component, in units of theta_perp; +infinity for no_cap().
     RealType max_normalized_velocity() const { return m_maxNormalizedVelocity; }
+    /// The rejection envelope: the largest probed value of g times 1.05, or 0 when
+    /// speed_sq_min == speed_sq_max.  Raise `probe_points` until this stops increasing.
     RealType pdfUpperBound() const { return m_pdfUpperBound; }
 
     // ====================================================================
     // Geometry helper
     // ====================================================================
-    // Transform local velocity components (perp1, perp2, par) to global
-    // Cartesian coordinates given the parallel direction ub.
+    /// Rotate @p local = {v_perp1, v_perp2, v_par} from field-aligned components to the
+    /// global frame, for the field direction @p ub.  Throws std::invalid_argument if @p ub
+    /// is numerically zero.
     point_type rotate_from_fieldAligned_frame(const point_type &local, const point_type &ub) const
     {
         const RealType kZero= RealType(0.0);

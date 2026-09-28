@@ -26,10 +26,13 @@
 template <typename RealType= double> class general_position_generator
 {
   public:
-    using result_type= std::vector<RealType>;
-    using point_type= result_type;
+    using result_type= std::vector<RealType>;   ///< A position, of length dimension().
+    using point_type= result_type;                ///< Same as result_type.
+    /// The type of the density rho(x) passed to define().
     using density_function= std::function<RealType(const point_type &)>;
 
+    /// Construct an undefined generator; call define() before drawing.  The internal engine
+    /// is seeded from `std::random_device`.
     general_position_generator()
         : m_dimension(0), m_lowerBounds(), m_upperBounds(), m_rangeWidths(), m_densityFunction(),
           m_maxRejectTries(200000), m_densityUpperBound(RealType(0.0)), m_isDefined(false),
@@ -38,6 +41,7 @@ template <typename RealType= double> class general_position_generator
     {
     }
 
+    /// Construct and call define() with these arguments.
     general_position_generator(int dimension, const point_type &lower_bounds,
                                const point_type &upper_bounds, density_function density_function,
                                int probe_points= 4096, int max_reject_tries= 200000)
@@ -59,10 +63,14 @@ template <typename RealType= double> class general_position_generator
      * @param density_function  Your rho(x), taking a std::vector<RealType> of
      *                length @p dimension.  Need not be normalized; must be finite,
      *                non-negative, and positive somewhere in the box.
-     * @param probe_points  Grid points used once to estimate max rho, which becomes
-     *                the rejection envelope.  A density with a spike narrow enough
-     *                to fall between probes yields a **silently wrong** sample --
-     *                see \ref params_rejection.  Must be > 0.
+     * @param probe_points  Number of points at which rho is evaluated once, here, to
+     *                estimate its maximum.  The points are uniformly random in the box,
+     *                drawn from a separate engine with a fixed seed, so they do not depend
+     *                on seed() and are the same for every call with the same box.  The
+     *                largest value found, plus a 5% margin, is the rejection envelope
+     *                (densityUpperBound()).  A density with a spike narrow enough to fall
+     *                between probes yields a **silently wrong** sample -- see
+     *                \ref params_rejection.  Must be > 0.
      * @param max_reject_tries  Candidate draws per sample before operator() throws.
      *                Must be > 0.  A density concentrated in a small corner of a
      *                large box exhausts this; shrink the box instead.
@@ -152,17 +160,24 @@ template <typename RealType= double> class general_position_generator
         reset();
     }
 
+    /// Discard any state cached by the internal uniform distributions.  Called by seed()
+    /// and define().
     void reset()
     {
         m_distAccept.reset();
         m_distUnit.reset();
     }
 
-    int dimension() const { return m_dimension; }
-    const point_type &lowerBounds() const { return m_lowerBounds; }
-    const point_type &upperBounds() const { return m_upperBounds; }
+    int dimension() const { return m_dimension; }                       ///< 1, 2 or 3; 0 before define().
+    const point_type &lowerBounds() const { return m_lowerBounds; }     ///< Lower corner of the box.
+    const point_type &upperBounds() const { return m_upperBounds; }     ///< Upper corner of the box.
+    /// The rejection envelope: the largest probed value of rho times 1.05.  Raise
+    /// `probe_points` until this stops increasing; see \ref params_rejection.
     RealType densityUpperBound() const { return m_densityUpperBound; }
 
+    /// Draw one position from the engine @p gen instead of the internal one.
+    /// @throws std::runtime_error if called before define(), if `max_reject_tries` is
+    ///         exhausted, or if rho returns a negative or non-finite value.
     template <typename GeneratorType> point_type operator()(GeneratorType &gen) const
     {
         if (!m_isDefined)
@@ -187,6 +202,7 @@ template <typename RealType= double> class general_position_generator
                                  "sampling exceeded max_reject_tries");
     }
 
+    /// Draw one position from the internal engine; throws as operator()(gen) does.
     point_type operator()() const
     {
         return (*this)(m_gen);

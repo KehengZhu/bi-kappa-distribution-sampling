@@ -337,7 +337,7 @@ struct test_all_ones_engine
 
 // ================================================================
 // test_transform
-// Rotation-frame consistency tests (previously in main.cpp).
+// Rotation-frame consistency tests.
 // ================================================================
 static int test_transform()
 {
@@ -741,8 +741,8 @@ static int test_define_general_velocity()
                   << (ok ? "PASS" : "FAIL") << std::endl;
     }
 
-    // D6: probe_points below 64 throws, and so does a pre-2.0 call
-    // define(f, E_min, E_max, mass) whose mass lands in probe_points
+    // D6: probe_points below 64 throws, and so does a call written for the 1.0.0
+    // interface define(f, E_min, E_max, mass) whose mass, below 64, lands in probe_points
     {
         int threw= 0;
         try { general_velocity_generator<TestReal> vgen;
@@ -1581,22 +1581,14 @@ static int test_define_field_aligned()
 // where the final radius R is comfortably representable.  Taking the roots first
 // halves the exponent before the division and keeps those draws.
 //
-// Measured effect (an earlier finite-precision study, 5e6 draws per configuration,
-// identical variates through both formations, libc++ and libstdc++ agreeing to
-// within seed noise):
-//
-//     float,  kappa = 0.55   loss 1.22e-2 -> 5.7e-3   (fix recovers 6.5e-3)
-//     float,  kappa = 0.60   loss 1.5e-4  -> 2.9e-5   (about 5x)
-//     double, kappa = 0.51   loss 8.2e-4  -> 5.7e-4
-//
 // A1 is a direct, deterministic check of the overflow mechanism itself; A2 and A3
-// guard the released sampler at the two ends of the range.
+// check the sampler at the two ends of the range.
 //
-// Since 2.0.0 the sampler does not form X2 at all -- it carries log X2 and log R --
-// so A1 and A4 now describe a formation the released class no longer uses, and what
-// A2 and A3 measure is the representability floor of the type rather than the
-// avoidable loss of an intermediate.  test_log_radius_finiteness below covers the
-// log-domain sampler against that floor directly.
+// The sampler does not form X2 at all -- it carries log X2 and log R -- so A1 and A4
+// describe a formation the class does not use, and what A2 and A3 measure is the
+// representability floor of the type rather than the avoidable loss of an
+// intermediate.  test_log_radius_finiteness below covers the log-domain sampler
+// against that floor directly.
 // ================================================================
 static int test_radius_formation()
 {
@@ -1621,10 +1613,9 @@ static int test_radius_formation()
                   << (ok ? "PASS" : "FAIL") << std::endl;
     }
 
-    // ---- A2: the released sampler is clean in double at kappa >= 0.55 ----
-    // The finite-precision study measured exactly zero non-finite draws over 5e6
-    // draws per configuration for double at every kappa >= 0.55, on both standard
-    // libraries.  Any regression here means the formation was changed back.
+    // ---- A2: the sampler returns no non-finite draw in double at kappa = 0.55 ----
+    // The analytic probability of a draw beyond DBL_MAX is about 1.5e-31 here (see N3),
+    // so a non-finite draw means an intermediate of the radius overflowed or underflowed.
     {
         const int n= 200000;
         int nonfinite= 0;
@@ -1644,14 +1635,9 @@ static int test_radius_formation()
     }
 
     // ---- A3: float at kappa = 0.6 sits on the representability floor -----
-    // This check used to compare the measured fraction against a constant chosen
-    // to sit between two measured values.  That constant carried no information
-    // about what the fraction should be, and it stopped describing the sampler
-    // once the radius moved into the log domain: the loss is now set by the
-    // largest finite float rather than by an intermediate that underflows, and
-    // the two formations no longer differ by the factor the constant encoded.
-    // The criterion is now the analytic floor at this configuration, tested with
-    // an exact two-sided binomial interval at a stated level.
+    // The loss is set by the largest finite float, not by an intermediate that
+    // underflows.  The criterion is the analytic floor at this configuration, tested
+    // with an exact two-sided binomial interval at a stated level.
     {
         const long long n= 500000;
         const double alpha= 1.0e-3;
@@ -1804,8 +1790,7 @@ static int test_no_cap_semantics()
     }
 
     // ---- B5: the DEFAULT cap is 20, on every construction path -----------
-    // Release 1.0.0 capped at 20 thermal speeds when the argument was omitted, and
-    // code written against it must keep sampling the same distribution.
+    // An omitted cap means 20 thermal speeds on every construction path, as documented.
     {
         bi_kappa_distribution<double> dflt;                          // default ctor
         bi_kappa_distribution<double> ctor(2.0, 1.0, 2.0);           // value ctor
@@ -1871,9 +1856,8 @@ static int test_no_cap_semantics()
 
     // ---- B8: the two target laws are measurably different ------------------
     // Guards against a future "simplification" that quietly makes the cap a
-    // no-op.  At kappa = 0.75, lambda = 3 the cap rejects ~55% of attempts
-    // (experiments/exp2_cap_characterization), so the capped sample's spread must be
-    // visibly smaller.
+    // no-op.  At kappa = 0.75, lambda = 3 the cap rejects about 55% of attempts, so the
+    // capped sample's spread must be visibly smaller.
     {
         const int n= 50000;
         const double kappa= 0.75, lambda= 3.0;
@@ -1916,8 +1900,7 @@ static int test_no_cap_semantics()
 // get the distribution the class is named after, on either sampler.
 //
 // The box here is deliberately tight (1 thermal speed).  Gaussian tails are so
-// thin that a realistic cap is never exercised by a finite sample, which is
-// exactly why the old truncating default went unnoticed.
+// thin that a realistic cap is almost never exercised by a finite sample.
 // ================================================================
 static int test_no_cap_semantics_bimaxwellian()
 {
@@ -2036,8 +2019,8 @@ static int test_no_cap_semantics_bimaxwellian()
 
     // ---- M6b: seed(s) after n draws reproduces the stream of a fresh seed(s) ----
     // std::normal_distribution caches the second variate of each pair and a sample uses
-    // three, so before seed() also called reset() an odd number of earlier draws left a
-    // stale variate that shifted the reseeded stream.
+    // three, so unless seed() also calls reset(), an odd number of earlier draws leaves a
+    // stale variate that shifts the reseeded stream.
     {
         bool ok= true;
         BM fresh(1.0, 2.0);
@@ -2319,8 +2302,8 @@ static int test_log_radius_primitive()
 // ================================================================
 
 /// 16 draws at kappa = 2, theta_perp = 1, theta_par = 2, ub = {0,0,1}, seed 20030410,
-/// as exact bit patterns.  ONE array serves both standard libraries: since 2.0.0 the
-/// Gamma, normal and uniform primitives live in the header, so the sampled sequence
+/// as exact bit patterns.  ONE array serves both standard libraries: the Gamma, normal
+/// and uniform primitives live in the header, so the sampled sequence
 /// is a function of the engine alone.  That equality is not background to this test,
 /// it is the assertion -- a libstdc++ build that disagreed with the array its build
 /// selects would mean the stream had become a property of the standard library
@@ -2540,7 +2523,7 @@ static int test_log_radius_no_regression()
 // above, tested with an exact binomial interval, not a bound on "small".
 // ================================================================
 
-/// Non-finite count over @p n uncapped draws of the released sampler, isotropic and
+/// Non-finite count over @p n uncapped draws of the sampler, isotropic and
 /// unrotated so that the analytic floor applies directly.
 template <typename RealType>
 static long long test_count_nonfinite(double kappa, double theta, int seed, long long n)
@@ -2622,9 +2605,8 @@ static int test_log_radius_finiteness()
                   << std::endl;
     }
 
-    // ---- N4: the previous formation loses strictly more ---------------------
-    // Reproduced inline rather than by vendoring the 1.0.0 header, because cpp/ must
-    // not depend on experiments/.  X2 ~ Gamma(a,1) is materialized and underflows to
+    // ---- N4: forming X2 directly loses strictly more ------------------------
+    // The direct formation is written inline.  X2 ~ Gamma(a,1) is materialized and underflows to
     // exactly zero for a = 0.005, which no rearrangement of sqrt(X1)/sqrt(X2) can
     // survive; the log path never forms it.
     {
@@ -2798,10 +2780,9 @@ static int test_seed_reset_contract()
     std::cout << "\n--- test_seed_reset_contract ---" << std::endl;
 
     // ---- P1: seed(s) restarts the stream for every length -------------------
-    // seed() now calls reset(), which discards the cached second polar-normal
-    // variate.  Without that the second run opens with a variate belonging to the
-    // first, so the two agree only when the draw count leaves the cache empty.
-    // Before the fix this FAILED under libstdc++ for every odd n.
+    // seed() calls reset(), which discards the cached second polar-normal variate.
+    // Without that the second run would open with a variate belonging to the first, and
+    // the two would agree only when the draw count leaves the cache empty.
     {
         bool ok= true;
         int first_bad= 0;
@@ -2821,8 +2802,8 @@ static int test_seed_reset_contract()
             }
         }
         all_ok= all_ok && ok;
-        std::cout << "  P1 seed(s) then n draws reproduces bitwise for n = 1..8; before"
-                     " seed() called reset() this FAILED under libstdc++ for every odd n";
+        std::cout << "  P1 seed(s) then n draws reproduces bitwise for n = 1..8 (seed() "
+                     "discards the cached normal variate)";
         if (!ok)
             std::cout << " (first n that still fails: " << first_bad << ")";
         std::cout << ": " << (ok ? "PASS" : "FAIL") << std::endl;
@@ -3042,9 +3023,8 @@ static int test_log_rotation_stability()
 
             // Predict from the rule the loader implements: materialize each component and
             // ask whether it is finite.  Predicting from `log R + log|g_j| >= log(max())`
-            // instead -- as this test did before 2.1.0 -- is predicting from a previous
-            // rule, and the two disagree exactly at the boundary, which is the only place
-            // this check has anything to say.
+            // instead would disagree exactly at the boundary, which is the only place this
+            // check has anything to say.
             bool predicted_finite= true;
             {
                 const double r_try= std::exp(d.log_r);
@@ -3187,25 +3167,22 @@ static int test_log_rotation_stability()
 // ================================================================
 // test_representability_boundary
 //
-// Deterministic fixtures at the representability boundary, built from the failure
-// preserved in experiments/exp4_finite_precision/raw/oracle_disagreements.jsonl and from
-// the neighbourhood of that boundary in both precisions.
+// Deterministic fixtures at the representability boundary, in both precisions.  F1 is
+// a float draw whose `log R` equals `log(FLT_MAX)` bit for bit; the others are its
+// neighbourhood and a few general cases.
 //
-// The defect these lock down.  Before the fix, the loader decided representability by
-// comparing a logarithm, `log R` or `log R + log|g_j|`, against `log(max())`.  That
-// comparison cannot be made to agree with the arithmetic it predicts, because
-// `log(max())` is itself a rounded value and may sit on either side of the true
-// logarithm of the largest finite number.  On this libm it sits ABOVE in `float`:
-// `exp(log(FLT_MAX))` is exactly `+inf`, while in `double` `exp(log(DBL_MAX))` is
-// finite.  A `float` draw whose `log R` equalled `log(FLT_MAX)` bit for bit therefore
-// passed the test, was exponentiated to `+inf`, and was returned as
-// `(-inf, +inf, +inf)` -- with `n_nonfinite()` never incremented, because the branch
-// that produced it did not look at what it had produced.  All three components were
-// representable: the largest was 1.92e38 against a limit of 3.40e38, a margin of 0.571
-// natural-log units, because every `|g_j|` is below one and pulls the product back
-// under the limit.
+// What they check.  A loader could decide representability by comparing a logarithm,
+// `log R` or `log R + log|g_j|`, against `log(max())`.  That comparison cannot be made
+// to agree with the arithmetic it predicts, because `log(max())` is itself a rounded
+// value and may sit on either side of the true logarithm of the largest finite number.
+// With common math libraries it sits ABOVE in `float`: `exp(log(FLT_MAX))` is `+inf`,
+// while in `double` `exp(log(DBL_MAX))` is finite.  For F1 a logarithmic test passes,
+// `exp(log R)` is `+inf`, and the draw would be returned as `(-inf, +inf, +inf)` without
+// being counted, although all three components are representable: the largest is
+// 1.92e38 against a limit of 3.40e38, a margin of 0.571 natural-log units, because
+// every `|g_j|` is below one and pulls the product back under the limit.
 //
-// The corrected loader never consults a logarithm to make this decision.  It
+// The loader never consults a logarithm to make this decision.  It
 // materializes each component and compares the component with `max()`, so the test and
 // the result agree by construction, in either precision and whichever way the library's
 // `log` and `exp` round.
@@ -3227,7 +3204,7 @@ template <typename T> struct BoundaryFixture
 
 #define INFV (std::numeric_limits<float>::infinity())
 static const BoundaryFixture<float> kFloatBoundaryFixtures[]= {
-    {"F1_preserved_failure", 88.72284f,
+    {"F1_log_r_equals_log_flt_max", 88.72284f,
      {-0.41668004f, 0.13217956f, 0.56471795f},
      {-1.417889e+38f, 4.4978383e+37f, 1.921636e+38f},
      {true, true, true}, false},
@@ -3302,12 +3279,11 @@ static const BoundaryFixture<double> kDoubleBoundaryFixtures[]= {
 };
 #undef INFV
 
-/// The previous step 5, kept verbatim so the regression can show it failing.  This is
-/// the code that shipped in 2.0.0: the radius is called representable when its LOGARITHM
-/// is at most log(max()), and the fast path then multiplies without looking at what it
-/// produced.
+/// A logarithmic representability test, kept so the fixtures can show that they detect
+/// its error: the radius is called representable when its LOGARITHM is at most
+/// log(max()), and the fast path then multiplies without looking at what it produced.
 template <typename T>
-static bool test_previous_step5(T log_r, const T g[3], T out[3])
+static bool test_log_domain_step5(T log_r, const T g[3], T out[3])
 {
     const T log_max= std::log(std::numeric_limits<T>::max());
     const T log_g_bound= std::log(std::max(std::max(std::abs(g[0]), std::abs(g[1])),
@@ -3352,10 +3328,10 @@ template <typename T> static double test_component_tolerance(T log_r, T g)
 
 template <typename T>
 static bool test_boundary_fixtures(const BoundaryFixture<T> *fx, int n, const char *label,
-                                   bool expect_previous_to_fail)
+                                   bool expect_log_test_to_fail)
 {
     bool all_ok= true;
-    int previous_failures= 0;
+    int log_test_failures= 0;
     double worst_rel= 0.0;
     for (int i= 0; i < n; ++i)
     {
@@ -3405,9 +3381,9 @@ static bool test_boundary_fixtures(const BoundaryFixture<T> *fx, int n, const ch
         if (any != any_nonfinite)
             ok= false;
 
-        // 5. the previous predicate, on the same fixture
+        // 5. the logarithmic test, on the same fixture
         T old_out[3];
-        const bool old_any= test_previous_step5<T>(f.log_r, f.g, old_out);
+        const bool old_any= test_log_domain_step5<T>(f.log_r, f.g, old_out);
         bool old_matches= (old_any == f.any_overflow);
         for (int j= 0; j < 3; ++j)
         {
@@ -3417,21 +3393,21 @@ static bool test_boundary_fixtures(const BoundaryFixture<T> *fx, int n, const ch
                 old_matches= false;
         }
         if (!old_matches)
-            ++previous_failures;
+            ++log_test_failures;
 
         all_ok= all_ok && ok;
-        std::cout << "  " << label << " " << f.name << ": corrected "
-                  << (ok ? "PASS" : "FAIL") << ", previous form "
-                  << (old_matches ? "agrees" : "DISAGREES with the 100-digit value")
-                  << std::endl;
+        std::cout << "  " << label << " " << f.name << ": "
+                  << (ok ? "PASS" : "FAIL") << " (a logarithmic test "
+                  << (old_matches ? "agrees" : "disagrees with the 100-digit value")
+                  << ")" << std::endl;
     }
     std::cout << "  " << label << ": worst relative deviation from the 100-digit value "
-              << worst_rel << "; the previous form misclassified " << previous_failures
+              << worst_rel << "; a logarithmic test misclassifies " << log_test_failures
               << " of " << n << " fixtures" << std::endl;
-    if (expect_previous_to_fail && previous_failures == 0)
+    if (expect_log_test_to_fail && log_test_failures == 0)
     {
-        std::cout << "  " << label << ": the regression has no teeth -- the previous form "
-                     "passes every fixture: FAIL" << std::endl;
+        std::cout << "  " << label << ": the fixtures do not detect the error of a "
+                     "logarithmic test: FAIL" << std::endl;
         all_ok= false;
     }
     return all_ok;
@@ -3442,9 +3418,9 @@ static int test_representability_boundary()
     bool all_ok= true;
     std::cout << "\n--- test_representability_boundary ---" << std::endl;
 
-    // S1/S2: the fixtures.  `float` is where this libm's log(max()) rounds up, so the
-    // previous form is required to fail there; `double` rounds the other way on this
-    // host, so it is not required to fail and the fixtures assert the contract only.
+    // S1/S2: the fixtures.  `float` is where log(max()) rounds up, so the logarithmic
+    // test is required to fail there; in `double` it rounds the other way on common
+    // libraries, so it is not required to fail and the fixtures assert the contract only.
     all_ok&= test_boundary_fixtures<float>(
         kFloatBoundaryFixtures,
         int(sizeof(kFloatBoundaryFixtures) / sizeof(kFloatBoundaryFixtures[0])), "S1 float",
@@ -3455,8 +3431,8 @@ static int test_representability_boundary()
         "S2 double", false);
 
     // S3: the whole class, uncapped, at a configuration that reaches the boundary often.
-    // n_nonfinite() must equal the number of non-finite returns exactly -- the count the
-    // previous fast path could not keep, because it never looked.
+    // n_nonfinite() must equal the number of non-finite returns exactly -- a count a
+    // fast path that multiplies without checking its result could not keep.
     {
         const long long n= 4000000;
         bi_kappa_distribution<float> dist;
@@ -3484,8 +3460,8 @@ static int test_representability_boundary()
     // S4: the capped counter counts the representability of the VELOCITY, not of the
     // normalized coordinate.  With theta_par/theta_perp = 8 the two differ by a factor of
     // eight, i.e. 2.08 natural-log units, so a draw can be unrepresentable while its
-    // normalized coordinate is not.  The released 2.0.0 form tested the normalized
-    // coordinate and undercounted; the corrected form materializes the velocity.
+    // normalized coordinate is not.  Testing the normalized coordinate would undercount;
+    // the sampler materializes the velocity.
     //
     // The check is an identity rather than a rate: every rejected attempt is re-derived
     // here from the same log-domain quantities the sampler used, and the two counts must
@@ -3519,7 +3495,7 @@ static int test_representability_boundary()
 
     // S5: a draw near the float overflow threshold, replayed from its recorded variates.
     //
-    // At `float kappa = 0.505`, seed 8005, attempt 157855 of an earlier run, the largest
+    // At `float kappa = 0.505`, seed 8005, attempt 157855, the largest
     // intended component lies 3.12e-08 natural-log units below the float overflow threshold
     // (FLT_MAX plus half an ulp), so its correctly rounded `float` is FLT_MAX.  The `float`
     // log radius carries about 3.5e-06 of error once `log U` has been divided by

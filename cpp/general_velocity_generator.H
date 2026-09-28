@@ -30,10 +30,13 @@
 template <typename RealType= double> class general_velocity_generator
 {
   public:
-    using result_type= std::array<RealType, 3>;
-    using point_type= result_type;
+    using result_type= std::array<RealType, 3>;   ///< A velocity {vx, vy, vz}.
+    using point_type= result_type;                  ///< Same as result_type.
+    /// The type of the density g(w) passed to define().
     using speed_sq_pdf_function= std::function<RealType(RealType)>;
 
+    /// Construct an undefined generator; call define() before drawing.  The internal engine
+    /// is seeded from `std::random_device`.
     general_velocity_generator()
         : m_speedSqPdf(), m_speedSqMin(RealType(0.0)), m_speedSqMax(RealType(1.0)),
           m_maxRejectTries(100000),
@@ -44,6 +47,7 @@ template <typename RealType= double> class general_velocity_generator
     {
     }
 
+    /// Construct and call define() with these arguments.
     general_velocity_generator(speed_sq_pdf_function speed_sq_pdf, RealType speed_sq_min,
                                RealType speed_sq_max, int probe_points= 1024,
                                int max_reject_tries= 100000)
@@ -67,8 +71,10 @@ template <typename RealType= double> class general_velocity_generator
      *                produced, so choose it to cover the tail you care about.  If it
      *                equals @p speed_sq_min, every sample has the speed
      *                sqrt(speed_sq_min) and @p speed_sq_pdf is not evaluated.
-     * @param probe_points  Grid points used once to estimate max g(w), which
-     *                becomes the rejection envelope (plus a 5% margin).  If g has
+     * @param probe_points  Number of evenly spaced points, from @p speed_sq_min to
+     *                @p speed_sq_max inclusive, at which g is evaluated once, here, to
+     *                estimate its maximum.  The largest value, plus a 5% margin, is the
+     *                rejection envelope (pdfUpperBound()).  If g has
      *                a peak narrow enough to fall between probes, the envelope is
      *                too low and the sampled distribution is **silently wrong**;
      *                raise this until pdfUpperBound() stops increasing.  Must be >= 64.
@@ -104,8 +110,9 @@ template <typename RealType= double> class general_velocity_generator
         if (probe_points < kMinProbePoints)
         {
             // An envelope estimated from a handful of probes can miss the peak of g and
-            // bias the samples silently.  The floor also rejects a pre-2.0 call
-            // define(f, E_min, E_max, mass), whose mass would land here.
+            // bias the samples silently.  The floor also rejects a call written for the
+            // 1.0.0 interface define(f, E_min, E_max, mass) whose mass, landing here, is
+            // below 64.
             throw std::invalid_argument("probe_points must be at least 64");
         }
         if (max_reject_tries <= 0)
@@ -155,6 +162,8 @@ template <typename RealType= double> class general_velocity_generator
         reset();
     }
 
+    /// Discard any state cached by the internal distributions.  Called by seed() and
+    /// define().
     void reset()
     {
         m_distSpeedSq.reset();
@@ -163,6 +172,10 @@ template <typename RealType= double> class general_velocity_generator
         m_distPhi.reset();
     }
 
+    /// Draw one velocity from the engine @p gen instead of the internal one.
+    /// @return {vx, vy, vz}, with speed sqrt(w) and an isotropic direction.
+    /// @throws std::runtime_error if called before define(), if `max_reject_tries` is
+    ///         exhausted, or if g returns a negative or non-finite value.
     template <typename GeneratorType> point_type operator()(GeneratorType &gen)
     {
         if (!m_isDefined)
@@ -190,13 +203,16 @@ template <typename RealType= double> class general_velocity_generator
         return point;
     }
 
+    /// Draw one velocity from the internal engine; throws as operator()(gen) does.
     point_type operator()()
     {
         return (*this)(m_gen);
     }
 
-    RealType speedSqMin() const { return m_speedSqMin; }
-    RealType speedSqMax() const { return m_speedSqMax; }
+    RealType speedSqMin() const { return m_speedSqMin; }   ///< Lower end of the sampled w.
+    RealType speedSqMax() const { return m_speedSqMax; }   ///< Upper end of the sampled w.
+    /// The rejection envelope: the largest probed value of g times 1.05, or 0 when
+    /// speed_sq_min == speed_sq_max.  Raise `probe_points` until this stops increasing.
     RealType pdfUpperBound() const { return m_pdfUpperBound; }
 
   private:

@@ -1,10 +1,9 @@
-// Test-only entry point.
+// Entry point of the regression suite (test_suite.H).
 //
-// main.cpp runs the suite and then writes about 25 MB of sample files, which makes
-// it unusable as a continuous-integration step: the samples are examples, not
-// assertions, and nothing reads them back.  This translation unit runs the suite
-// and nothing else, so `make test` is a pure pass/fail with no side effects on the
-// working directory.  Build it with `make test`; `make` still builds main.exe.
+// It runs the suite and nothing else: it writes no files, and its exit status is 0 if
+// every check passes and 1 otherwise.  Build and run it with `make test`.  The demo
+// program main.cpp, built by `make`, is separate: it runs no tests and writes five
+// sample files of 50,000 lines each (about 6 MB).
 
 #include <cmath>
 #include <iostream>

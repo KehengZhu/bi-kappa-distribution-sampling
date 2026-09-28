@@ -14,9 +14,13 @@ all: $(TARGET)
 $(TARGET): $(SRC) $(HEADERS)
 	$(CXX) $(CXXFLAGS) -o $(TARGET) $(SRC)
 
-# The regression suite.  The exit status is 0 if every check passed.
+# The regression suite.  The exit status is 0 if every check passed.  It is built with
+# optimization, which cuts its run time from about 50 s to under 10 s; every check passes
+# with or without it.
+TEST_CXXFLAGS = $(CXXFLAGS) -O2
+
 $(TEST_TARGET): $(TEST_SRC) test_suite.H $(HEADERS)
-	$(CXX) $(CXXFLAGS) -o $(TEST_TARGET) $(TEST_SRC)
+	$(CXX) $(TEST_CXXFLAGS) -o $(TEST_TARGET) $(TEST_SRC)
 
 test: $(TEST_TARGET)
 	./$(TEST_TARGET)

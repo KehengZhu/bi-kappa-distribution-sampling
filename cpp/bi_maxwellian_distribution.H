@@ -20,9 +20,8 @@
  * auto v = dist();                    // {vx, vy, vz}, global frame
  * @endcode
  *
- * @note **The cap defaults to 20 thermal speeds**, as in release 1.0.0 and as in
- * bi_kappa_distribution.  For a bi-Maxwellian the probability beyond it is
- * negligible.  Pass no_cap() to sample the bi-Maxwellian distribution itself; see
+ * @note **The cap defaults to 20 thermal speeds**, as in bi_kappa_distribution.  For a
+ * bi-Maxwellian the probability beyond it is negligible.  Pass no_cap() to sample the bi-Maxwellian distribution itself; see
  * no_cap() and param_type::capped().
  *
  * @see \ref usage for more recipes (seeding, external RNG, reconfiguration).
@@ -30,17 +29,18 @@
 template <typename RealType= double> class bi_maxwellian_distribution
 {
   public:
-    using result_type= std::array<RealType, 3>;
-    using point_type= result_type;
+    using result_type= std::array<RealType, 3>;   ///< A velocity {vx, vy, vz}.
+    using point_type= result_type;                  ///< Same as result_type.
 
+    /// @brief The parameters of a bi_maxwellian_distribution: theta_perp, theta_par, ub and
+    /// the velocity cap.
     class param_type
     {
       public:
-        using distribution_type= bi_maxwellian_distribution<RealType>;
+        using distribution_type= bi_maxwellian_distribution<RealType>;   ///< The owning sampler.
 
-        // The cap defaults to 20 thermal speeds, as in release 1.0.0, so that code written
-        // against 1.0.0 samples the same distribution.  Pass no_cap() (= +infinity) for the
-        // uncapped distribution.
+        /// Store the parameters.  Throws std::invalid_argument if either theta is zero or
+        /// negative, or if the cap is not positive; @p ub is not checked here.
         param_type(RealType theta_perp= RealType(1.0), RealType theta_par= RealType(1.0),
                    point_type ub= point_type({RealType(0.0), RealType(0.0), RealType(1.0)}),
                    RealType max_normalized_velocity= RealType(20.0))
@@ -53,7 +53,7 @@ template <typename RealType= double> class bi_maxwellian_distribution
             }
             // A positive finite value selects the capped mode.  no_cap() (= +inf)
             // selects the untruncated mode, in which no acceptance-rejection loop
-            // runs at all and samples follow the full bi-Maxwellian law.
+            // runs at all and samples follow the bi-Maxwellian distribution itself.
             if (!(m_maxNormalizedVelocity > RealType(0.0)))
             {
                 throw std::invalid_argument(
@@ -62,22 +62,25 @@ template <typename RealType= double> class bi_maxwellian_distribution
             }
         }
 
-        RealType theta_perp() const { return m_theta_perp; }
-        RealType theta_par() const { return m_theta_par; }
-        point_type ub() const { return m_ub; }
+        RealType theta_perp() const { return m_theta_perp; }   ///< Perpendicular thermal speed.
+        RealType theta_par() const { return m_theta_par; }     ///< Parallel thermal speed.
+        point_type ub() const { return m_ub; }                 ///< Field direction, as given.
+        /// Velocity cap in thermal speeds; +infinity for no_cap().
         RealType max_normalized_velocity() const { return m_maxNormalizedVelocity; }
 
-        /// True when a finite component-wise cap is in force, i.e. when the
-        /// sampled law is the bi-Maxwellian distribution conditioned on the cap
-        /// event rather than the bi-Maxwellian distribution itself.
+        /// True when a finite component-wise cap is in force, that is, when the sampled
+        /// distribution is the bi-Maxwellian distribution conditioned on the cap box rather
+        /// than the bi-Maxwellian distribution itself.
         bool capped() const { return std::isfinite(m_maxNormalizedVelocity); }
 
+        /// True if every parameter compares equal.
         bool operator==(const param_type &other) const
         {
             return m_theta_perp == other.m_theta_perp && m_theta_par == other.m_theta_par &&
                    m_ub == other.m_ub && m_maxNormalizedVelocity == other.m_maxNormalizedVelocity;
         }
 
+        /// Negation of operator==.
         bool operator!=(const param_type &other) const { return !(*this == other); }
 
       private:
@@ -87,18 +90,18 @@ template <typename RealType= double> class bi_maxwellian_distribution
         RealType m_maxNormalizedVelocity;
     };
 
-    /// Sentinel selecting the untruncated sampler.  In this mode each draw is three
-    /// Gaussians with no outer acceptance-rejection loop, and the sampled law is the
-    /// full bi-Maxwellian distribution.
+    /// Value of the cap that selects the uncapped sampler: `+infinity`.  In this mode each
+    /// draw is three Gaussians with no outer acceptance-rejection loop, and the samples
+    /// follow the bi-Maxwellian distribution itself.
     ///
-    /// It must be passed explicitly, because the default cap is 20 (release 1.0.0):
+    /// It must be passed explicitly, because the default cap is 20:
     ///
     ///     bi_maxwellian_distribution<double> d(1.0, 2.0, {0,0,1},
     ///                                          bi_maxwellian_distribution<double>::no_cap());
     ///
-    /// With a finite cap the sampled law is instead that distribution conditioned
+    /// With a finite cap the sampled distribution is instead that distribution conditioned
     /// on all normalized components lying inside the component-wise box -- a
-    /// different, bounded law with its own normalization.  The cap is tested in the
+    /// different, bounded distribution with its own normalization.  The cap is tested in the
     /// field-aligned frame, before the rotation into the global frame, so the
     /// returned components are *not* individually bounded by cap*theta unless ub is
     /// {0,0,1}; the box rotates with ub.
@@ -113,8 +116,12 @@ template <typename RealType= double> class bi_maxwellian_distribution
     // ====================================================================
     // Construction
     // ====================================================================
+    /// Construct with theta_perp = theta_par = 1, ub = {0, 0, 1} and a cap of 20.  The
+    /// internal engine is seeded from `std::random_device`.
     bi_maxwellian_distribution() : m_params(), m_gen(std::random_device{}()), m_standardNormal(RealType(0.0), RealType(1.0)) {}
 
+    /// Construct and call define() with these arguments.  The internal engine is seeded from
+    /// `std::random_device`; call seed() for a reproducible stream.
     explicit bi_maxwellian_distribution(RealType theta_perp, RealType theta_par= RealType(1.0),
                                         point_type ub= point_type({RealType(0.0), RealType(0.0),
                                                                    RealType(1.0)}),
@@ -125,6 +132,8 @@ template <typename RealType= double> class bi_maxwellian_distribution
         define(theta_perp, theta_par, ub, max_normalized_velocity);
     }
 
+    /// Construct from a parameter set.  The internal engine is seeded from
+    /// `std::random_device`.
     explicit bi_maxwellian_distribution(const param_type &params)
         : m_params(params), m_gen(std::random_device{}()), m_standardNormal(RealType(0.0), RealType(1.0))
     {
@@ -135,7 +144,7 @@ template <typename RealType= double> class bi_maxwellian_distribution
     // Setters
     // ====================================================================
 
-    // Bulk configuration
+    /// Replace all parameters with @p params, then call reset().
     void define(const param_type &params)
     {
         m_params= params;
@@ -143,27 +152,31 @@ template <typename RealType= double> class bi_maxwellian_distribution
     }
 
     /**
-     * @brief Configure the sampler.  Validates everything; throws rather than
-     * deferring a bad parameter to sampling time.
+     * @brief Configure the sampler.
      *
      * @param theta_perp  Thermal speed of the two components transverse to @p ub,
      *                > 0.  Each is N(0, theta_perp^2/2) -- a speed, not a
      *                temperature: theta = sqrt(2*k_B*T/m).
      * @param theta_par   Thermal speed along @p ub, > 0.
      * @param ub      Magnetic-field direction {bx,by,bz} in the global frame.
-     *                Need not be normalized; must be non-zero.
-     * @param max_normalized_velocity  Velocity cap in thermal speeds (default 20, as in
-     *                release 1.0.0), or no_cap() for the untruncated bi-Maxwellian law.  A
-     *                finite value selects a *different*, bounded target law -- see
-     *                \ref usage_bikappa_cap.  Must be > 0; passing 0 to mean
-     *                "no cap" throws.
+     *                Need not be normalized; must be non-zero, with a length above
+     *                about 1.5e-8 in `double` (3.5e-4 in `float`); see \ref params_ub.
+     * @param max_normalized_velocity  Velocity cap in thermal speeds (default 20), or
+     *                no_cap() for the bi-Maxwellian distribution itself.  A finite value
+     *                selects a *different*, bounded target distribution; see
+     *                \ref usage_bikappa_cap.  Must be > 0; passing 0 to mean "no cap"
+     *                throws.
      *
      * @note To seed reproducibly, either call seed() afterwards or use the
      * overload taking a trailing int: >= 0 is reproducible, < 0 reseeds from
      * std::random_device.
      *
-     * @throws std::invalid_argument if either theta is non-positive,
-     *         @p max_normalized_velocity is non-positive, or @p ub is the zero vector.
+     * @throws std::invalid_argument if either theta is zero or negative, or
+     *         @p max_normalized_velocity is not positive (NaN included).
+     *
+     * @note define() does not check @p ub, and it does not reject a NaN or infinite theta.
+     * A @p ub that is zero, or shorter than the limit above, passes define() and makes
+     * every draw throw std::invalid_argument("ub must be a non-zero vector").
      *
      * @see \ref parameters for the full table, \ref choosing to compare samplers.
      */
@@ -174,8 +187,11 @@ template <typename RealType= double> class bi_maxwellian_distribution
         define(param_type(theta_perp, theta_par, ub, max_normalized_velocity));
     }
 
+    /// define(params), after seeding the internal engine with @p seed as seed() does.
     void define(const param_type &params, int seed) { applySeed(m_gen, seed); define(params); }
 
+    /// define() with all four parameters, after seeding the internal engine with @p seed as
+    /// seed() does (`seed >= 0` reproducible, `seed < 0` from `std::random_device`).
     void define(RealType theta_perp, RealType theta_par,
                 point_type ub, RealType max_normalized_velocity, int seed)
     {
@@ -183,26 +199,32 @@ template <typename RealType= double> class bi_maxwellian_distribution
         define(theta_perp, theta_par, ub, max_normalized_velocity);
     }
 
-    // Individual parameter setters
+    // Individual parameter setters.  Each calls define() with the other parameters
+    // unchanged.
+
+    /// Set theta_perp, keeping the other parameters; throws as define() does.
     void theta_perp(RealType value)
     {
         define(value, m_params.theta_par(), m_params.ub(), m_params.max_normalized_velocity());
     }
 
+    /// Set theta_par, keeping the other parameters; throws as define() does.
     void theta_par(RealType value)
     {
         define(m_params.theta_perp(), value, m_params.ub(), m_params.max_normalized_velocity());
     }
 
+    /// Set the field direction, keeping the other parameters.
     void ub(const point_type &value)
     {
         define(m_params.theta_perp(), m_params.theta_par(), value,
                m_params.max_normalized_velocity());
     }
 
-    /// Unlike the other setters, this one changes *which distribution* is sampled,
-    /// not merely its parameters.  Pass no_cap() to return to the bi-Maxwellian law
-    /// itself; passing 0 to mean "no cap" throws, as every non-positive value does.
+    /// Set the velocity cap, keeping the other parameters.  Unlike the other setters, this
+    /// one changes *which distribution* is sampled, not merely its parameters.  Pass
+    /// no_cap() to return to the bi-Maxwellian distribution itself; passing 0 to mean
+    /// "no cap" throws, as every non-positive value does.
     void max_normalized_velocity(RealType value)
     {
         define(m_params.theta_perp(), m_params.theta_par(), m_params.ub(), value);
@@ -212,13 +234,13 @@ template <typename RealType= double> class bi_maxwellian_distribution
     // Getters
     // ====================================================================
 
-    // Bulk getter
+    /// The current parameters, for example to test param().capped().
     param_type param() const { return m_params; }
 
-    // Individual parameter getter
-    RealType theta_perp() const { return m_params.theta_perp(); }
-    RealType theta_par() const { return m_params.theta_par(); }
-    point_type ub() const { return m_params.ub(); }
+    RealType theta_perp() const { return m_params.theta_perp(); }   ///< Perpendicular thermal speed.
+    RealType theta_par() const { return m_params.theta_par(); }     ///< Parallel thermal speed.
+    point_type ub() const { return m_params.ub(); }                 ///< Field direction, as given.
+    /// Velocity cap in thermal speeds; +infinity for no_cap().
     RealType max_normalized_velocity() const { return m_params.max_normalized_velocity(); }
 
     // ====================================================================
@@ -232,21 +254,31 @@ template <typename RealType= double> class bi_maxwellian_distribution
         reset();
     }
 
+    /// Discard the normal variate cached by `std::normal_distribution`.  Called by seed()
+    /// and by every define() overload.
     void reset() { m_standardNormal.reset(); }
 
     // ====================================================================
     // Sampling
     // ====================================================================
+    /// Draw one velocity from the engine @p gen instead of the internal one.
+    /// @return {vx, vy, vz} in the global frame.
     template <typename GeneratorType> result_type operator()(GeneratorType &gen)
     {
         return (*this)(gen, m_params);
     }
 
+    /// Draw one velocity from the internal engine.
+    /// @return {vx, vy, vz} in the global frame.
     result_type operator()()
     {
         return (*this)(m_gen);
     }
 
+    /// Draw one velocity from @p gen with the parameters @p params instead of the stored
+    /// ones.
+    /// @throws std::invalid_argument if the field direction of @p params is numerically
+    ///         zero; std::runtime_error after 10^6 consecutive rejections by a finite cap.
     template <typename GeneratorType>
     result_type operator()(GeneratorType &gen, const param_type &params)
     {
@@ -296,8 +328,9 @@ template <typename RealType= double> class bi_maxwellian_distribution
     // ====================================================================
     // Geometry helper
     // ====================================================================
-    // Transform local velocity components to global Cartesian coordinates given the parallel
-    // direction ub.
+    /// Rotate @p local = {v_perp1, v_perp2, v_par} from field-aligned components to the
+    /// global frame, for the field direction @p ub.  The perpendicular axes are the ones the
+    /// sampler uses.  Throws std::invalid_argument if @p ub is numerically zero.
     point_type rotate_from_fieldAligned_frame(const point_type &local, const point_type &ub) const
     {
         const RealType kZero= RealType(0.0);
@@ -352,11 +385,13 @@ template <typename RealType= double> class bi_maxwellian_distribution
     // ====================================================================
     // Comparison
     // ====================================================================
+    /// True if the two samplers have equal parameters.  Engine state is not compared.
     bool operator==(const bi_maxwellian_distribution &other) const
     {
         return m_params == other.m_params;
     }
 
+    /// Negation of operator==.
     bool operator!=(const bi_maxwellian_distribution &other) const { return !(*this == other); }
 
   private:

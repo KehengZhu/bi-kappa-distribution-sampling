@@ -24,8 +24,8 @@ int main()
 
     std::cout << "=== Example 1: BiKappaDistribution ===" << std::endl;
     // no_cap(): these samples follow the bi-Kappa distribution itself.  Omitting the fifth
-    // argument applies the default cap of 20 thermal speeds (as in release 1.0.0), which
-    // samples the bi-Kappa distribution conditioned on that component-wise box.
+    // argument applies the default cap of 20 thermal speeds, which samples the bi-Kappa
+    // distribution conditioned on that component-wise box.
     bi_kappa_distribution<Real> biKappa;
     biKappa.define(kappa, theta_perp, theta_par, {0,0,1},
                    bi_kappa_distribution<Real>::no_cap(), 20030410);
